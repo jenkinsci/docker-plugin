@@ -1,0 +1,90 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">    
+
+    <f:entry title="${%Hypervisor}" field="hypervisorDescription" help="${rootURL}/plugin/libvirt/help-libvirt-hypervisorUri.html">
+        <select class="setting-input" name="hypervisorDescription" value="${instance.hypervisorDescription}"
+                onchange="updateListBox(document.getElementsByName('virtualMachineName')[0],'${rootURL}/plugin/libvirt-slave/computerNameValues?value='+encode(this.value))">
+            <option>Select an Hypervisor...</option>
+            <j:forEach var="d" items="${descriptor.getHypervisors()}" varStatus="loop">
+                <option selected="${d.hypervisorDescription==instance.hypervisorDescription}">
+                    ${d.hypervisorDescription}
+                </option>
+            </j:forEach>
+        </select>
+    </f:entry>
+
+    <f:entry title="${%Computer Name}" field="virtualMachineName" help="${rootURL}/plugin/libvirt/help-libvirt-computerName.html">
+        <select class="setting-input" name="virtualMachineName" value="${instance.virtualMachineName}">
+            <!--<j:forEach var="vc" items="${descriptor.getDefinedVirtualComputers()}" varStatus="loop">
+                <option selected="${vc.name==instance.computerName}">
+                    ${vc.name}
+                </option>
+            </j:forEach>      -->
+        </select>
+    </f:entry>
+
+    <f:entry title="${%Description}" help="/help/system-config/master-slave/description.html">
+        <f:textbox field="nodeDescription"/>
+    </f:entry>
+
+    <f:entry title="${%# of executors}" field="numExecutors">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="${%Remote FS root}" field="remoteFS">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="${%Labels}" field="labelString">
+        <f:textbox/>
+    </f:entry>
+
+    <f:slave-mode name="mode" node="${it}"/>
+
+    <f:dropdownList name="slave.delegateLauncher" title="${%Secondary launch method}"
+                    help="${descriptor.getHelpFile('launcher')}">
+        <j:forEach var="d" items="${descriptor.getComputerLauncherDescriptors()}" varStatus="loop">
+            <f:dropdownListBlock value="${d.clazz.name}" name="${d.displayName}"
+                                 selected="${it.delegateLauncher.descriptor==d}"
+                                 title="${d.displayName}">
+                <j:set var="descriptor" value="${d}"/>
+                <j:set var="instance"
+                       value="${it.delegateLauncher.descriptor==d ? it.delegateLauncher : null}"/>
+                <tr>
+                    <td>
+                        <input type="hidden" name="stapler-class" value="${d.clazz.name}"/>
+                    </td>
+                </tr>
+                <st:include from="${d}" page="${d.configPage}" optional="true"/>
+            </f:dropdownListBlock>
+        </j:forEach>
+    </f:dropdownList>
+
+    <!-- pointless to show this if there's only one option, which is the default -->
+    <j:if test="${h.getRetentionStrategyDescriptors().size() gt 1}">
+        <f:dropdownList name="slave.retentionStrategy" title="${%Availability}"
+                        help="/help/system-config/master-slave/availability.html">
+            <j:forEach var="d" items="${h.getRetentionStrategyDescriptors()}">
+                <j:if test="${d != null}">
+                    <f:dropdownListBlock value="${d.clazz.name}" name="${d.displayName}"
+                                         selected="${it.retentionStrategy.descriptor==d}"
+                                         title="${d.displayName}">
+                        <j:set var="descriptor" value="${d}"/>
+                        <j:set var="instance"
+                               value="${it.retentionStrategy.descriptor==d ? it.retentionStrategy : null}"/>
+                        <tr>
+                            <td>
+                                <input type="hidden" name="stapler-class" value="${d.clazz.name}"/>
+                            </td>
+                        </tr>
+                        <st:include from="${d}" page="${d.configPage}" optional="true"/>
+                    </f:dropdownListBlock>
+                </j:if>
+            </j:forEach>
+        </f:dropdownList>
+    </j:if>
+
+    <f:descriptorList title="${%Node Properties}" descriptors="${h.getNodePropertyDescriptors(descriptor.clazz)}"
+                      field="nodeProperties"/>
+
+</j:jelly>

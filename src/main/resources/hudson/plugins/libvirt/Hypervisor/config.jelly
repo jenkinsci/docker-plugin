@@ -1,0 +1,24 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">    
+    <f:entry title="${%Computer Name}" field="hypervisorType" name="hypervisorType" help="${rootURL}/plugin/libvirt/help-libvirt-hypervisorType.html">
+        <select class="setting-input" name="hypervisorType">
+            <j:forEach var="t" items="${descriptor.getHypervisorTypes()}" varStatus="loop">
+                <f:option value="${t}" selected="${t==instance.hypervisorType}">${t}</f:option>
+            </j:forEach>
+        </select>
+    </f:entry>
+    <f:entry title="${%Hypervisor Host}" field="hypervisorHost" help="${rootURL}/plugin/libvirt/help-libvirt-hypervisorHost.html">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%Username}" field="username" help="${rootURL}/plugin/libvirt/help-libvirt-username.html">
+        <f:textbox />
+    </f:entry>    
+    <f:advanced>
+        <f:entry title="${%SSH Port}" field="hypervisorSshPort" help="${rootURL}/plugin/libvirt/help-libvirt-hypervisorSshPort.html">
+            <f:textbox default="22"/>
+        </f:entry>
+        <f:entry title="${%Hypervisor System Url}" field="hypervisorSystemUrl">
+            <f:textbox default="system"/>
+        </f:entry>
+    </f:advanced>
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="hypervisorType,hypervisorHost,username,hypervisorSshPort,hypervisorSystemUrl"/>
+</j:jelly>
