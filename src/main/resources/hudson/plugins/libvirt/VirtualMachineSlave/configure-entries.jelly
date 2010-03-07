@@ -1,12 +1,11 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form">    
-
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <f:entry title="${%Hypervisor}" field="hypervisorDescription" help="${rootURL}/plugin/libvirt/help-libvirt-hypervisorUri.html">
-        <select class="setting-input" name="hypervisorDescription" value="${instance.hypervisorDescription}"
+        <select class="setting-input" name="hypervisorDescription" value="${it.hypervisorDescription}"
                 onchange="updateListBox(document.getElementsByName('virtualMachineName')[0],'${rootURL}/plugin/libvirt-slave/computerNameValues?value='+encode(this.value))">
             <option>Select an Hypervisor...</option>
             <j:forEach var="d" items="${descriptor.getHypervisors()}" varStatus="loop">
-                <option selected="${d.hypervisorDescription==instance.hypervisorDescription}">
+                <option selected="${d.hypervisorDescription==it.hypervisorDescription?'true':null}">
                     ${d.hypervisorDescription}
                 </option>
             </j:forEach>
@@ -15,11 +14,11 @@
 
     <f:entry title="${%Computer Name}" field="virtualMachineName" help="${rootURL}/plugin/libvirt/help-libvirt-computerName.html">
         <select class="setting-input" name="virtualMachineName" value="${instance.virtualMachineName}">
-            <!--<j:forEach var="vc" items="${descriptor.getDefinedVirtualComputers()}" varStatus="loop">
-                <option selected="${vc.name==instance.computerName}">
+            <j:forEach var="vc" items="${descriptor.getDefinedVirtualMachines(it.hypervisorDescription)}" varStatus="loop">
+                <option selected="${vc.name==it.virtualMachineName?'true':null}">
                     ${vc.name}
                 </option>
-            </j:forEach>      -->
+            </j:forEach>
         </select>
     </f:entry>
 

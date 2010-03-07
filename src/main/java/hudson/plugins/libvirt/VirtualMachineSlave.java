@@ -29,15 +29,14 @@ import hudson.slaves.Cloud;
 import hudson.Util;
 import hudson.Extension;
 import hudson.Functions;
+import hudson.model.Computer;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 import java.io.IOException;
-import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 
 public class VirtualMachineSlave extends Slave {
 
@@ -56,7 +55,7 @@ public class VirtualMachineSlave extends Slave {
                 launcher == null ? new VirtualMachineLauncher(delegateLauncher, hypervisorDescription, virtualMachineName) : launcher,
                 retentionStrategy, nodeProperties);
         this.hypervisorDescription = hypervisorDescription;
-        this.virtualMachineName = virtualMachineName;
+        this.virtualMachineName = virtualMachineName;        
     }
 
     public String getHypervisorDescription() {
@@ -71,11 +70,17 @@ public class VirtualMachineSlave extends Slave {
         return ((VirtualMachineLauncher) getLauncher()).getDelegate();
     }
 
+    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+
     @Extension
     public static final class DescriptorImpl extends SlaveDescriptor {
 
         private String hypervisorDescription;
         private String virtualMachineName;
+        
+        public DescriptorImpl() {            
+            load();
+        }
 
         public String getDisplayName() {
             return "Slave virtual computer running on a virtualization platform (via libvirt)";
@@ -86,8 +91,23 @@ public class VirtualMachineSlave extends Slave {
             return true;
         }
 
+        public List<VirtualMachine> getDefinedVirtualMachines(String hypervisorDescription) {
+            List<VirtualMachine> virtualMachinesList = new ArrayList<VirtualMachine>();                       
+            if (hypervisorDescription != null && !hypervisorDescription.equals("")) {
+                Hypervisor hypervisor = null;
+                for (Cloud cloud : Hudson.getInstance().clouds) {
+                    if (cloud instanceof Hypervisor && ((Hypervisor) cloud).getHypervisorDescription().equals(hypervisorDescription)) {
+                        hypervisor = (Hypervisor) cloud;
+                        break;
+                    }
+                }
+                virtualMachinesList.addAll(hypervisor.getVirtualMachines());
+            }
+            return virtualMachinesList;
+        }
+
         public List<Hypervisor> getHypervisors() {
-            List<Hypervisor> result = new ArrayList<Hypervisor>();
+            List<Hypervisor> result = new ArrayList<Hypervisor>();            
             for (Cloud cloud : Hudson.getInstance().clouds) {
                 if (cloud instanceof Hypervisor) {
                     result.add((Hypervisor) cloud);
@@ -115,6 +135,7 @@ public class VirtualMachineSlave extends Slave {
 //            VirtualMachineLauncher.DESCRIPTOR.save();
 //            return super.configure(req, o);
 //        }
+        
         public String getHypervisorDescription() {
             return hypervisorDescription;
         }
@@ -122,5 +143,6 @@ public class VirtualMachineSlave extends Slave {
         public String getVirtualMachineName() {
             return virtualMachineName;
         }
+        
     }
 }
