@@ -44,6 +44,7 @@
         </developer>
     </developers>
 
+
   <scm>
     <connection>scm:svn:https://guest@svn.dev.java.net/svn/hudson/tags/libvirt-slave-1.0</connection>
     <developerConnection>scm:svn:https://svn.dev.java.net/svn/hudson/tags/libvirt-slave-1.0</developerConnection>
