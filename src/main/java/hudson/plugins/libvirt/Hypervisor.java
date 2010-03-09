@@ -258,7 +258,14 @@ public class Hypervisor extends Cloud {
                 rec.setParameters(new Object[]{hypervisorHost, username});
                 LOGGER.log(rec);
                 return FormValidation.error(e.getMessage());
-            } 
+            } catch (Exception e) {
+                LogRecord rec = new LogRecord(Level.WARNING,
+                        "Failed to connect to hypervisor. Check libvirt installation on hudson machine!");
+                rec.setThrown(e);
+                rec.setParameters(new Object[]{hypervisorHost, username});
+                LOGGER.log(rec);
+                return FormValidation.error(e.getMessage());
+            }
         }
 
         public String getHypervisorHost() {
