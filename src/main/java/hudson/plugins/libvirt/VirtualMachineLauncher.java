@@ -40,18 +40,18 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     private transient VirtualMachine virtualMachine;
     private String hypervisorDescription;
     private String virtualMachineName;
-    private static final int RETRY_TIMES = 100;
+    private static final int WAIT_TIME = 60000;
 
     @DataBoundConstructor
     public VirtualMachineLauncher(ComputerLauncher delegate, String hypervisorDescription, String virtualMachineName) {
-        super();
+        super();        
         this.delegate = delegate;
         this.virtualMachineName = virtualMachineName;
         this.hypervisorDescription = hypervisorDescription;
         buildVirtualMachine();
     }
 
-    private void buildVirtualMachine() {
+    private void buildVirtualMachine() {        
         if (hypervisorDescription != null && virtualMachineName != null) {
             Hypervisor hypervisor = null;
             for (Cloud cloud : Hudson.getInstance().clouds) {
@@ -85,10 +85,13 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener)
-            throws IOException, InterruptedException {
+            throws IOException, InterruptedException {                
         taskListener.getLogger().println("Getting connection to the virtual datacenter");
+        if (virtualMachine==null) {
+            taskListener.getLogger().println("Re-connecting to Hypervisor");
+            buildVirtualMachine();
+        }
         try {
-            taskListener.getLogger().println("Target virtual computer: " + virtualMachine);
             Map<String, Domain> computers = virtualMachine.getHypervisor().getDomains();
             taskListener.getLogger().println("Finding the computer");
             for (String domainName : computers.keySet()) {
@@ -102,18 +105,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                     } else {
                         taskListener.getLogger().println("Virtual computer is already running");
                     }
-                    taskListener.getLogger().println("Starting stage 2 launcher");
-                    int i = 0;
-                    boolean finish = false;
-                    while (i < RETRY_TIMES && !finish) {
-                        try {
-
-                            finish = true;
-                        } catch (Exception e) {
-                            i++;
-                            wait(5000);
-                        }
-                    }
+                    taskListener.getLogger().println("Waiting for machine startup");                    
+                    Thread.sleep(WAIT_TIME);                    
+                    taskListener.getLogger().println("Connecting slave client");
                     delegate.launch(slaveComputer, taskListener);
                     taskListener.getLogger().println("Stage 2 launcher completed");
                     return;
@@ -188,13 +182,5 @@ public class VirtualMachineLauncher extends ComputerLauncher {
             return delegate;
         }
 
-//        @Override
-//        public boolean configure(StaplerRequest req, JSONObject o) throws FormException {
-//            virtualMachineName = o.getString("computerName");
-//            hypervisorDescription = o.getString("hypervisorDescription");
-//            delegate = (ComputerLauncher) o.get("slave.delegateLauncher");
-//            save();
-//            return super.configure(req, o);
-//        }
     };
 }

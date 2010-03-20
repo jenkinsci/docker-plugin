@@ -43,4 +43,10 @@
             <email>mmornati@byte-code.com</email>
         </developer>
     </developers>
+
+    <organization>
+        <name>Byte-Code</name>
+        <url>http://www.byte-code.com</url>
+    </organization>
+
 </project>

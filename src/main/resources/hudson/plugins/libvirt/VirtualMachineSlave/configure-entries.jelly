@@ -1,6 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="${%Hypervisor}" field="hypervisorDescription" help="${rootURL}/plugin/libvirt-slave/help-libvirt-hypervisorUri.html">
+    <f:entry title="${%Hypervisor}" field="hypervisorDescription" help="plugin/libvirt-slave/help-libvirt-hypervisorUri.html">
         <select class="setting-input" name="hypervisorDescription" value="${it.hypervisorDescription}"
                 onchange="updateListBox(document.getElementsByName('virtualMachineName')[0],'${rootURL}/plugin/libvirt-slave/computerNameValues?value='+encode(this.value))">
             <option>Select an Hypervisor...</option>
@@ -12,7 +12,7 @@
         </select>
     </f:entry>
 
-    <f:entry title="${%Computer Name}" field="virtualMachineName" help="${rootURL}/plugin/libvirt-slave/help-libvirt-computerName.html">
+    <f:entry title="${%Computer Name}" field="virtualMachineName" help="plugin/libvirt-slave/help-libvirt-computerName.html">
         <select class="setting-input" name="virtualMachineName" value="${instance.virtualMachineName}">
             <j:forEach var="vc" items="${descriptor.getDefinedVirtualMachines(it.hypervisorDescription)}" varStatus="loop">
                 <option selected="${vc.name==it.virtualMachineName?'true':null}">

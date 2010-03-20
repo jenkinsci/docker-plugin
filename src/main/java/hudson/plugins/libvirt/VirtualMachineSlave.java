@@ -53,7 +53,7 @@ public class VirtualMachineSlave extends Slave {
             Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, Util.tryParseNumber(numExecutors, 1).intValue(), mode, labelString,
                 launcher == null ? new VirtualMachineLauncher(delegateLauncher, hypervisorDescription, virtualMachineName) : launcher,
-                retentionStrategy, nodeProperties);
+                retentionStrategy, nodeProperties);        
         this.hypervisorDescription = hypervisorDescription;
         this.virtualMachineName = virtualMachineName;        
     }
