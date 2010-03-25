@@ -9,7 +9,7 @@
 
     <groupId>hudson.plugins.libvirt</groupId>
     <artifactId>libvirt-slave</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.4</version>
     <packaging>hpi</packaging>
     <name>Hudson Libvirt Slaves plugin</name>
     <url>http://wiki.hudson-ci.org/display/HUDSON/Libvirt+Slaves+Plugin</url>
@@ -48,4 +48,10 @@
         <name>Byte-Code</name>
         <url>http://www.byte-code.com</url>
     </organization>
+
+  <scm>
+    <connection>scm:svn:https://guest@svn.dev.java.net/svn/hudson/tags/libvirt-slave-1.4</connection>
+    <developerConnection>scm:svn:https://svn.dev.java.net/svn/hudson/tags/libvirt-slave-1.4</developerConnection>
+    <url>https://hudson.dev.java.net/source/browse/hudson/tags/libvirt-slave-1.4</url>
+  </scm>
 </project>
