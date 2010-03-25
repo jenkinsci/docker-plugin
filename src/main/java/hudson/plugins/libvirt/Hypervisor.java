@@ -60,7 +60,7 @@ public class Hypervisor extends Cloud {
     private final String username;
     private transient Map<String, Domain> domains = null;
     private transient List<VirtualMachine> virtualMachineList = null;
-    private transient Connect hypervisorConnection = null;
+    //private transient Connect hypervisorConnection = null;
 
     @DataBoundConstructor
     public Hypervisor(String hypervisorType, String hypervisorHost, int hypervisorSshPort, String hypervisorSystemUrl, String username) {
@@ -74,35 +74,34 @@ public class Hypervisor extends Cloud {
         }
         this.hypervisorSshPort = hypervisorSshPort <= 0 ? 22 : hypervisorSshPort;
         this.username = username;
-        makeConnection();
         virtualMachineList = retrieveVirtualMachines();
     }
 
-    private void makeConnection() {
-        if (hypervisorConnection == null) {
-            String hypervisorUri = constructHypervisorURI();
-            LOGGER.log(Level.INFO, "Trying to establish a connection to hypervisor URI: {0} as {1}/******",
+    private Connect makeConnection() {
+        String hypervisorUri = constructHypervisorURI();
+        LOGGER.log(Level.INFO, "Trying to establish a connection to hypervisor URI: {0} as {1}/******",
+                new Object[]{hypervisorUri, username});
+        Connect hypervisorConnection = null;
+        try {
+            hypervisorConnection = new Connect(hypervisorUri, false);
+            LOGGER.log(Level.INFO, "Established connection to hypervisor URI: {0} as {1}/******",
                     new Object[]{hypervisorUri, username});
-            try {
-                hypervisorConnection = new Connect(hypervisorUri, false);
-                LOGGER.log(Level.INFO, "Established connection to hypervisor URI: {0} as {1}/******",
-                        new Object[]{hypervisorUri, username});
-            } catch (LibvirtException e) {
-                LogRecord rec = new LogRecord(Level.WARNING,
-                        "Failed to establish connection to hypervisor URI: {0} as {1}/******");
-                rec.setThrown(e);
-                rec.setParameters(new Object[]{hypervisorUri, username});
-                LOGGER.log(rec);
-            }
+        } catch (LibvirtException e) {
+            LogRecord rec = new LogRecord(Level.WARNING,
+                    "Failed to establish connection to hypervisor URI: {0} as {1}/******");
+            rec.setThrown(e);
+            rec.setParameters(new Object[]{hypervisorUri, username});
+            LOGGER.log(rec);
         }
+        return hypervisorConnection;
     }
 
     private List<VirtualMachine> retrieveVirtualMachines() {
-        List<VirtualMachine> vmList = new ArrayList<VirtualMachine>();        
+        List<VirtualMachine> vmList = new ArrayList<VirtualMachine>();
         try {
-            domains = getDomains();            
+            domains = getDomains();
             for (String domainName : domains.keySet()) {
-                vmList.add(new VirtualMachine(this,domainName));
+                vmList.add(new VirtualMachine(this, domainName));
             }
         } catch (Exception e) {
             LogRecord rec = new LogRecord(Level.SEVERE, "Cannot connect to datacenter {0} as {1}/******");
@@ -139,38 +138,51 @@ public class Hypervisor extends Cloud {
 
     public synchronized Map<String, Domain> getDomains() throws LibvirtException {
         Map<String, Domain> domains = new HashMap<String, Domain>();
-        for (String c : hypervisorConnection.listDefinedDomains()) {
-            if (c != null && !c.equals("")) {
+        Connect hypervisorConnection = makeConnection();
+        LogRecord info = new LogRecord(Level.INFO, "Getting hypervisor domains");
+        LOGGER.log(info);
+        if (hypervisorConnection != null) {
+            for (String c : hypervisorConnection.listDefinedDomains()) {
+                if (c != null && !c.equals("")) {
+                    Domain domain = null;
+                    try {
+                        domain = hypervisorConnection.domainLookupByName(c);
+                        domains.put(domain.getName(), domain);
+                    } catch (Exception e) {
+                        LogRecord rec = new LogRecord(Level.INFO, "Error retreiving information for domain with name: {0}");
+                        rec.setParameters(new Object[]{c});
+                        rec.setThrown(e);
+                        LOGGER.log(rec);
+                    }
+                }
+            }
+            for (int c : hypervisorConnection.listDomains()) {
                 Domain domain = null;
                 try {
-                    domain = hypervisorConnection.domainLookupByName(c);
+                    domain = hypervisorConnection.domainLookupByID(c);
                     domains.put(domain.getName(), domain);
                 } catch (Exception e) {
-                    LogRecord rec = new LogRecord(Level.INFO, "Error retreiving information for domain with name: {0}");
+                    LogRecord rec = new LogRecord(Level.INFO, "Error retreiving information for domain with id: {0}");
                     rec.setParameters(new Object[]{c});
                     rec.setThrown(e);
                     LOGGER.log(rec);
                 }
             }
+            LogRecord rec = new LogRecord(Level.INFO, "Closing hypervisor connection");
+            LOGGER.log(rec);
+            hypervisorConnection.close();
+            hypervisorConnection = null;
+        } else {
+            LogRecord rec = new LogRecord(Level.SEVERE, "Cannot connect to datacenter {0} as {1}/******");
+            rec.setParameters(new Object[]{hypervisorHost, username});
+            LOGGER.log(rec);
         }
-        for (int c : hypervisorConnection.listDomains()) {
-            Domain domain = null;
-            try {
-                domain = hypervisorConnection.domainLookupByID(c);
-                domains.put(domain.getName(), domain);
-            } catch (Exception e) {
-                LogRecord rec = new LogRecord(Level.INFO, "Error retreiving information for domain with id: {0}");
-                rec.setParameters(new Object[]{c});
-                rec.setThrown(e);
-                LOGGER.log(rec);
-            }
-        }
+
         return domains;
-    }       
+    }
 
     public synchronized List<VirtualMachine> getVirtualMachines() {
         if (virtualMachineList == null) {
-            makeConnection();
             virtualMachineList = retrieveVirtualMachines();
         }
         return virtualMachineList;

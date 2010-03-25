@@ -29,7 +29,6 @@ import hudson.slaves.Cloud;
 import hudson.Util;
 import hudson.Extension;
 import hudson.Functions;
-import hudson.model.Computer;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -125,16 +124,6 @@ public class VirtualMachineSlave extends Slave {
             }
             return result;
         }
-
-//        @Override
-//        public boolean configure(StaplerRequest req, JSONObject o) throws FormException {
-//            virtualMachineName = o.getString("computerName");
-//            hypervisorDescription = o.getString("hypervisorDescription");
-//            save();
-//            VirtualMachineLauncher.DESCRIPTOR.newInstance(req, o);
-//            VirtualMachineLauncher.DESCRIPTOR.save();
-//            return super.configure(req, o);
-//        }
         
         public String getHypervisorDescription() {
             return hypervisorDescription;

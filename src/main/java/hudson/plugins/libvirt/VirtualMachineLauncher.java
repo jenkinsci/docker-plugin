@@ -88,33 +88,32 @@ public class VirtualMachineLauncher extends ComputerLauncher {
             throws IOException, InterruptedException {                
         taskListener.getLogger().println("Getting connection to the virtual datacenter");
         if (virtualMachine==null) {
-            taskListener.getLogger().println("Re-connecting to Hypervisor");
+            taskListener.getLogger().println("No connection ready to the Hypervisor... reconnecting...");
             buildVirtualMachine();
         }
         try {
             Map<String, Domain> computers = virtualMachine.getHypervisor().getDomains();
-            taskListener.getLogger().println("Finding the computer");
+            taskListener.getLogger().println("Looking for the virtual machine on Hypervisor...");
             for (String domainName : computers.keySet()) {
                 if (virtualMachine.getName().equals(domainName)) {
-                    taskListener.getLogger().println("Found the computer");
+                    taskListener.getLogger().println("Virtual Machine Found");
                     Domain domain = computers.get(domainName);
 
                     if (domain.getInfo().state != DomainState.VIR_DOMAIN_BLOCKED && domain.getInfo().state != DomainState.VIR_DOMAIN_RUNNING) {
-                        taskListener.getLogger().println("Starting virtual computer");
+                        taskListener.getLogger().println("Starting virtual machine");
                         domain.create();
                     } else {
-                        taskListener.getLogger().println("Virtual computer is already running");
+                        taskListener.getLogger().println("Virtual machine is already running. No startup procedure required.");
                     }
-                    taskListener.getLogger().println("Waiting for machine startup");                    
+                    taskListener.getLogger().println("Waiting " + WAIT_TIME + "ms for machine startup");
                     Thread.sleep(WAIT_TIME);                    
-                    taskListener.getLogger().println("Connecting slave client");
-                    delegate.launch(slaveComputer, taskListener);
-                    taskListener.getLogger().println("Stage 2 launcher completed");
+                    taskListener.getLogger().println("Finished startup procedure... Connecting slave client");
+                    delegate.launch(slaveComputer, taskListener);                    
                     return;
                 }
             }
-            taskListener.getLogger().println("Could not find the computer");
-            throw new IOException("Could not find the computer");
+            taskListener.getLogger().println("Error! Could not find virtual machine on the hypervisor");
+            throw new IOException("VM not found!");
         } catch (IOException e) {
             e.printStackTrace(taskListener.getLogger());
             throw e;
@@ -125,26 +124,26 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public void afterDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
-        taskListener.getLogger().println("Starting stage 2 afterDisconnect");
+        taskListener.getLogger().println("Running disconnect procedure...");
         delegate.afterDisconnect(slaveComputer, taskListener);
-        taskListener.getLogger().println("Getting connection to the virtual datacenter");
+        taskListener.getLogger().println("Shutting down Virtual Machine...");
         try {
             Map<String, Domain> computers = virtualMachine.getHypervisor().getDomains();
-            taskListener.getLogger().println("Finding the computer");
+            taskListener.getLogger().println("Looking for the virtual machine on Hypervisor...");
             for (String domainName : computers.keySet()) {
                 if (virtualMachine.getName().equals(domainName)) {
                     Domain domain = computers.get(domainName);
-                    taskListener.getLogger().println("Found the computer");
+                    taskListener.getLogger().println("Virtual Machine Found");
                     if (domain.getInfo().state.equals(DomainState.VIR_DOMAIN_RUNNING) || domain.getInfo().state.equals(DomainState.VIR_DOMAIN_BLOCKED)) {
-                        taskListener.getLogger().println("Suspending virtual computer");
+                        taskListener.getLogger().println("Shutting down virtual machine");
                         domain.shutdown();
                     } else {
-                        taskListener.getLogger().println("Virtual computer is already suspended");
+                        taskListener.getLogger().println("Virtual machine is already suspended. No shutdown procedure required.");
                     }
                     return;
                 }
             }
-            taskListener.getLogger().println("Could not find the computer");
+            taskListener.getLogger().println("Error! Could not find virtual machine on the hypervisor");
         } catch (Throwable t) {
             taskListener.fatalError(t.getMessage(), t);
         }
