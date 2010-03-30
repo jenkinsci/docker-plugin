@@ -171,7 +171,6 @@ public class Hypervisor extends Cloud {
             LogRecord rec = new LogRecord(Level.INFO, "Closing hypervisor connection");
             LOGGER.log(rec);
             hypervisorConnection.close();
-            hypervisorConnection = null;
         } else {
             LogRecord rec = new LogRecord(Level.SEVERE, "Cannot connect to datacenter {0} as {1}/******");
             rec.setParameters(new Object[]{hypervisorHost, username});
