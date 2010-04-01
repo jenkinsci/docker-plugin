@@ -29,6 +29,8 @@ import hudson.slaves.Cloud;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.libvirt.Domain;
@@ -36,6 +38,7 @@ import org.libvirt.DomainInfo.DomainState;
 
 public class VirtualMachineLauncher extends ComputerLauncher {
 
+    private static final Logger LOGGER = Logger.getLogger(VirtualMachineLauncher.class.getName());
     private ComputerLauncher delegate;
     private transient VirtualMachine virtualMachine;
     private String hypervisorDescription;
@@ -44,15 +47,16 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @DataBoundConstructor
     public VirtualMachineLauncher(ComputerLauncher delegate, String hypervisorDescription, String virtualMachineName) {
-        super();        
+        super();
         this.delegate = delegate;
         this.virtualMachineName = virtualMachineName;
         this.hypervisorDescription = hypervisorDescription;
         buildVirtualMachine();
     }
 
-    private void buildVirtualMachine() {        
+    private void buildVirtualMachine() {
         if (hypervisorDescription != null && virtualMachineName != null) {
+            LOGGER.log(Level.INFO, "Building virtual machine object from names");
             Hypervisor hypervisor = null;
             for (Cloud cloud : Hudson.getInstance().clouds) {
                 if (cloud instanceof Hypervisor && ((Hypervisor) cloud).getHypervisorDescription().equals(hypervisorDescription)) {
@@ -60,7 +64,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                     break;
                 }
             }
-
+            LOGGER.log(Level.INFO, "Hypervisor found... getting Virtual Machines associated");
             for (VirtualMachine vm : hypervisor.getVirtualMachines()) {
                 if (vm.getName().equals(virtualMachineName)) {
                     virtualMachine = vm;
@@ -85,9 +89,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener)
-            throws IOException, InterruptedException {                
+            throws IOException, InterruptedException {
         taskListener.getLogger().println("Getting connection to the virtual datacenter");
-        if (virtualMachine==null) {
+        if (virtualMachine == null) {
             taskListener.getLogger().println("No connection ready to the Hypervisor... reconnecting...");
             buildVirtualMachine();
         }
@@ -102,13 +106,13 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                     if (domain.getInfo().state != DomainState.VIR_DOMAIN_BLOCKED && domain.getInfo().state != DomainState.VIR_DOMAIN_RUNNING) {
                         taskListener.getLogger().println("Starting virtual machine");
                         domain.create();
+                        taskListener.getLogger().println("Waiting " + WAIT_TIME + "ms for machine startup");
+                        Thread.sleep(WAIT_TIME);
                     } else {
                         taskListener.getLogger().println("Virtual machine is already running. No startup procedure required.");
                     }
-                    taskListener.getLogger().println("Waiting " + WAIT_TIME + "ms for machine startup");
-                    Thread.sleep(WAIT_TIME);                    
                     taskListener.getLogger().println("Finished startup procedure... Connecting slave client");
-                    delegate.launch(slaveComputer, taskListener);                    
+                    delegate.launch(slaveComputer, taskListener);
                     return;
                 }
             }
@@ -180,6 +184,5 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         public ComputerLauncher getDelegate() {
             return delegate;
         }
-
     };
 }
