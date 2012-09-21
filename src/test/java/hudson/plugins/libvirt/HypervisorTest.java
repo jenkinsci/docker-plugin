@@ -18,6 +18,11 @@ public class HypervisorTest extends HudsonTestCase {
 
     }
 
+    public void testDummy () {
+    	// placeholder while there are no real tests
+    }
+    
+    
     // this doesnt work for everyone ...
 //    public void testCreation() {
 //        Hypervisor hp = new Hypervisor("test", "localhost", 22, "default", "philipp");
