@@ -19,13 +19,13 @@
  */
 package hudson.plugins.libvirt;
 
+import hudson.Extension;
+import hudson.model.Descriptor;
+import hudson.model.TaskListener;
+import hudson.model.Hudson;
+import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
-import hudson.model.TaskListener;
-import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import hudson.Extension;
-import hudson.slaves.Cloud;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,14 +43,15 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     private transient VirtualMachine virtualMachine;
     private String hypervisorDescription;
     private String virtualMachineName;
-    private static final int WAIT_TIME = 60000;
+    private final int WAIT_TIME_MS;
 
     @DataBoundConstructor
-    public VirtualMachineLauncher(ComputerLauncher delegate, String hypervisorDescription, String virtualMachineName) {
+    public VirtualMachineLauncher(ComputerLauncher delegate, String hypervisorDescription, String virtualMachineName, int waitingTimeSecs) {
         super();
         this.delegate = delegate;
         this.virtualMachineName = virtualMachineName;
         this.hypervisorDescription = hypervisorDescription;
+        this.WAIT_TIME_MS = waitingTimeSecs*1000;
         buildVirtualMachine();
     }
 
@@ -73,7 +74,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
             }
         }
     }
-
+    
     public ComputerLauncher getDelegate() {
         return delegate;
     }
@@ -106,8 +107,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                     if (domain.getInfo().state != DomainState.VIR_DOMAIN_BLOCKED && domain.getInfo().state != DomainState.VIR_DOMAIN_RUNNING) {
                         taskListener.getLogger().println("Starting virtual machine");
                         domain.create();
-                        taskListener.getLogger().println("Waiting " + WAIT_TIME + "ms for machine startup");
-                        Thread.sleep(WAIT_TIME);
+                        
+                        taskListener.getLogger().println("Waiting " + WAIT_TIME_MS + "ms for the VM machine to start up");
+                        Thread.sleep(WAIT_TIME_MS);
                     } else {
                         taskListener.getLogger().println("Virtual machine is already running. No startup procedure required.");
                     }

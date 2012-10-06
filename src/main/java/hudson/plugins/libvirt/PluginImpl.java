@@ -22,6 +22,7 @@ package hudson.plugins.libvirt;
 import hudson.Plugin;
 import hudson.model.Hudson;
 import hudson.slaves.Cloud;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 import java.io.IOException;
@@ -53,6 +54,21 @@ public class PluginImpl extends Plugin {
     public void stop() throws Exception {
         LOGGER.log(Level.FINE, "Stopping libvirt-slave plugin.");
     }
+
+	public FormValidation doCheckStartupWaitingPeriodSeconds (@QueryParameter String secsValue) throws IOException, ServletException {
+		try {
+			int v = Integer.parseInt(secsValue);
+		    if (v < 0) {
+		    	return FormValidation.error("Negative value..");
+		    } else if (v == 0) {
+		    	return FormValidation.warning("You declared this virtual machine to be ready right away. It probably needs a couple of seconds to get ready!");
+		    } else {
+		    	return FormValidation.ok();
+		    }
+		} catch (NumberFormatException e) {
+		    return FormValidation.error("Not a number..");
+		}
+	}
 
     public void doComputerNameValues(StaplerRequest req, StaplerResponse rsp, @QueryParameter("value") String value) throws IOException, ServletException {
         ListBoxModel m = new ListBoxModel();

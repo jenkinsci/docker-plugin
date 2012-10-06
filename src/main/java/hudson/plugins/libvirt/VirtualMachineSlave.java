@@ -19,42 +19,44 @@
  */
 package hudson.plugins.libvirt;
 
-import hudson.model.Slave;
-import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import hudson.slaves.ComputerLauncher;
-import hudson.slaves.RetentionStrategy;
-import hudson.slaves.NodeProperty;
-import hudson.slaves.Cloud;
-import hudson.Util;
 import hudson.Extension;
 import hudson.Functions;
+import hudson.Util;
+import hudson.model.Descriptor;
+import hudson.model.Hudson;
+import hudson.model.Slave;
+import hudson.slaves.Cloud;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.ComputerLauncher;
+import hudson.slaves.RetentionStrategy;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.logging.Logger;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VirtualMachineSlave extends Slave {
 
     private static final Logger LOGGER = Logger.getLogger(VirtualMachineSlave.class.getName());
-    private String hypervisorDescription;
-    private String virtualMachineName;
+    private String 				hypervisorDescription;
+    private String 				virtualMachineName;
+    private int 				startupWaitingPeriodSeconds;
 
     @DataBoundConstructor
     public VirtualMachineSlave(String name, String nodeDescription, String remoteFS, String numExecutors,
             Mode mode, String labelString, VirtualMachineLauncher launcher, ComputerLauncher delegateLauncher,
             RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties,
-            String hypervisorDescription, String virtualMachineName)
+            String hypervisorDescription, String virtualMachineName, int startupWaitingPeriodSeconds)
             throws
             Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, Util.tryParseNumber(numExecutors, 1).intValue(), mode, labelString,
-                launcher == null ? new VirtualMachineLauncher(delegateLauncher, hypervisorDescription, virtualMachineName) : launcher,
+                launcher == null ? new VirtualMachineLauncher(delegateLauncher, hypervisorDescription, virtualMachineName, startupWaitingPeriodSeconds) : launcher,
                 retentionStrategy, nodeProperties);        
         this.hypervisorDescription = hypervisorDescription;
-        this.virtualMachineName = virtualMachineName;        
+        this.virtualMachineName = virtualMachineName;
+        this.startupWaitingPeriodSeconds = startupWaitingPeriodSeconds;
     }
 
     public String getHypervisorDescription() {
@@ -63,6 +65,10 @@ public class VirtualMachineSlave extends Slave {
 
     public String getVirtualMachineName() {
         return virtualMachineName;
+    }
+
+    public int getStartupWaitingPeriodSeconds() {
+        return startupWaitingPeriodSeconds;
     }
 
     public ComputerLauncher getDelegateLauncher() {

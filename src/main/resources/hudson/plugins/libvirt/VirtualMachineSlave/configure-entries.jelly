@@ -26,6 +26,10 @@
         <f:textbox field="nodeDescription"/>
     </f:entry>
 
+    <f:entry title="${%Startup Idle (sec)}" field="startupWaitingPeriodSeconds" help="/plugin/libvirt-slave/help-libvirt-waitingperiod.html">
+        <f:textbox default="60" checkUrl="'${rootURL}/plugin/libvirt-slave/checkStartupWaitingPeriodSeconds?secsValue='+this.value"/>
+    </f:entry>
+
     <f:entry title="${%# of executors}" field="numExecutors">
         <f:textbox/>
     </f:entry>
