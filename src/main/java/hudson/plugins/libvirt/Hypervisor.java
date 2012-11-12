@@ -1,5 +1,6 @@
 /**
  *  Copyright (C) 2010, Byte-Code srl <http://www.byte-code.com>
+ *  Copyright (C) 2012  Philipp Bartsch <tastybug@tastybug.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,7 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Date: Mar 04, 2010
- * Author: Marco Mornati<mmornati@byte-code.com>
+ * @author Marco Mornati<mmornati@byte-code.com>
+ * @author Philipp Bartsch <tastybug@tastybug.com>
  */
 package hudson.plugins.libvirt;
 
@@ -60,7 +62,6 @@ public class Hypervisor extends Cloud {
     private final String username;
     private transient Map<String, Domain> domains = null;
     private transient List<VirtualMachine> virtualMachineList = null;
-    private transient Connect hypervisorConnection = null;
 
     @DataBoundConstructor
     public Hypervisor(String hypervisorType, String hypervisorHost, int hypervisorSshPort, String hypervisorSystemUrl, String username) {
@@ -81,18 +82,17 @@ public class Hypervisor extends Cloud {
         String hypervisorUri = constructHypervisorURI();
         LOGGER.log(Level.INFO, "Trying to establish a connection to hypervisor URI: {0} as {1}/******",
                 new Object[]{hypervisorUri, username});
-        if (hypervisorConnection == null) {
-            try {
-                hypervisorConnection = new Connect(hypervisorUri, false);
-                LOGGER.log(Level.INFO, "Established connection to hypervisor URI: {0} as {1}/******",
-                        new Object[]{hypervisorUri, username});
-            } catch (LibvirtException e) {
-                LogRecord rec = new LogRecord(Level.WARNING,
-                        "Failed to establish connection to hypervisor URI: {0} as {1}/******");
-                rec.setThrown(e);
-                rec.setParameters(new Object[]{hypervisorUri, username});
-                LOGGER.log(rec);
-            }
+        Connect hypervisorConnection = null;
+        try {
+            hypervisorConnection = new Connect(hypervisorUri, false);
+            LOGGER.log(Level.INFO, "Established connection to hypervisor URI: {0} as {1}/******",
+                    new Object[]{hypervisorUri, username});
+        } catch (LibvirtException e) {
+            LogRecord rec = new LogRecord(Level.WARNING,
+                    "Failed to establish connection to hypervisor URI: {0} as {1}/******");
+            rec.setThrown(e);
+            rec.setParameters(new Object[]{hypervisorUri, username});
+            LOGGER.log(rec);
         }
         return hypervisorConnection;
     }
@@ -139,7 +139,7 @@ public class Hypervisor extends Cloud {
 
     public synchronized Map<String, Domain> getDomains() throws LibvirtException {
         Map<String, Domain> domains = new HashMap<String, Domain>();
-        hypervisorConnection = makeConnection();
+        Connect hypervisorConnection = makeConnection();
         LogRecord info = new LogRecord(Level.INFO, "Getting hypervisor domains");
         LOGGER.log(info);
         if (hypervisorConnection != null) {
@@ -168,7 +168,10 @@ public class Hypervisor extends Cloud {
                     rec.setThrown(e);
                     LOGGER.log(rec);
                 }
-            }           
+            }      
+            LogRecord rec = new LogRecord(Level.INFO, "Closing hypervisor connection");
+            LOGGER.log(rec);
+            hypervisorConnection.close();
         } else {
             LogRecord rec = new LogRecord(Level.SEVERE, "Cannot connect to datacenter {0} as {1}/******");
             rec.setParameters(new Object[]{hypervisorHost, username});
@@ -209,9 +212,15 @@ public class Hypervisor extends Cloud {
     }
 
     public String constructHypervisorURI() {
-        return hypervisorType.toLowerCase() + "+ssh://" + username + "@" + hypervisorHost + ":" + hypervisorSshPort + "/" + hypervisorSystemUrl + "?no_tty=1";
+    	return constructHypervisorURI(hypervisorType, "ssh://", username, hypervisorHost, hypervisorSshPort, hypervisorSystemUrl);
     }
 
+    private static String constructHypervisorURI (String hypervisorType, String protocol, String userName, String hypervisorHost, int hypervisorPort, String hypervisorSysUrl) {
+    	// Fixing JENKINS-14617
+    	final String separator = (hypervisorSysUrl.contains("?")) ? "&" : "?";
+    	return hypervisorType.toLowerCase() + "+" + protocol + userName + "@" + hypervisorHost + ":" + hypervisorPort + "/" + hypervisorSysUrl + separator + "no_tty=1";
+    }
+    
     @Extension
     public static final class DescriptorImpl extends Descriptor<Cloud> {
 
@@ -251,7 +260,7 @@ public class Hypervisor extends Cloud {
                     return FormValidation.error("Username is not specified");
                 }
 
-                String hypervisorUri = hypervisorType.toLowerCase() + "+ssh://" + username + "@" + hypervisorHost + ":" + hypervisorSshPort + "/" + hypervisorSystemUrl + "?no_tty=1";
+                String hypervisorUri = constructHypervisorURI (hypervisorType, "+ssh://", username, hypervisorHost, Integer.parseInt(hypervisorSshPort), hypervisorSystemUrl);
 
                 LogRecord rec = new LogRecord(Level.INFO,
                         "Testing connection to hypervisor: {0}");
@@ -268,6 +277,13 @@ public class Hypervisor extends Cloud {
                 LOGGER.log(rec);
                 return FormValidation.error(e.getMessage());
             } catch (UnsatisfiedLinkError e) {
+                LogRecord rec = new LogRecord(Level.WARNING,
+                        "Failed to connect to hypervisor. Check libvirt installation on hudson machine!");
+                rec.setThrown(e);
+                rec.setParameters(new Object[]{hypervisorHost, username});
+                LOGGER.log(rec);
+                return FormValidation.error(e.getMessage());
+            } catch (Exception e) {
                 LogRecord rec = new LogRecord(Level.WARNING,
                         "Failed to connect to hypervisor. Check libvirt installation on hudson machine!");
                 rec.setThrown(e);
