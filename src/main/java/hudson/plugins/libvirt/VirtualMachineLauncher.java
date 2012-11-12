@@ -1,6 +1,7 @@
 /**
  *  Copyright (C) 2010, Byte-Code srl <http://www.byte-code.com>
- *
+ *  Copyright (C) 2012  Philipp Bartsch <tastybug@tastybug.com>
+ *  
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
@@ -15,7 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Date: Mar 04, 2010
- * Author: Marco Mornati<mmornati@byte-code.com>
+ * @author Marco Mornati<mmornati@byte-code.com>
+ * @author Philipp Bartsch <tastybug@tastybug.com>
  */
 package hudson.plugins.libvirt;
 

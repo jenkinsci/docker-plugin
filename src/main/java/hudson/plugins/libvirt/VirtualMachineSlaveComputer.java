@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Date: Mar 04, 2010
- * Author: Marco Mornati<mmornati@byte-code.com>
+ * @author Marco Mornati<mmornati@byte-code.com>
  */
 
 package hudson.plugins.libvirt;
