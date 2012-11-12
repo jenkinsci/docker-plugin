@@ -1,33 +1,84 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.jvnet.hudson.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>1.347</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+    	<groupId>org.jenkins-ci.plugins</groupId>
+    	<artifactId>plugin</artifactId>
+    	<version>1.420</version>
+  	</parent>
 
     <groupId>hudson.plugins.libvirt</groupId>
     <artifactId>libvirt-slave</artifactId>
     <version>1.7-SNAPSHOT</version>
     <packaging>hpi</packaging>
-    <name>Hudson Libvirt Slaves plugin</name>
-    <url>http://wiki.hudson-ci.org/display/HUDSON/Libvirt+Slaves+Plugin</url>
-
-    <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
+    <name>Jenkins Libvirt Slaves plugin</name>
+    <description>This plugin allows Jenkins to use libvirt-based slaves.</description>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Libvirt+Slaves+Plugin</url>
+	<licenses>
+		<license>
+			<name>GNU GENERAL PUBLIC LICENSE (GPLv3)</name>
+			<url>http://www.opensource.org/licenses/gpl-3.0.html</url>
+		</license>
+	</licenses>
+    
+    <organization>
+        <name>Byte-Code</name>
+        <url>http://www.byte-code.com</url>
+    </organization>
+	<developers>
+	    <developer>
+	      <id>tastybug</id>
+	      <name>Philipp Bartsch</name>
+	      <email>tastybug@tastybug.com</email>
+	    </developer>
+	    <developer>
+            <id>mmornati</id>
+            <name>Marco Mornati</name>
+            <email>mmornati@byte-code.com</email>
+        </developer>
+ 	</developers>
+<!-- 
+	  <scm>
+	    <connection>scm:git:git://github.com/jenkinsci/libvirt-plugin.git</connection>
+	    <developerConnection>scm:git:git@github.com:jenkinsci/libvirt-plugin.git</developerConnection>
+	    <url>http://github.com/jenkinsci/libvirt-plugin</url>
+	  </scm>
+-->
+	<repositories>
+		<repository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</pluginRepository>
+	</pluginRepositories>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <configLocation>config/sun_checks.xml</configLocation>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
     <dependencies>
         <dependency>
             <groupId>org.libvirt</groupId>
@@ -35,17 +86,5 @@
             <version>0.4.2</version>
         </dependency>
     </dependencies>
-
-    <developers>
-        <developer>
-            <id>mmornati</id>
-            <name>Marco Mornati</name>
-            <email>mmornati@byte-code.com</email>
-        </developer>
-    </developers>
-
-    <organization>
-        <name>Byte-Code</name>
-        <url>http://www.byte-code.com</url>
-    </organization>
+    
 </project>
