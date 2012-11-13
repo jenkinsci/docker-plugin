@@ -45,12 +45,32 @@
 -->
 	<repositories>
 		<repository>
+			<releases>
+			        <enabled>true</enabled>
+			        <updatePolicy>always</updatePolicy>
+			        <checksumPolicy>fail</checksumPolicy>
+			</releases>
+			<snapshots>
+			        <enabled>true</enabled>
+			        <updatePolicy>never</updatePolicy>
+			        <checksumPolicy>fail</checksumPolicy>
+			</snapshots>
 			<id>repo.jenkins-ci.org</id>
 			<url>http://repo.jenkins-ci.org/public/</url>
 		</repository>
 	</repositories>
 	<pluginRepositories>
 		<pluginRepository>
+                        <releases>
+                                <enabled>true</enabled>
+                                <updatePolicy>always</updatePolicy>
+                                <checksumPolicy>fail</checksumPolicy>
+                        </releases>
+                        <snapshots>
+                                <enabled>true</enabled>
+                                <updatePolicy>never</updatePolicy>
+                                <checksumPolicy>fail</checksumPolicy>
+                        </snapshots>
 			<id>repo.jenkins-ci.org</id>
 			<url>http://repo.jenkins-ci.org/public/</url>
 		</pluginRepository>
