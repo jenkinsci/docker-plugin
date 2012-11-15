@@ -79,7 +79,7 @@ public class Hypervisor extends Cloud {
     }
 
     private Connect makeConnection() {
-        String hypervisorUri = constructHypervisorURI();
+        String hypervisorUri = getHypervisorURI();
         LOGGER.log(Level.INFO, "Trying to establish a connection to hypervisor URI: {0} as {1}/******",
                 new Object[]{hypervisorUri, username});
         Connect hypervisorConnection = null;
@@ -132,7 +132,7 @@ public class Hypervisor extends Cloud {
     public String getUsername() {
         return username;
     }
-
+    
     public String getHypervisorDescription() {
         return getHypervisorType() + " - " + getHypervisorHost();
     }
@@ -140,7 +140,7 @@ public class Hypervisor extends Cloud {
     public synchronized Map<String, Domain> getDomains() throws LibvirtException {
         Map<String, Domain> domains = new HashMap<String, Domain>();
         Connect hypervisorConnection = makeConnection();
-        LogRecord info = new LogRecord(Level.INFO, "Getting hypervisor domains");
+        LogRecord info = new LogRecord(Level.INFO, "Getting hypervisor domains.");
         LOGGER.log(info);
         if (hypervisorConnection != null) {
             for (String c : hypervisorConnection.listDefinedDomains()) {
@@ -150,7 +150,7 @@ public class Hypervisor extends Cloud {
                         domain = hypervisorConnection.domainLookupByName(c);
                         domains.put(domain.getName(), domain);
                     } catch (Exception e) {
-                        LogRecord rec = new LogRecord(Level.INFO, "Error retreiving information for domain with name: {0}");
+                        LogRecord rec = new LogRecord(Level.INFO, "Error retreiving information for domain with name: {0}.");
                         rec.setParameters(new Object[]{c});
                         rec.setThrown(e);
                         LOGGER.log(rec);
@@ -163,13 +163,13 @@ public class Hypervisor extends Cloud {
                     domain = hypervisorConnection.domainLookupByID(c);
                     domains.put(domain.getName(), domain);
                 } catch (Exception e) {
-                    LogRecord rec = new LogRecord(Level.INFO, "Error retreiving information for domain with id: {0}");
+                    LogRecord rec = new LogRecord(Level.INFO, "Error retreiving information for domain with id: {0}.");
                     rec.setParameters(new Object[]{c});
                     rec.setThrown(e);
                     LOGGER.log(rec);
                 }
             }      
-            LogRecord rec = new LogRecord(Level.INFO, "Closing hypervisor connection");
+            LogRecord rec = new LogRecord(Level.INFO, "Closing hypervisor connection.");
             LOGGER.log(rec);
             hypervisorConnection.close();
         } else {
@@ -198,7 +198,7 @@ public class Hypervisor extends Cloud {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         sb.append("Hypervisor");
         sb.append("{hypervisorUri='").append(hypervisorHost).append('\'');
         sb.append(", username='").append(username).append('\'');
@@ -211,7 +211,7 @@ public class Hypervisor extends Cloud {
         return (DescriptorImpl) super.getDescriptor();
     }
 
-    public String constructHypervisorURI() {
+    public String getHypervisorURI() {
     	return constructHypervisorURI(hypervisorType, "ssh://", username, hypervisorHost, hypervisorSshPort, hypervisorSystemUrl);
     }
 
@@ -251,16 +251,16 @@ public class Hypervisor extends Cloud {
                 @QueryParameter String username, @QueryParameter String hypervisorSystemUrl) throws Exception, ServletException {
             try {
                 if (hypervisorHost == null) {
-                    return FormValidation.error("Hypervisor Host is not specified");
+                    return FormValidation.error("Hypervisor Host is not specified!");
                 }
                 if (hypervisorType == null) {
-                    return FormValidation.error("Hypervisor type is not specified");
+                    return FormValidation.error("Hypervisor type is not specified!");
                 }
                 if (username == null) {
-                    return FormValidation.error("Username is not specified");
+                    return FormValidation.error("Username is not specified!");
                 }
 
-                String hypervisorUri = constructHypervisorURI (hypervisorType, "+ssh://", username, hypervisorHost, Integer.parseInt(hypervisorSshPort), hypervisorSystemUrl);
+                String hypervisorUri = constructHypervisorURI (hypervisorType, "ssh://", username, hypervisorHost, Integer.parseInt(hypervisorSshPort), hypervisorSystemUrl);
 
                 LogRecord rec = new LogRecord(Level.INFO,
                         "Testing connection to hypervisor: {0}");
@@ -268,7 +268,7 @@ public class Hypervisor extends Cloud {
                 LOGGER.log(rec);
                 Connect hypervisorConnection = new Connect(hypervisorUri, false);
                 hypervisorConnection.close();
-                return FormValidation.ok("Connected successfully");
+                return FormValidation.ok("Successfully connected to: " + hypervisorUri);
             } catch (LibvirtException e) {
                 LogRecord rec = new LogRecord(Level.WARNING,
                         "Failed to check hypervisor connection to {0} as {1}/******");
@@ -278,14 +278,14 @@ public class Hypervisor extends Cloud {
                 return FormValidation.error(e.getMessage());
             } catch (UnsatisfiedLinkError e) {
                 LogRecord rec = new LogRecord(Level.WARNING,
-                        "Failed to connect to hypervisor. Check libvirt installation on hudson machine!");
+                        "Failed to connect to hypervisor. Check libvirt installation on jenkins machine!");
                 rec.setThrown(e);
                 rec.setParameters(new Object[]{hypervisorHost, username});
                 LOGGER.log(rec);
                 return FormValidation.error(e.getMessage());
             } catch (Exception e) {
                 LogRecord rec = new LogRecord(Level.WARNING,
-                        "Failed to connect to hypervisor. Check libvirt installation on hudson machine!");
+                        "Failed to connect to hypervisor. Check libvirt installation on jenkins machine!");
                 rec.setThrown(e);
                 rec.setParameters(new Object[]{hypervisorHost, username});
                 LOGGER.log(rec);

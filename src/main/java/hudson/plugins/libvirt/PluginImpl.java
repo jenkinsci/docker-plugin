@@ -63,7 +63,7 @@ public class PluginImpl extends Plugin {
 		    if (v < 0) {
 		    	return FormValidation.error("Negative value..");
 		    } else if (v == 0) {
-		    	return FormValidation.warning("You declared this virtual machine to be ready right away. It probably needs a couple of seconds to get ready!");
+		    	return FormValidation.warning("You declared this virtual machine to be ready right away. It probably needs a couple of seconds before it is ready to process jobs!");
 		    } else {
 		    	return FormValidation.ok();
 		    }

@@ -122,16 +122,6 @@ public class VirtualMachineSlave extends Slave {
             }
             return result;
         }
-
-        public List<Descriptor<ComputerLauncher>> getComputerLauncherDescriptors() {
-            List<Descriptor<ComputerLauncher>> result = new ArrayList<Descriptor<ComputerLauncher>>();
-            for (Descriptor<ComputerLauncher> launcher : Functions.getComputerLauncherDescriptors()) {
-                if (!VirtualMachineLauncher.DESCRIPTOR.getClass().isAssignableFrom(launcher.getClass())) {
-                    result.add(launcher);
-                }
-            }
-            return result;
-        }
         
         public String getHypervisorDescription() {
             return hypervisorDescription;

@@ -3,7 +3,7 @@
     <f:entry title="${%Hypervisor}" field="hypervisorDescription" help="/plugin/libvirt-slave/help-libvirt-hypervisorUri.html">
         <select class="setting-input" name="hypervisorDescription" value="${it.hypervisorDescription}"
                 onchange="updateListBox(document.getElementsByName('virtualMachineName')[0],'${rootURL}/plugin/libvirt-slave/computerNameValues?value='+encode(this.value))">
-            <option>Select an Hypervisor...</option>
+            <option>Select Hypervisor...</option>
             <j:forEach var="d" items="${descriptor.getHypervisors()}" varStatus="loop">
                 <option selected="${d.hypervisorDescription==it.hypervisorDescription?'true':null}">
                     ${d.hypervisorDescription}
@@ -46,7 +46,7 @@
 
     <f:dropdownList name="slave.delegateLauncher" title="${%Secondary launch method}"
                     help="${descriptor.getHelpFile('launcher')}">
-        <j:forEach var="d" items="${descriptor.getComputerLauncherDescriptors()}" varStatus="loop">
+        <j:forEach var="d" items="${h.getComputerLauncherDescriptors()}" varStatus="loop">
             <f:dropdownListBlock value="${d.clazz.name}" name="${d.displayName}"
                                  selected="${it.delegateLauncher.descriptor==d}"
                                  title="${d.displayName}">

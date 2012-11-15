@@ -22,8 +22,8 @@
 package hudson.plugins.libvirt;
 
 import hudson.Extension;
-import hudson.model.Descriptor;
 import hudson.model.TaskListener;
+import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
@@ -46,7 +46,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     private String hypervisorDescription;
     private String virtualMachineName;
     private final int WAIT_TIME_MS;
-
+    
     @DataBoundConstructor
     public VirtualMachineLauncher(ComputerLauncher delegate, String hypervisorDescription, String virtualMachineName, int waitingTimeSecs) {
         super();
@@ -54,12 +54,12 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         this.virtualMachineName = virtualMachineName;
         this.hypervisorDescription = hypervisorDescription;
         this.WAIT_TIME_MS = waitingTimeSecs*1000;
-        buildVirtualMachine();
+        lookupVirtualMachineHandle();
     }
 
-    private void buildVirtualMachine() {
+    private void lookupVirtualMachineHandle() {
         if (hypervisorDescription != null && virtualMachineName != null) {
-            LOGGER.log(Level.INFO, "Building virtual machine object from names");
+            LOGGER.log(Level.INFO, "Grabbing hypervisor...");
             Hypervisor hypervisor = null;
             for (Cloud cloud : Hudson.getInstance().clouds) {
                 if (cloud instanceof Hypervisor && ((Hypervisor) cloud).getHypervisorDescription().equals(hypervisorDescription)) {
@@ -67,7 +67,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                     break;
                 }
             }
-            LOGGER.log(Level.INFO, "Hypervisor found... getting Virtual Machines associated");
+            LOGGER.log(Level.INFO, "Hypervisor found, searching for a matching virtual machine for \"" + virtualMachineName + "\"...");
             for (VirtualMachine vm : hypervisor.getVirtualMachines()) {
                 if (vm.getName().equals(virtualMachineName)) {
                     virtualMachine = vm;
@@ -93,35 +93,35 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener)
             throws IOException, InterruptedException {
-        taskListener.getLogger().println("Getting connection to the virtual datacenter");
-        if (virtualMachine == null) {
-            taskListener.getLogger().println("No connection ready to the Hypervisor... reconnecting...");
-            buildVirtualMachine();
-        }
-        try {
+    	taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\"(slave \"" + slaveComputer.getDisplayName() + "\") is to be started ...");
+    	try {
+	        if (virtualMachine == null) {
+	            taskListener.getLogger().println("No connection ready to the Hypervisor, reconnecting...");
+	            lookupVirtualMachineHandle();
+	            if (virtualMachine == null) // still null? no such vm!
+	            	throw new Exception("Virtual machine \"" + virtualMachineName + "\"(slave \"" + slaveComputer.getDisplayName() + "\") not found on the specified hypervisor!");
+	        }
+        
             Map<String, Domain> computers = virtualMachine.getHypervisor().getDomains();
-            taskListener.getLogger().println("Looking for the virtual machine on Hypervisor...");
-            for (String domainName : computers.keySet()) {
+            taskListener.getLogger().println("Looking for \"" + virtualMachineName + "\" on Hypervisor...");
+             for (String domainName : computers.keySet()) {
                 if (virtualMachine.getName().equals(domainName)) {
-                    taskListener.getLogger().println("Virtual Machine Found");
                     Domain domain = computers.get(domainName);
 
                     if (domain.getInfo().state != DomainState.VIR_DOMAIN_BLOCKED && domain.getInfo().state != DomainState.VIR_DOMAIN_RUNNING) {
-                        taskListener.getLogger().println("Starting virtual machine");
+                        taskListener.getLogger().println("...Virtual machine found: starting, waiting for " + WAIT_TIME_MS + "ms to let it fully boot up...");
                         domain.create();
-                        
-                        taskListener.getLogger().println("Waiting " + WAIT_TIME_MS + "ms for the VM machine to start up");
                         Thread.sleep(WAIT_TIME_MS);
                     } else {
-                        taskListener.getLogger().println("Virtual machine is already running. No startup procedure required.");
+                        taskListener.getLogger().println("Virtual machine found; it is already running, no startup required.");
                     }
-                    taskListener.getLogger().println("Finished startup procedure... Connecting slave client");
+                    taskListener.getLogger().println("Finished startup, connecting slave client");
                     delegate.launch(slaveComputer, taskListener);
                     return;
                 }
             }
-            taskListener.getLogger().println("Error! Could not find virtual machine on the hypervisor");
-            throw new IOException("VM not found!");
+            taskListener.getLogger().println("Error! Could not find \"" + virtualMachineName + "\" on the hypervisor!");
+            throw new IOException("VM \"" + virtualMachine.getName() + "\"(slave \"" + slaveComputer.getDisplayName() + "\") not found!");
         } catch (IOException e) {
             e.printStackTrace(taskListener.getLogger());
             throw e;
@@ -131,27 +131,27 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     }
 
     @Override
-    public void afterDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
-        taskListener.getLogger().println("Running disconnect procedure...");
+    public synchronized void afterDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
+        taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is to be shut down.");
         delegate.afterDisconnect(slaveComputer, taskListener);
-        taskListener.getLogger().println("Shutting down Virtual Machine...");
         try {
+        	
             Map<String, Domain> computers = virtualMachine.getHypervisor().getDomains();
-            taskListener.getLogger().println("Looking for the virtual machine on Hypervisor...");
+            taskListener.getLogger().println("Looking for \"" + virtualMachineName + "\" on Hypervisor...");
             for (String domainName : computers.keySet()) {
                 if (virtualMachine.getName().equals(domainName)) {
                     Domain domain = computers.get(domainName);
-                    taskListener.getLogger().println("Virtual Machine Found");
                     if (domain.getInfo().state.equals(DomainState.VIR_DOMAIN_RUNNING) || domain.getInfo().state.equals(DomainState.VIR_DOMAIN_BLOCKED)) {
-                        taskListener.getLogger().println("Shutting down virtual machine");
+                        taskListener.getLogger().println("...Virtual machine found, shutting down.");
                         domain.shutdown();
+                        Thread.sleep(10000); // gi
                     } else {
-                        taskListener.getLogger().println("Virtual machine is already suspended. No shutdown procedure required.");
+                        taskListener.getLogger().println("...Virtual machine found; it is already suspended, no shutdown required.");
                     }
                     return;
                 }
             }
-            taskListener.getLogger().println("Error! Could not find virtual machine on the hypervisor");
+            taskListener.getLogger().println("Error! Could not find \"" + virtualMachineName + "\" on the hypervisor!");
         } catch (Throwable t) {
             taskListener.fatalError(t.getMessage(), t);
         }
@@ -164,29 +164,6 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     @Override
     public Descriptor<ComputerLauncher> getDescriptor() {
-        return Hudson.getInstance().getDescriptor(getClass());
+    	throw new UnsupportedOperationException();
     }
-    @Extension
-    public static final Descriptor<ComputerLauncher> DESCRIPTOR = new Descriptor<ComputerLauncher>() {
-
-        private String hypervisorDescription;
-        private String virtualMachineName;
-        private ComputerLauncher delegate;
-
-        public String getDisplayName() {
-            return "Virtual Machine Launcher";
-        }
-
-        public String getHypervisorDescription() {
-            return hypervisorDescription;
-        }
-
-        public String getVirtualMachineName() {
-            return virtualMachineName;
-        }
-
-        public ComputerLauncher getDelegate() {
-            return delegate;
-        }
-    };
 }
