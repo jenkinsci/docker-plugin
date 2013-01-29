@@ -93,13 +93,13 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     @Override
     public void launch(SlaveComputer slaveComputer, TaskListener taskListener)
             throws IOException, InterruptedException {
-    	taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\"(slave \"" + slaveComputer.getDisplayName() + "\") is to be started ...");
+    	taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is to be started ...");
     	try {
 	        if (virtualMachine == null) {
 	            taskListener.getLogger().println("No connection ready to the Hypervisor, reconnecting...");
 	            lookupVirtualMachineHandle();
 	            if (virtualMachine == null) // still null? no such vm!
-	            	throw new Exception("Virtual machine \"" + virtualMachineName + "\"(slave \"" + slaveComputer.getDisplayName() + "\") not found on the specified hypervisor!");
+	            	throw new Exception("Virtual machine \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") not found on the specified hypervisor!");
 	        }
         
             Map<String, Domain> computers = virtualMachine.getHypervisor().getDomains();
@@ -120,8 +120,8 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                     return;
                 }
             }
-            taskListener.getLogger().println("Error! Could not find \"" + virtualMachineName + "\" on the hypervisor!");
-            throw new IOException("VM \"" + virtualMachine.getName() + "\"(slave \"" + slaveComputer.getDisplayName() + "\") not found!");
+            taskListener.getLogger().println("Error! Could not find \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") on the hypervisor!");
+            throw new IOException("VM \"" + virtualMachine.getName() + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") not found!");
         } catch (IOException e) {
             e.printStackTrace(taskListener.getLogger());
             throw e;
