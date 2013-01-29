@@ -60,8 +60,6 @@ public class Hypervisor extends Cloud {
     private final String hypervisorSystemUrl;
     private final int hypervisorSshPort;
     private final String username;
-    private transient Map<String, Domain> domains = null;
-    private transient List<VirtualMachine> virtualMachineList = null;
 
     @DataBoundConstructor
     public Hypervisor(String hypervisorType, String hypervisorHost, int hypervisorSshPort, String hypervisorSystemUrl, String username) {
@@ -75,7 +73,6 @@ public class Hypervisor extends Cloud {
         }
         this.hypervisorSshPort = hypervisorSshPort <= 0 ? 22 : hypervisorSshPort;
         this.username = username;
-        virtualMachineList = retrieveVirtualMachines();
     }
 
     private Connect makeConnection() {
@@ -95,22 +92,6 @@ public class Hypervisor extends Cloud {
             LOGGER.log(rec);
         }
         return hypervisorConnection;
-    }
-
-    private List<VirtualMachine> retrieveVirtualMachines() {
-        List<VirtualMachine> vmList = new ArrayList<VirtualMachine>();
-        try {
-            domains = getDomains();
-            for (String domainName : domains.keySet()) {
-                vmList.add(new VirtualMachine(this, domainName));
-            }
-        } catch (Exception e) {
-            LogRecord rec = new LogRecord(Level.SEVERE, "Cannot connect to datacenter {0} as {1}/******");
-            rec.setThrown(e);
-            rec.setParameters(new Object[]{hypervisorHost, username});
-            LOGGER.log(rec);
-        }
-        return vmList;
     }
 
     public String getHypervisorHost() {
@@ -181,11 +162,26 @@ public class Hypervisor extends Cloud {
         return domains;
     }
 
+    /**
+     * Returns a <code>List</code> of VMs configured on the hypervisor. This method always retrieves the current list of
+     * VMs to ensure that newly available instances show up right away.
+     * 
+     * @return the virtual machines
+     */
     public synchronized List<VirtualMachine> getVirtualMachines() {
-        if (virtualMachineList == null) {
-            virtualMachineList = retrieveVirtualMachines();
+    	List<VirtualMachine> vmList = new ArrayList<VirtualMachine>();
+        try {
+        	Map<String, Domain> domains = getDomains();
+            for (String domainName : domains.keySet()) {
+                vmList.add(new VirtualMachine(this, domainName));
+            }
+        } catch (Exception e) {
+            LogRecord rec = new LogRecord(Level.SEVERE, "Cannot connect to datacenter {0} as {1}/******");
+            rec.setThrown(e);
+            rec.setParameters(new Object[]{hypervisorHost, username});
+            LOGGER.log(rec);
         }
-        return virtualMachineList;
+        return vmList;
     }
 
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int i) {
