@@ -31,6 +31,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
+import hudson.util.ListBoxModel;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -113,14 +114,14 @@ public class VirtualMachineSlave extends Slave {
             return virtualMachinesList;
         }
 
-        public List<Hypervisor> getHypervisors() {
-            List<Hypervisor> result = new ArrayList<Hypervisor>();            
+        public ListBoxModel doFillHypervisorDescriptionItems() {
+            ListBoxModel items = new ListBoxModel();
             for (Cloud cloud : Hudson.getInstance().clouds) {
                 if (cloud instanceof Hypervisor) {
-                    result.add((Hypervisor) cloud);
+                    items.add(((Hypervisor) cloud).getHypervisorURI(), ((Hypervisor) cloud).getHypervisorDescription());
                 }
             }
-            return result;
+            return items;
         }
         
         public String getHypervisorDescription() {
