@@ -36,13 +36,13 @@
             <email>mmornati@byte-code.com</email>
         </developer>
  	</developers>
-<!-- 
-	  <scm>
-	    <connection>scm:git:git://github.com/jenkinsci/libvirt-plugin.git</connection>
-	    <developerConnection>scm:git:git@github.com:jenkinsci/libvirt-plugin.git</developerConnection>
-	    <url>http://github.com/jenkinsci/libvirt-plugin</url>
-	  </scm>
--->
+
+	<scm>
+		<connection>scm:git:git://github.com/jenkinsci/libvirt-slave-plugin.git</connection>
+		<developerConnection>scm:git:git@github.com:jenkinsci/libvirt-slave-plugin.git</developerConnection>
+		<url>https://github.com/jenkinsci/libvirt-slave-plugin</url>
+	</scm>
+
 	<repositories>
 		<repository>
 			<releases>
@@ -106,5 +106,4 @@
             <version>0.4.2</version>
         </dependency>
     </dependencies>
-    
 </project>
