@@ -8,7 +8,7 @@
 
     <groupId>hudson.plugins.libvirt</groupId>
     <artifactId>libvirt-slave</artifactId>
-    <version>1.7-SNAPSHOT</version>
+    <version>1.7</version>
     <packaging>hpi</packaging>
     <name>Jenkins Libvirt Slaves plugin</name>
     <description>This plugin allows Jenkins to use libvirt-based slaves.</description>
