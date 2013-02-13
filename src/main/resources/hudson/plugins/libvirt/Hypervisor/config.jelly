@@ -19,6 +19,9 @@
         <f:entry title="${%Hypervisor System Url}" field="hypervisorSystemUrl">
             <f:textbox default="system"/>
         </f:entry>
+        <f:entry title="${%Max number of slaves online}" help="/plugin/libvirt-slave/help-libvirt-maxOnlineSlaves.html">
+            <f:textbox clazz="required number" field="maxOnlineSlaves" />
+        </f:entry>
     </f:advanced>
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="hypervisorType,hypervisorHost,username,hypervisorSshPort,hypervisorSystemUrl"/>
 </j:jelly>
