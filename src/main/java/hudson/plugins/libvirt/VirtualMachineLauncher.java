@@ -96,7 +96,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     	taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is to be started ...");
     	try {
 	        if (virtualMachine == null) {
-	            taskListener.getLogger().println("No connection ready to the Hypervisor, reconnecting...");
+	            taskListener.getLogger().println("No connection ready to the Hypervisor, connecting...");
 	            lookupVirtualMachineHandle();
 	            if (virtualMachine == null) // still null? no such vm!
 	            	throw new Exception("Virtual machine \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") not found on the specified hypervisor!");
