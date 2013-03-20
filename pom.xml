@@ -6,7 +6,7 @@
     	<version>1.420</version>
   	</parent>
 
-    <groupId>hudson.plugins.libvirt</groupId>
+    <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>libvirt-slave</artifactId>
     <version>1.8-SNAPSHOT</version>
     <packaging>hpi</packaging>
