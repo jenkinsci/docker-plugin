@@ -16,7 +16,7 @@
         <f:entry title="${%SSH Port}" field="hypervisorSshPort" help="/plugin/libvirt-slave/help-libvirt-hypervisorSshPort.html">
             <f:textbox default="22"/>
         </f:entry>
-        <f:entry title="${%Hypervisor URL parameters}" field="hypervisorSystemUrl" help="/plugin/libvirt-slave/help-libvirt-hypervisorUrl.html">
+        <f:entry title="${%URI parameters}" field="hypervisorSystemUrl" help="/plugin/libvirt-slave/help-libvirt-hypervisorUrl.html">
             <f:textbox default="system"/>
         </f:entry>
         <f:entry title="${%Concurrent Slaves Capacity}" help="/plugin/libvirt-slave/help-libvirt-maxOnlineSlaves.html">

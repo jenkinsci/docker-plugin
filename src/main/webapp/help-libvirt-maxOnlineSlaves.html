@@ -1,7 +1,7 @@
 <div>
 	<p>
-		Maximum number of virtual machines that this libvirt cloud should use at one time. A value of 0 indicates no maximum value.<br/>
+		Maximum number of virtual machines that this Hypervisor should use concurrently. A value of 0 indicates no maximum value.<br/>
 		<br/>
-		Note: If the hypervisor reaches its capacity, Jenkins will keep reissuing the slave commissioning until the capacity is below the threshold. Associated build jobs are thus delayed but not failed by a lack of slaves.
+		Note: If the Hypervisor reaches its capacity, Jenkins will keep reissuing the slave commissioning until the capacity is below the threshold. Associated build jobs are thus delayed but not failed by a (presumably temporary) lack of slaves.
 	</p>
 </div>
