@@ -1,4 +1,4 @@
-[ButlerImage]
+![Jenkins Logo] (http://jenkins-ci.org/sites/default/files/jenkins_logo.png)
 
 About libvirt-slave-plugin
 =====
