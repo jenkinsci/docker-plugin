@@ -14,3 +14,4 @@ Please check the [plugin project page].
 
 [ButlerImage]: http://jenkins-ci.org/sites/default/files/jenkins_logo.png
 [plugin project page]: https://wiki.jenkins-ci.org/display/JENKINS/Libvirt+Slaves+Plugin
+[website] http://www.jenkins-ci.org
