@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,10 +63,13 @@ public class Hypervisor extends Cloud {
     private final String hypervisorSystemUrl;
     private final int hypervisorSshPort;
     private final String username;
+    private final int maxOnlineSlaves;
+    private transient int currentOnlineSlaveCount = 0;
+    private transient Hashtable<String, String> currentOnline;
     private Connect connection;
     
     @DataBoundConstructor
-    public Hypervisor(String hypervisorType, String hypervisorHost, int hypervisorSshPort, String hypervisorSystemUrl, String username) {
+    public Hypervisor(String hypervisorType, String hypervisorHost, int hypervisorSshPort, String hypervisorSystemUrl, String username, int maxOnlineSlaves) {
         super("Hypervisor(libvirt)");
         this.hypervisorType = hypervisorType;
         this.hypervisorHost = hypervisorHost;
@@ -76,6 +80,12 @@ public class Hypervisor extends Cloud {
         }
         this.hypervisorSshPort = hypervisorSshPort <= 0 ? 22 : hypervisorSshPort;
         this.username = username;
+        this.maxOnlineSlaves = maxOnlineSlaves;
+    }
+
+    protected void EnsureLists() {
+        if (currentOnline == null)
+            currentOnline = new Hashtable<String, String>();
     }
 
     private synchronized Connect getOrCreateConnection() {
@@ -120,6 +130,14 @@ public class Hypervisor extends Cloud {
         return username;
     }
     
+    public int getMaxOnlineSlaves() {
+        return maxOnlineSlaves;
+    }
+
+    public synchronized int getCurrentOnlineSlaveCount() {
+        return currentOnlineSlaveCount;
+    }
+
     public String getHypervisorDescription() {
         return getHypervisorType() + " - " + getHypervisorHost();
     }
@@ -231,6 +249,55 @@ public class Hypervisor extends Cloud {
         sb.append(", username='").append(username).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    public synchronized Boolean canMarkVMOnline(String slaveName, String vmName) {
+        EnsureLists();
+        
+        // Don't allow more than max.
+        if ((maxOnlineSlaves > 0) && (currentOnline.size() == maxOnlineSlaves))
+            return Boolean.FALSE;
+        
+        // Don't allow two slaves to the same VM to fire up.
+        if (currentOnline.containsValue(vmName))
+            return Boolean.FALSE;
+        
+        // Don't allow two instances of the same slave, although Jenkins will
+        // probably not encounter this.
+        if (currentOnline.containsKey(slaveName))
+            return Boolean.FALSE;
+        
+        // Don't allow a misconfigured slave to try start
+        if ("".equals(vmName) || "".equals(slaveName)) {
+            LogRecord rec = new LogRecord(Level.WARNING, "Slave '"+slaveName+"' (using VM '"+vmName+"') appears to be misconfigured.");
+            LOGGER.log(rec);
+            return Boolean.FALSE;
+        }
+        
+        return Boolean.TRUE;
+    }
+    
+    public synchronized Boolean markVMOnline(String slaveName, String vmName) {
+        EnsureLists();
+        
+        // If the combination is already in the list, it's good.
+        if (currentOnline.containsKey(slaveName) && currentOnline.get(slaveName).equals(vmName))
+            return Boolean.TRUE;
+        
+        if (!canMarkVMOnline(slaveName, vmName))
+            return Boolean.FALSE;
+        
+        currentOnline.put(slaveName, vmName);
+        currentOnlineSlaveCount++;
+        
+        return Boolean.TRUE;
+    }
+
+    public synchronized void markVMOffline(String slaveName, String vmName) {
+        EnsureLists();
+        
+        if (currentOnline.remove(slaveName) != null)
+            currentOnlineSlaveCount--;
     }
 
     @Override

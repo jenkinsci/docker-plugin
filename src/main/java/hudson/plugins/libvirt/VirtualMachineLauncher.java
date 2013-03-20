@@ -87,9 +87,27 @@ public class VirtualMachineLauncher extends ComputerLauncher {
         return virtualMachine;
     }
 
+    public String getVirtualMachineName() {
+        return virtualMachineName;
+    }
+
     @Override
     public boolean isLaunchSupported() {
         return delegate.isLaunchSupported();
+    }
+
+    public Hypervisor findOurHypervisorInstance() throws RuntimeException {
+        if (hypervisorDescription != null && virtualMachineName != null) {
+            Hypervisor hypervisor = null;
+            for (Cloud cloud : Hudson.getInstance().clouds) {
+                if (cloud instanceof Hypervisor && ((Hypervisor) cloud).getHypervisorDescription().equals(hypervisorDescription)) {
+                    hypervisor = (Hypervisor) cloud;
+                    return hypervisor;
+                }
+            }
+        }
+        LOGGER.log(Level.INFO, "Could not find our libvirt cloud instance!");
+        throw new RuntimeException("Could not find our libvirt cloud instance!");
     }
 
     @Override
@@ -154,6 +172,9 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                     } else {
                         taskListener.getLogger().println("...Virtual machine found; it is already suspended, no shutdown required.");
                     }
+                    VirtualMachineLauncher vmL = (VirtualMachineLauncher) ((SlaveComputer) slaveComputer).getLauncher();
+                    Hypervisor vmC = vmL.findOurHypervisorInstance();
+                    vmC.markVMOffline(slaveComputer.getDisplayName(), vmL.getVirtualMachineName());
                     return;
                 }
             }

@@ -21,15 +21,20 @@
  */
 package hudson.plugins.libvirt;
 
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.Util;
+import hudson.model.TaskListener;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.Slave;
 import hudson.slaves.Cloud;
+import hudson.slaves.ComputerListener;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
+import hudson.slaves.SlaveComputer;
 import hudson.util.ListBoxModel;
 
 import java.io.IOException;
@@ -84,6 +89,25 @@ public class VirtualMachineSlave extends Slave {
     }
 
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+
+    @Extension
+    public static class VirtualMachineComputerListener extends ComputerListener {
+        
+        @Override
+        public void preLaunch(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
+            /* We may be called on any slave type so check that we should
+             * be in here. */
+            if (!(c.getNode() instanceof VirtualMachineSlave)) {
+                return;
+            }
+            
+            VirtualMachineLauncher vmL = (VirtualMachineLauncher) ((SlaveComputer) c).getLauncher();
+            Hypervisor vmC = vmL.findOurHypervisorInstance();
+            
+            if (!vmC.markVMOnline(c.getDisplayName(), vmL.getVirtualMachineName()))
+                throw new AbortException("Capacity threshold  (" + vmC.getMaxOnlineSlaves() + ") reached at hypervisor \"" + vmC.getHypervisorDescription() + "\", slave commissioning delayed.");
+        }
+    }
 
     @Extension
     public static final class DescriptorImpl extends SlaveDescriptor {
