@@ -189,6 +189,32 @@ public class Hypervisor extends Cloud {
         return vmList;
     }
 
+    /**
+     * Returns an array of snapshots names/ids of a given VM as found by libvirt.
+     * 
+     * @param virtualMachineName 	the name of the vm
+     * @return 						the array of snapshot ids (can be empty)
+     */
+    public synchronized String[] getSnapshots (String virtualMachineName) {
+    	try {
+    		LogRecord rec = new LogRecord(Level.INFO, "Searching snapshots for " + virtualMachineName);
+    		LOGGER.log(rec);
+	        for (Domain domain : getDomains().values()) {
+	        	if (domain.getName().equals(virtualMachineName)) {
+	        		rec = new LogRecord(Level.INFO, "Fetching snapshots for " + virtualMachineName + ": " + domain.snapshotNum());
+	        		LOGGER.log(rec);
+	        		return domain.snapshotListNames();
+	        	}
+	        }
+    	} catch (LibvirtException lve) {
+    		LogRecord rec = new LogRecord(Level.SEVERE, "Failed to fetch snapshot ids for VM {0} at datacenter {1} as {2}/******");
+            rec.setThrown(lve);
+            rec.setParameters(new Object[]{virtualMachineName, hypervisorHost, username});
+            LOGGER.log(rec);
+    	}
+        return new String[0];
+    }
+
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int i) {
         return Collections.emptySet();
     }

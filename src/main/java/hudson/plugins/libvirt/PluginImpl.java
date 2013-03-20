@@ -92,5 +92,23 @@ public class PluginImpl extends Plugin {
         }
         m.writeTo(req, rsp);
     }
+
+    public void doSnapshotNameValues(StaplerRequest req, StaplerResponse rsp, @QueryParameter("vm") String vm, @QueryParameter("hypervisor") String hypervisor) throws IOException, ServletException {
+        ListBoxModel m = new ListBoxModel();
+        m.add(new ListBoxModel.Option("", ""));
+        for (Cloud cloud : Hudson.getInstance().clouds) {
+            if (cloud instanceof Hypervisor) {
+                Hypervisor hypHandle = (Hypervisor) cloud;
+                if (hypervisor != null && hypervisor.equals(hypHandle.getHypervisorURI())) {
+                	String[] ss  = hypHandle.getSnapshots(vm);
+                	for (String sshot : ss) {
+                		m.add(new ListBoxModel.Option(sshot, sshot));
+                	}
+                }
+            }
+        }
+        
+        m.writeTo(req, rsp);
+    }
 }
 

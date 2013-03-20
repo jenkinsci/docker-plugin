@@ -22,7 +22,6 @@
 package hudson.plugins.libvirt;
 
 import hudson.Extension;
-import hudson.Functions;
 import hudson.Util;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
@@ -44,6 +43,7 @@ public class VirtualMachineSlave extends Slave {
 
     private static final Logger LOGGER = Logger.getLogger(VirtualMachineSlave.class.getName());
     private String 				hypervisorDescription;
+    private String 				snapshotName;
     private String 				virtualMachineName;
     private int 				startupWaitingPeriodSeconds;
 
@@ -51,14 +51,15 @@ public class VirtualMachineSlave extends Slave {
     public VirtualMachineSlave(String name, String nodeDescription, String remoteFS, String numExecutors,
             Mode mode, String labelString, VirtualMachineLauncher launcher, ComputerLauncher delegateLauncher,
             RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties,
-            String hypervisorDescription, String virtualMachineName, int startupWaitingPeriodSeconds)
+            String hypervisorDescription, String virtualMachineName, String snapshotName, int startupWaitingPeriodSeconds)
             throws
             Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, Util.tryParseNumber(numExecutors, 1).intValue(), mode, labelString,
-                launcher == null ? new VirtualMachineLauncher(delegateLauncher, hypervisorDescription, virtualMachineName, startupWaitingPeriodSeconds) : launcher,
+                launcher == null ? new VirtualMachineLauncher(delegateLauncher, hypervisorDescription, virtualMachineName, snapshotName, startupWaitingPeriodSeconds) : launcher,
                 retentionStrategy, nodeProperties);        
         this.hypervisorDescription = hypervisorDescription;
         this.virtualMachineName = virtualMachineName;
+        this.snapshotName = snapshotName;
         this.startupWaitingPeriodSeconds = startupWaitingPeriodSeconds;
     }
 
@@ -68,6 +69,10 @@ public class VirtualMachineSlave extends Slave {
 
     public String getVirtualMachineName() {
         return virtualMachineName;
+    }
+
+    public String getSnapshotName() {
+        return snapshotName;
     }
 
     public int getStartupWaitingPeriodSeconds() {
@@ -85,6 +90,7 @@ public class VirtualMachineSlave extends Slave {
 
         private String hypervisorDescription;
         private String virtualMachineName;
+        private String snapshotName;
         
         public DescriptorImpl() {            
             load();
@@ -101,17 +107,19 @@ public class VirtualMachineSlave extends Slave {
 
         public List<VirtualMachine> getDefinedVirtualMachines(String hypervisorDescription) {
             List<VirtualMachine> virtualMachinesList = new ArrayList<VirtualMachine>();                       
-            if (hypervisorDescription != null && !hypervisorDescription.equals("")) {
-                Hypervisor hypervisor = null;
-                for (Cloud cloud : Hudson.getInstance().clouds) {
-                    if (cloud instanceof Hypervisor && ((Hypervisor) cloud).getHypervisorDescription().equals(hypervisorDescription)) {
-                        hypervisor = (Hypervisor) cloud;
-                        break;
-                    }
-                }
-                virtualMachinesList.addAll(hypervisor.getVirtualMachines());
-            }
+            Hypervisor hypervisor = getHypervisorByDescription(hypervisorDescription);
+            if (hypervisor != null)
+            	virtualMachinesList.addAll(hypervisor.getVirtualMachines());
             return virtualMachinesList;
+        }
+
+        public String[] getDefinedSnapshots(String hypervisorDescription, String virtualMachineName) {
+        	Hypervisor hypervisor = getHypervisorByDescription(hypervisorDescription);
+            if (hypervisor != null) {
+            	String[] snapS = hypervisor.getSnapshots(virtualMachineName);
+            	return snapS;
+            }
+            return new String[0];
         }
 
         public ListBoxModel doFillHypervisorDescriptionItems() {
@@ -131,6 +139,20 @@ public class VirtualMachineSlave extends Slave {
         public String getVirtualMachineName() {
             return virtualMachineName;
         }
+
+        public String getSnapshotName() {
+            return snapshotName;
+        }
         
+        private Hypervisor getHypervisorByDescription (String hypervisorDescription) {
+        	if (hypervisorDescription != null && !hypervisorDescription.equals("")) {
+	        	for (Cloud cloud : Hudson.getInstance().clouds) {
+	                if (cloud instanceof Hypervisor && ((Hypervisor) cloud).getHypervisorDescription().equals(hypervisorDescription)) {
+	                    return (Hypervisor) cloud;
+	                }
+	            }
+        	}
+            return null;
+        }
     }
 }

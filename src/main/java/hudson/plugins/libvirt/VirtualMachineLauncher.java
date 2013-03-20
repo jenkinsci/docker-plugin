@@ -45,13 +45,15 @@ public class VirtualMachineLauncher extends ComputerLauncher {
     private transient VirtualMachine virtualMachine;
     private String hypervisorDescription;
     private String virtualMachineName;
+    private String snapshotName;
     private final int WAIT_TIME_MS;
     
     @DataBoundConstructor
-    public VirtualMachineLauncher(ComputerLauncher delegate, String hypervisorDescription, String virtualMachineName, int waitingTimeSecs) {
+    public VirtualMachineLauncher(ComputerLauncher delegate, String hypervisorDescription, String virtualMachineName, String snapshotName, int waitingTimeSecs) {
         super();
         this.delegate = delegate;
         this.virtualMachineName = virtualMachineName;
+        this.snapshotName = snapshotName;
         this.hypervisorDescription = hypervisorDescription;
         this.WAIT_TIME_MS = waitingTimeSecs*1000;
         lookupVirtualMachineHandle();
@@ -142,9 +144,13 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                 if (virtualMachine.getName().equals(domainName)) {
                     Domain domain = computers.get(domainName);
                     if (domain.getInfo().state.equals(DomainState.VIR_DOMAIN_RUNNING) || domain.getInfo().state.equals(DomainState.VIR_DOMAIN_BLOCKED)) {
-                        taskListener.getLogger().println("...Virtual machine found, shutting down.");
-                        domain.shutdown();
-                        Thread.sleep(10000); // gi
+                        if (snapshotName != null && snapshotName.length() > 0) {
+                        	taskListener.getLogger().println("...Virtual machine found, reverting to " + snapshotName + " and shutting down.");
+                            domain.revertToSnapshot(domain.snapshotLookupByName(snapshotName));
+                        } else {
+                        	taskListener.getLogger().println("...Virtual machine found, shutting down.");
+                            domain.shutdown();
+                        }
                     } else {
                         taskListener.getLogger().println("...Virtual machine found; it is already suspended, no shutdown required.");
                     }

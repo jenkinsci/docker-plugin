@@ -5,10 +5,21 @@
 	</f:entry>
     
     <f:entry title="${%Virtual Machine}" field="virtualMachineName" help="/plugin/libvirt-slave/help-libvirt-computerName.html">
-        <select class="setting-input" name="virtualMachineName" value="${instance.virtualMachineName}">
+        <select class="setting-input" name="virtualMachineName" value="${instance.virtualMachineName}" onchange="updateListBox(document.getElementsByName('snapshotName')[0],'${rootURL}/plugin/libvirt-slave/snapshotNameValues?vm='+encode(this.value)+'&amp;hypervisor='+encode(document.getElementsByName('_.hypervisorDescription')[0].options[document.getElementsByName('_.hypervisorDescription')[0].selectedIndex].text))">
             <j:forEach var="vc" items="${descriptor.getDefinedVirtualMachines(it.hypervisorDescription)}" varStatus="loop">
                 <option selected="${vc.name==it.virtualMachineName?'true':null}">
                     ${vc.name}
+                </option>
+            </j:forEach>
+        </select>
+    </f:entry>
+
+	<f:entry title="${%Revert Snapshot}" field="snapshotName" help="/plugin/libvirt-slave/help-libvirt-snapshotName.html">
+        <select class="setting-input" name="snapshotName" value="${instance.snapshotName}">
+        	<option selected="${it.snapshotName == null || it.snapshotName == ''}"></option>
+            <j:forEach var="sshot" items="${descriptor.getDefinedSnapshots(it.hypervisorDescription, it.virtualMachineName)}" varStatus="loop">
+                <option selected="${sshot==it.snapshotName?'true':null}">
+                    ${sshot}
                 </option>
             </j:forEach>
         </select>
