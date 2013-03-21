@@ -46,7 +46,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VirtualMachineSlave extends Slave {
 
-    private static final Logger LOGGER = Logger.getLogger(VirtualMachineSlave.class.getName());
     private String 				hypervisorDescription;
     private String 				snapshotName;
     private String 				virtualMachineName;

@@ -21,7 +21,6 @@
  */
 package hudson.plugins.libvirt;
 
-import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
@@ -32,6 +31,7 @@ import hudson.slaves.SlaveComputer;
 import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -61,7 +61,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 
     private void lookupVirtualMachineHandle() {
         if (hypervisorDescription != null && virtualMachineName != null) {
-            LOGGER.log(Level.INFO, "Grabbing hypervisor...");
+            LOGGER.log(Level.FINE, "Grabbing hypervisor...");
             Hypervisor hypervisor = null;
             for (Cloud cloud : Hudson.getInstance().clouds) {
                 if (cloud instanceof Hypervisor && ((Hypervisor) cloud).getHypervisorDescription().equals(hypervisorDescription)) {
@@ -69,7 +69,7 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                     break;
                 }
             }
-            LOGGER.log(Level.INFO, "Hypervisor found, searching for a matching virtual machine for \"" + virtualMachineName + "\"...");
+            LOGGER.log(Level.FINE, "Hypervisor found, searching for a matching virtual machine for \"" + virtualMachineName + "\"...");
             for (VirtualMachine vm : hypervisor.getVirtualMachines()) {
                 if (vm.getName().equals(virtualMachineName)) {
                     virtualMachine = vm;
@@ -106,14 +106,14 @@ public class VirtualMachineLauncher extends ComputerLauncher {
                 }
             }
         }
-        LOGGER.log(Level.INFO, "Could not find our libvirt cloud instance!");
+        LOGGER.log(Level.SEVERE, "Could not find our libvirt cloud instance!");
         throw new RuntimeException("Could not find our libvirt cloud instance!");
     }
 
     @Override
-    public void launch(SlaveComputer slaveComputer, TaskListener taskListener)
-            throws IOException, InterruptedException {
-    	taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is to be started ...");
+    public void launch(SlaveComputer slaveComputer, TaskListener taskListener) throws IOException, InterruptedException {
+    	
+    	taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") is to be started.");
     	try {
 	        if (virtualMachine == null) {
 	            taskListener.getLogger().println("No connection ready to the Hypervisor, connecting...");
@@ -123,64 +123,78 @@ public class VirtualMachineLauncher extends ComputerLauncher {
 	        }
         
             Map<String, Domain> computers = virtualMachine.getHypervisor().getDomains();
-            taskListener.getLogger().println("Looking for \"" + virtualMachineName + "\" on Hypervisor...");
-             for (String domainName : computers.keySet()) {
-                if (virtualMachine.getName().equals(domainName)) {
-                    Domain domain = computers.get(domainName);
-
-                    if (domain.getInfo().state != DomainState.VIR_DOMAIN_BLOCKED && domain.getInfo().state != DomainState.VIR_DOMAIN_RUNNING) {
-                        taskListener.getLogger().println("...Virtual machine found: starting, waiting for " + WAIT_TIME_MS + "ms to let it fully boot up...");
-                        domain.create();
-                        Thread.sleep(WAIT_TIME_MS);
-                    } else {
-                        taskListener.getLogger().println("Virtual machine found; it is already running, no startup required.");
-                    }
-                    taskListener.getLogger().println("Finished startup, connecting slave client");
-                    delegate.launch(slaveComputer, taskListener);
-                    return;
+            Domain domain = computers.get(virtualMachine.getName());
+            if (domain != null) {
+                if (domain.getInfo().state != DomainState.VIR_DOMAIN_BLOCKED && domain.getInfo().state != DomainState.VIR_DOMAIN_RUNNING) {
+                    taskListener.getLogger().println("Starting, waiting for " + WAIT_TIME_MS + "ms to let it fully boot up...");
+                    domain.create();
+                    Thread.sleep(WAIT_TIME_MS);
+                } else {
+                    taskListener.getLogger().println("Already running, no startup required.");
                 }
+                taskListener.getLogger().println("Connecting slave client.");
+                delegate.launch(slaveComputer, taskListener);
+            } else {
+	            throw new IOException("VM \"" + virtualMachine.getName() + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") not found!");
             }
-            taskListener.getLogger().println("Error! Could not find \"" + virtualMachineName + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") on the hypervisor!");
-            throw new IOException("VM \"" + virtualMachine.getName() + "\" (slave title \"" + slaveComputer.getDisplayName() + "\") not found!");
         } catch (IOException e) {
-            e.printStackTrace(taskListener.getLogger());
+            taskListener.fatalError(e.getMessage(), e);
+            
+            LogRecord rec = new LogRecord(Level.SEVERE, "Error while launching {0} on Hypervisor {1}.");
+            rec.setParameters(new Object[]{virtualMachine.getName(), virtualMachine.getHypervisor().getHypervisorURI()});
+            rec.setThrown(e);
+            LOGGER.log(rec);
             throw e;
         } catch (Throwable t) {
-            t.printStackTrace(taskListener.getLogger());
+        	taskListener.fatalError(t.getMessage(), t);
+            
+            LogRecord rec = new LogRecord(Level.SEVERE, "Error while launching {0} on Hypervisor {1}.");
+            rec.setParameters(new Object[]{virtualMachine.getName(), virtualMachine.getHypervisor().getHypervisorURI()});
+            rec.setThrown(t);
+            LOGGER.log(rec);
         }
     }
 
     @Override
     public synchronized void afterDisconnect(SlaveComputer slaveComputer, TaskListener taskListener) {
+    	
         taskListener.getLogger().println("Virtual machine \"" + virtualMachineName + "\" (slave \"" + slaveComputer.getDisplayName() + "\") is to be shut down.");
         delegate.afterDisconnect(slaveComputer, taskListener);
+
         try {
-        	
             Map<String, Domain> computers = virtualMachine.getHypervisor().getDomains();
-            taskListener.getLogger().println("Looking for \"" + virtualMachineName + "\" on Hypervisor...");
-            for (String domainName : computers.keySet()) {
-                if (virtualMachine.getName().equals(domainName)) {
-                    Domain domain = computers.get(domainName);
-                    if (domain.getInfo().state.equals(DomainState.VIR_DOMAIN_RUNNING) || domain.getInfo().state.equals(DomainState.VIR_DOMAIN_BLOCKED)) {
-                        if (snapshotName != null && snapshotName.length() > 0) {
-                        	taskListener.getLogger().println("...Virtual machine found, reverting to " + snapshotName + " and shutting down.");
-                            domain.revertToSnapshot(domain.snapshotLookupByName(snapshotName));
-                        } else {
-                        	taskListener.getLogger().println("...Virtual machine found, shutting down.");
-                            domain.shutdown();
-                        }
+            Domain domain = computers.get(virtualMachine.getName());
+            if (domain != null) {
+            	if (domain.getInfo().state.equals(DomainState.VIR_DOMAIN_RUNNING) || domain.getInfo().state.equals(DomainState.VIR_DOMAIN_BLOCKED)) {
+                    if (snapshotName != null && snapshotName.length() > 0) {
+                    	taskListener.getLogger().println("Reverting to " + snapshotName + " and shutting down.");
+                        domain.revertToSnapshot(domain.snapshotLookupByName(snapshotName));
                     } else {
-                        taskListener.getLogger().println("...Virtual machine found; it is already suspended, no shutdown required.");
+                    	taskListener.getLogger().println("Shutting down.");
+                        domain.shutdown();
                     }
-                    VirtualMachineLauncher vmL = (VirtualMachineLauncher) ((SlaveComputer) slaveComputer).getLauncher();
-                    Hypervisor vmC = vmL.findOurHypervisorInstance();
-                    vmC.markVMOffline(slaveComputer.getDisplayName(), vmL.getVirtualMachineName());
-                    return;
+                } else {
+                    taskListener.getLogger().println("Already suspended, no shutdown required.");
                 }
+                VirtualMachineLauncher vmL = (VirtualMachineLauncher) ((SlaveComputer) slaveComputer).getLauncher();
+                Hypervisor vmC = vmL.findOurHypervisorInstance();
+                vmC.markVMOffline(slaveComputer.getDisplayName(), vmL.getVirtualMachineName());
+            } else {
+            	// log to slave 
+            	taskListener.getLogger().println("\"" + virtualMachineName + "\" not found on Hypervisor, can not shut down!");
+            	
+            	// log to jenkins
+            	LogRecord rec = new LogRecord(Level.WARNING, "Can not shut down {0} on Hypervisor {1}, domain not found!");
+                rec.setParameters(new Object[]{virtualMachine.getName(), virtualMachine.getHypervisor().getHypervisorURI()});
+                LOGGER.log(rec);
             }
-            taskListener.getLogger().println("Error! Could not find \"" + virtualMachineName + "\" on the hypervisor!");
         } catch (Throwable t) {
             taskListener.fatalError(t.getMessage(), t);
+            
+            LogRecord rec = new LogRecord(Level.SEVERE, "Error while shutting down {0} on Hypervisor {1}.");
+            rec.setParameters(new Object[]{virtualMachine.getName(), virtualMachine.getHypervisor().getHypervisorURI()});
+            rec.setThrown(t);
+            LOGGER.log(rec);
         }
     }
 
