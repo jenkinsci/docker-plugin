@@ -11,7 +11,12 @@
     <version>0.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Docker plugin</name>
-
+ 
+ <scm>
+    <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/docker-plugin</url>
+  </scm>
 
 
     <dependencies>
