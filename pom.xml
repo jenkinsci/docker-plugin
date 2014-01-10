@@ -11,6 +11,8 @@
     <version>0.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Docker plugin</name>
+
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
  
  <scm>
     <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
