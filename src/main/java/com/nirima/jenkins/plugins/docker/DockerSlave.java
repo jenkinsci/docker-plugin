@@ -6,16 +6,24 @@ import com.kpelykh.docker.client.DockerClient;
 import com.kpelykh.docker.client.DockerException;
 import com.kpelykh.docker.client.model.CommitConfig;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
+
+import hudson.Extension;
 import hudson.model.*;
+import hudson.model.Slave.SlaveDescriptor;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
+import hudson.util.ListBoxModel;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.ServletException;
+
+import org.kohsuke.stapler.QueryParameter;
 
 
 public class DockerSlave extends AbstractCloudSlave {
@@ -143,4 +151,19 @@ public class DockerSlave extends AbstractCloudSlave {
                 .add("containerId", containerId)
                 .toString();
     }
+
+    @Extension
+	public static final class DescriptorImpl extends SlaveDescriptor {
+
+    	@Override
+		public String getDisplayName() {
+			return "Docker Slave";
+    	};
+
+		@Override
+		public boolean isInstantiable() {
+			return false;
+		}
+
+	}
 }
