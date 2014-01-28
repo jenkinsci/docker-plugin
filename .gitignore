@@ -2,3 +2,5 @@
 target
 work
 *.iml
+/target
+.*
