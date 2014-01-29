@@ -5,6 +5,8 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.domains.HostnamePortRequirement;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.kpelykh.docker.client.DockerClient;
 import com.kpelykh.docker.client.DockerException;
@@ -72,7 +74,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
 
     public final int instanceCap;
-
+    public final String[] dnsHosts;
 
     public final boolean tagOnCompletion;
 
@@ -84,7 +86,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String remoteFs,
                           String credentialsId, String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                          boolean tagOnCompletion, String instanceCapStr
+                          boolean tagOnCompletion, String instanceCapStr, String dnsString
     ) {
         this.image = image;
         this.labelString = Util.fixNull(labelString);
@@ -102,6 +104,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             this.instanceCap = Integer.parseInt(instanceCapStr);
         }
 
+        this.dnsHosts = dnsString.split(" ");
+
         readResolve();
     }
 
@@ -111,6 +115,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         } else {
             return String.valueOf(instanceCap);
         }
+    }
+
+    public String getDnsString() {
+        return Joiner.on(" ").join(dnsHosts);
     }
 
     public Descriptor<DockerTemplate> getDescriptor() {
@@ -160,7 +168,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         containerConfig.setCmd(new String[]{"/usr/sbin/sshd", "-D"});
         containerConfig.setPortSpecs(new String[]{"22"});
 
-
+        if( dnsHosts.length > 0 )
+            containerConfig.setDns(dnsHosts);
 
         ContainerCreateResponse container = dockerClient.createContainer(containerConfig);
 

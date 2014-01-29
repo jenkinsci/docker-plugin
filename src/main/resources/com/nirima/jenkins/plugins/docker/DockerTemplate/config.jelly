@@ -27,6 +27,10 @@
           <f:textbox />
         </f:entry>
 
+        <f:entry title="${%DNS}" field="dnsString">
+          <f:textbox />
+        </f:entry>
+
     <f:advanced>
 
         <f:entry title="${%JavaPath}" field="javaPath">
