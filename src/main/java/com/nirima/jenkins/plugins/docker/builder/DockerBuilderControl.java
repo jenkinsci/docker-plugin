@@ -1,0 +1,77 @@
+package com.nirima.jenkins.plugins.docker.builder;
+
+import com.google.common.base.Strings;
+import com.kpelykh.docker.client.DockerClient;
+import com.kpelykh.docker.client.DockerException;
+import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.DockerComputer;
+import com.nirima.jenkins.plugins.docker.DockerSlave;
+import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
+import hudson.DescriptorExtensionList;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.*;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.Builder;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.List;
+import java.util.logging.Logger;
+
+/**
+ * Created by magnayn on 29/01/2014.
+ */
+public class DockerBuilderControl extends Builder implements Serializable {
+    private static final Logger LOGGER = Logger.getLogger(DockerBuilderControl.class.getName());
+
+    public final DockerBuilderControlOption option;
+
+    @DataBoundConstructor
+    public DockerBuilderControl(DockerBuilderControlOption option) {
+        this.option = option;
+    }
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
+    }
+
+    @Extension
+    public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
+
+        @Override
+        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+            return true;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Start/Stop Docker Containers";
+        }
+
+        public static DescriptorExtensionList<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor> getOptionList() {
+            return Jenkins.getInstance()
+                    .<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor>getDescriptorList(DockerBuilderControlOption.class);
+        }
+
+    }
+
+
+    @Override
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+
+        try {
+            option.execute(build);
+        } catch (DockerException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Save the actions
+        build.save();
+        return true;
+    }
+}

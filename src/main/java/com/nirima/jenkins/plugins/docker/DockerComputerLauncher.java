@@ -52,14 +52,24 @@ public class DockerComputerLauncher extends ComputerLauncher {
 
     @Override
     public void launch(SlaveComputer _computer, TaskListener listener) throws IOException, InterruptedException {
-        SSHLauncher launcher = getSSHLauncher();
-        launcher.launch(_computer, listener);
-        if( launcher.getConnection() == null ) {
-            LOGGER.log(Level.WARNING, "Couldn't launch Docker template. Closing.");
-            DockerComputer dc = (DockerComputer)_computer;
-            dc.getNode().terminate();
+
+        for(int tries=0;tries < 3; tries++) {
+            SSHLauncher launcher = getSSHLauncher();
+            launcher.launch(_computer, listener);
+
+            if( launcher.getConnection() != null ) {
+                LOGGER.log(Level.INFO, "Launched " + _computer);
+                return;
+            }
+
+            Thread.sleep(5000 * (tries+1));
         }
-        LOGGER.log(Level.INFO, "Launched " + _computer);
+
+        LOGGER.log(Level.WARNING, "Couldn't launch Docker template. Closing.");
+        DockerComputer dc = (DockerComputer)_computer;
+        dc.getNode().terminate();
+
+
     }
 
     public SSHLauncher getSSHLauncher() throws MalformedURLException {

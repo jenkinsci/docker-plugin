@@ -46,8 +46,10 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         if( executable instanceof Run) {
             Run build = (Run) executable;
 
+            getNode().setRun(build);
+
             if( getNode().dockerTemplate.tagOnCompletion ) {
-                getNode().commitOnTerminate( build );
+                getNode().commitOnTerminate();
             }
 
 

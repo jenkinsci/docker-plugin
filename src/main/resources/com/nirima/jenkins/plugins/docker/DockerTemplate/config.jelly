@@ -33,6 +33,14 @@
 
     <f:advanced>
 
+        <f:entry title="${%Additional tag to add}" field="additionalTag">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="${%Push on successful build}" field="push">
+            <f:checkbox />
+        </f:entry>
+
         <f:entry title="${%JavaPath}" field="javaPath">
             <f:textbox />
         </f:entry>

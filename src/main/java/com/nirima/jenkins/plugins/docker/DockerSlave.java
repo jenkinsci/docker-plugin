@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 import com.kpelykh.docker.client.DockerClient;
 import com.kpelykh.docker.client.DockerException;
 import com.kpelykh.docker.client.model.CommitConfig;
@@ -24,8 +25,9 @@ public class DockerSlave extends AbstractCloudSlave {
     public final DockerTemplate dockerTemplate;
     public final String containerId;
 
-
     private transient Run theRun;
+
+    private transient boolean commitOnTermate;
 
     public DockerSlave(DockerTemplate dockerTemplate, String containerId, String name, String nodeDescription, String remoteFS, int numExecutors, Mode mode, String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties) throws Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
@@ -42,8 +44,12 @@ public class DockerSlave extends AbstractCloudSlave {
         return name;
     }
 
-    public void commitOnTerminate(Run run) {
-       this.theRun = run;
+    public void setRun(Run run) {
+        this.theRun = run;
+    }
+
+    public void commitOnTerminate() {
+       commitOnTermate = true;
     }
 
     @Override
@@ -61,7 +67,10 @@ public class DockerSlave extends AbstractCloudSlave {
 
             if( theRun != null ) {
                 try {
-                    commit();
+                    if( commitOnTermate )
+                        commit();
+                    else
+                        tag(null);
                 } catch (DockerException e) {
                     LOGGER.log(Level.SEVERE, "Failure to commit instance " + containerId);
                 }
@@ -84,6 +93,31 @@ public class DockerSlave extends AbstractCloudSlave {
 
         String tag_image = client.commit(commitConfig);
 
+        tag(tag_image);
+
+        // SHould we add additional tags?
+        try
+        {
+            if( !Strings.isNullOrEmpty(dockerTemplate.additionalTag) ) {
+                client.tag(tag_image,dockerTemplate.additionalTag, false );
+            }
+        }
+        catch(DockerException ex) {
+            LOGGER.log(Level.SEVERE, "Could not add additional tags");
+        }
+
+        if( dockerTemplate.push ) {
+            try {
+                client.push(tag_image, null);
+            }
+            catch(DockerException ex) {
+                LOGGER.log(Level.SEVERE, "Could not push image");
+            }
+        }
+
+    }
+
+    private void tag(String tag_image) throws IOException {
         theRun.addAction( new DockerBuildAction(getCloud().serverUrl, containerId, tag_image) );
         theRun.save();
     }

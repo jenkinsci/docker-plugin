@@ -6,12 +6,14 @@ import hudson.model.BuildBadgeAction;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
+import org.kohsuke.stapler.export.ExportedBean;
 
 import java.io.Serializable;
 
 /**
  * Created by magnayn on 10/01/2014.
  */
+@ExportedBean
 public class DockerBuildAction implements Action, Serializable, Cloneable, Describable<DockerBuildAction> {
 
     public final String containerHost;
@@ -37,8 +39,8 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
         return "docker";
     }
 
-    public Descriptor<DockerBuildAction> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorOrDie(getClass());
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(getClass());
     }
 
     /**

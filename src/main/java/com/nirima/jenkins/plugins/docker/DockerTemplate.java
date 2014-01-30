@@ -81,12 +81,16 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     public transient DockerCloud parent;
 
+    public final String additionalTag;
+    public final boolean push;
+
     @DataBoundConstructor
     public DockerTemplate(String image, String labelString,
                           String remoteFs,
                           String credentialsId, String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                          boolean tagOnCompletion, String instanceCapStr, String dnsString
+                          boolean tagOnCompletion, String instanceCapStr, String dnsString,
+                          String additionalTag, boolean push
     ) {
         this.image = image;
         this.labelString = Util.fixNull(labelString);
@@ -105,6 +109,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         this.dnsHosts = dnsString.split(" ");
+        this.additionalTag = additionalTag;
+        this.push = push;
 
         readResolve();
     }
@@ -147,7 +153,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException {
             PrintStream logger = listener.getLogger();
-            DockerClient dockerClient = getParent().connect();
 
 
         logger.println("Launching " + image );
@@ -162,6 +167,25 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         RetentionStrategy retentionStrategy = new DockerRetentionStrategy();//RetentionStrategy.INSTANCE;
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
+
+
+        //ContainerInspectResponse containerInspectResponse = dockerClient.inspectContainer(containerId);
+
+        ContainerInspectResponse containerInspectResponse = provisionNew();
+        String containerId = containerInspectResponse.getId();
+
+        ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
+
+        return new DockerSlave(this, containerId,
+                containerId.substring(12),
+                nodeDescription,
+                remoteFs, numExecutors, mode, labelString,
+                launcher, retentionStrategy, nodeProperties);
+
+    }
+
+    public ContainerInspectResponse provisionNew() throws DockerException {
+        DockerClient dockerClient = getParent().connect();
 
         ContainerConfig containerConfig = new ContainerConfig();
         containerConfig.setImage(image);
@@ -191,16 +215,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         String containerId = container.getId();
 
-        ContainerInspectResponse containerInspectResponse = dockerClient.inspectContainer(containerId);
-
-
-        ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
-
-        return new DockerSlave(this, containerId,
-                containerId.substring(12),
-                nodeDescription,
-                remoteFs, numExecutors, mode, labelString,
-                launcher, retentionStrategy, nodeProperties);
+        return dockerClient.inspectContainer(containerId);
 
     }
 
