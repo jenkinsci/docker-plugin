@@ -81,6 +81,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
+                .add("name", super.getName())
                 .add("slave", getNode())
                 .toString();
     }

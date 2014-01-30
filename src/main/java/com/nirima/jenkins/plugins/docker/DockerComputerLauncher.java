@@ -54,8 +54,8 @@ public class DockerComputerLauncher extends ComputerLauncher {
     public void launch(SlaveComputer _computer, TaskListener listener) throws IOException, InterruptedException {
 
         for(int tries=0;tries < 3; tries++) {
-            SSHLauncher launcher = getSSHLauncher();
-            launcher.launch(_computer, listener);
+        SSHLauncher launcher = getSSHLauncher();
+        launcher.launch(_computer, listener);
 
             if( launcher.getConnection() != null ) {
                 LOGGER.log(Level.INFO, "Launched " + _computer);
@@ -65,12 +65,12 @@ public class DockerComputerLauncher extends ComputerLauncher {
             Thread.sleep(5000 * (tries+1));
         }
 
-        LOGGER.log(Level.WARNING, "Couldn't launch Docker template. Closing.");
-        DockerComputer dc = (DockerComputer)_computer;
-        dc.getNode().terminate();
+            LOGGER.log(Level.WARNING, "Couldn't launch Docker template. Closing.");
+            DockerComputer dc = (DockerComputer)_computer;
+            dc.getNode().terminate();
 
 
-    }
+        }
 
     public SSHLauncher getSSHLauncher() throws MalformedURLException {
         /**
@@ -84,10 +84,11 @@ public class DockerComputerLauncher extends ComputerLauncher {
         int port = Integer.parseInt(detail.getNetworkSettings().ports.get("22/tcp")[0].hostPort);
 
         URL hostUrl = new URL(template.getParent().serverUrl);
+        String host = hostUrl.getHost();
+        
+        LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
 
-        LOGGER.log(Level.INFO, "Attempting launch on" + hostUrl + " port " + port);
-
-        return new SSHLauncher(hostUrl.getHost(), port, template.credentialsId, template.jvmOptions , template.javaPath, template.prefixStartSlaveCmd, template.suffixStartSlaveCmd);
+        return new SSHLauncher(host, port, template.credentialsId, template.jvmOptions , template.javaPath, template.prefixStartSlaveCmd, template.suffixStartSlaveCmd);
     }
 
     @Extension
