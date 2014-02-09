@@ -1,11 +1,9 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.kpelykh.docker.client.DockerException;
+import com.nirima.docker.client.DockerException;
 import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
 import hudson.model.AbstractBuild;
 import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.Hudson;
 import jenkins.model.Jenkins;
 
 import java.util.List;

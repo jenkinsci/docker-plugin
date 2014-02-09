@@ -1,8 +1,6 @@
 package com.nirima.jenkins.plugins.docker.publisher;
 
-import com.kpelykh.docker.client.DockerException;
-import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
-import com.nirima.jenkins.plugins.docker.builder.DockerBuilderControl;
+import com.nirima.docker.client.DockerException;
 import com.nirima.jenkins.plugins.docker.builder.DockerBuilderControlOptionStopAll;
 import hudson.Extension;
 import hudson.Launcher;
@@ -15,7 +13,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**

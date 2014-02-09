@@ -4,20 +4,18 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.domains.HostnamePortRequirement;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.kpelykh.docker.client.DockerClient;
-import com.kpelykh.docker.client.DockerException;
-import com.kpelykh.docker.client.model.*;
+
+import com.nirima.docker.client.DockerException;
+import com.nirima.docker.client.DockerClient;
+import com.nirima.docker.client.model.*;
 import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.*;
 import hudson.model.labels.LabelAtom;
 import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.remoting.Channel;
 import hudson.security.ACL;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
@@ -27,11 +25,9 @@ import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URL;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -195,7 +191,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         if( dnsHosts.length > 0 )
             containerConfig.setDns(dnsHosts);
 
-        ContainerCreateResponse container = dockerClient.createContainer(containerConfig);
+        ContainerCreateResponse container = dockerClient.containersApi().createContainer(containerConfig);
 
 
         // Launch it.. :
@@ -211,11 +207,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         hostConfig.setPortBindings(bports);
 
 
-        dockerClient.startContainer(container.getId(), hostConfig);
+        dockerClient.containersApi().startContainer(container.getId(), hostConfig);
 
         String containerId = container.getId();
 
-        return dockerClient.inspectContainer(containerId);
+        return dockerClient.containersApi().inspectContainer(containerId);
 
     }
 

@@ -2,28 +2,22 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
-import com.kpelykh.docker.client.DockerClient;
-import com.kpelykh.docker.client.DockerException;
-import com.kpelykh.docker.client.model.CommitConfig;
+import com.nirima.docker.client.DockerException;
+import com.nirima.docker.client.model.CommitConfig;
+import com.nirima.docker.client.DockerClient;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 
 import hudson.Extension;
 import hudson.model.*;
-import hudson.model.Slave.SlaveDescriptor;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
-import hudson.util.ListBoxModel;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.servlet.ServletException;
-
-import org.kohsuke.stapler.QueryParameter;
 
 
 public class DockerSlave extends AbstractCloudSlave {
@@ -71,7 +65,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         try {
             toComputer().disconnect(null);
-            client.stopContainer(containerId);
+            client.container(containerId).stop();
 
             if( theRun != null ) {
                 try {
@@ -84,8 +78,8 @@ public class DockerSlave extends AbstractCloudSlave {
                 }
             }
 
-            client.removeContainer(containerId);
-        } catch (DockerException e) {
+            client.containersApi().removeContainer(containerId);
+        } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failure to terminate instance " + containerId);
         }
     }
@@ -93,13 +87,11 @@ public class DockerSlave extends AbstractCloudSlave {
     public void commit() throws DockerException, IOException {
         DockerClient client = getClient();
 
-        CommitConfig commitConfig = new CommitConfig.Builder(containerId)
-                .author("Jenkins")
-                .repo(theRun.getParent().getDisplayName())
-                .tag(theRun.getDisplayName())
-                .build();
-
-        String tag_image = client.commit(commitConfig);
+        String tag_image = client.container(containerId).createCommitCommand()
+                                 .repo(theRun.getParent().getDisplayName())
+                                 .tag(theRun.getDisplayName())
+                                 .author("Jenkins")
+                                 .execute();
 
         tag(tag_image);
 
@@ -107,18 +99,18 @@ public class DockerSlave extends AbstractCloudSlave {
         try
         {
             if( !Strings.isNullOrEmpty(dockerTemplate.additionalTag) ) {
-                client.tag(tag_image,dockerTemplate.additionalTag, false );
+                client.image(tag_image).tag(dockerTemplate.additionalTag, false);
             }
         }
-        catch(DockerException ex) {
+        catch(Exception ex) {
             LOGGER.log(Level.SEVERE, "Could not add additional tags");
         }
 
         if( dockerTemplate.push ) {
             try {
-                client.push(tag_image, null);
+                client.image(tag_image).push(null);
             }
-            catch(DockerException ex) {
+            catch(Exception ex) {
                 LOGGER.log(Level.SEVERE, "Could not push image");
             }
         }

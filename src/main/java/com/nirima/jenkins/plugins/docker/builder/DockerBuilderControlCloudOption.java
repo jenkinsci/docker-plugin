@@ -1,7 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import com.google.common.base.Strings;
-import com.kpelykh.docker.client.DockerClient;
+import com.nirima.docker.client.DockerClient;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import hudson.model.AbstractBuild;
@@ -32,7 +32,7 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
         }
 
         if( cloud == null ) {
-            throw new RuntimeException("Cannot get cloud for docker action");
+            throw new RuntimeException("Cannot list cloud for docker action");
         }
 
         return cloud;
@@ -52,7 +52,7 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
         }
 
         if( cloud == null ) {
-            throw new RuntimeException("Cannot get cloud for docker action");
+            throw new RuntimeException("Cannot list cloud for docker action");
         }
 
         DockerClient client = cloud.connect();

@@ -23,9 +23,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.kpelykh</groupId>
-            <artifactId>docker-java</artifactId>
-            <version>0.6.1-nm-SNAPSHOT</version>
+            <groupId>com.nirima.jdocker</groupId>
+            <artifactId>jDocker</artifactId>
+            <version>0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>

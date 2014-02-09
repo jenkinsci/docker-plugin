@@ -1,10 +1,9 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.kpelykh.docker.client.DockerException;
+import com.nirima.docker.client.DockerException;
 import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
-import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -23,8 +22,8 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
         for(DockerLaunchAction.Item containerItem : getLaunchAction(build).getRunning()) {
             try {
                 LOGGER.info("Stopping container " + containerItem.id);
-                containerItem.client.stopContainer(containerItem.id);
-            } catch (DockerException e) {
+                containerItem.client.container(containerItem.id).stop();
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }

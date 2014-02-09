@@ -1,25 +1,17 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.google.common.base.Strings;
-import com.kpelykh.docker.client.DockerClient;
-import com.kpelykh.docker.client.DockerException;
-import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerComputer;
-import com.nirima.jenkins.plugins.docker.DockerSlave;
-import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
+import com.nirima.docker.client.DockerException;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**

@@ -1,6 +1,6 @@
 package com.nirima.jenkins.plugins.docker.action;
 
-import com.kpelykh.docker.client.DockerClient;
+import com.nirima.docker.client.DockerClient;
 import hudson.model.Action;
 import hudson.model.Describable;
 

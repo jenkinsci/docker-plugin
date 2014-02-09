@@ -3,9 +3,10 @@ package com.nirima.jenkins.plugins.docker;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
-import com.kpelykh.docker.client.DockerClient;
-import com.kpelykh.docker.client.DockerException;
-import com.kpelykh.docker.client.model.Container;
+import com.nirima.docker.client.DockerException;
+import com.nirima.docker.client.model.Container;
+import com.nirima.docker.client.model.Version;
+import com.nirima.docker.client.DockerClient;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.slaves.Cloud;
@@ -15,7 +16,6 @@ import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerResponse;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
@@ -70,7 +70,9 @@ public class DockerCloud extends Cloud {
     public synchronized DockerClient connect() {
 
         if (connection == null) {
-            connection = new DockerClient(serverUrl);
+            connection = DockerClient.builder()
+                    .withUrl(serverUrl)
+                    .build();
         }
         return connection;
 
@@ -185,7 +187,7 @@ public class DockerCloud extends Cloud {
         if( amiCap == 0 )
             return true;
 
-        List<Container> containers = connect().listContainers(false);
+        List<Container> containers = connect().containers().finder().allContainers(false).list();
 
         Collection<Container> matching = Collections2.filter(containers, new Predicate<Container>() {
             public boolean apply(@Nullable Container container) {
@@ -208,10 +210,11 @@ public class DockerCloud extends Cloud {
                 @QueryParameter URL serverUrl
                 ) throws IOException, ServletException, DockerException {
 
-            DockerClient dc = new DockerClient(serverUrl.toString());
-            dc.info();
+            DockerClient dc = DockerClient.builder().withUrl(serverUrl.toString()).build();
 
-            return FormValidation.ok();
+            Version version = dc.miscApi().version();
+
+            return FormValidation.ok("Version = " + version.getVersion());
         }
     }
 }
