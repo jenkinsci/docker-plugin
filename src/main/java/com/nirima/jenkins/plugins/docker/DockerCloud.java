@@ -212,7 +212,7 @@ public class DockerCloud extends Cloud {
 
             DockerClient dc = DockerClient.builder().withUrl(serverUrl.toString()).build();
 
-            Version version = dc.miscApi().version();
+            Version version = dc.system().version();
 
             return FormValidation.ok("Version = " + version.getVersion());
         }

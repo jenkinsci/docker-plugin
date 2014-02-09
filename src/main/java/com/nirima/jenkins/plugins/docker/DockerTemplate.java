@@ -10,6 +10,7 @@ import com.google.common.base.Strings;
 import com.nirima.docker.client.DockerException;
 import com.nirima.docker.client.DockerClient;
 import com.nirima.docker.client.model.*;
+import com.nirima.jenkins.plugins.docker.builder.DockerBuilderControl;
 import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.Util;
@@ -164,9 +165,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
 
-
-        //ContainerInspectResponse containerInspectResponse = dockerClient.inspectContainer(containerId);
-
         ContainerInspectResponse containerInspectResponse = provisionNew();
         String containerId = containerInspectResponse.getId();
 
@@ -191,8 +189,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         if( dnsHosts.length > 0 )
             containerConfig.setDns(dnsHosts);
 
-        ContainerCreateResponse container = dockerClient.containersApi().createContainer(containerConfig);
-
+        ContainerCreateResponse container = dockerClient.containers().createContainer(containerConfig);
 
         // Launch it.. :
         // MAybe should be in computerLauncher
@@ -206,13 +203,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         HostConfig hostConfig = new HostConfig();
         hostConfig.setPortBindings(bports);
 
-
-        dockerClient.containersApi().startContainer(container.getId(), hostConfig);
+        dockerClient.container(container.getId()).start(hostConfig);
 
         String containerId = container.getId();
 
-        return dockerClient.containersApi().inspectContainer(containerId);
-
+        return dockerClient.container(containerId).inspect();
     }
 
     public int getNumExecutors() {

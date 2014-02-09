@@ -78,7 +78,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 }
             }
 
-            client.containersApi().removeContainer(containerId);
+            client.container(containerId).remove();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failure to terminate instance " + containerId);
         }
