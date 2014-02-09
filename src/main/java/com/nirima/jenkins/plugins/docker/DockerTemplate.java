@@ -10,7 +10,6 @@ import com.google.common.base.Strings;
 import com.nirima.docker.client.DockerException;
 import com.nirima.docker.client.DockerClient;
 import com.nirima.docker.client.model.*;
-import com.nirima.jenkins.plugins.docker.builder.DockerBuilderControl;
 import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.Util;
@@ -171,7 +170,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
 
         return new DockerSlave(this, containerId,
-                containerId.substring(12),
+                containerId.substring(0,12),
                 nodeDescription,
                 remoteFs, numExecutors, mode, labelString,
                 launcher, retentionStrategy, nodeProperties);
@@ -184,12 +183,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         ContainerConfig containerConfig = new ContainerConfig();
         containerConfig.setImage(image);
         containerConfig.setCmd(new String[]{"/usr/sbin/sshd", "-D"});
-        containerConfig.setPortSpecs(new String[]{"22"});
-
+        containerConfig.setPortSpecs(new String[]{"22/tcp"});
+        //containerConfig.setPortSpecs(new String[]{"22/tcp"});
+        //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
         if( dnsHosts.length > 0 )
             containerConfig.setDns(dnsHosts);
 
-        ContainerCreateResponse container = dockerClient.containers().createContainer(containerConfig);
+        ContainerCreateResponse container = dockerClient.containers().create(containerConfig);
 
         // Launch it.. :
         // MAybe should be in computerLauncher
@@ -197,7 +197,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         Map<String, PortBinding[]> bports = new HashMap<String, PortBinding[]>();
         PortBinding binding = new PortBinding();
         binding.hostIp = "0.0.0.0";
-        // binding.hostPort = "";
+        //binding.hostPort = ":";
         bports.put("22/tcp", new PortBinding[] { binding });
 
         HostConfig hostConfig = new HostConfig();
