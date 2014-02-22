@@ -5,6 +5,8 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.nirima.docker.client.DockerException;
 import com.nirima.docker.client.model.Container;
+import com.nirima.docker.client.model.ContainerInspectResponse;
+import com.nirima.docker.client.model.ImageInspectResponse;
 import com.nirima.docker.client.model.Version;
 import com.nirima.docker.client.DockerClient;
 import hudson.Extension;
@@ -79,7 +81,7 @@ public class DockerCloud extends Cloud {
     }
 
     @Override
-    public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
+    public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         try {
             // Count number of pending executors from spot requests
         /*    for(EC2SpotSlave n : NodeIterator.nodes(EC2SpotSlave.class)){
@@ -119,7 +121,7 @@ public class DockerCloud extends Cloud {
                                 try {
                                     DockerSlave s = t.provision(new StreamTaskListener(System.out));
                                     Jenkins.getInstance().addNode(s);
-                                    // EC2 instances may have a long init script. If we declare
+                                    // Docker instances may have a long init script. If we declare
                                     // the provisioning complete by returning without the connect
                                     // operation, NodeProvisioner may decide that it still wants
                                     // one more instance, because it sees that (1) all the slaves
@@ -148,7 +150,7 @@ public class DockerCloud extends Cloud {
             }
             return r;
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING,"Failed to count the # of live instances on EC2",e);
+            LOGGER.log(Level.WARNING,"Failed to count the # of live instances on Docker",e);
             return Collections.emptyList();
         }
     }
@@ -183,16 +185,20 @@ public class DockerCloud extends Cloud {
      * Check not too many already running.
      *
      */
-    private boolean addProvisionedSlave(String image, int amiCap) throws Exception {
+    private synchronized boolean addProvisionedSlave(String image, int amiCap) throws Exception {
         if( amiCap == 0 )
             return true;
 
-        List<Container> containers = connect().containers().finder().allContainers(false).list();
+
+        final DockerClient dockerClient = connect();
+        final ImageInspectResponse ir = dockerClient.image(image).inspect();
+
+        List<Container> containers = dockerClient.containers().finder().allContainers(false).list();
 
         Collection<Container> matching = Collections2.filter(containers, new Predicate<Container>() {
             public boolean apply(@Nullable Container container) {
-                // TODO: filter out containers not of the right type.
-                return true;
+                ContainerInspectResponse cis = dockerClient.container(container.getId()).inspect();
+                return (cis.getImage().equalsIgnoreCase(ir.getId()));
             }
         });
 
