@@ -60,6 +60,11 @@
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
         </repository>
+        <repository>
+            <id>mavenin.nuxeo.com</id>
+            <url>http://mavenin.nuxeo.com/nexus/content/repositories/public-snapshot/</url>
+        </repository>
+
     </repositories>
 
     <pluginRepositories>
