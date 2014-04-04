@@ -46,6 +46,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public final String credentialsId;
 
     /**
+     * Field dockerCommand
+     */
+    public final String dockerCommand;
+
+    /**
      * Field jvmOptions.
      */
     public final String jvmOptions;
@@ -86,7 +91,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String credentialsId, String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           boolean tagOnCompletion, String instanceCapStr, String dnsString,
-                          String additionalTag, boolean push
+                          String additionalTag, boolean push, String dockerCommand
     ) {
         this.image = image;
         this.labelString = Util.fixNull(labelString);
@@ -97,6 +102,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
         this.tagOnCompletion = tagOnCompletion;
+        this.dockerCommand = dockerCommand;
 
         if(instanceCapStr.equals("")) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -182,7 +188,17 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         ContainerConfig containerConfig = new ContainerConfig();
         containerConfig.setImage(image);
-        containerConfig.setCmd(new String[]{"/usr/sbin/sshd", "-D"});
+
+        String[] dockerCommandArray;
+
+        if(dockerCommand != null && !dockerCommand.isEmpty()){
+            dockerCommandArray = dockerCommand.split(" ");
+        } else {
+            //default value to preserve comptability
+            dockerCommandArray = new String[]{"/usr/sbin/sshd", "-D"};
+        }
+
+        containerConfig.setCmd(dockerCommandArray);
         containerConfig.setPortSpecs(new String[]{"22/tcp"});
         //containerConfig.setPortSpecs(new String[]{"22/tcp"});
         //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
