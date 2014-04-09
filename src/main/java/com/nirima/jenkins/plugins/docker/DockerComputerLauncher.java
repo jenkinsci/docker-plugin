@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.google.common.base.Preconditions;
 import com.nirima.docker.client.model.ContainerInspectResponse;
 import hudson.Extension;
@@ -81,7 +82,9 @@ public class DockerComputerLauncher extends ComputerLauncher {
         
         LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
 
-        return new SSHLauncher(host, port, template.credentialsId, template.jvmOptions , template.javaPath, template.prefixStartSlaveCmd, template.suffixStartSlaveCmd);
+        StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(template.credentialsId);
+
+        return new SSHLauncher(host, port, credentials,  template.jvmOptions , template.javaPath, template.prefixStartSlaveCmd, template.suffixStartSlaveCmd, 60);
     }
 
     @Extension

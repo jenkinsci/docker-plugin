@@ -59,9 +59,9 @@ public class PluginImpl extends Plugin {
     }
 
     /**
-     * Get the list of Gerrit servers.
+     * Get the list of Docker servers.
      *
-     * @return the list as a LinkedList of GerritServers
+     * @return the list as a LinkedList of DockerCloud
      */
     public synchronized Collection<DockerCloud> getServers() {
 
