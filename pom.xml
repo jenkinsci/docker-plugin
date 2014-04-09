@@ -25,7 +25,7 @@
         <dependency>
             <groupId>com.nirima.jdocker</groupId>
             <artifactId>jDocker</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2.4</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
