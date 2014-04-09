@@ -72,7 +72,7 @@ public class DockerComputerLauncher extends ComputerLauncher {
         int port;
 
         try {
-            port = Integer.parseInt(detail.getNetworkSettings().ports.get("22/tcp")[0].hostPort);
+            port = Integer.parseInt(detail.getNetworkSettings().ports.getAllPorts().get("22/tcp").getHostPort());
         } catch(NullPointerException ex) {
             throw new RuntimeException("No mapped port 22 in host for SSL. Config=" + detail);
         }
