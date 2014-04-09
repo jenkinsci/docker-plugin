@@ -68,6 +68,7 @@ public class DockerCloud extends Cloud {
 
     /**
      * Connects to Docker.
+     * @return Docker client.
      */
     public synchronized DockerClient connect() {
 
@@ -170,7 +171,7 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Gets {@link SlaveTemplate} that has the matching {@link Label}.
+     * Gets {@link DockerTemplate} that has the matching {@link Label}.
      */
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
