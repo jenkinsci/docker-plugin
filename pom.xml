@@ -8,7 +8,7 @@
 
     <groupId>com.nirima</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>0.3.2-SNAPSHOT</version>
+    <version>0.3.4-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Docker plugin</name>
 
@@ -76,6 +76,13 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
+
         </plugins>
     </build>
 
