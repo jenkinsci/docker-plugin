@@ -8,7 +8,7 @@
 
     <groupId>com.nirima</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>0.3.1</version>
+    <version>0.3.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Docker plugin</name>
 
