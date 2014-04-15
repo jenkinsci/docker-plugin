@@ -1,0 +1,22 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+    <l:layout title="${%Docker hosts}" norefresh="true" permission="${it.requiredPermission}">
+        <l:side-panel>
+            <l:tasks>
+                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
+            </l:tasks>
+        </l:side-panel>
+        <l:main-panel>
+            <j:set var="instance" value="${it}"/>
+            <j:set var="descriptor" value="${it.descriptor}"/>
+
+            <h1>${%Docker Servers}</h1>
+            <ul>
+                <j:forEach var="serverName" items="${it.serverNames}" varStatus="loop">
+                    <li> <a href="server/${serverName}"> ${serverName} </a> </li>
+                </j:forEach>
+            </ul>
+
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
