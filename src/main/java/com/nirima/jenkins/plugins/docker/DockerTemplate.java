@@ -83,7 +83,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public transient DockerCloud parent;
 
     public final String additionalTag;
-    public final boolean push;
+    public final boolean pushOnSuccess;
 
     @DataBoundConstructor
     public DockerTemplate(String image, String labelString,
@@ -91,7 +91,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String credentialsId, String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           boolean tagOnCompletion, String instanceCapStr, String dnsString,
-                          String additionalTag, boolean push, String dockerCommand
+                          String additionalTag, boolean pushOnSuccess, String dockerCommand
+
     ) {
         this.image = image;
         this.labelString = Util.fixNull(labelString);
@@ -112,7 +113,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         this.dnsHosts = dnsString.split(" ");
         this.additionalTag = additionalTag;
-        this.push = push;
+        this.pushOnSuccess = pushOnSuccess;
 
         readResolve();
     }
