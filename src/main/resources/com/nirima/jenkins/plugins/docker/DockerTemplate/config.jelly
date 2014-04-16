@@ -49,6 +49,11 @@
             <f:textbox />
         </f:entry>
 
+        <f:entry title="${%Docker Command}" field="dockerCommand">
+            <f:textbox />
+        </f:entry>
+
+
         <f:entry title="${%Prefix Start Slave Command}" field="prefixStartSlaveCmd">
             <f:textbox />
         </f:entry>
