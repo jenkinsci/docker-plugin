@@ -106,7 +106,7 @@ public class DockerSlave extends AbstractCloudSlave {
             LOGGER.log(Level.SEVERE, "Could not add additional tags");
         }
 
-        if( dockerTemplate.push ) {
+        if( dockerTemplate.pushOnSuccess ) {
             try {
                 client.image(tag_image).push(null);
             }
