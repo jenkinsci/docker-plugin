@@ -220,6 +220,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         HostConfig hostConfig = new HostConfig();
         hostConfig.setPortBindings(bports);
+        if( dnsHosts.length > 0 )
+            hostConfig.setDns(dnsHosts);
 
         dockerClient.container(container.getId()).start(hostConfig);
 
