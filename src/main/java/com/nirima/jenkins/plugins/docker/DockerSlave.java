@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.nirima.docker.client.DockerException;
 import com.nirima.docker.client.model.CommitConfig;
@@ -33,12 +34,21 @@ public class DockerSlave extends AbstractCloudSlave {
 
     public DockerSlave(DockerTemplate dockerTemplate, String containerId, String name, String nodeDescription, String remoteFS, int numExecutors, Mode mode, String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties) throws Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
+        Preconditions.checkNotNull(dockerTemplate);
+        Preconditions.checkNotNull(containerId);
+
         this.dockerTemplate = dockerTemplate;
         this.containerId = containerId;
     }
 
     public DockerCloud getCloud() {
-        return dockerTemplate.getParent();
+        DockerCloud theCloud = dockerTemplate.getParent();
+
+        if( theCloud == null ) {
+            throw new RuntimeException("Docker template " + dockerTemplate + " has no parent ");
+        }
+
+        return theCloud;
     }
 
     @Override
@@ -61,11 +71,17 @@ public class DockerSlave extends AbstractCloudSlave {
 
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
-        DockerClient client = getClient();
+
 
         try {
             toComputer().disconnect(null);
-            client.container(containerId).stop();
+
+            try {
+                DockerClient client = getClient();
+                client.container(containerId).stop();
+            } catch(Exception ex) {
+                LOGGER.log(Level.SEVERE, "Failed to stop instance " + containerId + " due to exception");
+            }
 
             if( theRun != null ) {
                 try {
@@ -78,7 +94,13 @@ public class DockerSlave extends AbstractCloudSlave {
                 }
             }
 
-            client.container(containerId).remove();
+            try {
+                DockerClient client = getClient();
+                client.container(containerId).remove();
+            } catch(Exception ex) {
+                LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " due to exception");
+            }
+
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failure to terminate instance " + containerId);
         }
@@ -123,7 +145,7 @@ public class DockerSlave extends AbstractCloudSlave {
     }
 
     public DockerClient getClient() {
-        return dockerTemplate.getParent().connect();
+        return getCloud().connect();
     }
 
     /**
@@ -140,7 +162,9 @@ public class DockerSlave extends AbstractCloudSlave {
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
+                .add("name", name)
                 .add("containerId", containerId)
+                .add("template", dockerTemplate)
                 .toString();
     }
 

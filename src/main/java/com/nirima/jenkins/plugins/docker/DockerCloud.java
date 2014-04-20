@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
@@ -48,6 +50,8 @@ public class DockerCloud extends Cloud {
     @DataBoundConstructor
     public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String instanceCapStr) {
         super(name);
+        Preconditions.checkNotNull(serverUrl);
+
         this.serverUrl = serverUrl;
 
         if( templates != null )
@@ -71,6 +75,8 @@ public class DockerCloud extends Cloud {
      * @return Docker client.
      */
     public synchronized DockerClient connect() {
+
+        LOGGER.info("Building connection to docker host " + name + " URL " + serverUrl);
 
         if (connection == null) {
             connection = DockerClient.builder()
@@ -119,9 +125,10 @@ public class DockerCloud extends Cloud {
                         Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                             public Node call() throws Exception {
                                 // TODO: record the output somewhere
+                                DockerSlave slave = null;
                                 try {
-                                    DockerSlave s = t.provision(new StreamTaskListener(System.out));
-                                    Jenkins.getInstance().addNode(s);
+                                    slave = t.provision(new StreamTaskListener(System.out));
+                                    Jenkins.getInstance().addNode(slave);
                                     // Docker instances may have a long init script. If we declare
                                     // the provisioning complete by returning without the connect
                                     // operation, NodeProvisioner may decide that it still wants
@@ -131,11 +138,12 @@ public class DockerCloud extends Cloud {
                                     //
                                     // deferring the completion of provisioning until the launch
                                     // goes successful prevents this problem.
-                                    s.toComputer().connect(false).get();
-                                    return s;
+                                    slave.toComputer().connect(false).get();
+                                    return slave;
                                 }
                                 catch(Exception ex) {
-                                    LOGGER.log(Level.WARNING, "Error in provisioning");
+                                    LOGGER.log(Level.SEVERE, "Error in provisioning; slave=" + slave + ", template=" + t);
+
                                     ex.printStackTrace();
                                     throw Throwables.propagate(ex);
                                 }
@@ -223,5 +231,13 @@ public class DockerCloud extends Cloud {
 
             return FormValidation.ok("Version = " + version.getVersion());
         }
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this)
+                .add("name", name)
+                .add("serverUrl", serverUrl)
+                .toString();
     }
 }

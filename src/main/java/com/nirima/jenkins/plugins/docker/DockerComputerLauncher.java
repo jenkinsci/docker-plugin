@@ -26,8 +26,6 @@ import java.util.logging.Logger;
 /**
  * {@link hudson.slaves.ComputerLauncher} for Docker that waits for the instance to really come up before proceeding to
  * the real user-specified {@link hudson.slaves.ComputerLauncher}.
- *
- * @author Kohsuke Kawaguchi
  */
 public class DockerComputerLauncher extends ComputerLauncher {
 
@@ -49,8 +47,8 @@ public class DockerComputerLauncher extends ComputerLauncher {
     public void launch(SlaveComputer _computer, TaskListener listener) throws IOException, InterruptedException {
 
         for(int tries=0;tries < 3; tries++) {
-        SSHLauncher launcher = getSSHLauncher();
-        launcher.launch(_computer, listener);
+            SSHLauncher launcher = getSSHLauncher();
+            launcher.launch(_computer, listener);
 
             if( launcher.getConnection() != null ) {
                 LOGGER.log(Level.INFO, "Launched " + _computer);
@@ -65,7 +63,7 @@ public class DockerComputerLauncher extends ComputerLauncher {
             dc.getNode().terminate();
 
 
-        }
+    }
 
     public SSHLauncher getSSHLauncher() throws MalformedURLException {
 

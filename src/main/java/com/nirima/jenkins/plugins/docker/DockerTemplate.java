@@ -5,6 +5,7 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 
 import com.nirima.docker.client.DockerException;
@@ -245,5 +246,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                     CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
                             ACL.SYSTEM, SSHLauncher.SSH_SCHEME));
         }
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this)
+                .add("image", image)
+                .add("parent", parent)
+                .toString();
     }
 }
