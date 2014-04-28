@@ -165,9 +165,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         logger.println("Launching " + image );
 
-        String nodeDescription = "Docker Node";
-
-
         int numExecutors = 1;
         Node.Mode mode = Node.Mode.EXCLUSIVE;
 
@@ -180,6 +177,16 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         String containerId = containerInspectResponse.getId();
 
         ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
+
+        // Build a description up:
+        String nodeDescription = "Docker Node [" + image + " on ";
+        try {
+            nodeDescription += getParent().getDisplayName();
+        } catch(Exception ex)
+        {
+            nodeDescription += "???";
+        }
+        nodeDescription += "]";
 
         return new DockerSlave(this, containerId,
                 containerId.substring(0,12),
