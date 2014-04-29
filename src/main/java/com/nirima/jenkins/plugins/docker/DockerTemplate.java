@@ -94,7 +94,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String credentialsId, String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           boolean tagOnCompletion, String instanceCapStr, String dnsString,
-                          String additionalTag, boolean pushOnSuccess, String dockerCommand
+                          String additionalTag, boolean pushOnSuccess, String dockerCommand,
+                          boolean privileged
 
     ) {
         this.image = image;
@@ -107,7 +108,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
         this.tagOnCompletion = tagOnCompletion;
         this.dockerCommand = dockerCommand;
-        this.privileged = true;
+        this.privileged = privileged;
 
         if(instanceCapStr.equals("")) {
             this.instanceCap = Integer.MAX_VALUE;
