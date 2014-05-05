@@ -45,13 +45,17 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         Queue.Executable executable = executor.getCurrentExecutable();
         if( executable instanceof Run) {
             Run build = (Run) executable;
+            DockerSlave slave = getNode();
 
-            getNode().setRun(build);
+            if( slave == null ) {
+                LOGGER.log(Level.INFO, " Ignoring TaskCompleted for " + this + " as node has already been removed.");
+            } else {
+                slave.setRun(build);
 
-            if( getNode().dockerTemplate.tagOnCompletion ) {
-                getNode().commitOnTerminate();
+                if (slave.dockerTemplate.tagOnCompletion) {
+                    slave.commitOnTerminate();
+                }
             }
-
 
         }
         LOGGER.log(Level.INFO, " Computer " + this + " taskCompleted");
