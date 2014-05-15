@@ -42,7 +42,7 @@ public class DockerCloud extends Cloud {
 
     public static final String CLOUD_ID_PREFIX = "docker-";
 
-    public final List<? extends DockerTemplate> templates;
+    public final List<DockerTemplate> templates;
     public final String serverUrl;
 
     private transient DockerClient connection;
@@ -55,9 +55,9 @@ public class DockerCloud extends Cloud {
         this.serverUrl = serverUrl;
 
         if( templates != null )
-            this.templates = templates;
+            this.templates = new ArrayList<DockerTemplate>(templates);
         else
-            this.templates = Collections.emptyList();
+            this.templates = new ArrayList<DockerTemplate>();
 
 
 
@@ -188,6 +188,14 @@ public class DockerCloud extends Cloud {
             }
         }
         return null;
+    }
+
+    /**
+     * Add a new template to the cloud
+     */
+    public void addTemplate(DockerTemplate t) {
+        this.templates.add(t);
+        t.parent = this;
     }
 
     /**

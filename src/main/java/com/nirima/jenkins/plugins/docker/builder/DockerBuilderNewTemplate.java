@@ -1,0 +1,124 @@
+package com.nirima.jenkins.plugins.docker.builder;
+
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.model.ItemGroup;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.Builder;
+import hudson.slaves.Cloud;
+import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.security.ACL;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.AncestorInPath;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.trilead.ssh2.Connection;
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import com.nirima.jenkins.plugins.docker.DockerCloud;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+
+/**
+ * Created by Jocelyn De La Rosa on 14/05/2014.
+ */
+public class DockerBuilderNewTemplate extends Builder implements Serializable {
+    private static final Logger LOGGER = Logger.getLogger(DockerBuilderNewTemplate.class.getName());
+
+    public final String image;
+    public final String labelString;
+    public final String remoteFs;
+    public final String credentialsId;
+    public final String jvmOptions;
+    public final String javaPath;
+    public final String prefixStartSlaveCmd;
+    public final String suffixStartSlaveCmd;
+    public final boolean tagOnCompletion;
+    public final String instanceCapStr;
+    public final String dnsString;
+    public final String additionalTag;
+    public final boolean pushOnSuccess;
+    public final String dockerCommand;
+    public final boolean privileged;
+
+    @DataBoundConstructor
+    public DockerBuilderNewTemplate(String image, String labelString, String remoteFs,
+                                              String credentialsId, String jvmOptions, String javaPath,
+                                              String prefixStartSlaveCmd, String suffixStartSlaveCmd,
+                                              boolean tagOnCompletion, String instanceCapStr, String dnsString,
+                                              String additionalTag, boolean pushOnSuccess, String dockerCommand,
+                                              boolean privileged) {
+
+        this.image = image;
+        this.labelString = labelString;
+        this.remoteFs = remoteFs;
+        this.credentialsId = credentialsId;
+        this.jvmOptions = jvmOptions;
+        this.javaPath = javaPath;
+        this.prefixStartSlaveCmd = prefixStartSlaveCmd;
+        this.suffixStartSlaveCmd = suffixStartSlaveCmd;
+        this.tagOnCompletion = tagOnCompletion;
+        this.instanceCapStr = instanceCapStr;
+        this.dnsString = dnsString;
+        this.additionalTag = additionalTag;
+        this.pushOnSuccess = pushOnSuccess;
+        this.dockerCommand = dockerCommand;
+        this.privileged = privileged;
+    }
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
+    }
+
+    @Extension
+    public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
+
+        @Override
+        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+            return true;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Add a new template to all docker clouds";
+        }
+
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+
+            return new SSHUserListBoxModel().withMatching(SSHAuthenticator.matcher(Connection.class),
+                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
+                            ACL.SYSTEM, SSHLauncher.SSH_SCHEME));
+        }
+    }
+
+
+    @Override
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+
+        for (Cloud c : Jenkins.getInstance().clouds) {
+            if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
+                LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
+                DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, credentialsId,
+                        jvmOptions, javaPath, prefixStartSlaveCmd,
+                        suffixStartSlaveCmd, tagOnCompletion, instanceCapStr,
+                        dnsString, additionalTag, pushOnSuccess, dockerCommand,
+                        privileged);
+                ((DockerCloud) c).addTemplate(t);
+            }
+        }
+
+        return true;
+    }
+}
