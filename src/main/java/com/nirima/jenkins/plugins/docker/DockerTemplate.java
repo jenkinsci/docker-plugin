@@ -169,7 +169,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         Node.Mode mode = Node.Mode.EXCLUSIVE;
 
 
-        RetentionStrategy retentionStrategy = new DockerRetentionStrategy();//RetentionStrategy.INSTANCE;
+        RetentionStrategy retentionStrategy = new DockerRetentionStrategy();
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
 
