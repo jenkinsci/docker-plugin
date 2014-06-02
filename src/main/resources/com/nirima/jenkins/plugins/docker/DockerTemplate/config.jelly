@@ -1,75 +1,10 @@
 <j:jelly xmlns:j="jelly:core"
          xmlns:f="/lib/form"
-         xmlns:c="/lib/credentials"
+         xmlns:st="jelly:stapler"
         >
     <table width="100%">
 
-        <f:entry title="${%ID}" field="image">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%Labels}" field="labelString">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%Credentials}" field="credentialsId">
-            <c:select/>
-        </f:entry>
-
-        <f:entry title="${%Remote Filing System Root}" field="remoteFs">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%Tag on Completion}" field="tagOnCompletion">
-            <f:checkbox/>
-        </f:entry>
-
-        <f:entry title="${%Instance Cap}" field="instanceCapStr">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%DNS}" field="dnsString">
-            <f:textbox/>
-        </f:entry>
-
-        <f:advanced>
-
-            <f:entry title="${%Additional tag to add}" field="additionalTag">
-                <f:textbox/>
-            </f:entry>
-
-
-            <f:entry title="${%Push on successful build}" field="pushOnSuccess">
-                <f:checkbox/>
-            </f:entry>
-
-
-            <f:entry title="${%JavaPath}" field="javaPath">
-                <f:textbox/>
-            </f:entry>
-
-       <f:entry title="${%JVM Options}" field="jvmOptions">
-           <f:textbox/>
-       </f:entry>
-
-        <f:entry title="${%Docker Command}" field="dockerCommand">
-            <f:textbox />
-        </f:entry>
-
-        <f:entry title="${%Run container privileged}" field="privileged">
-            <f:checkbox/>
-        </f:entry>
-
-       <f:entry title="${%Prefix Start Slave Command}" field="prefixStartSlaveCmd">
-           <f:textbox/>
-       </f:entry>
-
-       <f:entry title="${%Suffix Start Slave Command}" field="suffixStartSlaveCmd">
-           <f:textbox/>
-       </f:entry>
-
-        </f:advanced>
-
+        <st:include page="template.jelly" class="${descriptor.clazz}" />
         <f:entry title="">
             <div align="right">
                 <f:repeatableDeleteButton/>
