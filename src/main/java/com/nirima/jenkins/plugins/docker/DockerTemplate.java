@@ -74,6 +74,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public final String remoteFs; // = "/home/jenkins";
 
+    public final String hostname;
 
     public final int instanceCap;
     public final String[] dnsHosts;
@@ -92,6 +93,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String instanceCapStr, String dnsString,
                           String dockerCommand,
                           String volumesString,
+                          String hostname,
                           boolean privileged
 
     ) {
@@ -106,6 +108,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         this.dockerCommand = dockerCommand;
         this.privileged = privileged;
+        this.hostname = hostname;
 
         if(instanceCapStr.equals("")) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -226,6 +229,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             dockerCommandArray = new String[]{"/usr/sbin/sshd", "-D"};
         }
 
+        if (hostname != null && !hostname.isEmpty()) {
+            containerConfig.setHostName(hostname);
+        }
         containerConfig.setCmd(dockerCommandArray);
         containerConfig.setPortSpecs(new String[]{"22/tcp"});
         //containerConfig.setPortSpecs(new String[]{"22/tcp"});
