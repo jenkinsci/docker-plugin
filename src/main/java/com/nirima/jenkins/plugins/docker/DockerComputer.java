@@ -4,6 +4,7 @@ import com.google.common.base.Objects;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.model.*;
 import hudson.slaves.AbstractCloudComputer;
+import hudson.slaves.OfflineCause;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -62,6 +63,8 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     }
 
+
+
     @Override
     public void taskCompletedWithProblems(Executor executor, Queue.Task task, long durationMS, Throwable problems) {
         super.taskCompletedWithProblems(executor, task, durationMS, problems);
@@ -70,6 +73,21 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     @Override
     public boolean isAcceptingTasks() {
+
+        try {
+            DockerSlave node = getNode();
+            if( !node.containerExistsInCloud() )
+                setAcceptingTasks(false);
+            if( getOfflineCause() != null) {
+                setAcceptingTasks(false);
+                LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause() );
+            }
+        } catch(Exception ex) {
+            LOGGER.log(Level.INFO, " Computer " + this + " error getting node");
+            setAcceptingTasks(false);
+        }
+
+
         boolean result = !haveWeRunAnyJobs && super.isAcceptingTasks();
         LOGGER.log(Level.INFO, " Computer " + this + " isAcceptingTasks " + result);
         return result;
@@ -81,6 +99,8 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
             node.onConnected();
         }
     }
+
+
 
     @Override
     public String toString() {

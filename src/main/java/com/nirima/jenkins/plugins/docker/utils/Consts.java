@@ -1,7 +1,5 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import java.util.regex.Pattern;
-
 /**
  * Created by magnayn on 22/02/2014.
  */

@@ -71,6 +71,16 @@ public class DockerSlave extends AbstractCloudSlave {
         return new DockerComputer(this);
     }
 
+    public boolean containerExistsInCloud() {
+        try {
+            DockerClient client = getClient();
+            client.container(containerId).inspect();
+            return true;
+        } catch(Exception ex) {
+            return false;
+        }
+    }
+
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
 
@@ -156,6 +166,8 @@ public class DockerSlave extends AbstractCloudSlave {
     public void onConnected() {
 
     }
+
+
 
     public void retentionTerminate() throws IOException, InterruptedException {
         terminate();

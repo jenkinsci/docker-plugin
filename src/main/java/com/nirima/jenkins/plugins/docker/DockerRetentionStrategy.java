@@ -41,6 +41,8 @@ public class DockerRetentionStrategy  extends RetentionStrategy<DockerComputer> 
             synchronized (this) {
                 if (c.isIdle() && c.isOnline() && !disabled && c.haveWeRunAnyJobs())
                     shouldTerminate = true;
+                if( !c.isAcceptingTasks() )
+                    shouldTerminate = true;
             }
 
             // TODO: really think about the right strategy here
