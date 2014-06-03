@@ -188,8 +188,18 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
         nodeDescription += "]";
 
+        String slaveName = containerId.substring(0,12);
+
+        try
+        {
+            slaveName = slaveName + "@" + getParent().getDisplayName();
+        }
+        catch(Exception ex) {
+            LOGGER.warning("Error fetching name of cloud");
+        }
+
         return new DockerSlave(this, containerId,
-                containerId.substring(0,12),
+                slaveName,
                 nodeDescription,
                 remoteFs, numExecutors, mode, labelString,
                 launcher, retentionStrategy, nodeProperties);
