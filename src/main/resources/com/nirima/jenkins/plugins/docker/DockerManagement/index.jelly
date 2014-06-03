@@ -11,11 +11,26 @@
             <j:set var="descriptor" value="${it.descriptor}"/>
 
             <h1>${%Docker Servers}</h1>
-            <ul>
-                <j:forEach var="serverName" items="${it.serverNames}" varStatus="loop">
-                    <li> <a href="server/${serverName}"> ${serverName} </a> </li>
+
+
+            <table border="0" cellpadding="2" cellspacing="0"
+                   class="pane bigtable"
+                   style="margin-top: 0">
+                <tr>
+
+                    <td class="pane-header">${%Name}</td>
+                    <td class="pane-header">${%Active Hosts}</td>
+                </tr>
+
+                <j:forEach var="res" items="${it.servers}">
+                    <tr>
+                        <td><a href="server/${res.name}"> ${res.name} </a></td>
+                        <td>${res.activeHosts}</td>
+                    </tr>
                 </j:forEach>
-            </ul>
+
+
+            </table>
 
         </l:main-panel>
     </l:layout>
