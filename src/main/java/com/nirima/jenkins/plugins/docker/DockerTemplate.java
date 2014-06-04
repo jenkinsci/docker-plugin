@@ -78,13 +78,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public final int instanceCap;
     public final String[] dnsHosts;
 
-    public final boolean tagOnCompletion;
-
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     public transient DockerCloud parent;
-
-    public final String additionalTag;
-    public final boolean pushOnSuccess;
 
     public final boolean privileged;
 
@@ -93,8 +88,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String remoteFs,
                           String credentialsId, String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                          boolean tagOnCompletion, String instanceCapStr, String dnsString,
-                          String additionalTag, boolean pushOnSuccess, String dockerCommand,
+                          String instanceCapStr, String dnsString,
+                          String dockerCommand,
                           boolean privileged
 
     ) {
@@ -106,7 +101,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
-        this.tagOnCompletion = tagOnCompletion;
+
         this.dockerCommand = dockerCommand;
         this.privileged = privileged;
 
@@ -117,8 +112,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         this.dnsHosts = dnsString.split(" ");
-        this.additionalTag = additionalTag;
-        this.pushOnSuccess = pushOnSuccess;
 
         readResolve();
     }

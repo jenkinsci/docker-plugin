@@ -52,10 +52,6 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
                 LOGGER.log(Level.INFO, " Ignoring TaskCompleted for " + this + " as node has already been removed.");
             } else {
                 slave.setRun(build);
-
-                if (slave.dockerTemplate.tagOnCompletion) {
-                    slave.commitOnTerminate();
-                }
             }
 
         }

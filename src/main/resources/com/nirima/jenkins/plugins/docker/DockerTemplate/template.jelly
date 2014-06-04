@@ -18,10 +18,6 @@
             <f:textbox/>
         </f:entry>
 
-        <f:entry title="${%Tag on Completion}" field="tagOnCompletion">
-            <f:checkbox/>
-        </f:entry>
-
         <f:entry title="${%Instance Cap}" field="instanceCapStr">
             <f:textbox/>
         </f:entry>
@@ -31,16 +27,6 @@
         </f:entry>
 
         <f:advanced>
-
-            <f:entry title="${%Additional tag to add}" field="additionalTag">
-                <f:textbox/>
-            </f:entry>
-
-
-            <f:entry title="${%Push on successful build}" field="pushOnSuccess">
-                <f:checkbox/>
-            </f:entry>
-
 
             <f:entry title="${%JavaPath}" field="javaPath">
                 <f:textbox/>

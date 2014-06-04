@@ -44,11 +44,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String javaPath;
     public final String prefixStartSlaveCmd;
     public final String suffixStartSlaveCmd;
-    public final boolean tagOnCompletion;
     public final String instanceCapStr;
     public final String dnsString;
-    public final String additionalTag;
-    public final boolean pushOnSuccess;
     public final String dockerCommand;
     public final boolean privileged;
 
@@ -56,8 +53,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public DockerBuilderNewTemplate(String image, String labelString, String remoteFs,
                                               String credentialsId, String jvmOptions, String javaPath,
                                               String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                                              boolean tagOnCompletion, String instanceCapStr, String dnsString,
-                                              String additionalTag, boolean pushOnSuccess, String dockerCommand,
+                                              String instanceCapStr, String dnsString,
+                                              String dockerCommand,
                                               boolean privileged) {
 
         this.image = image;
@@ -68,11 +65,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.javaPath = javaPath;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
-        this.tagOnCompletion = tagOnCompletion;
         this.instanceCapStr = instanceCapStr;
         this.dnsString = dnsString;
-        this.additionalTag = additionalTag;
-        this.pushOnSuccess = pushOnSuccess;
         this.dockerCommand = dockerCommand;
         this.privileged = privileged;
     }
@@ -112,8 +106,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
                 DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, credentialsId,
                         jvmOptions, javaPath, prefixStartSlaveCmd,
-                        suffixStartSlaveCmd, tagOnCompletion, instanceCapStr,
-                        dnsString, additionalTag, pushOnSuccess, dockerCommand,
+                        suffixStartSlaveCmd, instanceCapStr,
+                        dnsString, dockerCommand,
                         privileged);
                 ((DockerCloud) c).addTemplate(t);
             }
