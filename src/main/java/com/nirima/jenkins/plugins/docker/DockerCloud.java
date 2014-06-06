@@ -45,21 +45,27 @@ public class DockerCloud extends Cloud {
     public final List<DockerTemplate> templates;
     public final String serverUrl;
 
+    private final int connectTimeout;
+    private final int readTimeout;
+
+
     private transient DockerClient connection;
 
+
+
     @DataBoundConstructor
-    public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String instanceCapStr) {
+    public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String instanceCapStr, int connectTimeout, int readTimeout) {
         super(name);
+
         Preconditions.checkNotNull(serverUrl);
 
         this.serverUrl = serverUrl;
-
+        this.connectTimeout = connectTimeout;
+        this.readTimeout = readTimeout;
         if( templates != null )
             this.templates = new ArrayList<DockerTemplate>(templates);
         else
             this.templates = new ArrayList<DockerTemplate>();
-
-
 
         readResolve();
     }
@@ -79,8 +85,11 @@ public class DockerCloud extends Cloud {
         LOGGER.info("Building connection to docker host " + name + " URL " + serverUrl);
 
         if (connection == null) {
+
             connection = DockerClient.builder()
                     .withUrl(serverUrl)
+                    .connectTimeout(connectTimeout*1000)
+                    .readTimeout(readTimeout*1000)
                     .build();
         }
         return connection;
@@ -90,25 +99,7 @@ public class DockerCloud extends Cloud {
     @Override
     public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         try {
-            // Count number of pending executors from spot requests
-        /*    for(EC2SpotSlave n : NodeIterator.nodes(EC2SpotSlave.class)){
-                // If the slave is online then it is already counted by Jenkins
-                // We only want to count potential additional Spot instance slaves
-                if (n.getComputer().isOffline()){
-                    DescribeSpotInstanceRequestsRequest dsir =
-                            new DescribeSpotInstanceRequestsRequest().withSpotInstanceRequestIds(n.getSpotInstanceRequestId());
 
-                    for(SpotInstanceRequest sir : connect().describeSpotInstanceRequests(dsir).getSpotInstanceRequests()) {
-                        // Count Spot requests that are open and still have a chance to be active
-                        // A request can be active and not yet registered as a slave. We check above
-                        // to ensure only unregistered slaves get counted
-                        if(sir.getState().equals("open") || sir.getState().equals("active")){
-                            excessWorkload -= n.getNumExecutors();
-                        }
-                    }
-                }
-            }
-            */
             LOGGER.log(Level.INFO, "Excess workload after pending Spot instances: " + excessWorkload);
 
             List<NodeProvisioner.PlannedNode> r = new ArrayList<NodeProvisioner.PlannedNode>();
