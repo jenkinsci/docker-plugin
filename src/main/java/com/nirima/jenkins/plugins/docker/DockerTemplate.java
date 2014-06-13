@@ -77,6 +77,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public final int instanceCap;
     public final String[] dnsHosts;
+    public final String[] volumes;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     public transient DockerCloud parent;
@@ -90,6 +91,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
                           String dockerCommand,
+                          String volumesString,
                           boolean privileged
 
     ) {
@@ -112,6 +114,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         this.dnsHosts = dnsString.split(" ");
+        this.volumes = volumesString.split(" ");
 
         readResolve();
     }
@@ -126,6 +129,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public String getDnsString() {
         return Joiner.on(" ").join(dnsHosts);
+    }
+
+    public String getVolumesString() {
+	return Joiner.on(" ").join(volumes);
     }
 
     public Descriptor<DockerTemplate> getDescriptor() {
@@ -237,6 +244,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         hostConfig.setPrivileged(this.privileged);
         if( dnsHosts.length > 0 )
             hostConfig.setDns(dnsHosts);
+
+        if (volumes.length > 0)
+            hostConfig.setBinds(volumes);
 
         dockerClient.container(container.getId()).start(hostConfig);
 

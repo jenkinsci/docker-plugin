@@ -47,6 +47,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String instanceCapStr;
     public final String dnsString;
     public final String dockerCommand;
+    public final String volumesString;
     public final boolean privileged;
 
     @DataBoundConstructor
@@ -55,6 +56,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                                               String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                                               String instanceCapStr, String dnsString,
                                               String dockerCommand,
+                                              String volumesString,
                                               boolean privileged) {
 
         this.image = image;
@@ -68,6 +70,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.instanceCapStr = instanceCapStr;
         this.dnsString = dnsString;
         this.dockerCommand = dockerCommand;
+        this.volumesString = volumesString;
         this.privileged = privileged;
     }
 
@@ -108,7 +111,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                         jvmOptions, javaPath, prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
                         dnsString, dockerCommand,
-                        privileged);
+                        volumesString, privileged);
                 ((DockerCloud) c).addTemplate(t);
             }
         }
