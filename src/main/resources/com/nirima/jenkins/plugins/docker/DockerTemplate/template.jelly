@@ -40,6 +40,10 @@
             <f:textbox />
         </f:entry>
 
+        <f:entry title="${%Volumes}" field="volumesString">
+            <f:textbox/>
+        </f:entry>
+
         <f:entry title="${%Run container privileged}" field="privileged">
             <f:checkbox/>
         </f:entry>
