@@ -228,6 +228,9 @@ public class DockerCloud extends Cloud {
 
             Version version = dc.system().version();
 
+            if( version.getVersionComponents()[0] < 1 )
+                return FormValidation.error("Docker host is " + version.getVersion() + " which is not supported.");
+
             return FormValidation.ok("Version = " + version.getVersion());
         }
     }
