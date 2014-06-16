@@ -18,6 +18,9 @@
 
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="serverUrl" />
 
+    <f:entry title="${%Container Cap}" field="containerCapStr">
+        <f:textbox />
+    </f:entry>
 
 
   <f:entry title="${%Images}" description="${%List of Images to be launched as slaves}">

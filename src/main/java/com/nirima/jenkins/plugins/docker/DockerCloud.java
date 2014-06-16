@@ -45,6 +45,7 @@ public class DockerCloud extends Cloud {
 
     public final List<DockerTemplate> templates;
     public final String serverUrl;
+    public final int containerCap;
 
     private final int connectTimeout;
     private final int readTimeout;
@@ -58,7 +59,7 @@ public class DockerCloud extends Cloud {
     private static HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
 
     @DataBoundConstructor
-    public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String instanceCapStr, int connectTimeout, int readTimeout) {
+    public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String containerCapStr, int connectTimeout, int readTimeout) {
         super(name);
 
         Preconditions.checkNotNull(serverUrl);
@@ -71,7 +72,21 @@ public class DockerCloud extends Cloud {
         else
             this.templates = new ArrayList<DockerTemplate>();
 
+        if(containerCapStr.equals("")) {
+            this.containerCap = Integer.MAX_VALUE;
+        } else {
+            this.containerCap = Integer.parseInt(containerCapStr);
+        }
+
         readResolve();
+    }
+
+    public String getContainerCapStr() {
+        if (containerCap==Integer.MAX_VALUE) {
+            return "";
+        } else {
+            return String.valueOf(containerCap);
+        }
     }
 
     protected Object readResolve() {
@@ -259,6 +274,12 @@ public class DockerCloud extends Cloud {
             }
 
             estimatedAmiSlaves += currentProvisioning;
+
+            if(estimatedTotalSlaves >= containerCap) {
+                LOGGER.log(Level.INFO, "Total container cap of " + containerCap +
+                        " reached, not provisioning.");
+                return false;      // maxed out
+            }
 
             if (estimatedAmiSlaves >= amiCap) {
                 LOGGER.log(Level.INFO, "AMI Instance cap of " + amiCap +
