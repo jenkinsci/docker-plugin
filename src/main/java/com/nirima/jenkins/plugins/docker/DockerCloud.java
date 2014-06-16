@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.HashMap;
 
 /**
  * Created by magnayn on 08/01/2014.
@@ -51,7 +52,10 @@ public class DockerCloud extends Cloud {
 
     private transient DockerClient connection;
 
-
+    /* Track the count per-AMI identifiers for AMIs currently being
+     * provisioned, but not necessarily reported yet by docker.
+     */
+    private static HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
 
     @DataBoundConstructor
     public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String instanceCapStr, int connectTimeout, int readTimeout) {
@@ -94,6 +98,21 @@ public class DockerCloud extends Cloud {
         }
         return connection;
 
+    }
+
+    /**
+     * Decrease the count of slaves being "provisioned".
+     */
+    private void decrementAmiSlaveProvision(String ami) {
+        synchronized (provisioningAmis) {
+            int currentProvisioning;
+            try {
+                currentProvisioning = provisioningAmis.get(ami);
+            } catch(NullPointerException npe) {
+                return;
+            }
+            provisioningAmis.put(ami, Math.max(currentProvisioning - 1, 0));
+        }
     }
 
     @Override
@@ -139,7 +158,7 @@ public class DockerCloud extends Cloud {
                                     throw Throwables.propagate(ex);
                                 }
                                 finally {
-                                    //decrementAmiSlaveProvision(t.ami);
+                                    decrementAmiSlaveProvision(t.image);
                                 }
                             }
                         })
@@ -190,18 +209,21 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Check not too many already running.
+     * Counts the number of instances in Docker currently running that are using the specifed image.
      *
+     * @param ami If AMI is left null, then all instances are counted.
+     * <p>
+     * This includes those instances that may be started outside Hudson.
      */
-    private synchronized boolean addProvisionedSlave(String image, int amiCap) throws Exception {
-        if( amiCap == 0 )
-            return true;
-
-
+    public int countCurrentDockerSlaves(String ami) throws Exception {
         final DockerClient dockerClient = connect();
-        final ImageInspectResponse ir = dockerClient.image(image).inspect();
 
         List<Container> containers = dockerClient.containers().finder().allContainers(false).list();
+
+        if (ami == null)
+            return containers.size();
+
+        final ImageInspectResponse ir = dockerClient.image(ami).inspect();
 
         Collection<Container> matching = Collections2.filter(containers, new Predicate<Container>() {
             public boolean apply(@Nullable Container container) {
@@ -209,8 +231,54 @@ public class DockerCloud extends Cloud {
                 return (cis.getImage().equalsIgnoreCase(ir.getId()));
             }
         });
+        return matching.size();
+    }
 
-        return matching.size() < amiCap;
+    /**
+     * Check not too many already running.
+     *
+     */
+    private synchronized boolean addProvisionedSlave(String ami, int amiCap) throws Exception {
+        if( amiCap == 0 )
+            return true;
+
+        int estimatedTotalSlaves = countCurrentDockerSlaves(null);
+        int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
+
+        synchronized (provisioningAmis) {
+            int currentProvisioning;
+
+            for (int amiCount : provisioningAmis.values()) {
+                estimatedTotalSlaves += amiCount;
+            }
+            try {
+                currentProvisioning = provisioningAmis.get(ami);
+            }
+            catch (NullPointerException npe) {
+                currentProvisioning = 0;
+            }
+
+            estimatedAmiSlaves += currentProvisioning;
+
+            if (estimatedAmiSlaves >= amiCap) {
+                LOGGER.log(Level.INFO, "AMI Instance cap of " + amiCap +
+                        " reached for ami " + ami +
+                        ", not provisioning.");
+                return false;      // maxed out
+            }
+
+            LOGGER.log(Level.INFO,
+                    "Provisioning for AMI " + ami + "; " +
+                            "Estimated number of total slaves: "
+                            + String.valueOf(estimatedTotalSlaves) + "; " +
+                            "Estimated number of slaves for ami "
+                            + ami + ": "
+                            + String.valueOf(estimatedAmiSlaves)
+            );
+
+            provisioningAmis.put(ami, currentProvisioning + 1);
+            return true;
+        }
     }
 
     @Extension
