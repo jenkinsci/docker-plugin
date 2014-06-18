@@ -31,11 +31,12 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 
 public class DockerTemplate implements Describable<DockerTemplate> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
-
+    private static final int CONTAINER_START_TIME = 2000;
 
     public final String image;
     public final String labelString;
@@ -167,7 +168,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return parent;
     }
 
-    public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException {
+    public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException, InterruptedException {
             PrintStream logger = listener.getLogger();
 
 
@@ -214,7 +215,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     }
 
-    public ContainerInspectResponse provisionNew() throws DockerException {
+    public ContainerInspectResponse provisionNew() throws DockerException, InterruptedException {
         DockerClient dockerClient = getParent().connect();
 
         ContainerConfig containerConfig = new ContainerConfig();
@@ -260,6 +261,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             hostConfig.setBinds(volumes);
 
         dockerClient.container(container.getId()).start(hostConfig);
+
+        // Give the container time to start up
+        LOGGER.log(Level.INFO, "Waiting for the container processes to start...");
+        Thread.sleep(CONTAINER_START_TIME);
 
         String containerId = container.getId();
 
