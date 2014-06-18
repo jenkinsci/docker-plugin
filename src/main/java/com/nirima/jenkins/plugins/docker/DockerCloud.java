@@ -107,7 +107,8 @@ public class DockerCloud extends Cloud {
 
             connection = DockerClient.builder()
                     .withUrl(serverUrl)
-                    .connectTimeout(connectTimeout*1000)
+                    .withLogging(DockerClient.Logging.SLF4J)
+                    .connectTimeout(connectTimeout * 1000)
                     .readTimeout(readTimeout*1000)
                     .build();
         }

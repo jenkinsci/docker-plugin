@@ -70,23 +70,34 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     @Override
     public boolean isAcceptingTasks() {
 
+        boolean result = !haveWeRunAnyJobs && super.isAcceptingTasks();
+
+        // Quit quickly if we aren't accepting tasks
+        if( !result )
+            return false;
+
+        // Update
+        updateAcceptingTasks();
+
+        // Are we still accepting tasks?
+        result = !haveWeRunAnyJobs && super.isAcceptingTasks();
+
+        return result;
+    }
+
+    private void updateAcceptingTasks() {
         try {
             DockerSlave node = getNode();
-            if( !node.containerExistsInCloud() )
-                setAcceptingTasks(false);
             if( getOfflineCause() != null) {
                 setAcceptingTasks(false);
                 LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause() );
+            } else if( !node.containerExistsInCloud() ) {
+                setAcceptingTasks(false);
             }
         } catch(Exception ex) {
             LOGGER.log(Level.INFO, " Computer " + this + " error getting node");
             setAcceptingTasks(false);
         }
-
-
-        boolean result = !haveWeRunAnyJobs && super.isAcceptingTasks();
-        LOGGER.log(Level.INFO, " Computer " + this + " isAcceptingTasks " + result);
-        return result;
     }
 
     public void onConnected(){
