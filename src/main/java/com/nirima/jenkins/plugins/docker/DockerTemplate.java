@@ -36,7 +36,6 @@ import java.util.logging.Level;
 
 public class DockerTemplate implements Describable<DockerTemplate> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
-    private static final int CONTAINER_START_TIME = 2000;
 
     public final String image;
     public final String labelString;
@@ -51,6 +50,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Field dockerCommand
      */
     public final String dockerCommand;
+
+    /**
+     * Field container start up time
+     */
+    public final int containerStartTime;
 
     /**
      * Field jvmOptions.
@@ -92,7 +96,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String credentialsId, String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
-                          String dockerCommand,
+                          String dockerCommand, String containerStartTime,
                           String volumesString,
                           String hostname,
                           boolean privileged
@@ -108,6 +112,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
 
         this.dockerCommand = dockerCommand;
+        if (containerStartTime.equals("")) {
+            this.containerStartTime = 0;
+        } else {
+            this.containerStartTime = Integer.parseInt(containerStartTime);
+        }
         this.privileged = privileged;
         this.hostname = hostname;
 
@@ -263,8 +272,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         dockerClient.container(container.getId()).start(hostConfig);
 
         // Give the container time to start up
-        LOGGER.log(Level.INFO, "Waiting for the container processes to start...");
-        Thread.sleep(CONTAINER_START_TIME);
+        LOGGER.log(Level.INFO, "Waiting " + containerStartTime + " seconds for container processes to start.");
+        Thread.sleep(containerStartTime * 1000);
 
         String containerId = container.getId();
 

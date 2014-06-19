@@ -44,6 +44,10 @@
             <f:textbox />
         </f:entry>
 
+        <f:entry title="${%Container Start Up Time}" field="containerStartTime">
+            <f:textbox />
+        </f:entry>
+
         <f:entry title="${%Volumes}" field="volumesString">
             <f:textbox/>
         </f:entry>
