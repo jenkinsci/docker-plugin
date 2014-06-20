@@ -101,7 +101,7 @@ public class DockerCloud extends Cloud {
      */
     public synchronized DockerClient connect() {
 
-        LOGGER.info("Building connection to docker host " + name + " URL " + serverUrl);
+        LOGGER.log(Level.FINE, "Building connection to docker host " + name + " URL " + serverUrl);
 
         if (connection == null) {
 
