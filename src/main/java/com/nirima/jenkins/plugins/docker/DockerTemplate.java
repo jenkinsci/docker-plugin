@@ -31,11 +31,11 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 
 public class DockerTemplate implements Describable<DockerTemplate> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
-
 
     public final String image;
     public final String labelString;
@@ -50,6 +50,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Field dockerCommand
      */
     public final String dockerCommand;
+
+    /**
+     * Field container start up time
+     */
+    public final int containerStartTime;
 
     /**
      * Field jvmOptions.
@@ -91,7 +96,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String credentialsId, String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
-                          String dockerCommand,
+                          String dockerCommand, String containerStartTime,
                           String volumesString,
                           String hostname,
                           boolean privileged
@@ -107,6 +112,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
 
         this.dockerCommand = dockerCommand;
+        if (containerStartTime.equals("")) {
+            this.containerStartTime = 0;
+        } else {
+            this.containerStartTime = Integer.parseInt(containerStartTime);
+        }
         this.privileged = privileged;
         this.hostname = hostname;
 
@@ -167,7 +177,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return parent;
     }
 
-    public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException {
+    public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException, InterruptedException {
             PrintStream logger = listener.getLogger();
 
 
@@ -214,7 +224,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     }
 
-    public ContainerInspectResponse provisionNew() throws DockerException {
+    public ContainerInspectResponse provisionNew() throws DockerException, InterruptedException {
         DockerClient dockerClient = getParent().connect();
 
         ContainerConfig containerConfig = new ContainerConfig();
@@ -260,6 +270,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             hostConfig.setBinds(volumes);
 
         dockerClient.container(container.getId()).start(hostConfig);
+
+        // Give the container time to start up
+        LOGGER.log(Level.INFO, "Waiting " + containerStartTime + " seconds for container processes to start.");
+        Thread.sleep(containerStartTime * 1000);
 
         String containerId = container.getId();
 
