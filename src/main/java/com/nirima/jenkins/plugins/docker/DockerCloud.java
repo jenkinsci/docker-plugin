@@ -10,6 +10,7 @@ import com.nirima.docker.client.model.Container;
 import com.nirima.docker.client.model.ContainerInspectResponse;
 import com.nirima.docker.client.model.ImageInspectResponse;
 import com.nirima.docker.client.model.Version;
+import com.nirima.docker.client.model.Image;
 import com.nirima.docker.client.DockerClient;
 import hudson.Extension;
 import hudson.model.*;
@@ -238,6 +239,14 @@ public class DockerCloud extends Cloud {
 
         if (ami == null)
             return containers.size();
+
+        List<Image> images = dockerClient.images().finder().allImages(true).filter(ami).list();
+        LOGGER.log(Level.INFO, "Images found: " + images);
+
+        if (images.size() == 0) {
+            LOGGER.log(Level.INFO, "Pulling image " + ami + " since one was not found.");
+            dockerClient.createPullCommand().image(ami).withTag("latest").execute();
+        }
 
         final ImageInspectResponse ir = dockerClient.image(ami).inspect();
 
