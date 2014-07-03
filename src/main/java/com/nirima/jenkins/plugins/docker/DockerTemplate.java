@@ -116,15 +116,21 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             this.instanceCap = Integer.parseInt(instanceCapStr);
         }
 
-        this.dnsHosts = dnsString.split(" ");
-		  //remove all empty volume entries
-		  List<String> temp = new ArrayList<String>();
-		  for(String vol:volumesString.split(" ")) {
-					 if(!vol.isEmpty()) temp.add(vol);
-		  }
-        this.volumes = temp.toArray(new String[temp.size()]);
+        this.dnsHosts = splitAndFilterEmpty(dnsString);
+        this.volumes = splitAndFilterEmpty(volumesString);
 
         readResolve();
+    }
+
+    private String[] splitAndFilterEmpty(String s) {
+        List<String> temp = new ArrayList<String>();
+        for (String item : s.split(" ")) {
+            if (!item.isEmpty())
+                temp.add(item);
+        }
+
+        return temp.toArray(new String[temp.size()]);
+
     }
 
     public String getInstanceCapStr() {
