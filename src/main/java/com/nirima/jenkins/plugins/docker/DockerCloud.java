@@ -10,6 +10,7 @@ import com.nirima.docker.client.model.Container;
 import com.nirima.docker.client.model.ContainerInspectResponse;
 import com.nirima.docker.client.model.ImageInspectResponse;
 import com.nirima.docker.client.model.Version;
+import com.nirima.docker.client.model.Image;
 import com.nirima.docker.client.DockerClient;
 import hudson.Extension;
 import hudson.model.*;
@@ -24,6 +25,7 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -238,6 +240,20 @@ public class DockerCloud extends Cloud {
 
         if (ami == null)
             return containers.size();
+
+        List<Image> images = dockerClient.images().finder().allImages(true).filter(ami).list();
+        LOGGER.log(Level.INFO, "Images found: " + images);
+
+        if (images.size() == 0) {
+            LOGGER.log(Level.INFO, "Pulling image " + ami + " since one was not found.  This may take awhile...");
+            InputStream imageStream = dockerClient.createPullCommand().image(ami).withTag("latest").execute();
+            int streamValue = 0;
+            while (streamValue != -1) {
+                streamValue = imageStream.read();
+            }
+            imageStream.close();
+            LOGGER.log(Level.INFO, "Finished pulling image " + ami);
+        }
 
         final ImageInspectResponse ir = dockerClient.image(ami).inspect();
 
