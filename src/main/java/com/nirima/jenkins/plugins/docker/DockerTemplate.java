@@ -79,6 +79,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public final int instanceCap;
     public final String[] dnsHosts;
     public final String[] volumes;
+    public final String volumesFrom;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     public transient DockerCloud parent;
@@ -92,7 +93,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
                           String dockerCommand,
-                          String volumesString,
+                          String volumesString, String volumesFrom,
                           String hostname,
                           boolean privileged
 
@@ -118,6 +119,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         this.dnsHosts = splitAndFilterEmpty(dnsString);
         this.volumes = splitAndFilterEmpty(volumesString);
+        this.volumesFrom = volumesFrom;
 
         readResolve();
     }
@@ -147,6 +149,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public String getVolumesString() {
 	return Joiner.on(" ").join(volumes);
+    }
+
+    public String getVolumesFrom() {
+        return volumesFrom;
     }
 
     public Descriptor<DockerTemplate> getDescriptor() {
@@ -244,6 +250,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
         if( dnsHosts.length > 0 )
             containerConfig.setDns(dnsHosts);
+        if( volumesFrom != null && !volumesFrom.isEmpty() )
+            containerConfig.setVolumesFrom(volumesFrom);
 
         ContainerCreateResponse container = dockerClient.containers().create(containerConfig);
 
@@ -264,6 +272,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         if (volumes.length > 0)
             hostConfig.setBinds(volumes);
+
+        if(volumesFrom != null && !volumesFrom.isEmpty())
+            hostConfig.setVolumesFrom(new String[] {volumesFrom});
 
         dockerClient.container(container.getId()).start(hostConfig);
 
