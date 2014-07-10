@@ -18,6 +18,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     private boolean haveWeRunAnyJobs = false;
 
+    private int checked = 0;
 
     public DockerComputer(DockerSlave dockerSlave) {
         super(dockerSlave);
@@ -88,9 +89,16 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     private void updateAcceptingTasks() {
         try {
             DockerSlave node = getNode();
+            int pause = 5000;
             if( getOfflineCause() != null) {
-                setAcceptingTasks(false);
-                LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause() );
+                if(getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
+                    LOGGER.log(Level.INFO, "Slave agent not launched after checking " + checked + " time(s).  Waiting for any retries...");
+                    checked += 1;
+                    Thread.sleep(pause);
+                } else {
+                    setAcceptingTasks(false);
+                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause() );
+                }
             } else if( !node.containerExistsInCloud() ) {
                 setAcceptingTasks(false);
             }

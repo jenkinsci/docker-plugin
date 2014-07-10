@@ -16,14 +16,14 @@ public class RetryingComputerLauncher extends DelegatingComputerLauncher {
     private static final Logger log = LoggerFactory.getLogger(RetryingComputerLauncher.class);
 
     /**
-     * How many times to retry the launch?
-     */
-    private final int retries = 3;
-
-    /**
      * time (ms) to back off between retries?
      */
     private final int pause   = 5000;
+
+    /**
+     * Let us know when to pause the launch.
+     */
+    private boolean hasTried = false;
 
     public RetryingComputerLauncher(ComputerLauncher delegate) {
         super(delegate);
@@ -31,16 +31,11 @@ public class RetryingComputerLauncher extends DelegatingComputerLauncher {
 
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-
-        for( int i=0;i<retries;i++) {
-            try {
-                super.launch(computer, listener);
-                return;
-            } catch(Exception ex) {
-                log.info("Launch failed on attempt {}", i);
-            }
+        if (hasTried) {
+            log.info("Launch failed, pausing before retry.");
             Thread.sleep(pause);
         }
-        throw new IOException("SSH Launch failed");
+        super.launch(computer, listener);
+        hasTried = true;
     }
 }
