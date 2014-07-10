@@ -49,8 +49,8 @@ public class DockerCloud extends Cloud {
     public final String serverUrl;
     public final int containerCap;
 
-    private final int connectTimeout;
-    private final int readTimeout;
+    public final int connectTimeout;
+    public final int readTimeout;
 
 
     private transient DockerClient connection;
@@ -99,6 +99,7 @@ public class DockerCloud extends Cloud {
 
     /**
      * Connects to Docker.
+     *
      * @return Docker client.
      */
     public synchronized DockerClient connect() {
@@ -107,12 +108,17 @@ public class DockerCloud extends Cloud {
 
         if (connection == null) {
 
-            connection = DockerClient.builder()
+            DockerClient.Builder builder = DockerClient.builder()
                     .withUrl(serverUrl)
-                    .withLogging(DockerClient.Logging.SLF4J)
-                    .connectTimeout(connectTimeout * 1000)
-                    .readTimeout(readTimeout*1000)
-                    .build();
+                    .withLogging(DockerClient.Logging.SLF4J);
+
+            if (connectTimeout > 0)
+                builder.connectTimeout(connectTimeout * 1000);
+
+            if (readTimeout > 0)
+                builder.readTimeout(readTimeout * 1000);
+
+            connection = builder.build();
         }
         return connection;
 
