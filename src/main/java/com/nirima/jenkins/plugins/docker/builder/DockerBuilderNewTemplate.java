@@ -50,6 +50,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String volumesString;
     public final boolean privileged;
     public final String hostname;
+    public final String slaveStartDelay;
 
     @DataBoundConstructor
     public DockerBuilderNewTemplate(String image, String labelString, String remoteFs,
@@ -60,7 +61,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
             String lxcConfString,
             String volumesString,
             String hostname,
-            boolean privileged) {
+            boolean privileged,
+            String slaveStartDelay) {
 
         this.image = image;
         this.labelString = labelString;
@@ -77,6 +79,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.volumesString = volumesString;
         this.privileged = privileged;
         this.hostname = hostname;
+        this.slaveStartDelay = slaveStartDelay;
     }
 
     @Override
@@ -115,7 +118,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                         jvmOptions, javaPath, prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
                         dnsString, dockerCommand, lxcConfString,
-                        volumesString, hostname, privileged);
+                        volumesString, hostname, privileged, slaveStartDelay);
                 ((DockerCloud) c).addTemplate(t);
             }
         }

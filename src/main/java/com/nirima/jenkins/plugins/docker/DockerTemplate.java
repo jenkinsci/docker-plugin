@@ -64,7 +64,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Field javaPath.
      */
     public final String javaPath;
-
+  
     /**
      * Field prefixStartSlaveCmd.
      */
@@ -74,7 +74,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Field suffixStartSlaveCmd.
      */
     public final String suffixStartSlaveCmd;
-
+    
     public final String remoteFs; // = "/home/jenkins";
 
     public final String hostname;
@@ -83,6 +83,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public final String[] dnsHosts;
     public final String[] volumes;
     public final HostConfig.LxcConf[] lxcOptions;
+    public final int slaveStartDelay_ms;
 
     private transient /*
              * almost final
@@ -101,7 +102,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             String lxcConfString,
             String volumesString,
             String hostname,
-            boolean privileged
+            boolean privileged,
+            String slaveStartDelay
     ) {
         this.image = image;
         this.labelString = Util.fixNull(labelString);
@@ -126,7 +128,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.dnsHosts = splitAndFilterEmpty(dnsString);
         this.volumes = splitAndFilterEmpty(volumesString);
         this.lxcOptions = splitAndFilterEmptyLxcConf(lxcConfString);
-
+        
+        if (slaveStartDelay.equals("")) {
+            this.slaveStartDelay_ms = 30000;
+        } else {
+            this.slaveStartDelay_ms = Integer.parseInt(slaveStartDelay) * 1000;
+        }
         readResolve();
     }
 
@@ -214,7 +221,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         try {
             LOGGER.info("Pausing for 30secs before attempting to SSH to container!");
-            Thread.sleep(30000);
+            Thread.sleep(slaveStartDelay_ms);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
