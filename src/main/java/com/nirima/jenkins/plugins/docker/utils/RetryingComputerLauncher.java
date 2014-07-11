@@ -8,9 +8,7 @@ import hudson.slaves.SlaveComputer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.io.IOException;
-
 
 public class RetryingComputerLauncher extends DelegatingComputerLauncher {
 
@@ -19,7 +17,7 @@ public class RetryingComputerLauncher extends DelegatingComputerLauncher {
     /**
      * time (ms) to back off between retries?
      */
-    private final int pause   = 5000;
+    private final int pause = 5000;
 
     /**
      * Let us know when to pause the launch.

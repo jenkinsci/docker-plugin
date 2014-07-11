@@ -11,9 +11,10 @@ import java.util.List;
 /**
  * Action to record launching of a slave.
  */
-public class DockerLaunchAction implements Action, Serializable, Cloneable{
+public class DockerLaunchAction implements Action, Serializable, Cloneable {
 
     public static class Item {
+
         public final DockerClient client;
         public final String id;
 
@@ -24,13 +25,21 @@ public class DockerLaunchAction implements Action, Serializable, Cloneable{
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             Item item = (Item) o;
 
-            if (!client.equals(item.client)) return false;
-            if (!id.equals(item.id)) return false;
+            if (!client.equals(item.client)) {
+                return false;
+            }
+            if (!id.equals(item.id)) {
+                return false;
+            }
 
             return true;
         }
@@ -58,11 +67,11 @@ public class DockerLaunchAction implements Action, Serializable, Cloneable{
     }
 
     public void started(DockerClient client, String containerName) {
-        running.add( new Item(client, containerName) );
+        running.add(new Item(client, containerName));
     }
 
     public void stopped(DockerClient client, String containerName) {
-        running.remove( new Item(client, containerName) );
+        running.remove(new Item(client, containerName));
     }
 
     public Iterable<Item> getRunning() {

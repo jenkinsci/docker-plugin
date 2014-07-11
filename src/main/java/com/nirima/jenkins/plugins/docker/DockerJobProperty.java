@@ -15,7 +15,6 @@ import org.kohsuke.stapler.export.Exported;
 
 import java.util.Map;
 
-
 public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<?, ?>> {
 
     /**
@@ -30,8 +29,7 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
     public DockerJobProperty(
             boolean tagOnCompletion,
             String additionalTag,
-            boolean pushOnSuccess, boolean cleanImages)
-    {
+            boolean pushOnSuccess, boolean cleanImages) {
         this.tagOnCompletion = tagOnCompletion;
         this.additionalTag = additionalTag;
         this.pushOnSuccess = pushOnSuccess;
@@ -60,6 +58,7 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
 
     @Extension
     public static final class DescriptorImpl extends JobPropertyDescriptor {
+
         public String getDisplayName() {
             return "Docker Job Properties";
         }
@@ -72,10 +71,10 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
         @Override
         public DockerJobProperty newInstance(StaplerRequest sr, JSONObject formData) throws hudson.model.Descriptor.FormException {
             return new DockerJobProperty(
-                    (Boolean)formData.get("tagOnCompletion"),
-                    (String)formData.get("additionalTag"),
-                    (Boolean)formData.get("pushOnSuccess"),
-                    (Boolean)formData.get("cleanImages"));
+                    (Boolean) formData.get("tagOnCompletion"),
+                    (String) formData.get("additionalTag"),
+                    (Boolean) formData.get("pushOnSuccess"),
+                    (Boolean) formData.get("cleanImages"));
         }
     }
 }

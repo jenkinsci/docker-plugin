@@ -28,12 +28,11 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-
 /**
  * Created by Jocelyn De La Rosa on 14/05/2014.
  */
 public class DockerBuilderNewTemplate extends Builder implements Serializable {
+
     private static final Logger LOGGER = Logger.getLogger(DockerBuilderNewTemplate.class.getName());
 
     public final String image;
@@ -54,14 +53,14 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
 
     @DataBoundConstructor
     public DockerBuilderNewTemplate(String image, String labelString, String remoteFs,
-                                              String credentialsId, String jvmOptions, String javaPath,
-                                              String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                                              String instanceCapStr, String dnsString,
-                                              String dockerCommand,
-                                              String lxcConfString,
-                                              String volumesString,
-                                              String hostname,
-                                              boolean privileged) {
+            String credentialsId, String jvmOptions, String javaPath,
+            String prefixStartSlaveCmd, String suffixStartSlaveCmd,
+            String instanceCapStr, String dnsString,
+            String dockerCommand,
+            String lxcConfString,
+            String volumesString,
+            String hostname,
+            boolean privileged) {
 
         this.image = image;
         this.labelString = labelString;
@@ -106,13 +105,12 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         }
     }
 
-
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
-                LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
+                LOGGER.log(Level.INFO, "Adding new template « " + image + " » to cloud " + ((DockerCloud) c).name);
                 DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, credentialsId,
                         jvmOptions, javaPath, prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,

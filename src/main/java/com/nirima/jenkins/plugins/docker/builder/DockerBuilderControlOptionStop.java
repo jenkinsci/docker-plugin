@@ -25,11 +25,12 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
     }
 
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Extension
     public static final class DescriptorImpl extends DockerBuilderControlOptionDescriptor {
+
         @Override
         public String getDisplayName() {
             return "Stop Container";

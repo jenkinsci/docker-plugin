@@ -14,12 +14,12 @@
 
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
  
- <scm>
-    <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
-    <url>https://github.com/jenkinsci/docker-plugin</url>
-    <tag>HEAD</tag>
-  </scm>
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/docker-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
 
 
     <dependencies>

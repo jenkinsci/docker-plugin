@@ -52,11 +52,11 @@ public class DockerCloud extends Cloud {
     private final int connectTimeout;
     private final int readTimeout;
 
-
     private transient DockerClient connection;
 
-    /* Track the count per-AMI identifiers for AMIs currently being
-     * provisioned, but not necessarily reported yet by docker.
+    /*
+     * Track the count per-AMI identifiers for AMIs currently being provisioned,
+     * but not necessarily reported yet by docker.
      */
     private static HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
 
@@ -69,12 +69,13 @@ public class DockerCloud extends Cloud {
         this.serverUrl = serverUrl;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
-        if( templates != null )
+        if (templates != null) {
             this.templates = new ArrayList<DockerTemplate>(templates);
-        else
+        } else {
             this.templates = new ArrayList<DockerTemplate>();
+        }
 
-        if(containerCapStr.equals("")) {
+        if (containerCapStr.equals("")) {
             this.containerCap = Integer.MAX_VALUE;
         } else {
             this.containerCap = Integer.parseInt(containerCapStr);
@@ -84,7 +85,7 @@ public class DockerCloud extends Cloud {
     }
 
     public String getContainerCapStr() {
-        if (containerCap==Integer.MAX_VALUE) {
+        if (containerCap == Integer.MAX_VALUE) {
             return "";
         } else {
             return String.valueOf(containerCap);
@@ -92,13 +93,15 @@ public class DockerCloud extends Cloud {
     }
 
     protected Object readResolve() {
-        for (DockerTemplate t : templates)
+        for (DockerTemplate t : templates) {
             t.parent = this;
+        }
         return this;
     }
 
     /**
      * Connects to Docker.
+     *
      * @return Docker client.
      */
     public synchronized DockerClient connect() {
@@ -111,7 +114,7 @@ public class DockerCloud extends Cloud {
                     .withUrl(serverUrl)
                     .withLogging(DockerClient.Logging.SLF4J)
                     .connectTimeout(connectTimeout * 1000)
-                    .readTimeout(readTimeout*1000)
+                    .readTimeout(readTimeout * 1000)
                     .build();
         }
         return connection;
@@ -126,7 +129,7 @@ public class DockerCloud extends Cloud {
             int currentProvisioning;
             try {
                 currentProvisioning = provisioningAmis.get(ami);
-            } catch(NullPointerException npe) {
+            } catch (NullPointerException npe) {
                 return;
             }
             provisioningAmis.put(ami, Math.max(currentProvisioning - 1, 0));
@@ -143,7 +146,7 @@ public class DockerCloud extends Cloud {
 
             final DockerTemplate t = getTemplate(label);
 
-            while (excessWorkload>0) {
+            while (excessWorkload > 0) {
 
                 if (!addProvisionedSlave(t.image, t.instanceCap)) {
                     break;
@@ -168,38 +171,35 @@ public class DockerCloud extends Cloud {
                                     // goes successful prevents this problem.
                                     slave.toComputer().connect(false).get();
                                     return slave;
-                                }
-                                catch(Exception ex) {
+                                } catch (Exception ex) {
                                     LOGGER.log(Level.SEVERE, "Error in provisioning; slave=" + slave + ", template=" + t);
 
                                     ex.printStackTrace();
                                     throw Throwables.propagate(ex);
-                                }
-                                finally {
+                                } finally {
                                     decrementAmiSlaveProvision(t.image);
                                 }
                             }
-                        })
-                        ,t.getNumExecutors()));
+                        }), t.getNumExecutors()));
 
                 excessWorkload -= t.getNumExecutors();
 
             }
             return r;
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING,"Failed to count the # of live instances on Docker",e);
+            LOGGER.log(Level.WARNING, "Failed to count the # of live instances on Docker", e);
             return Collections.emptyList();
         }
     }
 
     @Override
     public boolean canProvision(Label label) {
-        return getTemplate(label)!=null;
+        return getTemplate(label) != null;
     }
 
     public DockerTemplate getTemplate(String template) {
         for (DockerTemplate t : templates) {
-            if(t.image.equals(template)) {
+            if (t.image.equals(template)) {
                 return t;
             }
         }
@@ -211,7 +211,7 @@ public class DockerCloud extends Cloud {
      */
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
-            if(label == null || label.matches(t.getLabelSet())) {
+            if (label == null || label.matches(t.getLabelSet())) {
                 return t;
             }
         }
@@ -227,7 +227,8 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Counts the number of instances in Docker currently running that are using the specifed image.
+     * Counts the number of instances in Docker currently running that are using
+     * the specifed image.
      *
      * @param ami If AMI is left null, then all instances are counted.
      * <p>
@@ -238,8 +239,9 @@ public class DockerCloud extends Cloud {
 
         List<Container> containers = dockerClient.containers().finder().allContainers(false).list();
 
-        if (ami == null)
+        if (ami == null) {
             return containers.size();
+        }
 
         List<Image> images = dockerClient.images().finder().allImages(true).filter(ami).list();
         LOGGER.log(Level.INFO, "Images found: " + images);
@@ -271,8 +273,9 @@ public class DockerCloud extends Cloud {
      *
      */
     private synchronized boolean addProvisionedSlave(String ami, int amiCap) throws Exception {
-        if( amiCap == 0 )
+        if (amiCap == 0) {
             return true;
+        }
 
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);
         int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
@@ -285,33 +288,32 @@ public class DockerCloud extends Cloud {
             }
             try {
                 currentProvisioning = provisioningAmis.get(ami);
-            }
-            catch (NullPointerException npe) {
+            } catch (NullPointerException npe) {
                 currentProvisioning = 0;
             }
 
             estimatedAmiSlaves += currentProvisioning;
 
-            if(estimatedTotalSlaves >= containerCap) {
-                LOGGER.log(Level.INFO, "Total container cap of " + containerCap +
-                        " reached, not provisioning.");
+            if (estimatedTotalSlaves >= containerCap) {
+                LOGGER.log(Level.INFO, "Total container cap of " + containerCap
+                        + " reached, not provisioning.");
                 return false;      // maxed out
             }
 
             if (estimatedAmiSlaves >= amiCap) {
-                LOGGER.log(Level.INFO, "AMI Instance cap of " + amiCap +
-                        " reached for ami " + ami +
-                        ", not provisioning.");
+                LOGGER.log(Level.INFO, "AMI Instance cap of " + amiCap
+                        + " reached for ami " + ami
+                        + ", not provisioning.");
                 return false;      // maxed out
             }
 
             LOGGER.log(Level.INFO,
-                    "Provisioning for AMI " + ami + "; " +
-                            "Estimated number of total slaves: "
-                            + String.valueOf(estimatedTotalSlaves) + "; " +
-                            "Estimated number of slaves for ami "
-                            + ami + ": "
-                            + String.valueOf(estimatedAmiSlaves)
+                    "Provisioning for AMI " + ami + "; "
+                    + "Estimated number of total slaves: "
+                    + String.valueOf(estimatedTotalSlaves) + "; "
+                    + "Estimated number of slaves for ami "
+                    + ami + ": "
+                    + String.valueOf(estimatedAmiSlaves)
             );
 
             provisioningAmis.put(ami, currentProvisioning + 1);
@@ -321,6 +323,7 @@ public class DockerCloud extends Cloud {
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
+
         @Override
         public String getDisplayName() {
             return "Docker";
@@ -328,14 +331,15 @@ public class DockerCloud extends Cloud {
 
         public FormValidation doTestConnection(
                 @QueryParameter URL serverUrl
-                ) throws IOException, ServletException, DockerException {
+        ) throws IOException, ServletException, DockerException {
 
             DockerClient dc = DockerClient.builder().withUrl(serverUrl.toString()).build();
 
             Version version = dc.system().version();
 
-            if( version.getVersionComponents()[0] < 1 )
+            if (version.getVersionComponents()[0] < 1) {
                 return FormValidation.error("Docker host is " + version.getVersion() + " which is not supported.");
+            }
 
             return FormValidation.ok("Version = " + version.getVersion());
         }

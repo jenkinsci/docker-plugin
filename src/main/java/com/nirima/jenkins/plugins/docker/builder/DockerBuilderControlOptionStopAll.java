@@ -19,7 +19,7 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
     @Override
     public void execute(AbstractBuild<?, ?> build) throws DockerException {
         LOGGER.info("Stopping all containers");
-        for(DockerLaunchAction.Item containerItem : getLaunchAction(build).getRunning()) {
+        for (DockerLaunchAction.Item containerItem : getLaunchAction(build).getRunning()) {
             try {
                 LOGGER.info("Stopping container " + containerItem.id);
                 containerItem.client.container(containerItem.id).stop();
@@ -30,11 +30,12 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
     }
 
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Extension
     public static final class DescriptorImpl extends DockerBuilderControlOptionDescriptor {
+
         @Override
         public String getDisplayName() {
             return "Stop All Containers";

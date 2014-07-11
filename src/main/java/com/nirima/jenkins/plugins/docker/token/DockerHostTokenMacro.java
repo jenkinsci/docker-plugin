@@ -13,13 +13,14 @@ import java.io.IOException;
 /**
  * Created by magnayn on 30/01/2014.
  */
-@Extension(optional=true)
+@Extension(optional = true)
 public class DockerHostTokenMacro extends DataBoundTokenMacro {
+
     @Override
     public String evaluate(AbstractBuild<?, ?> abstractBuild, TaskListener taskListener, String s) throws MacroEvaluationException, IOException, InterruptedException {
         Node node = abstractBuild.getBuiltOn();
-        if( node instanceof DockerSlave) {
-            DockerSlave dockerSlave = (DockerSlave)node;
+        if (node instanceof DockerSlave) {
+            DockerSlave dockerSlave = (DockerSlave) node;
             return dockerSlave.containerId;
         }
 

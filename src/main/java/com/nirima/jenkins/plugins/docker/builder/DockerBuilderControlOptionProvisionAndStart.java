@@ -11,6 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Created by magnayn on 30/01/2014.
  */
 public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderControlCloudOption {
+
     private final String templateId;
 
     @DataBoundConstructor
@@ -33,11 +34,12 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
     }
 
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Extension
     public static final class DescriptorImpl extends DockerBuilderControlOptionDescriptor {
+
         @Override
         public String getDisplayName() {
             return "Provision & Start Container";
