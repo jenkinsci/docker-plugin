@@ -44,6 +44,10 @@
             <f:textbox />
         </f:entry>
 
+        <f:entry title="${%LXC Conf Options}" field="lxcConfString">
+            <f:textbox/>
+        </f:entry>
+
         <f:entry title="${%Volumes}" field="volumesString">
             <f:textbox/>
         </f:entry>

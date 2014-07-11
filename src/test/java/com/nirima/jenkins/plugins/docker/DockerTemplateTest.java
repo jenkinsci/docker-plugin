@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 public class DockerTemplateTest {
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "credentialsId", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "hostname", false);
+        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "credentialsId", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "lxcConf", "volumes", "hostname", false);
         return instance;
     }
 

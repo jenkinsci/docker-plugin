@@ -8,6 +8,7 @@ import hudson.slaves.SlaveComputer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import java.io.IOException;
 
 
@@ -31,8 +32,9 @@ public class RetryingComputerLauncher extends DelegatingComputerLauncher {
 
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-
+        log.info("Launch......");
         for( int i=0;i<retries;i++) {
+            log.info("Launch Retry: " + i);
             try {
                 super.launch(computer, listener);
                 return;

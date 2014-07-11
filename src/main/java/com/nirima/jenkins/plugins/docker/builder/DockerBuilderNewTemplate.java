@@ -47,6 +47,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String instanceCapStr;
     public final String dnsString;
     public final String dockerCommand;
+    public final String lxcConfString;
     public final String volumesString;
     public final boolean privileged;
     public final String hostname;
@@ -57,6 +58,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                                               String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                                               String instanceCapStr, String dnsString,
                                               String dockerCommand,
+                                              String lxcConfString,
                                               String volumesString,
                                               String hostname,
                                               boolean privileged) {
@@ -72,6 +74,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.instanceCapStr = instanceCapStr;
         this.dnsString = dnsString;
         this.dockerCommand = dockerCommand;
+        this.lxcConfString = lxcConfString;
         this.volumesString = volumesString;
         this.privileged = privileged;
         this.hostname = hostname;
@@ -113,7 +116,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                 DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, credentialsId,
                         jvmOptions, javaPath, prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
-                        dnsString, dockerCommand,
+                        dnsString, dockerCommand, lxcConfString,
                         volumesString, hostname, privileged);
                 ((DockerCloud) c).addTemplate(t);
             }

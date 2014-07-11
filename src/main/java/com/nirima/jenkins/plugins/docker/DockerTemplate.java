@@ -50,6 +50,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Field dockerCommand
      */
     public final String dockerCommand;
+    
+    /**
+     * Field dockerCommand
+     */
+    public final String lxcConfString;
 
     /**
      * Field jvmOptions.
@@ -79,6 +84,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public final int instanceCap;
     public final String[] dnsHosts;
     public final String[] volumes;
+    public final HostConfig.LxcConf[] lxcOptions;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     public transient DockerCloud parent;
@@ -92,6 +98,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
                           String dockerCommand,
+                          String lxcConfString,
                           String volumesString,
                           String hostname,
                           boolean privileged
@@ -107,6 +114,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
 
         this.dockerCommand = dockerCommand;
+        this.lxcConfString = lxcConfString;
         this.privileged = privileged;
         this.hostname = hostname;
 
@@ -118,6 +126,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         this.dnsHosts = splitAndFilterEmpty(dnsString);
         this.volumes = splitAndFilterEmpty(volumesString);
+        this.lxcOptions = splitAndFilterEmptyLxcConf(lxcConfString);
 
         readResolve();
     }
@@ -131,6 +140,24 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         return temp.toArray(new String[temp.size()]);
 
+    }
+    
+    private HostConfig.LxcConf[] splitAndFilterEmptyLxcConf(String s) {
+        List<HostConfig.LxcConf> temp = new ArrayList<HostConfig.LxcConf>();
+        for (String item : s.split(" ")) {
+            String[] keyValuePairs = item.split("=");
+            if (keyValuePairs.length == 2 )
+            {
+                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
+                //HostConfig.LxcConf optN = new HostConfig.LxcConf(keyValuePairs[0], keyValuePairs[1]);
+            }
+            else
+            {
+                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
+            }
+        }
+        
+        return temp.toArray(new HostConfig.LxcConf[temp.size()]);
     }
 
     public String getInstanceCapStr() {
@@ -240,8 +267,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
         containerConfig.setCmd(dockerCommandArray);
         containerConfig.setPortSpecs(new String[]{"22/tcp"});
-        //containerConfig.setPortSpecs(new String[]{"22/tcp"});
-        //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
+        // containerConfig.getExposedPorts().put("22/tcp", new ExposedPort());
+        
         if( dnsHosts.length > 0 )
             containerConfig.setDns(dnsHosts);
 
@@ -264,6 +291,26 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         if (volumes.length > 0)
             hostConfig.setBinds(volumes);
+        
+        List<HostConfig.LxcConf> temp = new ArrayList<HostConfig.LxcConf>();
+        for (String item : lxcConfString.split(" ")) {
+            String[] keyValuePairs = item.split("=");
+            if (keyValuePairs.length == 2 )
+            {
+                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
+                HostConfig.LxcConf optN = hostConfig.new LxcConf();
+                optN.setKey(keyValuePairs[0]);
+                optN.setValue(keyValuePairs[1]);    
+                temp.add(optN);
+            }
+            else
+            {
+                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
+            }
+        }
+        
+        if (!temp.isEmpty())
+            hostConfig.setLxcConf(temp.toArray(new HostConfig.LxcConf[temp.size()]));
 
         dockerClient.container(container.getId()).start(hostConfig);
 

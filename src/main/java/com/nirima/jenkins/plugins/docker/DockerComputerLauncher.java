@@ -39,6 +39,8 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
     private static ComputerLauncher makeLauncher(DockerTemplate template, ContainerInspectResponse containerInspectResponse) {
         SSHLauncher sshLauncher = getSSHLauncher(containerInspectResponse, template);
+        
+        LOGGER.log(Level.INFO, "Keep retrying........");
         return new RetryingComputerLauncher(sshLauncher);
     }
 
@@ -53,10 +55,17 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
             String host = hostUrl.getHost();
 
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
-
             StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(template.credentialsId);
+            
+            LOGGER.log(Level.INFO, "StandardUsernameCredentials: " + template.credentialsId);
+            LOGGER.log(Level.INFO, "StandardUsernameCredentials.getUsername: " + credentials.getUsername());
+            LOGGER.log(Level.INFO, "StandardUsernameCredentials.getDescription: " + credentials.getDescription());
 
-            return new SSHLauncher(host, port, credentials,  template.jvmOptions , template.javaPath, template.prefixStartSlaveCmd, template.suffixStartSlaveCmd, 60);
+            return new SSHLauncher(host, port, credentials, 
+                    template.jvmOptions , 
+                    template.javaPath, 
+                    template.prefixStartSlaveCmd, 
+                    template.suffixStartSlaveCmd, 120);
 
         } catch(NullPointerException ex) {
             throw new RuntimeException("No mapped port 22 in host for SSL. Config=" + detail);
