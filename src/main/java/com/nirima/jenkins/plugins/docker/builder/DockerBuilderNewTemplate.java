@@ -6,6 +6,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.ItemGroup;
+import hudson.model.Node;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.slaves.Cloud;
@@ -42,6 +43,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String credentialsId;
     public final String jvmOptions;
     public final String javaPath;
+    public final Node.Mode mode;
     public final String prefixStartSlaveCmd;
     public final String suffixStartSlaveCmd;
     public final String instanceCapStr;
@@ -55,6 +57,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     @DataBoundConstructor
     public DockerBuilderNewTemplate(String image, String labelString, String remoteFs,
                                               String credentialsId, String jvmOptions, String javaPath,
+                                              Node.Mode mode,
                                               String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                                               String instanceCapStr, String dnsString,
                                               String dockerCommand,
@@ -68,6 +71,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.credentialsId = credentialsId;
         this.jvmOptions = jvmOptions;
         this.javaPath = javaPath;
+        this.mode = mode;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.instanceCapStr = instanceCapStr;
@@ -113,7 +117,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
                 DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, credentialsId,
-                        jvmOptions, javaPath, prefixStartSlaveCmd,
+                        jvmOptions, javaPath,
+                        mode, prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
                         dnsString, dockerCommand,
                         volumesString, volumesFrom, hostname, privileged);

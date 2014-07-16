@@ -62,6 +62,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public final String javaPath;
 
     /**
+     * Normal/Exclusive tied jobs mode
+     */
+    public final Node.Mode mode;
+
+    /**
      * Field prefixStartSlaveCmd.
      */
     public final String prefixStartSlaveCmd;
@@ -90,6 +95,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public DockerTemplate(String image, String labelString,
                           String remoteFs,
                           String credentialsId, String jvmOptions, String javaPath,
+                          Node.Mode mode,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
                           String dockerCommand,
@@ -103,6 +109,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.credentialsId = credentialsId;
         this.jvmOptions = jvmOptions;
         this.javaPath = javaPath;
+        this.mode = mode;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
@@ -163,6 +170,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return labelSet;
     }
 
+    public Node.Mode getMode() {
+        return mode;
+    }
+
     /**
      * Initializes data structure that we don't persist.
      */
@@ -186,8 +197,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         logger.println("Launching " + image );
 
         int numExecutors = 1;
-        Node.Mode mode = Node.Mode.EXCLUSIVE;
-
 
         RetentionStrategy retentionStrategy = new DockerRetentionStrategy();
 

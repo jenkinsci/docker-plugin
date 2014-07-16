@@ -32,6 +32,8 @@
 
         <f:advanced>
 
+            <f:slave-mode name="mode" node="${instance}" />
+
             <f:entry title="${%JavaPath}" field="javaPath">
                 <f:textbox/>
             </f:entry>
