@@ -52,6 +52,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public final String dockerCommand;
 
     /**
+     * Minutes before terminating an idle slave
+     */
+    public final String idleTerminationMinutes;
+
+    /**
      * Field jvmOptions.
      */
     public final String jvmOptions;
@@ -94,7 +99,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     @DataBoundConstructor
     public DockerTemplate(String image, String labelString,
                           String remoteFs,
-                          String credentialsId, String jvmOptions, String javaPath,
+                          String credentialsId, String idleTerminationMinutes,
+                          String jvmOptions, String javaPath,
                           Node.Mode mode,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
@@ -107,6 +113,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.image = image;
         this.labelString = Util.fixNull(labelString);
         this.credentialsId = credentialsId;
+        this.idleTerminationMinutes = idleTerminationMinutes;
         this.jvmOptions = jvmOptions;
         this.javaPath = javaPath;
         this.mode = mode;
@@ -198,7 +205,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         int numExecutors = 1;
 
-        RetentionStrategy retentionStrategy = new DockerRetentionStrategy();
+        RetentionStrategy retentionStrategy = new DockerRetentionStrategy(idleTerminationMinutes);
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
 
