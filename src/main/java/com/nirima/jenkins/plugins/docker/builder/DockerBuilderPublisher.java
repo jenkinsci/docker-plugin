@@ -7,7 +7,6 @@ import com.nirima.docker.client.DockerException;
 import com.nirima.docker.client.command.BuildCommandResponse;
 import com.nirima.docker.client.command.PushCommandResponse;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
-import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
 import hudson.Extension;
 import hudson.FilePath;
@@ -61,10 +60,19 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             public BuildCommandResponse invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
                 try {
                     listener.getLogger().println("Docker Build : build with tag " + tagToUse + " at path " + f.getAbsolutePath());
-                    DockerClient client = builder.build();
+                    DockerClient client = builder
+                            .readTimeout(3600000).build();
+
+                    File dockerFile;
+
+                    // Be lenient and allow the user to just specify the path.
+                    if( f.isFile() )
+                        dockerFile = f;
+                    else
+                        dockerFile = new File(f, "Dockerfile");
 
                     return client.createBuildCommand()
-                            .dockerFileFolder(f)
+                            .dockerFile(dockerFile)
                             .tag(tagToUse)
                             .execute();
 
@@ -93,8 +101,10 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 listener.getLogger().println("ERROR: Docker will refuse to push tag name " + tagToUse + " because it uses upper case.");
             }
 
+            String repositoryName = getRepositoryName(tagToUse);
+
             PushCommandResponse pushResponse = client.createPushCommand()
-                    .name(tagToUse)
+                    .name(repositoryName)
                     .execute();
 
             listener.getLogger().println("Docker Push Response : " + pushResponse);
@@ -124,6 +134,22 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         listener.getLogger().println("Docker Build Done");
 
         return true;
+    }
+
+    private String getRepositoryName(String tagToUse) {
+        // fred/jim     --> fred/jim
+        // fred/jim:123 --> fred/jim
+        // fred:123/jim:123 --> fred:123/jim
+
+        String[] parts = tagToUse.split("/");
+        if( parts.length != 2 )
+            return tagToUse;
+
+        String[] rhs = parts[1].split(":");
+        if( rhs.length != 2 )
+            return tagToUse;
+
+        return parts[0] + "/" + rhs[0];
     }
 
     private DockerClient getDockerClient(AbstractBuild build) {
