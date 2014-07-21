@@ -32,6 +32,10 @@
 
         <f:advanced>
 
+            <f:entry title="${%Idle termination time}" field="idleTerminationMinutes">
+                <f:textbox default="5" />
+            </f:entry>
+
             <f:entry title="${%JavaPath}" field="javaPath">
                 <f:textbox/>
             </f:entry>

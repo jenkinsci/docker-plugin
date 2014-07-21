@@ -15,9 +15,26 @@ public class DockerRetentionStrategy  extends RetentionStrategy<DockerComputer> 
 
     private AtomicBoolean currentlyChecking;
 
+    /** Number of minutes of idleness before an instance should be terminated.
+        A value of zero indicates that the instance should never be automatically terminated */
+    public final int idleTerminationMinutes;
+
     @DataBoundConstructor
-    public DockerRetentionStrategy() {
+    public DockerRetentionStrategy(String idleTerminationMinutes) {
         currentlyChecking = new AtomicBoolean(false);
+
+        if (idleTerminationMinutes == null || idleTerminationMinutes.trim() == "") {
+            this.idleTerminationMinutes = 0;
+        } else {
+            int value = 30;
+            try {
+                value = Integer.parseInt(idleTerminationMinutes);
+            } catch (NumberFormatException nfe) {
+                LOGGER.info("Malformed idleTermination value: " + idleTerminationMinutes);
+            }
+
+            this.idleTerminationMinutes = value;
+        }
     }
 
     @Override
@@ -38,26 +55,34 @@ public class DockerRetentionStrategy  extends RetentionStrategy<DockerComputer> 
         boolean shouldTerminate = false;
 
         try {
-            synchronized (this) {
-                if (c.isIdle() && c.isOnline() && !disabled && c.haveWeRunAnyJobs())
-                    shouldTerminate = true;
-                if( !c.isAcceptingTasks() )
-                    shouldTerminate = true;
+
+            if (c.isIdle() && !disabled) {
+                if( idleTerminationMinutes > 0) {
+                    final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
+                    if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(idleTerminationMinutes)) {
+                        shouldTerminate = true;
+                    }
+                }
+
+                //TODO: Verify all of this should be in a synchronized block
+                synchronized (this) {
+                    if (c.isOnline() && c.haveWeRunAnyJobs())
+                        shouldTerminate = true;
+                    if( !c.isAcceptingTasks() )
+                        shouldTerminate = true;
+                }
             }
 
-            // TODO: really think about the right strategy here
+
             if( shouldTerminate ) {
-                final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
-                if (idleMilliseconds > 0) {
-                    LOGGER.info("Idle timeout: " + c.getName());
-                    LOGGER.log(Level.INFO, "Terminating " + c);
-                    try {
-                        c.getNode().retentionTerminate();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                LOGGER.info("Idle timeout: " + c.getName());
+                LOGGER.log(Level.INFO, "Terminating " + c);
+                try {
+                    c.getNode().retentionTerminate();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         }

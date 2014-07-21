@@ -40,6 +40,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String labelString;
     public final String remoteFs;
     public final String credentialsId;
+    public final String idleTerminationMinutes;
     public final String jvmOptions;
     public final String javaPath;
     public final String prefixStartSlaveCmd;
@@ -54,7 +55,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
 
     @DataBoundConstructor
     public DockerBuilderNewTemplate(String image, String labelString, String remoteFs,
-                                              String credentialsId, String jvmOptions, String javaPath,
+                                              String credentialsId, String idleTerminationMinutes,
+                                              String jvmOptions, String javaPath,
                                               String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                                               String instanceCapStr, String dnsString,
                                               String dockerCommand,
@@ -66,6 +68,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.labelString = labelString;
         this.remoteFs = remoteFs;
         this.credentialsId = credentialsId;
+        this.idleTerminationMinutes = idleTerminationMinutes;
         this.jvmOptions = jvmOptions;
         this.javaPath = javaPath;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
@@ -112,8 +115,10 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
-                DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, credentialsId,
-                        jvmOptions, javaPath, prefixStartSlaveCmd,
+                DockerTemplate t = new DockerTemplate(image, labelString, remoteFs,
+                        credentialsId, idleTerminationMinutes,
+                        jvmOptions, javaPath,
+                        prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
                         dnsString, dockerCommand,
                         volumesString, volumesFrom, hostname, privileged);

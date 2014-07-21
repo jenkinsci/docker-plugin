@@ -2,11 +2,12 @@ package com.nirima.jenkins.plugins.docker;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
+import hudson.model.Node;
 
 public class DockerTemplateTest {
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "credentialsId", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "hostname", false);
+        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "credentialsId", "idleTerminationMinutes", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "volumesFrom", "hostname", false);
         return instance;
     }
 
