@@ -217,7 +217,12 @@ public class DockerCloud extends Cloud {
      */
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
-            if(label == null || label.matches(t.getLabelSet())) {
+            if(label == null) {
+                //If not tied jobs only (exclusive)
+                if(t.getMode() == Node.Mode.NORMAL) {
+                    return t;
+                }
+            } else if(label.matches(t.getLabelSet())) {
                 return t;
             }
         }
