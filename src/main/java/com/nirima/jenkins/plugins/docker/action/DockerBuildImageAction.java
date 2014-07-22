@@ -18,11 +18,15 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
     public final String containerHost;
     public final String containerId;
     public final String taggedId;
+    public final boolean cleanupWithJenkinsJobDelete;
+    public final boolean pushOnSuccess;
 
-    public DockerBuildImageAction(String containerHost, String containerId, String taggedId) {
+    public DockerBuildImageAction(String containerHost, String containerId, String taggedId, boolean cleanupWithJenkinsJobDelete, boolean pushOnSuccess) {
         this.containerHost = containerHost;
         this.containerId = containerId;
         this.taggedId = taggedId;
+        this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
+        this.pushOnSuccess = pushOnSuccess;
     }
 
     public String getIconFileName() {

@@ -6,6 +6,7 @@ import com.nirima.docker.client.DockerClient;
 import com.nirima.docker.client.DockerException;
 import com.nirima.docker.client.command.BuildCommandResponse;
 import com.nirima.docker.client.command.PushCommandResponse;
+import com.nirima.docker.client.model.Identifier;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
 import hudson.Extension;
@@ -26,7 +27,7 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * Builder extension to build / publish an image.
+ * Builder extension to build / publish an image from a Dockerfile.
  */
 public class DockerBuilderPublisher extends Builder implements Serializable {
 
@@ -34,13 +35,15 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
     public final String tag;
     public final boolean pushOnSuccess;
     public final boolean cleanImages;
+    public final boolean cleanupWithJenkinsJobDelete;
 
     @DataBoundConstructor
-    public DockerBuilderPublisher(String dockerFileDirectory, String tag, boolean pushOnSuccess, boolean cleanImages) {
+    public DockerBuilderPublisher(String dockerFileDirectory, String tag, boolean pushOnSuccess, boolean cleanImages, boolean cleanupWithJenkinsJobDelete) {
         this.dockerFileDirectory = dockerFileDirectory;
         this.tag = tag;
         this.pushOnSuccess = pushOnSuccess;
         this.cleanImages = cleanImages;
+        this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
     }
 
     @Override
@@ -90,7 +93,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         if( !id.isPresent() )
            return false;
 
-        build.addAction( new DockerBuildImageAction(url, id.get(), tagToUse) );
+        build.addAction( new DockerBuildImageAction(url, id.get(), tagToUse, cleanupWithJenkinsJobDelete, pushOnSuccess) );
         build.save();
 
 
@@ -101,7 +104,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 listener.getLogger().println("ERROR: Docker will refuse to push tag name " + tagToUse + " because it uses upper case.");
             }
 
-            String repositoryName = getRepositoryName(tagToUse);
+            Identifier identifier = Identifier.fromCompoundString(tagToUse);
+
+            String repositoryName = identifier.repository.name;
 
             PushCommandResponse pushResponse = client.createPushCommand()
                     .name(repositoryName)
@@ -136,21 +141,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         return true;
     }
 
-    private String getRepositoryName(String tagToUse) {
-        // fred/jim     --> fred/jim
-        // fred/jim:123 --> fred/jim
-        // fred:123/jim:123 --> fred:123/jim
 
-        String[] parts = tagToUse.split("/");
-        if( parts.length != 2 )
-            return tagToUse;
-
-        String[] rhs = parts[1].split(":");
-        if( rhs.length != 2 )
-            return tagToUse;
-
-        return parts[0] + "/" + rhs[0];
-    }
 
     private DockerClient getDockerClient(AbstractBuild build) {
 
