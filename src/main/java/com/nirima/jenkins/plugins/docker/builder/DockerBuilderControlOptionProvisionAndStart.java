@@ -14,11 +14,15 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
     private final String templateId;
 
     @DataBoundConstructor
-    public DockerBuilderControlOptionProvisionAndStart(String cloudId, String templateId) {
-        super(cloudId);
+    public DockerBuilderControlOptionProvisionAndStart(String cloudName, String templateId) {
+        super(cloudName);
         this.templateId = templateId;
     }
 
+    public String getTemplateId() {
+        return templateId;
+    }
+    
     @Override
     public void execute(AbstractBuild<?, ?> build) throws DockerException {
 
