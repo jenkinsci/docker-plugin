@@ -186,7 +186,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         logger.println("Launching " + image );
 
         int numExecutors = 1;
-        Node.Mode mode = Node.Mode.EXCLUSIVE;
+        Node.Mode mode = Node.Mode.NORMAL;
 
 
         RetentionStrategy retentionStrategy = new DockerRetentionStrategy();
