@@ -10,7 +10,7 @@ public class DockerComputerListener extends ComputerListener {
 
     @Override
     public void onOnline(Computer c, TaskListener listener) {
-        if(c instanceof DockerComputer){
+        if (c instanceof DockerComputer) {
             ((DockerComputer) c).onConnected();
         }
     }

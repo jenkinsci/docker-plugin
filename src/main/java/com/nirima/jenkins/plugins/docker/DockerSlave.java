@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 public class DockerSlave extends AbstractCloudSlave {
 
     private static final Logger LOGGER = Logger.getLogger(DockerSlave.class.getName());
@@ -44,7 +43,7 @@ public class DockerSlave extends AbstractCloudSlave {
     public DockerCloud getCloud() {
         DockerCloud theCloud = dockerTemplate.getParent();
 
-        if( theCloud == null ) {
+        if (theCloud == null) {
             throw new RuntimeException("Docker template " + dockerTemplate + " has no parent ");
         }
 
@@ -70,7 +69,7 @@ public class DockerSlave extends AbstractCloudSlave {
             DockerClient client = getClient();
             client.container(containerId).inspect();
             return true;
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             return false;
         }
     }
@@ -78,93 +77,88 @@ public class DockerSlave extends AbstractCloudSlave {
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
 
-
         try {
             toComputer().disconnect(null);
 
             try {
                 DockerClient client = getClient();
                 client.container(containerId).stop();
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to stop instance " + containerId + " for slave " + name + " due to exception", ex);
             }
 
             // If the run was OK, then do any tagging here
-            if( theRun != null ) {
+            if (theRun != null) {
                 try {
                     slaveShutdown(listener);
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Failure to slaveShutdown instance " + containerId+ " for slave " + name , e);
+                    LOGGER.log(Level.SEVERE, "Failure to slaveShutdown instance " + containerId + " for slave " + name, e);
                 }
             }
 
             try {
                 DockerClient client = getClient();
                 client.container(containerId).remove();
-            } catch(Exception ex) {
-                LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception",ex);
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception", ex);
             }
 
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failure to terminate instance " + containerId + " for slave " + name ,e);
+            LOGGER.log(Level.SEVERE, "Failure to terminate instance " + containerId + " for slave " + name, e);
         }
     }
 
     private void slaveShutdown(TaskListener listener) throws DockerException, IOException {
 
         // The slave has stopped. Should we commit / tag / push ?
-
-        if(!getJobProperty().tagOnCompletion) {
+        if (!getJobProperty().tagOnCompletion) {
             addJenkinsAction(null);
             return;
         }
 
         DockerClient client = getClient();
 
-
-         // Commit
+        // Commit
         String tag_image = client.container(containerId).createCommitCommand()
-                    .repo(theRun.getParent().getDisplayName())
-                    .tag(theRun.getDisplayName())
-                    .author("Jenkins")
-                    .execute();
+                .repo(theRun.getParent().getDisplayName())
+                .tag(theRun.getDisplayName())
+                .author("Jenkins")
+                .execute();
 
         // Tag it with the jenkins name
         addJenkinsAction(tag_image);
 
         // SHould we add additional tags?
-        try
-        {
+        try {
             String tagToken = getAdditionalTag(listener);
 
-            if( !Strings.isNullOrEmpty(tagToken) ) {
+            if (!Strings.isNullOrEmpty(tagToken)) {
                 client.image(tag_image).tag(tagToken, false);
                 addJenkinsAction(tagToken);
 
-                if( getJobProperty().pushOnSuccess ) {
+                if (getJobProperty().pushOnSuccess) {
                     client.image(tagToken).push(null);
                 }
             }
-        }
-        catch(Exception ex) {
+        } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Could not add additional tags");
         }
 
-        if( getJobProperty().cleanImages ) {
+        if (getJobProperty().cleanImages) {
 
             // For some reason, docker delete doesn't delete all tagged
             // versions, despite force = true.
             // So, do it multiple times (protect against infinite looping).
-
             int delete = 100;
-            while(delete != 0 ) {
+            while (delete != 0) {
                 int count = client.image(tag_image).removeCommand()
-                                   .force(true)
-                                   .execute().size();
-                if( count == 0 )
+                        .force(true)
+                        .execute().size();
+                if (count == 0) {
                     delete = 0;
-                else
+                } else {
                     delete--;
+                }
             }
         }
 
@@ -178,8 +172,9 @@ public class DockerSlave extends AbstractCloudSlave {
 
         // Do any macro expansions
         try {
-            if(!Strings.isNullOrEmpty(tagToken)  )
+            if (!Strings.isNullOrEmpty(tagToken)) {
                 tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -188,11 +183,12 @@ public class DockerSlave extends AbstractCloudSlave {
 
     /**
      * Add a built on docker action.
+     *
      * @param tag_image
      * @throws IOException
      */
     private void addJenkinsAction(String tag_image) throws IOException {
-        theRun.addAction( new DockerBuildAction(getCloud().serverUrl, containerId, tag_image) );
+        theRun.addAction(new DockerBuildAction(getCloud().serverUrl, containerId, tag_image));
         theRun.save();
     }
 
@@ -206,8 +202,6 @@ public class DockerSlave extends AbstractCloudSlave {
     public void onConnected() {
 
     }
-
-
 
     public void retentionTerminate() throws IOException, InterruptedException {
         terminate();
@@ -227,27 +221,30 @@ public class DockerSlave extends AbstractCloudSlave {
         try {
             DockerJobProperty p = (DockerJobProperty) ((AbstractBuild) theRun).getProject().getProperty(DockerJobProperty.class);
 
-            if (p != null)
+            if (p != null) {
                 return p;
-        } catch(Exception ex) {
+            }
+        } catch (Exception ex) {
             // Don't care.
         }
         // Safe default
-        return new DockerJobProperty(false,null,false, true);
+        return new DockerJobProperty(false, null, false, true);
     }
 
     @Extension
-	public static final class DescriptorImpl extends SlaveDescriptor {
+    public static final class DescriptorImpl extends SlaveDescriptor {
 
-    	@Override
-		public String getDisplayName() {
-			return "Docker Slave";
-    	};
+        @Override
+        public String getDisplayName() {
+            return "Docker Slave";
+        }
+
+        ;
 
 		@Override
-		public boolean isInstantiable() {
-			return false;
-		}
+        public boolean isInstantiable() {
+            return false;
+        }
 
-	}
+    }
 }

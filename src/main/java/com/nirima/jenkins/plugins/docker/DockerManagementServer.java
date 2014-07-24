@@ -19,7 +19,8 @@ import java.util.Date;
 /**
  * Created by magnayn on 22/02/2014.
  */
-public class DockerManagementServer  implements Describable<DockerManagementServer> {
+public class DockerManagementServer implements Describable<DockerManagementServer> {
+
     final String name;
     final DockerCloud theCloud;
 
@@ -36,7 +37,7 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
         theCloud = PluginImpl.getInstance().getServer(name);
     }
 
-    public Collection getImages(){
+    public Collection getImages() {
         return theCloud.connect().images()
                 .finder()
                 .allImages(false)
@@ -51,8 +52,9 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
     }
 
     public String asTime(Long time) {
-        if( time == null )
+        if (time == null) {
             return "";
+        }
 
         long when = System.currentTimeMillis() - time;
 
@@ -82,7 +84,6 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
         public String getDisplayName() {
             return "server ";
         }
-
 
     }
 }

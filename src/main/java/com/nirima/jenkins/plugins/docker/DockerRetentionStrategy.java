@@ -114,3 +114,4 @@ public class DockerRetentionStrategy  extends RetentionStrategy<DockerComputer> 
 
     public static boolean disabled = Boolean.getBoolean(DockerRetentionStrategy.class.getName()+".disabled");
 }
+

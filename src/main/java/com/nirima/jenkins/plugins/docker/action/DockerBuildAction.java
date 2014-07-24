@@ -48,6 +48,7 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
      */
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerBuildAction> {
+
         public String getDisplayName() {
             return "Docker";
         }

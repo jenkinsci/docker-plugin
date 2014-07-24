@@ -13,6 +13,7 @@ import java.util.logging.Logger;
  * Created by magnayn on 30/01/2014.
  */
 public abstract class DockerBuilderControlOption implements Describable<DockerBuilderControlOption> {
+
     protected static final Logger LOGGER = Logger.getLogger(DockerBuilderControl.class.getName());
 
     public abstract void execute(AbstractBuild<?, ?> build) throws DockerException;
@@ -20,7 +21,7 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
     protected DockerLaunchAction getLaunchAction(AbstractBuild<?, ?> build) {
         List<DockerLaunchAction> launchActionList = build.getActions(DockerLaunchAction.class);
         DockerLaunchAction launchAction;
-        if( launchActionList.size() > 0 ) {
+        if (launchActionList.size() > 0) {
             launchAction = launchActionList.get(0);
         } else {
             launchAction = new DockerLaunchAction();

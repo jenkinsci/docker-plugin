@@ -19,11 +19,12 @@ import java.util.logging.Logger;
  * Created by magnayn on 30/01/2014.
  */
 public class DockerPublisherControl extends Recorder implements Serializable {
+
     private static final Logger LOGGER = Logger.getLogger(DockerPublisherControl.class.getName());
 
     @DataBoundConstructor
-    public DockerPublisherControl()
-    {}
+    public DockerPublisherControl() {
+    }
 
     public BuildStepMonitor getRequiredMonitorService() {
         return null;
@@ -31,7 +32,7 @@ public class DockerPublisherControl extends Recorder implements Serializable {
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Override

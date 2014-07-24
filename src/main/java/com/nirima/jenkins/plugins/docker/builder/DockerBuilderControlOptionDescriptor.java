@@ -5,7 +5,6 @@ import hudson.model.Descriptor;
 /**
  * Created by magnayn on 30/01/2014.
  */
-public abstract class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption>
-{
+public abstract class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption> {
 
 }

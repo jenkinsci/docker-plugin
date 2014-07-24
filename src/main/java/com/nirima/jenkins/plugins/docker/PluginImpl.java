@@ -29,7 +29,6 @@ public class PluginImpl extends Plugin {
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
 
-
     /**
      * What to call this plug-in to humans.
      */
@@ -72,7 +71,7 @@ public class PluginImpl extends Plugin {
                     }
                 });
 
-        return (Collection<DockerCloud>)clouds;
+        return (Collection<DockerCloud>) clouds;
     }
 
     public DockerCloud getServer(final String serverName) {
@@ -86,7 +85,7 @@ public class PluginImpl extends Plugin {
 
     @Override
     public void start() throws Exception {
-       super.start();
+        super.start();
     }
 
     @Override
@@ -98,6 +97,5 @@ public class PluginImpl extends Plugin {
     public void stop() throws Exception {
         super.stop();
     }
-
 
 }

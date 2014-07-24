@@ -56,8 +56,16 @@
             <f:textbox/>
         </f:entry>
 
+        <f:entry title="${%LXC Conf Options}" field="lxcConfString">
+            <f:textbox/>
+        </f:entry>
+
         <f:entry title="${%Run container privileged}" field="privileged">
             <f:checkbox/>
+        </f:entry>
+
+        <f:entry title="${%Delay before starting Slave (seconds)}" field="slaveStartDelay">
+            <f:textbox default="30"/>
         </f:entry>
 
        <f:entry title="${%Prefix Start Slave Command}" field="prefixStartSlaveCmd">

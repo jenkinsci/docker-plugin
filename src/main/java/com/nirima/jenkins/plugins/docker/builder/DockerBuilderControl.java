@@ -18,6 +18,7 @@ import java.util.logging.Logger;
  * Created by magnayn on 29/01/2014.
  */
 public class DockerBuilderControl extends Builder implements Serializable {
+
     private static final Logger LOGGER = Logger.getLogger(DockerBuilderControl.class.getName());
 
     public final DockerBuilderControlOption option;
@@ -45,13 +46,12 @@ public class DockerBuilderControl extends Builder implements Serializable {
             return "Start/Stop Docker Containers";
         }
 
-        public static DescriptorExtensionList<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor> getOptionList() {
+        public static DescriptorExtensionList<DockerBuilderControlOption, DockerBuilderControlOptionDescriptor> getOptionList() {
             return Jenkins.getInstance()
-                    .<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor>getDescriptorList(DockerBuilderControlOption.class);
+                    .<DockerBuilderControlOption, DockerBuilderControlOptionDescriptor>getDescriptorList(DockerBuilderControlOption.class);
         }
 
     }
-
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
