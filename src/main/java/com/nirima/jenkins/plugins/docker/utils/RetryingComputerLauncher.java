@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+
 public class RetryingComputerLauncher extends DelegatingComputerLauncher {
 
     private static final Logger log = LoggerFactory.getLogger(RetryingComputerLauncher.class);
@@ -17,7 +18,7 @@ public class RetryingComputerLauncher extends DelegatingComputerLauncher {
     /**
      * time (ms) to back off between retries?
      */
-    private final int pause = 5000;
+    private final int pause   = 5000;
 
     /**
      * Let us know when to pause the launch.

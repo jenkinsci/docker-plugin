@@ -1,0 +1,27 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+
+    <f:entry title="Directory for Dockerfile" field="dockerFileDirectory"
+             description="Location to look for the Dockerfile in, which is used to build the image.">
+        <f:textbox />
+    </f:entry>
+
+
+    <f:entry title="Tag to use" field="tag"
+             description="Tag to give the image.">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Push image}" field="pushOnSuccess">
+        <f:checkbox/>
+    </f:entry>
+
+    <f:entry title="${%Clean local images}" field="cleanImages">
+        <f:checkbox default="false"/>
+    </f:entry>
+
+    <f:entry title="${%Attempt to remove images when jenkins deletes the run}" field="cleanupWithJenkinsJobDelete">
+        <f:checkbox default="false"/>
+    </f:entry>
+
+</j:jelly>

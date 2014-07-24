@@ -13,8 +13,8 @@ import java.util.logging.Logger;
  * Created by magnayn on 09/01/2014.
  */
 public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
-
     private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
+
 
     private boolean haveWeRunAnyJobs = false;
 
@@ -45,11 +45,11 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         haveWeRunAnyJobs = true;
 
         Queue.Executable executable = executor.getCurrentExecutable();
-        if (executable instanceof Run) {
+        if( executable instanceof Run) {
             Run build = (Run) executable;
             DockerSlave slave = getNode();
 
-            if (slave == null) {
+            if( slave == null ) {
                 LOGGER.log(Level.FINE, " Ignoring TaskCompleted for " + this + " as node has already been removed.");
             } else {
                 slave.setRun(build);
@@ -59,6 +59,8 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         LOGGER.log(Level.FINE, " Computer " + this + " taskCompleted");
 
     }
+
+
 
     @Override
     public void taskCompletedWithProblems(Executor executor, Queue.Task task, long durationMS, Throwable problems) {
@@ -72,9 +74,8 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         boolean result = !haveWeRunAnyJobs && super.isAcceptingTasks();
 
         // Quit quickly if we aren't accepting tasks
-        if (!result) {
+        if( !result )
             return false;
-        }
 
         // Update
         updateAcceptingTasks();
@@ -89,30 +90,32 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         try {
             DockerSlave node = getNode();
             int pause = 5000;
-            if (getOfflineCause() != null) {
-                if (getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
+            if( getOfflineCause() != null) {
+                if(getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
                     LOGGER.log(Level.INFO, "Slave agent not launched after checking " + checked + " time(s).  Waiting for any retries...");
                     checked += 1;
                     Thread.sleep(pause);
                 } else {
                     setAcceptingTasks(false);
-                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause());
+                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause() );
                 }
-            } else if (!node.containerExistsInCloud()) {
+            } else if( !node.containerExistsInCloud() ) {
                 setAcceptingTasks(false);
             }
-        } catch (Exception ex) {
+        } catch(Exception ex) {
             LOGGER.log(Level.INFO, " Computer " + this + " error getting node");
             setAcceptingTasks(false);
         }
     }
 
-    public void onConnected() {
+    public void onConnected(){
         DockerSlave node = getNode();
         if (node != null) {
             node.onConnected();
         }
     }
+
+
 
     @Override
     public String toString() {

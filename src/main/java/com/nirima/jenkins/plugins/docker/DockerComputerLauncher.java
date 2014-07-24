@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.google.common.base.Preconditions;
 import com.nirima.docker.client.model.ContainerInspectResponse;
@@ -16,16 +17,17 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
 /**
- * {@link hudson.slaves.ComputerLauncher} for Docker that waits for the instance
- * to really come up before proceeding to the real user-specified
- * {@link hudson.slaves.ComputerLauncher}.
+ * {@link hudson.slaves.ComputerLauncher} for Docker that waits for the instance to really come up before proceeding to
+ * the real user-specified {@link hudson.slaves.ComputerLauncher}.
  */
 public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
@@ -37,12 +39,12 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
     private static ComputerLauncher makeLauncher(DockerTemplate template, ContainerInspectResponse containerInspectResponse) {
         SSHLauncher sshLauncher = getSSHLauncher(containerInspectResponse, template);
-
+        
         LOGGER.log(Level.INFO, "Keep retrying........");
         return new RetryingComputerLauncher(sshLauncher);
     }
 
-    private static SSHLauncher getSSHLauncher(ContainerInspectResponse detail, DockerTemplate template) {
+    private static SSHLauncher getSSHLauncher(ContainerInspectResponse detail, DockerTemplate template)   {
         Preconditions.checkNotNull(template);
         Preconditions.checkNotNull(detail);
 
@@ -54,22 +56,23 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
             StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(template.credentialsId);
-
+            
             LOGGER.log(Level.INFO, "StandardUsernameCredentials: " + template.credentialsId);
             LOGGER.log(Level.INFO, "StandardUsernameCredentials.getUsername: " + credentials.getUsername());
             LOGGER.log(Level.INFO, "StandardUsernameCredentials.getDescription: " + credentials.getDescription());
 
-            return new SSHLauncher(host, port, credentials,
-                    template.jvmOptions,
-                    template.javaPath,
-                    template.prefixStartSlaveCmd,
-                    template.suffixStartSlaveCmd, 60);
+            return new SSHLauncher(host, port, credentials, 
+                    template.jvmOptions , 
+                    template.javaPath, 
+                    template.prefixStartSlaveCmd, 
+                    template.suffixStartSlaveCmd, 120);
 
-        } catch (NullPointerException ex) {
+        } catch(NullPointerException ex) {
             throw new RuntimeException("No mapped port 22 in host for SSL. Config=" + detail);
         } catch (MalformedURLException e) {
             throw new RuntimeException("Malformed URL for host " + template);
         }
     }
+
 
 }

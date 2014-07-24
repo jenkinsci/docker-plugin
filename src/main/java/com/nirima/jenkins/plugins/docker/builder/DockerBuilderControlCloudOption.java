@@ -18,6 +18,10 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
     protected DockerBuilderControlCloudOption(String cloudName) {
         this.cloudName = cloudName;
     }
+    
+    public String getCloudName() {
+        return cloudName;
+    }
 
     protected DockerCloud getCloud(AbstractBuild<?, ?> build) {
         DockerCloud cloud = null;

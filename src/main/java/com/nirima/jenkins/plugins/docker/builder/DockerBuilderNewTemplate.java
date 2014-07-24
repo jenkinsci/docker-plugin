@@ -28,17 +28,19 @@ import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
+
 /**
  * Created by Jocelyn De La Rosa on 14/05/2014.
  */
 public class DockerBuilderNewTemplate extends Builder implements Serializable {
-
     private static final Logger LOGGER = Logger.getLogger(DockerBuilderNewTemplate.class.getName());
 
     public final String image;
     public final String labelString;
     public final String remoteFs;
     public final String credentialsId;
+    public final String idleTerminationMinutes;
     public final String jvmOptions;
     public final String javaPath;
     public final String prefixStartSlaveCmd;
@@ -48,26 +50,29 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String dockerCommand;
     public final String lxcConfString;
     public final String volumesString;
+    public final String volumesFrom;
+    public final String lxcConfString;
     public final boolean privileged;
     public final String hostname;
     public final String slaveStartDelay;
 
     @DataBoundConstructor
     public DockerBuilderNewTemplate(String image, String labelString, String remoteFs,
-            String credentialsId, String jvmOptions, String javaPath,
-            String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-            String instanceCapStr, String dnsString,
-            String dockerCommand,
-            String lxcConfString,
-            String volumesString,
-            String hostname,
-            boolean privileged,
-            String slaveStartDelay) {
+                                              String credentialsId, String idleTerminationMinutes,
+                                              String jvmOptions, String javaPath,
+                                              String prefixStartSlaveCmd, String suffixStartSlaveCmd,
+                                              String instanceCapStr, String dnsString,
+                                              String dockerCommand,
+                                              String volumesString, String volumesFrom,
+                                              String lxcConfString,
+                                              String hostname,
+                                              boolean privileged) {
 
         this.image = image;
         this.labelString = labelString;
         this.remoteFs = remoteFs;
         this.credentialsId = credentialsId;
+        this.idleTerminationMinutes = idleTerminationMinutes;
         this.jvmOptions = jvmOptions;
         this.javaPath = javaPath;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
@@ -75,11 +80,11 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.instanceCapStr = instanceCapStr;
         this.dnsString = dnsString;
         this.dockerCommand = dockerCommand;
-        this.lxcConfString = lxcConfString;
         this.volumesString = volumesString;
+        this.volumesFrom = volumesFrom;
+        this.lxcConfString = lxcConfString;
         this.privileged = privileged;
         this.hostname = hostname;
-        this.slaveStartDelay = slaveStartDelay;
     }
 
     @Override
@@ -108,17 +113,20 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         }
     }
 
+
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
-                LOGGER.log(Level.INFO, "Adding new template « " + image + " » to cloud " + ((DockerCloud) c).name);
-                DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, credentialsId,
-                        jvmOptions, javaPath, prefixStartSlaveCmd,
+                LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
+                DockerTemplate t = new DockerTemplate(image, labelString, remoteFs,
+                        credentialsId, idleTerminationMinutes,
+                        jvmOptions, javaPath,
+                        prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
-                        dnsString, dockerCommand, lxcConfString,
-                        volumesString, hostname, privileged, slaveStartDelay);
+                        dnsString, dockerCommand,
+                        volumesString, volumesFrom, lxcConfString, hostname, privileged);
                 ((DockerCloud) c).addTemplate(t);
             }
         }

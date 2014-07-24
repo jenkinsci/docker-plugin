@@ -8,7 +8,7 @@
 
     <groupId>com.nirima</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>0.6.3-SNAPSHOT</version>
+    <version>0.8-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Docker plugin</name>
 
@@ -26,7 +26,7 @@
         <dependency>
             <groupId>com.nirima.jdocker</groupId>
             <artifactId>jDocker</artifactId>
-            <version>1.4.1</version>
+            <version>1.5</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
