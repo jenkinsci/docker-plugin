@@ -50,6 +50,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Field dockerCommand
      */
     public final String dockerCommand;
+    
+    /**
+     * Field lxcConfString
+     */
+    public final String lxcConfString;
 
     /**
      * Minutes before terminating an idle slave
@@ -100,6 +105,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           String instanceCapStr, String dnsString,
                           String dockerCommand,
                           String volumesString, String volumesFrom,
+                          String lxcConfString,
                           String hostname,
                           boolean privileged
 
@@ -115,6 +121,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
 
         this.dockerCommand = dockerCommand;
+        this.lxcConfString = lxcConfString;
         this.privileged = privileged;
         this.hostname = hostname;
 
@@ -279,6 +286,26 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         if (volumes.length > 0)
             hostConfig.setBinds(volumes);
+        
+        List<HostConfig.LxcConf> temp = new ArrayList<HostConfig.LxcConf>();
+        for (String item : lxcConfString.split(" ")) {
+            String[] keyValuePairs = item.split("=");
+            if (keyValuePairs.length == 2 )
+            {
+                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
+                HostConfig.LxcConf optN = hostConfig.new LxcConf();
+                optN.setKey(keyValuePairs[0]);
+                optN.setValue(keyValuePairs[1]);    
+                temp.add(optN);
+            }
+            else
+            {
+                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
+            }
+        }
+        
+        if (!temp.isEmpty())
+            hostConfig.setLxcConf(temp.toArray(new HostConfig.LxcConf[temp.size()]));
 
         if(volumesFrom != null && !volumesFrom.isEmpty())
             hostConfig.setVolumesFrom(new String[] {volumesFrom});
