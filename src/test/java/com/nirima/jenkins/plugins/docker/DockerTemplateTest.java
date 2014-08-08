@@ -7,7 +7,7 @@ import hudson.model.Node;
 public class DockerTemplateTest {
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "credentialsId", "idleTerminationMinutes", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "volumesFrom", "lxcConf", "hostname", false);
+        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "remoteFsMapping", "credentialsId", "idleTerminationMinutes", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "volumesFrom", "lxcConf", "hostname", false);
         return instance;
     }
 
