@@ -192,7 +192,7 @@ public class DockerSlave extends AbstractCloudSlave {
      * @throws IOException
      */
     private void addJenkinsAction(String tag_image) throws IOException {
-        theRun.addAction( new DockerBuildAction(getCloud().serverUrl, containerId, tag_image) );
+        theRun.addAction( new DockerBuildAction(getCloud().serverUrl, containerId, tag_image, dockerTemplate.remoteFsMapping) );
         theRun.save();
     }
 

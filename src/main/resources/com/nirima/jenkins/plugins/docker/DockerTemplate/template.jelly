@@ -18,6 +18,10 @@
             <f:textbox/>
         </f:entry>
 
+       <f:entry title="${%Remote FS Root Mapping}" field="remoteFsMapping">
+           <f:textbox/>
+       </f:entry>
+
         <f:entry title="${%Instance Cap}" field="instanceCapStr">
             <f:textbox/>
         </f:entry>

@@ -81,6 +81,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      */
     public final String suffixStartSlaveCmd;
 
+    /**
+     *  Field remoteFSMapping.
+     */
+    public final String remoteFsMapping;
 
     public final String remoteFs; // = "/home/jenkins";
 
@@ -99,6 +103,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     @DataBoundConstructor
     public DockerTemplate(String image, String labelString,
                           String remoteFs,
+                          String remoteFsMapping,
                           String credentialsId, String idleTerminationMinutes,
                           String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
@@ -119,6 +124,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
+        this.remoteFsMapping = remoteFsMapping;
 
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
@@ -167,6 +173,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public String getVolumesFrom() {
         return volumesFrom;
+    }
+
+    public String getRemoteFsMapping() {
+        return remoteFsMapping;
     }
 
     public Descriptor<DockerTemplate> getDescriptor() {

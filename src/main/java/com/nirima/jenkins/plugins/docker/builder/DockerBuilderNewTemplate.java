@@ -38,6 +38,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
 
     public final String image;
     public final String labelString;
+    public final String remoteFsMapping;
     public final String remoteFs;
     public final String credentialsId;
     public final String idleTerminationMinutes;
@@ -55,7 +56,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String hostname;
 
     @DataBoundConstructor
-    public DockerBuilderNewTemplate(String image, String labelString, String remoteFs,
+    public DockerBuilderNewTemplate(String image, String labelString, String remoteFs, String remoteFsMapping,
                                               String credentialsId, String idleTerminationMinutes,
                                               String jvmOptions, String javaPath,
                                               String prefixStartSlaveCmd, String suffixStartSlaveCmd,
@@ -69,6 +70,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.image = image;
         this.labelString = labelString;
         this.remoteFs = remoteFs;
+        this.remoteFsMapping = remoteFsMapping;
         this.credentialsId = credentialsId;
         this.idleTerminationMinutes = idleTerminationMinutes;
         this.jvmOptions = jvmOptions;
@@ -118,7 +120,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
-                DockerTemplate t = new DockerTemplate(image, labelString, remoteFs,
+                DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, remoteFsMapping, 
                         credentialsId, idleTerminationMinutes,
                         jvmOptions, javaPath,
                         prefixStartSlaveCmd,
