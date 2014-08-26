@@ -32,7 +32,7 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
 
         LOGGER.info("Starting container " + containerId);
         DockerClient client = getClient(build);
-        client.container(containerId).start();
+        
         getLaunchAction(build).started(client, containerId);
     }
 
