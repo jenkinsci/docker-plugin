@@ -6,25 +6,6 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="${%Labels}" field="labelString">
-        <f:textbox/>
-    </f:entry>
-
-    <f:entry title="${%Credentials}" field="credentialsId">
-        <c:select/>
-    </f:entry>
-
-    <f:entry title="${%Remote Filing System Root}" field="remoteFs">
-        <f:textbox/>
-    </f:entry>
-
-    <f:entry title="${%Remote FS Root Mapping}" field="remoteFsMapping">
-        <f:textbox/>
-    </f:entry>
-
-    <f:entry title="${%Instance Cap}" field="instanceCapStr">
-        <f:textbox/>
-    </f:entry>
 
     <f:entry title="${%DNS}" field="dnsString">
         <f:textbox/>
@@ -44,17 +25,6 @@
 
     <f:advanced>
 
-        <f:entry title="${%Idle termination time}" field="idleTerminationMinutes">
-            <f:textbox default="5"/>
-        </f:entry>
-
-        <f:entry title="${%JavaPath}" field="javaPath">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%JVM Options}" field="jvmOptions">
-            <f:textbox/>
-        </f:entry>
 
         <f:entry title="${%Docker Command}" field="dockerCommand">
             <f:textbox/>
@@ -76,13 +46,6 @@
             <f:checkbox/>
         </f:entry>
 
-        <f:entry title="${%Prefix Start Slave Command}" field="prefixStartSlaveCmd">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%Suffix Start Slave Command}" field="suffixStartSlaveCmd">
-            <f:textbox/>
-        </f:entry>
 
     </f:advanced>
 </j:jelly>

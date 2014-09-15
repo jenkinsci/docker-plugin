@@ -8,20 +8,18 @@ import com.nirima.docker.client.model.ContainerConfig;
 import com.nirima.docker.client.model.ContainerCreateResponse;
 import com.nirima.docker.client.model.ContainerInspectResponse;
 import com.nirima.docker.client.model.HostConfig;
-import com.nirima.docker.client.model.PortBinding;
+import com.nirima.docker.client.model.PortMapping;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 /**
  * Created by magnayn on 15/09/2014.
  */
-public class DockerTemplateBase {
-    private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
+public abstract class DockerTemplateBase {
+    private static final Logger LOGGER = Logger.getLogger(DockerTemplateBase.class.getName());
 
 
     public final String image;
@@ -42,15 +40,19 @@ public class DockerTemplateBase {
     public final String[] volumes;
     public final String volumesFrom;
 
+    public final String bindPorts;
+    public final boolean bindAllPorts;
+
     public final boolean privileged;
 
-    @DataBoundConstructor
     public DockerTemplateBase(String image,
                           String dnsString,
                           String dockerCommand,
                           String volumesString, String volumesFrom,
                           String lxcConfString,
                           String hostname,
+                          String bindPorts,
+                          boolean bindAllPorts,
                           boolean privileged
 
     ) {
@@ -60,6 +62,9 @@ public class DockerTemplateBase {
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
         this.hostname = hostname;
+
+        this.bindPorts    = bindPorts;
+        this.bindAllPorts = bindAllPorts;
 
         this.dnsHosts = splitAndFilterEmpty(dnsString);
         this.volumes = splitAndFilterEmpty(volumesString);
@@ -133,6 +138,12 @@ public class DockerTemplateBase {
 
         HostConfig hostConfig = new HostConfig();
         hostConfig.setPortBindings(bports);
+
+        String bp = Objects.firstNonNull(bindPorts, "0.0.0.0::22");
+        hostConfig.setPortBindings( PortMapping.parse(bp) );
+        hostConfig.setPublishAllPorts( bindAllPorts );
+
+
         hostConfig.setPrivileged(this.privileged);
         if( dnsHosts.length > 0 )
             hostConfig.setDns(dnsHosts);
