@@ -11,9 +11,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionStopStart {
 
+    public final boolean remove;
+
     @DataBoundConstructor
-    public DockerBuilderControlOptionStop(String cloudId, String containerId) {
+    public DockerBuilderControlOptionStop(String cloudId, String containerId, boolean remove) {
         super(cloudId, containerId);
+        this.remove = remove;
     }
 
     @Override
@@ -22,11 +25,10 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
         DockerClient client = getClient(build);
         client.container(containerId).stop();
         getLaunchAction(build).stopped(client, containerId);
+        if( remove )
+            client.container(containerId).remove();
     }
 
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
-    }
 
     @Extension
     public static final class DescriptorImpl extends DockerBuilderControlOptionDescriptor {

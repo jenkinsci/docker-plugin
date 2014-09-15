@@ -26,10 +26,6 @@ public class DockerBuilderControlOptionStart extends DockerBuilderControlOptionS
 
     }
 
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
-    }
-
     @Extension
     public static final class DescriptorImpl extends DockerBuilderControlOptionDescriptor {
         @Override

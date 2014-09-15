@@ -43,23 +43,8 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
     }
 
     protected DockerClient getClient(AbstractBuild<?, ?> build) {
-        DockerCloud cloud = null;
+        DockerCloud cloud = getCloud(build);
 
-        Node node = build.getBuiltOn();
-        if( node instanceof DockerSlave) {
-            DockerSlave dockerSlave = (DockerSlave)node;
-            cloud = dockerSlave.getCloud();
-        }
-
-        if( !Strings.isNullOrEmpty(cloudName) ) {
-            cloud = (DockerCloud) Jenkins.getInstance().getCloud(cloudName);
-        }
-
-        if( cloud == null ) {
-            throw new RuntimeException("Cannot list cloud for docker action");
-        }
-
-        DockerClient client = cloud.connect();
-        return client;
+        return cloud.connect();
     }
 }

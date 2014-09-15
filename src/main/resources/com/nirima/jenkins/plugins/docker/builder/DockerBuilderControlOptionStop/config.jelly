@@ -9,5 +9,8 @@
       <f:textbox />
     </f:entry>
 
+    <f:entry title="${%Remove Stopped Container}" field="remove">
+        <f:checkbox/>
+    </f:entry>
 
 </j:jelly>

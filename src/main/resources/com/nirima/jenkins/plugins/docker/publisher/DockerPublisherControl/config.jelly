@@ -1,0 +1,9 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
+    xmlns:c="/lib/credentials" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" >
+
+
+    <f:entry title="${%Remove Stopped Containers}" field="remove">
+        <f:checkbox/>
+    </f:entry>
+
+</j:jelly>

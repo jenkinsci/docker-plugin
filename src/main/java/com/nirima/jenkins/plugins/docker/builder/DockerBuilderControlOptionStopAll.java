@@ -11,9 +11,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOption {
 
-    @DataBoundConstructor
-    public DockerBuilderControlOptionStopAll() {
+    public final boolean remove;
 
+    @DataBoundConstructor
+    public DockerBuilderControlOptionStopAll(boolean remove) {
+
+        this.remove = remove;
     }
 
     @Override
@@ -23,14 +26,14 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
             try {
                 LOGGER.info("Stopping container " + containerItem.id);
                 containerItem.client.container(containerItem.id).stop();
+
+                if( remove )
+                    containerItem.client.container(containerItem.id).remove();
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
     }
 
     @Extension

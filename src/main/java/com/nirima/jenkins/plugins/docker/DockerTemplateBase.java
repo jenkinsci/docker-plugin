@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Created by magnayn on 15/09/2014.
+ * Base for docker templates - does not include Jenkins items like labels.
  */
 public abstract class DockerTemplateBase {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplateBase.class.getName());

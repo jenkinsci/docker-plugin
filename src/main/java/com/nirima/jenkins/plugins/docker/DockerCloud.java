@@ -8,6 +8,7 @@ import com.google.common.collect.Collections2;
 import com.nirima.docker.client.DockerException;
 import com.nirima.docker.client.model.Container;
 import com.nirima.docker.client.model.ContainerInspectResponse;
+import com.nirima.docker.client.model.Identifier;
 import com.nirima.docker.client.model.ImageInspectResponse;
 import com.nirima.docker.client.model.Version;
 import com.nirima.docker.client.model.Image;
@@ -230,6 +231,14 @@ public class DockerCloud extends Cloud {
     public void addTemplate(DockerTemplate t) {
         this.templates.add(t);
         t.parent = this;
+    }
+
+    /**
+     * Remove a
+     * @param t
+     */
+    public void removeTemplate(DockerTemplate t) {
+        this.templates.remove(t);
     }
 
     /**

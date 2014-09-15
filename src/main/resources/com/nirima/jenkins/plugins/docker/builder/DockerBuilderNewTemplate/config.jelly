@@ -1,5 +1,7 @@
 <j:jelly xmlns:j="jelly:core"
          xmlns:st="jelly:stapler"
+         xmlns:f="/lib/form"
         >
+
     <st:include page="template.jelly" class="com.nirima.jenkins.plugins.docker.DockerTemplate" />
 </j:jelly>

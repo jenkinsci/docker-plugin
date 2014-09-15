@@ -2,36 +2,36 @@
          xmlns:f="/lib/form"
          xmlns:c="/lib/credentials"
         >
-    <f:entry title="${%ID}" field="image">
-        <f:textbox/>
-    </f:entry>
-
-
-    <f:entry title="${%DNS}" field="dnsString">
-        <f:textbox/>
-    </f:entry>
-
-    <f:entry title="${%Port bindings}" field="bindPorts">
-        <f:textbox/>
-    </f:entry>
-
-    <f:entry title="${%Bind all declared ports}" field="bindAllPorts">
-        <f:checkbox/>
-    </f:entry>
-
-    <f:entry title="${%Hostname}" field="hostname">
-        <f:textbox/>
-    </f:entry>
-
-    <f:advanced>
-
-
-        <f:entry title="${%Docker Command}" field="dockerCommand">
+        <f:entry title="${%ID}" field="image">
             <f:textbox/>
         </f:entry>
 
-        <f:entry title="${%LXC Conf Options}" field="lxcConfString">
+
+        <f:entry title="${%DNS}" field="dnsString">
             <f:textbox/>
+        </f:entry>
+
+        <f:entry title="${%Port bindings}" field="bindPorts">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="${%Bind all declared ports}" field="bindAllPorts">
+            <f:checkbox/>
+        </f:entry>
+
+        <f:entry title="${%Hostname}" field="hostname">
+            <f:textbox/>
+        </f:entry>
+
+        <f:advanced>
+
+
+        <f:entry title="${%Docker Command}" field="dockerCommand">
+           <f:textbox/>
+       </f:entry>
+
+        <f:entry title="${%LXC Conf Options}" field="lxcConfString">
+            <f:textbox />
         </f:entry>
 
         <f:entry title="${%Volumes}" field="volumesString">
@@ -47,5 +47,5 @@
         </f:entry>
 
 
-    </f:advanced>
+        </f:advanced>
 </j:jelly>

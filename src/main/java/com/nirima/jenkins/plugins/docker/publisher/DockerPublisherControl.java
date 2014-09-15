@@ -21,12 +21,16 @@ import java.util.logging.Logger;
 public class DockerPublisherControl extends Recorder implements Serializable {
     private static final Logger LOGGER = Logger.getLogger(DockerPublisherControl.class.getName());
 
+    public final boolean remove;
+
     @DataBoundConstructor
-    public DockerPublisherControl()
-    {}
+    public DockerPublisherControl(boolean remove)
+    {
+        this.remove = remove;
+    }
 
     public BuildStepMonitor getRequiredMonitorService() {
-        return null;
+        return BuildStepMonitor.BUILD;
     }
 
     @Override
@@ -38,7 +42,7 @@ public class DockerPublisherControl extends Recorder implements Serializable {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
         try {
-            new DockerBuilderControlOptionStopAll().execute(build);
+            new DockerBuilderControlOptionStopAll(remove).execute(build);
         } catch (DockerException e) {
             throw new RuntimeException(e);
         }

@@ -1,0 +1,11 @@
+<j:jelly xmlns:j="jelly:core"
+         xmlns:st="jelly:stapler"
+         xmlns:f="/lib/form"
+        >
+
+    <f:entry title="${%Docker Cloud name}" field="cloudName">
+        <f:textbox />
+    </f:entry>
+
+    <st:include page="template.jelly" class="com.nirima.jenkins.plugins.docker.DockerSimpleTemplate" />
+</j:jelly>

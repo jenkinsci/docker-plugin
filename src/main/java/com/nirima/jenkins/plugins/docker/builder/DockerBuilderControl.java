@@ -46,10 +46,8 @@ public class DockerBuilderControl extends Builder implements Serializable {
         }
 
         public static DescriptorExtensionList<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor> getOptionList() {
-            return Jenkins.getInstance()
-                    .<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor>getDescriptorList(DockerBuilderControlOption.class);
+            return DockerBuilderControlOptionDescriptor.all();
         }
-
     }
 
 

@@ -22,7 +22,7 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
     public String getTemplateId() {
         return templateId;
     }
-    
+
     @Override
     public void execute(AbstractBuild<?, ?> build) throws DockerException {
 
@@ -34,10 +34,6 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
         DockerClient client = getClient(build);
         client.container(containerId).start();
         getLaunchAction(build).started(client, containerId);
-    }
-
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
     }
 
     @Extension
