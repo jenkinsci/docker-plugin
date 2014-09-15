@@ -101,6 +101,22 @@ public abstract class DockerTemplateBase {
 
     public ContainerInspectResponse provisionNew(DockerClient dockerClient) throws DockerException {
 
+        ContainerConfig containerConfig = createContainerConfig();
+
+        ContainerCreateResponse container = dockerClient.containers().create(containerConfig);
+
+        // Launch it.. :
+
+        HostConfig hostConfig = createHostConfig();
+
+        dockerClient.container(container.getId()).start(hostConfig);
+
+        String containerId = container.getId();
+
+        return dockerClient.container(containerId).inspect();
+    }
+
+    public ContainerConfig createContainerConfig() {
         ContainerConfig containerConfig = new ContainerConfig();
         containerConfig.setImage(image);
 
@@ -125,19 +141,12 @@ public abstract class DockerTemplateBase {
         if( volumesFrom != null && !volumesFrom.isEmpty() )
             containerConfig.setVolumesFrom(volumesFrom);
 
-        ContainerCreateResponse container = dockerClient.containers().create(containerConfig);
+        return containerConfig;
+    }
 
-        // Launch it.. :
-        // MAybe should be in computerLauncher
-
-        Map<String, PortBinding[]> bports = new HashMap<String, PortBinding[]>();
-        PortBinding binding = new PortBinding();
-        binding.hostIp = "0.0.0.0";
-        //binding.hostPort = ":";
-        bports.put("22/tcp", new PortBinding[] { binding });
-
+    public HostConfig createHostConfig() {
         HostConfig hostConfig = new HostConfig();
-        hostConfig.setPortBindings(bports);
+
 
         String bp = Objects.firstNonNull(bindPorts, "0.0.0.0::22");
         hostConfig.setPortBindings( PortMapping.parse(bp) );
@@ -174,11 +183,7 @@ public abstract class DockerTemplateBase {
         if(volumesFrom != null && !volumesFrom.isEmpty())
             hostConfig.setVolumesFrom(new String[] {volumesFrom});
 
-        dockerClient.container(container.getId()).start(hostConfig);
-
-        String containerId = container.getId();
-
-        return dockerClient.container(containerId).inspect();
+        return hostConfig;
     }
 
     @Override
