@@ -261,7 +261,8 @@ public class DockerCloud extends Cloud {
 
         if (images.size() == 0) {
             LOGGER.log(Level.INFO, "Pulling image " + ami + " since one was not found.  This may take awhile...");
-            InputStream imageStream = dockerClient.createPullCommand().image(ami).withTag("latest").execute();
+            Identifier amiId = Identifier.fromCompoundString(ami);
+            InputStream imageStream = dockerClient.createPullCommand().image(amiId).execute();
             int streamValue = 0;
             while (streamValue != -1) {
                 streamValue = imageStream.read();
