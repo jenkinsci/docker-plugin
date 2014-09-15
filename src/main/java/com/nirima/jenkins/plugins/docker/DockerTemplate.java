@@ -33,11 +33,10 @@ import java.util.*;
 import java.util.logging.Logger;
 
 
-public class DockerTemplate implements Describable<DockerTemplate> {
+public class DockerTemplate extends DockerTemplateBase implements Describable<DockerTemplate> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
 
 
-    public final String image;
     public final String labelString;
 
     // SSH settings
@@ -45,16 +44,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * The id of the credentials to use.
      */
     public final String credentialsId;
-
-    /**
-     * Field dockerCommand
-     */
-    public final String dockerCommand;
-    
-    /**
-     * Field lxcConfString
-     */
-    public final String lxcConfString;
 
     /**
      * Minutes before terminating an idle slave
@@ -88,17 +77,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public final String remoteFs; // = "/home/jenkins";
 
-    public final String hostname;
-
     public final int instanceCap;
-    public final String[] dnsHosts;
-    public final String[] volumes;
-    public final String volumesFrom;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     public transient DockerCloud parent;
 
-    public final boolean privileged;
 
     @DataBoundConstructor
     public DockerTemplate(String image, String labelString,
@@ -115,7 +98,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           boolean privileged
 
     ) {
-        this.image = image;
+        super(image, dnsString,dockerCommand,volumesString,volumesFrom,lxcConfString,hostname,privileged);
+
+
         this.labelString = Util.fixNull(labelString);
         this.credentialsId = credentialsId;
         this.idleTerminationMinutes = idleTerminationMinutes;
@@ -126,20 +111,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
         this.remoteFsMapping = remoteFsMapping;
 
-        this.dockerCommand = dockerCommand;
-        this.lxcConfString = lxcConfString;
-        this.privileged = privileged;
-        this.hostname = hostname;
-
-        if(instanceCapStr.equals("")) {
+        if (instanceCapStr.equals("")) {
             this.instanceCap = Integer.MAX_VALUE;
         } else {
             this.instanceCap = Integer.parseInt(instanceCapStr);
         }
-
-        this.dnsHosts = splitAndFilterEmpty(dnsString);
-        this.volumes = splitAndFilterEmpty(volumesString);
-        this.volumesFrom = volumesFrom;
 
         readResolve();
     }
@@ -252,79 +228,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public ContainerInspectResponse provisionNew() throws DockerException {
         DockerClient dockerClient = getParent().connect();
-
-        ContainerConfig containerConfig = new ContainerConfig();
-        containerConfig.setImage(image);
-
-        String[] dockerCommandArray;
-
-        if(dockerCommand != null && !dockerCommand.isEmpty()){
-            dockerCommandArray = dockerCommand.split(" ");
-        } else {
-            //default value to preserve comptability
-            dockerCommandArray = new String[]{"/usr/sbin/sshd", "-D"};
-        }
-
-        if (hostname != null && !hostname.isEmpty()) {
-            containerConfig.setHostName(hostname);
-        }
-        containerConfig.setCmd(dockerCommandArray);
-        containerConfig.setPortSpecs(new String[]{"22/tcp"});
-        //containerConfig.setPortSpecs(new String[]{"22/tcp"});
-        //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
-        if( dnsHosts.length > 0 )
-            containerConfig.setDns(dnsHosts);
-        if( volumesFrom != null && !volumesFrom.isEmpty() )
-            containerConfig.setVolumesFrom(volumesFrom);
-
-        ContainerCreateResponse container = dockerClient.containers().create(containerConfig);
-
-        // Launch it.. :
-        // MAybe should be in computerLauncher
-
-        Map<String, PortBinding[]> bports = new HashMap<String, PortBinding[]>();
-        PortBinding binding = new PortBinding();
-        binding.hostIp = "0.0.0.0";
-        //binding.hostPort = ":";
-        bports.put("22/tcp", new PortBinding[] { binding });
-
-        HostConfig hostConfig = new HostConfig();
-        hostConfig.setPortBindings(bports);
-        hostConfig.setPrivileged(this.privileged);
-        if( dnsHosts.length > 0 )
-            hostConfig.setDns(dnsHosts);
-
-        if (volumes.length > 0)
-            hostConfig.setBinds(volumes);
-        
-        List<HostConfig.LxcConf> temp = new ArrayList<HostConfig.LxcConf>();
-        for (String item : lxcConfString.split(" ")) {
-            String[] keyValuePairs = item.split("=");
-            if (keyValuePairs.length == 2 )
-            {
-                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
-                HostConfig.LxcConf optN = hostConfig.new LxcConf();
-                optN.setKey(keyValuePairs[0]);
-                optN.setValue(keyValuePairs[1]);    
-                temp.add(optN);
-            }
-            else
-            {
-                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
-            }
-        }
-        
-        if (!temp.isEmpty())
-            hostConfig.setLxcConf(temp.toArray(new HostConfig.LxcConf[temp.size()]));
-
-        if(volumesFrom != null && !volumesFrom.isEmpty())
-            hostConfig.setVolumesFrom(new String[] {volumesFrom});
-
-        dockerClient.container(container.getId()).start(hostConfig);
-
-        String containerId = container.getId();
-
-        return dockerClient.container(containerId).inspect();
+        return provisionNew(dockerClient);
     }
 
     public int getNumExecutors() {
