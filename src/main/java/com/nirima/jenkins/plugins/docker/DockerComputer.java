@@ -1,10 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.google.common.base.Objects;
-import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.model.*;
 import hudson.slaves.AbstractCloudComputer;
-import hudson.slaves.OfflineCause;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,9 +12,6 @@ import java.util.logging.Logger;
  */
 public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
-
-
-    private boolean haveWeRunAnyJobs = false;
 
     private int checked = 0;
 
@@ -28,10 +23,6 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         return getNode().getCloud();
     }
 
-    public boolean haveWeRunAnyJobs() {
-        return haveWeRunAnyJobs;
-    }
-
     @Override
     public void taskAccepted(Executor executor, Queue.Task task) {
         super.taskAccepted(executor, task);
@@ -41,8 +32,6 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     @Override
     public void taskCompleted(Executor executor, Queue.Task task, long durationMS) {
         super.taskCompleted(executor, task, durationMS);
-
-        haveWeRunAnyJobs = true;
 
         Queue.Executable executable = executor.getCurrentExecutable();
         if( executable instanceof Run) {
@@ -71,7 +60,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     @Override
     public boolean isAcceptingTasks() {
 
-        boolean result = !haveWeRunAnyJobs && super.isAcceptingTasks();
+        boolean result = super.isAcceptingTasks();
 
         // Quit quickly if we aren't accepting tasks
         if( !result )
@@ -81,7 +70,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         updateAcceptingTasks();
 
         // Are we still accepting tasks?
-        result = !haveWeRunAnyJobs && super.isAcceptingTasks();
+        result = super.isAcceptingTasks();
 
         return result;
     }
