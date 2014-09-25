@@ -30,7 +30,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy;
 
 
 public class DockerTemplate extends DockerTemplateBase implements Describable<DockerTemplate> {
@@ -183,6 +185,19 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return parent;
     }
 
+    private int idleTerminationMinutes() {
+        if (idleTerminationMinutes == null || idleTerminationMinutes.trim().isEmpty()) {
+            return 0;
+        } else {
+            try {
+                return Integer.parseInt(idleTerminationMinutes);
+            } catch (NumberFormatException nfe) {
+                LOGGER.log(Level.INFO, "Malformed idleTermination value: {0}", idleTerminationMinutes);
+                return 30;
+            }
+        }
+    }
+
     public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException {
             PrintStream logger = listener.getLogger();
 
@@ -192,8 +207,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         int numExecutors = 1;
         Node.Mode mode = Node.Mode.NORMAL;
 
-
-        RetentionStrategy retentionStrategy = new DockerRetentionStrategy(idleTerminationMinutes);
+        RetentionStrategy retentionStrategy = new OnceRetentionStrategy(idleTerminationMinutes());
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
 

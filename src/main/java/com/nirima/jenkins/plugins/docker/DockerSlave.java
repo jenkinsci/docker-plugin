@@ -207,12 +207,6 @@ public class DockerSlave extends AbstractCloudSlave {
 
     }
 
-
-
-    public void retentionTerminate() throws IOException, InterruptedException {
-        terminate();
-    }
-
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
