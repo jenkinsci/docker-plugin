@@ -8,7 +8,7 @@
 
     <groupId>com.nirima</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>0.8</version>
+    <version>0.9-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Docker plugin</name>
 
@@ -18,7 +18,7 @@
     <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/docker-plugin</url>
-    <tag>docker-plugin-0.8</tag>
+    <tag>HEAD</tag>
   </scm>
 
 
