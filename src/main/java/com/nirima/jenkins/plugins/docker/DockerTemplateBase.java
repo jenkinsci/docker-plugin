@@ -2,16 +2,22 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.nirima.docker.client.DockerClient;
 import com.nirima.docker.client.DockerException;
 import com.nirima.docker.client.model.ContainerConfig;
 import com.nirima.docker.client.model.ContainerCreateResponse;
 import com.nirima.docker.client.model.ContainerInspectResponse;
 import com.nirima.docker.client.model.HostConfig;
+import com.nirima.docker.client.model.PortBinding;
 import com.nirima.docker.client.model.PortMapping;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -71,6 +77,10 @@ public abstract class DockerTemplateBase {
         this.volumesFrom = volumesFrom;
     }
 
+    protected Object readResolve() {
+        return this;
+    }
+
     private String[] splitAndFilterEmpty(String s) {
         List<String> temp = new ArrayList<String>();
         for (String item : s.split(" ")) {
@@ -116,24 +126,36 @@ public abstract class DockerTemplateBase {
         return dockerClient.container(containerId).inspect();
     }
 
+    protected String[] getDockerCommandArray() {
+         String[] dockerCommandArray = new String[0];
+
+        if(dockerCommand != null && !dockerCommand.isEmpty()){
+            dockerCommandArray = dockerCommand.split(" ");
+        }
+        return dockerCommandArray;
+    }
+
+    protected Iterable<PortMapping> getPortMappings() {
+
+        if(Strings.isNullOrEmpty(bindPorts) ) {
+            return Collections.EMPTY_LIST;
+        }
+
+        return PortMapping.parse(bindPorts);
+    }
+
     public ContainerConfig createContainerConfig() {
         ContainerConfig containerConfig = new ContainerConfig();
         containerConfig.setImage(image);
 
-        String[] dockerCommandArray;
-
-        if(dockerCommand != null && !dockerCommand.isEmpty()){
-            dockerCommandArray = dockerCommand.split(" ");
-        } else {
-            //default value to preserve comptability
-            dockerCommandArray = new String[]{"/usr/sbin/sshd", "-D"};
-        }
-
         if (hostname != null && !hostname.isEmpty()) {
             containerConfig.setHostName(hostname);
         }
-        containerConfig.setCmd(dockerCommandArray);
+        String[] cmd = getDockerCommandArray();
+        if( cmd.length > 0)
+            containerConfig.setCmd(cmd);
         containerConfig.setPortSpecs(new String[]{"22/tcp"});
+
         //containerConfig.setPortSpecs(new String[]{"22/tcp"});
         //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
         if( dnsHosts.length > 0 )
@@ -147,9 +169,7 @@ public abstract class DockerTemplateBase {
     public HostConfig createHostConfig() {
         HostConfig hostConfig = new HostConfig();
 
-
-        String bp = Objects.firstNonNull(bindPorts, "0.0.0.0::22");
-        hostConfig.setPortBindings( PortMapping.parse(bp) );
+        hostConfig.setPortBindings( getPortMappings() );
         hostConfig.setPublishAllPorts( bindAllPorts );
 
 
@@ -160,7 +180,29 @@ public abstract class DockerTemplateBase {
         if (volumes.length > 0)
             hostConfig.setBinds(volumes);
 
+        List<HostConfig.LxcConf> temp = getLxcConf(hostConfig);
+
+        if (!temp.isEmpty())
+            hostConfig.setLxcConf(temp.toArray(new HostConfig.LxcConf[temp.size()]));
+
+        if(!Strings.isNullOrEmpty(volumesFrom) )
+            hostConfig.setVolumesFrom(new String[] {volumesFrom});
+
+        return hostConfig;
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this)
+                .add("image", image)
+                .toString();
+    }
+
+
+    protected List<HostConfig.LxcConf> getLxcConf(HostConfig hostConfig) {
         List<HostConfig.LxcConf> temp = new ArrayList<HostConfig.LxcConf>();
+        if( lxcConfString == null )
+            return temp;
         for (String item : lxcConfString.split(" ")) {
             String[] keyValuePairs = item.split("=");
             if (keyValuePairs.length == 2 )
@@ -176,20 +218,6 @@ public abstract class DockerTemplateBase {
                 LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
             }
         }
-
-        if (!temp.isEmpty())
-            hostConfig.setLxcConf(temp.toArray(new HostConfig.LxcConf[temp.size()]));
-
-        if(volumesFrom != null && !volumesFrom.isEmpty())
-            hostConfig.setVolumesFrom(new String[] {volumesFrom});
-
-        return hostConfig;
-    }
-
-    @Override
-    public String toString() {
-        return Objects.toStringHelper(this)
-                .add("image", image)
-                .toString();
+        return temp;
     }
 }

@@ -173,6 +173,8 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
      * Initializes data structure that we don't persist.
      */
     protected Object readResolve() {
+        super.readResolve();
+
         labelSet = Label.parse(labelString);
         return this;
     }
@@ -251,6 +253,31 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     public int getNumExecutors() {
         return 1;
+    }
+
+    @Override
+    protected String[] getDockerCommandArray() {
+        String[] cmd = super.getDockerCommandArray();
+
+        if( cmd.length == 0 ) {
+            //default value to preserve comptability
+            cmd = new String[]{"/usr/sbin/sshd", "-D"};
+        }
+
+        return cmd;
+    }
+
+    @Override
+    /**
+     * Provide a sensible default - templates are for slaves, and you're mostly going
+     * to want port 22 exposed.
+     */
+    protected Iterable<PortMapping> getPortMappings() {
+
+        if(Strings.isNullOrEmpty(bindPorts) ) {
+            return PortMapping.parse("0.0.0.0::22");
+        }
+        return super.getPortMappings();
     }
 
     @Extension
