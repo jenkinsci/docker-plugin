@@ -24,17 +24,22 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
     public final boolean tagOnCompletion;
     public final String additionalTag;
     public final boolean pushOnSuccess;
+    public final boolean pushOnUnstable;
+    public final boolean pushOnFailure;
     public final boolean cleanImages;
 
     @DataBoundConstructor
     public DockerJobProperty(
             boolean tagOnCompletion,
             String additionalTag,
-            boolean pushOnSuccess, boolean cleanImages)
+            boolean pushOnSuccess, boolean pushOnUnstable,
+            boolean pushOnFailure, boolean cleanImages)
     {
         this.tagOnCompletion = tagOnCompletion;
         this.additionalTag = additionalTag;
         this.pushOnSuccess = pushOnSuccess;
+        this.pushOnUnstable = pushOnUnstable;
+        this.pushOnFailure = pushOnFailure;
         this.cleanImages = cleanImages;
     }
 
@@ -46,6 +51,14 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
     @Exported
     public boolean isPushOnSuccess() {
         return pushOnSuccess;
+    }
+
+    @Exported
+    public boolean isPushOnUnstable() { return pushOnUnstable; }
+
+    @Exported
+    public boolean isPushOnFailure() {
+        return pushOnFailure;
     }
 
     @Exported
@@ -75,6 +88,8 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
                     (Boolean)formData.get("tagOnCompletion"),
                     (String)formData.get("additionalTag"),
                     (Boolean)formData.get("pushOnSuccess"),
+                    (Boolean)formData.get("pushOnUnstable"),
+                    (Boolean)formData.get("pushOnFailure"),
                     (Boolean)formData.get("cleanImages"));
         }
     }
