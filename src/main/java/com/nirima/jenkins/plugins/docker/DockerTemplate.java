@@ -178,13 +178,13 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     public int getSSHLaunchTimeoutMinutes() {
         if (sshLaunchTimeoutMinutes == null || sshLaunchTimeoutMinutes.trim().isEmpty()) {
-            return 0;
+            return 1;
         } else {
             try {
                 return Integer.parseInt(sshLaunchTimeoutMinutes);
             } catch (NumberFormatException nfe) {
                 LOGGER.log(Level.INFO, "Malformed SSH Launch Timeout value: {0}", sshLaunchTimeoutMinutes);
-                return 60;
+                return 1;
             }
         }
     }
