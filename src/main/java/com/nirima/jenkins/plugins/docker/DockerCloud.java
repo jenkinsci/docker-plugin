@@ -5,14 +5,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
-import com.nirima.docker.client.DockerException;
-import com.nirima.docker.client.model.Container;
-import com.nirima.docker.client.model.ContainerInspectResponse;
-import com.nirima.docker.client.model.Identifier;
-import com.nirima.docker.client.model.ImageInspectResponse;
-import com.nirima.docker.client.model.Version;
-import com.nirima.docker.client.model.Image;
-import com.nirima.docker.client.DockerClient;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Version;
+import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.DockerClientConfig;
+
 import hudson.Extension;
 import hudson.model.*;
 import hudson.slaves.Cloud;
@@ -105,24 +108,34 @@ public class DockerCloud extends Cloud {
      */
     public synchronized DockerClient connect() {
 
-        LOGGER.log(Level.FINE, "Building connection to docker host " + name + " URL " + serverUrl);
-
         if (connection == null) {
-
-            DockerClient.Builder builder = DockerClient.builder()
-                    .withUrl(serverUrl)
-                    .withLogging(DockerClient.Logging.SLF4J);
-
-            if (connectTimeout > 0)
-                builder.connectTimeout(connectTimeout * 1000);
-
-            if (readTimeout > 0)
-                builder.readTimeout(readTimeout * 1000);
-
-            connection = builder.build();
+            connection = buildConnection();
         }
         return connection;
+    }
 
+    public DockerClientConfig getDockerClientConfig() {
+        DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
+            .createDefaultConfigBuilder()
+            .withUri(serverUrl);
+
+
+        // TODO?
+        // .withLogging(DockerClient.Logging.SLF4J);
+
+        //if (connectTimeout > 0)
+        //    builder.connectTimeout(connectTimeout * 1000);
+
+        if (readTimeout > 0)
+            config.withReadTimeout(readTimeout * 1000);
+
+        return config.build();
+    }
+
+    private DockerClient buildConnection() {
+        LOGGER.log(Level.FINE, "Building connection to docker host " + name + " URL " + serverUrl);
+
+        return DockerClientBuilder.getInstance(getDockerClientConfig()).build();
     }
 
     /**
@@ -251,18 +264,22 @@ public class DockerCloud extends Cloud {
     public int countCurrentDockerSlaves(String ami) throws Exception {
         final DockerClient dockerClient = connect();
 
-        List<Container> containers = dockerClient.containers().finder().allContainers(false).list();
+        List<Container> containers = dockerClient.listContainersCmd().exec();
 
         if (ami == null)
             return containers.size();
 
-        List<Image> images = dockerClient.images().finder().allImages(true).filter(ami).list();
+        List<Image> images = dockerClient.listImagesCmd()
+            .withFilter(ami)
+            .exec();
+
+
         LOGGER.log(Level.INFO, "Images found: " + images);
 
         if (images.size() == 0) {
             LOGGER.log(Level.INFO, "Pulling image " + ami + " since one was not found.  This may take awhile...");
-            Identifier amiId = Identifier.fromCompoundString(ami);
-            InputStream imageStream = dockerClient.createPullCommand().image(amiId).execute();
+            //Identifier amiId = Identifier.fromCompoundString(ami);
+            InputStream imageStream = dockerClient.pullImageCmd(ami).exec();
             int streamValue = 0;
             while (streamValue != -1) {
                 streamValue = imageStream.read();
@@ -271,12 +288,13 @@ public class DockerCloud extends Cloud {
             LOGGER.log(Level.INFO, "Finished pulling image " + ami);
         }
 
-        final ImageInspectResponse ir = dockerClient.image(ami).inspect();
+        final InspectImageResponse ir = dockerClient.inspectImageCmd(ami).exec();
 
         Collection<Container> matching = Collections2.filter(containers, new Predicate<Container>() {
             public boolean apply(@Nullable Container container) {
-                ContainerInspectResponse cis = dockerClient.container(container.getId()).inspect();
-                return (cis.getImage().equalsIgnoreCase(ir.getId()));
+                InspectContainerResponse
+                    cis = dockerClient.inspectContainerCmd(container.getId()).exec();
+                return (cis.getImageId().equalsIgnoreCase(ir.getId()));
             }
         });
         return matching.size();
@@ -346,12 +364,13 @@ public class DockerCloud extends Cloud {
                 @QueryParameter URL serverUrl
                 ) throws IOException, ServletException, DockerException {
 
-            DockerClient dc = DockerClient.builder().withUrl(serverUrl.toString()).build();
+            DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
+                .createDefaultConfigBuilder()
+                .withUri(serverUrl.toString());
 
-            Version version = dc.system().version();
+            DockerClient dc = DockerClientBuilder.getInstance(config.build()).build();
 
-            if( version.getVersionComponents()[0] < 1 )
-                return FormValidation.error("Docker host is " + version.getVersion() + " which is not supported.");
+            Version version = dc.versionCmd().exec();
 
             return FormValidation.ok("Version = " + version.getVersion());
         }

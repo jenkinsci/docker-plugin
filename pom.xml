@@ -24,9 +24,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.nirima.jdocker</groupId>
-            <artifactId>jDocker</artifactId>
-            <version>1.6</version>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java</artifactId>
+            <version>0.10.3</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>

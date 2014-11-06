@@ -1,20 +1,39 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.base.Strings;
-
-import com.nirima.docker.client.DockerException;
-import com.nirima.docker.client.DockerClient;
-import com.nirima.docker.client.model.*;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.PortBinding;
 import com.trilead.ssh2.Connection;
+
+import org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import hudson.Extension;
 import hudson.Util;
-import hudson.model.*;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.ItemGroup;
+import hudson.model.Label;
+import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
@@ -24,15 +43,6 @@ import hudson.slaves.RetentionStrategy;
 import hudson.util.ListBoxModel;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy;
 
 
 public class DockerTemplate extends DockerTemplateBase implements Describable<DockerTemplate> {
@@ -213,7 +223,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
 
-        ContainerInspectResponse containerInspectResponse = provisionNew();
+        InspectContainerResponse containerInspectResponse = provisionNew();
         String containerId = containerInspectResponse.getId();
 
         ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
@@ -246,7 +256,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     }
 
-    public ContainerInspectResponse provisionNew() throws DockerException {
+    public InspectContainerResponse provisionNew() throws DockerException {
         DockerClient dockerClient = getParent().connect();
         return provisionNew(dockerClient);
     }
@@ -272,10 +282,12 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
      * Provide a sensible default - templates are for slaves, and you're mostly going
      * to want port 22 exposed.
      */
-    protected Iterable<PortMapping> getPortMappings() {
+    protected Iterable<PortBinding> getPortMappings() {
 
         if(Strings.isNullOrEmpty(bindPorts) ) {
-            return PortMapping.parse("0.0.0.0::22");
+             return ImmutableList.<PortBinding>builder()
+                .add(PortBinding.parse("0.0.0.0::22"))
+                 .build();
         }
         return super.getPortMappings();
     }

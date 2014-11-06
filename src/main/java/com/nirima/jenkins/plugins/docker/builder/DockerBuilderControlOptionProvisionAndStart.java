@@ -1,7 +1,8 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.nirima.docker.client.DockerClient;
-import com.nirima.docker.client.DockerException;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerException;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
@@ -32,7 +33,7 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
 
         LOGGER.info("Starting container " + containerId);
         DockerClient client = getClient(build);
-        client.container(containerId).start();
+        client.startContainerCmd(containerId).exec();
         getLaunchAction(build).started(client, containerId);
     }
 

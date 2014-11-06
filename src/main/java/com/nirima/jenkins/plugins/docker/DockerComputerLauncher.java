@@ -3,7 +3,10 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.google.common.base.Preconditions;
-import com.nirima.docker.client.model.ContainerInspectResponse;
+
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
 import com.nirima.jenkins.plugins.docker.utils.RetryingComputerLauncher;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
@@ -25,21 +28,29 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
     private static final Logger LOGGER = Logger.getLogger(DockerComputerLauncher.class.getName());
 
-    public DockerComputerLauncher(DockerTemplate template, ContainerInspectResponse containerInspectResponse) {
+    public DockerComputerLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
         super(makeLauncher(template, containerInspectResponse));
     }
 
-    private static ComputerLauncher makeLauncher(DockerTemplate template, ContainerInspectResponse containerInspectResponse) {
+    private static ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
         SSHLauncher sshLauncher = getSSHLauncher(containerInspectResponse, template);
         return new RetryingComputerLauncher(sshLauncher);
     }
 
-    private static SSHLauncher getSSHLauncher(ContainerInspectResponse detail, DockerTemplate template)   {
+    private static SSHLauncher getSSHLauncher(InspectContainerResponse detail, DockerTemplate template)   {
         Preconditions.checkNotNull(template);
         Preconditions.checkNotNull(detail);
 
         try {
-            int port = Integer.parseInt(detail.getNetworkSettings().ports.getAllPorts().get("22").getHostPort());
+
+            ExposedPort sshPort = new ExposedPort(22);
+            int port = 22;
+
+            Ports.Binding[] bindings = detail.getNetworkSettings().getPorts().getBindings().get(sshPort);
+
+            for(Ports.Binding b : bindings) {
+                port = b.getHostPort();
+            }
 
             URL hostUrl = new URL(template.getParent().serverUrl);
             String host = hostUrl.getHost();

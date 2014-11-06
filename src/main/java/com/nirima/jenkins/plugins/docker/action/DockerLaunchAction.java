@@ -1,12 +1,13 @@
 package com.nirima.jenkins.plugins.docker.action;
 
-import com.nirima.docker.client.DockerClient;
-import hudson.model.Action;
-import hudson.model.Describable;
+
+import com.github.dockerjava.api.DockerClient;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import hudson.model.Action;
 
 /**
  * Action to record launching of a slave.

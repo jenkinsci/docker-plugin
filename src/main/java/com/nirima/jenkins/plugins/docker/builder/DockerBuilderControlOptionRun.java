@@ -1,34 +1,22 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.google.common.base.Strings;
-import com.nirima.docker.client.DockerClient;
-import com.nirima.docker.client.DockerException;
-import com.nirima.docker.client.model.Identifier;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerException;
 import com.nirima.jenkins.plugins.docker.DockerSimpleTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
-import com.trilead.ssh2.Connection;
-import hudson.Extension;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Describable;
-import hudson.model.ItemGroup;
-import hudson.model.TaskListener;
-import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.security.ACL;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Builder;
-import hudson.util.ListBoxModel;
+
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import hudson.Extension;
+import hudson.model.AbstractBuild;
+import hudson.model.TaskListener;
 
 /**
  * Created by magnayn on 30/01/2014.
@@ -84,9 +72,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         LOGGER.info("Pulling image " + xImage);
 
-        InputStream result = client.createPullCommand()
-                .image( Identifier.fromCompoundString(xImage))
-                .execute();
+        InputStream result = client.pullImageCmd(xImage)
+                .exec();
 
         String strResult = IOUtils.toString(result);
         LOGGER.info("Pull result = " + strResult);
