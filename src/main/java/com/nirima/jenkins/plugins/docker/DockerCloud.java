@@ -3,9 +3,24 @@ package com.nirima.jenkins.plugins.docker;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsNameProvider;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
+import com.cloudbees.plugins.credentials.common.CertificateCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.HostnamePortRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.InspectContainerResponse;
@@ -15,14 +30,22 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.KeystoreSSLConfig;
+import com.trilead.ssh2.Connection;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
+import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.security.ACL;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
+
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -55,7 +78,8 @@ public class DockerCloud extends Cloud {
 
     public final int connectTimeout;
     public final int readTimeout;
-
+    public final String version;
+    public final String credentialsId;
 
     private transient DockerClient connection;
 
@@ -65,11 +89,12 @@ public class DockerCloud extends Cloud {
     private static HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
 
     @DataBoundConstructor
-    public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String containerCapStr, int connectTimeout, int readTimeout) {
+    public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String containerCapStr, int connectTimeout, int readTimeout, String credentialsId, String version) {
         super(name);
 
         Preconditions.checkNotNull(serverUrl);
-
+        this.version = version;
+        this.credentialsId = credentialsId;
         this.serverUrl = serverUrl;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
@@ -119,6 +144,14 @@ public class DockerCloud extends Cloud {
             .createDefaultConfigBuilder()
             .withUri(serverUrl);
 
+        if( !Strings.isNullOrEmpty(version)) {
+            config.withVersion(version);
+        }
+
+        addCredentials(config, credentialsId);
+
+
+
 
         // TODO?
         // .withLogging(DockerClient.Logging.SLF4J);
@@ -130,6 +163,33 @@ public class DockerCloud extends Cloud {
             config.withReadTimeout(readTimeout * 1000);
 
         return config.build();
+    }
+
+    private static void addCredentials(DockerClientConfig.DockerClientConfigBuilder config,
+                                       String credentialsId) {
+        if( !Strings.isNullOrEmpty(credentialsId)) {
+            Credentials credentials = lookupSystemCredentials(credentialsId);
+
+            if( credentials instanceof CertificateCredentials ) {
+                config.withSSLConfig( new KeystoreSSLConfig( ((CertificateCredentials)credentials).getKeyStore() ));
+            }
+            else if( credentials instanceof StandardUsernamePasswordCredentials ) {
+                StandardUsernamePasswordCredentials usernamePasswordCredentials = ((StandardUsernamePasswordCredentials)credentials);
+
+                config.withUsername( usernamePasswordCredentials.getUsername() );
+                config.withPassword(usernamePasswordCredentials.getPassword().getPlainText());
+            }
+        }
+    }
+
+    public static Credentials lookupSystemCredentials(String credentialsId) {
+        return CredentialsMatchers.firstOrNull(
+            CredentialsProvider
+                .lookupCredentials(Credentials.class, Jenkins.getInstance(),
+                                   ACL.SYSTEM
+                                   ),
+            CredentialsMatchers.withId(credentialsId)
+        );
     }
 
     private DockerClient buildConnection() {
@@ -361,18 +421,47 @@ public class DockerCloud extends Cloud {
         }
 
         public FormValidation doTestConnection(
-                @QueryParameter URL serverUrl
+                @QueryParameter URL serverUrl,
+                @QueryParameter String credentialsId,
+                @QueryParameter String version
                 ) throws IOException, ServletException, DockerException {
 
             DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
                 .createDefaultConfigBuilder()
                 .withUri(serverUrl.toString());
 
+            if( !Strings.isNullOrEmpty(version)) {
+                config.withVersion(version);
+            }
+
+            addCredentials(config, credentialsId);
+
             DockerClient dc = DockerClientBuilder.getInstance(config.build()).build();
 
-            Version version = dc.versionCmd().exec();
+            Version v = dc.versionCmd().exec();
 
-            return FormValidation.ok("Version = " + version.getVersion());
+            return FormValidation.ok("Version = " + v.getVersion());
+        }
+
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+
+            List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context);
+
+            return new CredentialsListBoxModel().withEmptySelection()
+                                                .withMatching(CredentialsMatchers.always(),
+                                                              credentials);
+        }
+    }
+
+    public static class CredentialsListBoxModel
+        extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, StandardCertificateCredentials> {
+
+        /**
+         * {@inheritDoc}
+         */
+        @NonNull
+        protected String describe(@NonNull StandardCertificateCredentials c) {
+            return CredentialsNameProvider.name(c);
         }
     }
 
