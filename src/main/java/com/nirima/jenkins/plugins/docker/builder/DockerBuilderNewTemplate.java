@@ -42,6 +42,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String remoteFs;
     public final String credentialsId;
     public final String idleTerminationMinutes;
+    public final String sshLaunchTimeoutMinutes;
     public final String jvmOptions;
     public final String javaPath;
     public final String prefixStartSlaveCmd;
@@ -60,6 +61,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     @DataBoundConstructor
     public DockerBuilderNewTemplate(String image, String labelString, String remoteFs, String remoteFsMapping,
                                               String credentialsId, String idleTerminationMinutes,
+                                              String sshLaunchTimeoutMinutes,
                                               String jvmOptions, String javaPath,
                                               String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                                               String instanceCapStr, String dnsString,
@@ -77,6 +79,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.remoteFsMapping = remoteFsMapping;
         this.credentialsId = credentialsId;
         this.idleTerminationMinutes = idleTerminationMinutes;
+        this.sshLaunchTimeoutMinutes = sshLaunchTimeoutMinutes;
         this.jvmOptions = jvmOptions;
         this.javaPath = javaPath;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
@@ -128,6 +131,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
                 DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, remoteFsMapping, 
                         credentialsId, idleTerminationMinutes,
+                        sshLaunchTimeoutMinutes,
                         jvmOptions, javaPath,
                         prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
