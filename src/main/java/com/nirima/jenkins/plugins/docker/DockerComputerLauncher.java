@@ -4,6 +4,7 @@ package com.nirima.jenkins.plugins.docker;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.google.common.base.Preconditions;
 import com.nirima.docker.client.model.ContainerInspectResponse;
+import com.nirima.jenkins.plugins.docker.utils.PortUtils;
 import com.nirima.jenkins.plugins.docker.utils.RetryingComputerLauncher;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
@@ -45,6 +46,8 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
             String host = hostUrl.getHost();
 
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
+            
+            PortUtils.waitForPort(host, port);
 
             StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(template.credentialsId);
 
