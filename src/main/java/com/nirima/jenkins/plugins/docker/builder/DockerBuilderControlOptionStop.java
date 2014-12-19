@@ -14,8 +14,8 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
     public final boolean remove;
 
     @DataBoundConstructor
-    public DockerBuilderControlOptionStop(String cloudId, String containerId, boolean remove) {
-        super(cloudId, containerId);
+    public DockerBuilderControlOptionStop(String cloudName, String containerId, boolean remove) {
+        super(cloudName, containerId);
         this.remove = remove;
     }
 
