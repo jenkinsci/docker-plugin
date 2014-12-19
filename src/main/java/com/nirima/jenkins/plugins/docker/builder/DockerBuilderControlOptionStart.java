@@ -12,8 +12,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public class DockerBuilderControlOptionStart extends DockerBuilderControlOptionStopStart {
 
     @DataBoundConstructor
-    public DockerBuilderControlOptionStart(String cloudId, String containerId) {
-        super(cloudId, containerId);
+    public DockerBuilderControlOptionStart(String cloudName, String containerId) {
+        super(cloudName, containerId);
     }
 
     @Override
