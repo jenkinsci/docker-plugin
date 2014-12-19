@@ -2,6 +2,8 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.NotModifiedException;
+
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -23,7 +25,12 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
     public void execute(AbstractBuild<?, ?> build) throws DockerException {
         LOGGER.info("Stopping container " + containerId);
         DockerClient client = getClient(build);
-        client.stopContainerCmd(containerId).exec();
+        try {
+            client.stopContainerCmd(containerId).exec();
+        } catch(NotModifiedException ex) {
+            LOGGER.info("Already stopped.");
+        }
+
         getLaunchAction(build).stopped(client, containerId);
         if( remove )
             client.removeContainerCmd(containerId);
