@@ -151,8 +151,6 @@ public class DockerCloud extends Cloud {
         addCredentials(config, credentialsId);
 
 
-
-
         // TODO?
         // .withLogging(DockerClient.Logging.SLF4J);
 
@@ -171,7 +169,8 @@ public class DockerCloud extends Cloud {
             Credentials credentials = lookupSystemCredentials(credentialsId);
 
             if( credentials instanceof CertificateCredentials ) {
-                config.withSSLConfig( new KeystoreSSLConfig( ((CertificateCredentials)credentials).getKeyStore() ));
+                CertificateCredentials certificateCredentials = (CertificateCredentials)credentials;
+                config.withSSLConfig( new KeystoreSSLConfig( certificateCredentials.getKeyStore(), certificateCredentials.getPassword().getPlainText() ));
             }
             else if( credentials instanceof StandardUsernamePasswordCredentials ) {
                 StandardUsernamePasswordCredentials usernamePasswordCredentials = ((StandardUsernamePasswordCredentials)credentials);
@@ -329,8 +328,10 @@ public class DockerCloud extends Cloud {
         if (ami == null)
             return containers.size();
 
+        String theFilter = "{\"RepoTags\":[\"" + ami + "\"]}";
+
         List<Image> images = dockerClient.listImagesCmd()
-            .withFilter(ami)
+            .withFilters(theFilter)
             .exec();
 
 

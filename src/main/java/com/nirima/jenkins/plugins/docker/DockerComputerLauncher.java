@@ -3,7 +3,10 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.google.common.base.Preconditions;
-import com.nirima.docker.client.model.ContainerInspectResponse;
+
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
 import com.nirima.jenkins.plugins.docker.utils.RetryingComputerLauncher;
 import hudson.plugins.sshslaves.SSHLauncher;

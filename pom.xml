@@ -24,9 +24,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.docker-java</groupId>
+            <groupId>com.nirima.docker-java</groupId>
             <artifactId>docker-java</artifactId>
-            <version>0.10.4-SNAPSHOT</version>
+            <version>0.10.5-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
