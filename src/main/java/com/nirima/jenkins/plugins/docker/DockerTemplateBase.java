@@ -45,6 +45,7 @@ public abstract class DockerTemplateBase {
     public final String[] dnsHosts;
     public final String[] volumes;
     public final String volumesFrom;
+    public final String[] environment;
 
     public final String bindPorts;
     public final boolean bindAllPorts;
@@ -55,6 +56,7 @@ public abstract class DockerTemplateBase {
                           String dnsString,
                           String dockerCommand,
                           String volumesString, String volumesFrom,
+                          String environmentsString,
                           String lxcConfString,
                           String hostname,
                           String bindPorts,
@@ -75,6 +77,8 @@ public abstract class DockerTemplateBase {
         this.dnsHosts = splitAndFilterEmpty(dnsString);
         this.volumes = splitAndFilterEmpty(volumesString);
         this.volumesFrom = volumesFrom;
+
+        this.environment = splitAndFilterEmpty(environmentsString);
     }
 
     protected Object readResolve() {
@@ -162,6 +166,8 @@ public abstract class DockerTemplateBase {
             containerConfig.setDns(dnsHosts);
         if( volumesFrom != null && !volumesFrom.isEmpty() )
             containerConfig.setVolumesFrom(volumesFrom);
+        if(environment != null && environment.length > 0)
+            containerConfig.setEnv(environment);
 
         return containerConfig;
     }

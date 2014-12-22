@@ -42,6 +42,10 @@
             <f:textbox/>
         </f:entry>
 
+        <f:entry title="${%Environment}" field="environmentsString">
+            <f:textbox/>
+        </f:entry>
+
         <f:entry title="${%Run container privileged}" field="privileged">
             <f:checkbox/>
         </f:entry>
