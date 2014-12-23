@@ -6,6 +6,8 @@ import com.google.common.base.Throwables;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 
+import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
@@ -70,26 +72,18 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 try {
                     listener.getLogger().println("Docker Build : build with tag " + tagToUse + " at path " + f.getAbsolutePath());
 
-
-                    //TODO:
-                    //DockerClient client = builder
-                    //    .readTimeout(3600000).build();
-
                     DockerClient client = DockerClientBuilder.getInstance(clientConfig)
                         .build();
 
-
-
-
-                    File dockerFile;
+                    File dockerFolder;
 
                     // Be lenient and allow the user to just specify the path.
                     if( f.isFile() )
-                        dockerFile = f;
+                        dockerFolder = f.getParentFile();
                     else
-                        dockerFile = new File(f, "Dockerfile");
+                        dockerFolder = f;
 
-                    InputStream is = client.buildImageCmd(dockerFile)
+                    InputStream is = client.buildImageCmd(dockerFolder)
                             .withTag(tagToUse)
                             .exec();
 
@@ -121,12 +115,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 listener.getLogger().println("ERROR: Docker will refuse to push tag name " + tagToUse + " because it uses upper case.");
             }
 
-//            Identifier identifier = Identifier.fromCompoundString(tagToUse);
-//
-//            String repositoryName = identifier.repository.name;
+            Identifier identifier = Identifier.fromCompoundString(tagToUse);
 
-            InputStream pushResponse = client.pushImageCmd(tagToUse)
-                    .exec();
+            String repositoryName = identifier.repository.name;
+
+            PushImageCmd pushImageCmd = client.pushImageCmd(repositoryName);
+
+            if( identifier.tag.isPresent() )
+                pushImageCmd.withTag(identifier.tag.get());
+
+            InputStream pushResponse = pushImageCmd.exec();
 
             String stringResponse = IOUtils.toString(pushResponse);
 
@@ -156,6 +154,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         for(String item : response.split("\n") ) {
             if (item.contains("Successfully built")) {
                 String id =  StringUtils.substringAfterLast(item, "Successfully built ").trim();
+                // Seem to have an additional \n in the stream.
+                id = id.replace("\\n","");
                 return Optional.of(id);
             }
         }
