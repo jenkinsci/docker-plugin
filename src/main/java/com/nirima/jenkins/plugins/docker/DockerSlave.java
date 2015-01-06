@@ -28,7 +28,8 @@ public class DockerSlave extends AbstractCloudSlave {
 
     public final DockerTemplate dockerTemplate;
     public final String containerId;
-
+    public final String containerName;
+    
     private transient Run theRun;
 
     @DataBoundConstructor
@@ -39,6 +40,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         this.dockerTemplate = dockerTemplate;
         this.containerId = containerId;
+        this.containerName = this.dockerTemplate.image;
     }
 
     public DockerCloud getCloud() {
@@ -112,34 +114,49 @@ public class DockerSlave extends AbstractCloudSlave {
 
     private void slaveShutdown(TaskListener listener) throws DockerException, IOException {
 
-        // The slave has stopped. Should we commit / tag / push ?
-
-        if(!getJobProperty().tagOnCompletion) {
-            addJenkinsAction(null);
+        // The slave has stopped. Should we commit / tag / push ?       
+        if(!getJobProperty().isTagOnCompletion() && 
+           !getJobProperty().isTagOnFailure()) {
+            addJenkinsAction(null, null);
             return;
         }
 
+        // If we are not tagging regardless (tagOnCompletion) but we are tagging on failure
+        // then we need to check the job status.
+        if (!getJobProperty().isTagOnCompletion() &&
+            (getJobProperty().isTagOnFailure() && theRun.getResult() == Result.SUCCESS)) {
+            LOGGER.log(Level.INFO, "No need to tag the image as the build was SUCCESSFUL.");
+            addJenkinsAction(null, null);
+            return;
+        }
+
+        String repoName = theRun.getParent().getDisplayName();
+        String tagName = theRun.getResult().toString() + "_" + theRun.getDisplayName();
+        // Make sure we remove the # from the tagName
+        tagName = tagName.replace("#", "");
+        String taggedName = repoName + ":" + tagName;
+        
+        LOGGER.log(Level.INFO, "Going to tag the image locally - REPOSITORY: " + repoName + ". TAG: " + tagName);
         DockerClient client = getClient();
 
-
-         // Commit
-        String tag_image = client.container(containerId).createCommitCommand()
-                    .repo(theRun.getParent().getDisplayName())
-                    .tag(theRun.getDisplayName())
+        // Commit
+        String taggedId = client.container(containerId).createCommitCommand()
+                    .repo(repoName)
+                    .tag(tagName)
                     .author("Jenkins")
                     .execute();
 
         // Tag it with the jenkins name
-        addJenkinsAction(tag_image);
+        addJenkinsAction(taggedId, taggedName);
 
-        // SHould we add additional tags?
+        // Should we add additional tags?
         try
         {
             String tagToken = getAdditionalTag(listener);
 
             if( !Strings.isNullOrEmpty(tagToken) ) {
-                client.image(tag_image).tag(tagToken, false);
-                addJenkinsAction(tagToken);
+                client.image(taggedId).tag(tagToken, false);
+                addJenkinsAction(tagToken, taggedName);
 
                 if( getJobProperty().pushOnSuccess ) {
                     client.image(tagToken).push(null);
@@ -158,7 +175,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
             int delete = 100;
             while(delete != 0 ) {
-                int count = client.image(tag_image).removeCommand()
+                int count = client.image(taggedId).removeCommand()
                                    .force(true)
                                    .execute().size();
                 if( count == 0 )
@@ -191,8 +208,14 @@ public class DockerSlave extends AbstractCloudSlave {
      * @param tag_image
      * @throws IOException
      */
-    private void addJenkinsAction(String tag_image) throws IOException {
-        theRun.addAction( new DockerBuildAction(getCloud().serverUrl, containerId, tag_image, dockerTemplate.remoteFsMapping) );
+
+    private void addJenkinsAction(String taggedId, String taggedName) throws IOException {
+        theRun.addAction( new DockerBuildAction(getCloud().serverUrl,
+                containerName,
+                containerId,
+                (taggedName == null ? "Image not tagged" : taggedName),
+                (taggedId == null ? "Image not tagged" : taggedId),
+                dockerTemplate.remoteFsMapping) );
         theRun.save();
     }
 
@@ -227,7 +250,7 @@ public class DockerSlave extends AbstractCloudSlave {
             // Don't care.
         }
         // Safe default
-        return new DockerJobProperty(false,null,false, true);
+        return new DockerJobProperty(false,false,null,false, true);
     }
 
     @Extension

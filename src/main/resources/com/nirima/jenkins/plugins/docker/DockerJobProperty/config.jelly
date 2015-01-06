@@ -5,6 +5,10 @@
             <f:checkbox default="false"/>
         </f:entry>
 
+        <f:entry title="${%Commit on non-successful build}" field="tagOnFailure">
+            <f:checkbox default="false"/>
+        </f:entry>
+
         <f:entry title="${%Additional tag to add}" field="additionalTag">
             <f:textbox/>
         </f:entry>

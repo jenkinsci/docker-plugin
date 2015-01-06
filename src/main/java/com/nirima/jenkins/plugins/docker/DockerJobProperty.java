@@ -22,6 +22,7 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
      * Tag on completion (commit).
      */
     public final boolean tagOnCompletion;
+    public final boolean tagOnFailure;
     public final String additionalTag;
     public final boolean pushOnSuccess;
     public final boolean cleanImages;
@@ -29,10 +30,12 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
     @DataBoundConstructor
     public DockerJobProperty(
             boolean tagOnCompletion,
+            boolean tagOnFailure,
             String additionalTag,
             boolean pushOnSuccess, boolean cleanImages)
     {
         this.tagOnCompletion = tagOnCompletion;
+        this.tagOnFailure = tagOnFailure;
         this.additionalTag = additionalTag;
         this.pushOnSuccess = pushOnSuccess;
         this.cleanImages = cleanImages;
@@ -51,6 +54,11 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
     @Exported
     public boolean isTagOnCompletion() {
         return tagOnCompletion;
+    }
+    
+    @Exported
+    public boolean isTagOnFailure() {
+        return tagOnFailure;
     }
 
     @Exported
@@ -73,6 +81,7 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
         public DockerJobProperty newInstance(StaplerRequest sr, JSONObject formData) throws hudson.model.Descriptor.FormException {
             return new DockerJobProperty(
                     (Boolean)formData.get("tagOnCompletion"),
+                    (Boolean)formData.get("tagOnFailure"),
                     (String)formData.get("additionalTag"),
                     (Boolean)formData.get("pushOnSuccess"),
                     (Boolean)formData.get("cleanImages"));

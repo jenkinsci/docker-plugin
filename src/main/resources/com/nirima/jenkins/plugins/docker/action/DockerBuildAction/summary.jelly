@@ -3,15 +3,16 @@
 	xmlns:f="/lib/form" xmlns:i="jelly:fmt">
 	<t:summary icon="/plugin/docker-plugin/images/48x48/docker.png">
 
- 		<h1>Docker Build Data</h1>
-
-           	<b>Host:</b> ${it.containerHost}
-             <br/>
-
-             <b>Original Container Id:</b> ${it.containerId}
-             <br/>
-             <b>Committed Container Id:</b> ${it.taggedId}
-             <br/>
-
+            <h1>Docker Build Data</h1>
+            <b>Host:</b> ${it.containerHost}
+            <br/>
+            <b>Original Container Name:</b> ${it.containerName}
+            <br/>
+            <b>Original Container Id:</b> ${it.containerId}
+            <br/>
+            <b>Committed Container Name:</b> ${it.taggedName}
+            <br/>
+            <b>Committed Container Id:</b> ${it.taggedId}
+            <br/>
 	</t:summary>
 </j:jelly>

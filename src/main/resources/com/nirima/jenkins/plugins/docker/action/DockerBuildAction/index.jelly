@@ -1,17 +1,19 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-	<l:layout title="Docker">
+  <l:layout title="Docker">
 	
 	
     <l:main-panel>
-       	<h1>Docker Build Data</h1>
-
-       	<b>Host:</b> ${it.containerHost}
-         <br/>
-
-         <b>Original Container Id:</b> ${it.containerId}
-         <br/>
-         <b>Committed Container Id:</b> ${it.taggedId}
-         <br/>
-	</l:main-panel>
-  	</l:layout>
+        <h1>Docker Build Data</h1>
+        <b>Host:</b> ${it.containerHost}
+        <br/>
+        <b>Original Container Name:</b> ${it.containerName}
+        <br/>
+        <b>Original Container Id:</b> ${it.containerId}
+        <br/>
+        <b>Committed Container Name:</b> ${it.taggedName}
+        <br/>
+        <b>Committed Container Id:</b> ${it.taggedId}
+        <br/>
+    </l:main-panel>
+  </l:layout>
 </j:jelly>
