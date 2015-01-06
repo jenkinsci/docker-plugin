@@ -169,6 +169,10 @@ public abstract class DockerTemplateBase {
         if(environment != null && environment.length > 0)
             containerConfig.setEnv(environment);
 
+        HostConfig hostConfig = createHostConfig();
+
+        containerConfig.setHostConfig(hostConfig);
+
         return containerConfig;
     }
 
