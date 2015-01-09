@@ -209,7 +209,7 @@ public abstract class DockerTemplateBase {
         List<HostConfig.LxcConf> temp = new ArrayList<HostConfig.LxcConf>();
         if( lxcConfString == null )
             return temp;
-        for (String item : lxcConfString.split(" ")) {
+        for (String item : lxcConfString.split(",")) {
             String[] keyValuePairs = item.split("=");
             if (keyValuePairs.length == 2 )
             {
