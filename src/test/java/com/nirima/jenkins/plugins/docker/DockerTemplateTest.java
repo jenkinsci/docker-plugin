@@ -1,13 +1,18 @@
 package com.nirima.jenkins.plugins.docker;
 
+import hudson.model.Descriptor;
+import hudson.model.Node;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import hudson.model.Node;
+import hudson.util.StreamTaskListener;
+
+import java.io.IOException;
+
 
 public class DockerTemplateTest {
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "remoteFsMapping", "credentialsId", "idleTerminationMinutes", "sshLaunchTimeoutMinutes", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "volumesFrom", "environmentsString", "lxcConf", "hostname", "0.0.0.0:22", true, false);
+        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "remoteFsMapping", "credentialsId", "idleTerminationMinutes", "sshLaunchTimeoutMinutes", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "volumesFrom", "environmentsString", "lxcConf", "hostname", "0.0.0.0:22", true, false, true);
         return instance;
     }
 
@@ -32,5 +37,4 @@ public class DockerTemplateTest {
         assertArrayEquals(expected, instance.dnsHosts);
 
     }
-
 }
