@@ -52,6 +52,8 @@ public abstract class DockerTemplateBase {
 
     public final boolean privileged;
 
+    public final boolean togglemode;
+
     public DockerTemplateBase(String image,
                           String dnsString,
                           String dockerCommand,
@@ -61,7 +63,8 @@ public abstract class DockerTemplateBase {
                           String hostname,
                           String bindPorts,
                           boolean bindAllPorts,
-                          boolean privileged
+                          boolean privileged,
+                          boolean togglemode
 
     ) {
         this.image = image;
@@ -69,6 +72,7 @@ public abstract class DockerTemplateBase {
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
+        this.togglemode = togglemode;
         this.hostname = hostname;
 
         this.bindPorts    = bindPorts;
@@ -178,8 +182,9 @@ public abstract class DockerTemplateBase {
         hostConfig.setPortBindings( getPortMappings() );
         hostConfig.setPublishAllPorts( bindAllPorts );
 
-
         hostConfig.setPrivileged(this.privileged);
+        hostConfig.setTogglemode(this.togglemode);
+
         if( dnsHosts.length > 0 )
             hostConfig.setDns(dnsHosts);
 

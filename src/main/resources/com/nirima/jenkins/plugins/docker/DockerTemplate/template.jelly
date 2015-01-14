@@ -84,6 +84,10 @@
             <f:checkbox/>
         </f:entry>
 
+        <f:entry title="${%Run slave in exclusive mode}" field="togglemode">
+            <f:checkbox/>
+        </f:entry>
+
        <f:entry title="${%Prefix Start Slave Command}" field="prefixStartSlaveCmd">
            <f:textbox/>
        </f:entry>
