@@ -183,7 +183,6 @@ public abstract class DockerTemplateBase {
         hostConfig.setPublishAllPorts( bindAllPorts );
 
         hostConfig.setPrivileged(this.privileged);
-        hostConfig.setTogglemode(this.togglemode);
 
         if( dnsHosts.length > 0 )
             hostConfig.setDns(dnsHosts);

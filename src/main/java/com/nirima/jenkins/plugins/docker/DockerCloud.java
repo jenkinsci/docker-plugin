@@ -214,11 +214,14 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Gets {@link DockerTemplate} that has the matching {@link Label}.
+     * Gets {@link DockerTemplate} that has the matching {@link Label}; if {@link Label} is null and togglemode false,
+     * then get this template.
      */
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
-            if(label == null || label.matches(t.getLabelSet())) {
+            if(label == null && !t.getToggleMode()) {
+                return t;
+            } else if (label.matches(t.getLabelSet())) {
                 return t;
             }
         }
