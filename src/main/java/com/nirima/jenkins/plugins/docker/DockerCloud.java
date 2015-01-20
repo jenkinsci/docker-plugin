@@ -219,9 +219,7 @@ public class DockerCloud extends Cloud {
      */
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
-            if(label == null && !t.getToggleMode()) {
-                return t;
-            } else if (label.matches(t.getLabelSet())) {
+            if( (label == null && !t.getExclusiveMode()) || (label != null && label.matches(t.getLabelSet())) ) {
                 return t;
             }
         }
