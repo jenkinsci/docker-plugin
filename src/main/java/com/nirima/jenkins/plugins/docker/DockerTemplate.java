@@ -178,7 +178,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return labelSet;
     }
 
-    public boolean getToggleMode() { return exclusiveMode; }
+    public boolean getExclusiveMode() { return exclusiveMode; }
 
     public int getSSHLaunchTimeoutMinutes() {
         if (sshLaunchTimeoutMinutes == null || sshLaunchTimeoutMinutes.trim().isEmpty()) {
