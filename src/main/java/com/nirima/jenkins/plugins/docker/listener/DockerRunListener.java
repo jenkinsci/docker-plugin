@@ -1,7 +1,5 @@
 package com.nirima.jenkins.plugins.docker.listener;
 
-import com.nirima.docker.client.DockerRegistryClient;
-import com.nirima.docker.client.model.Identifier;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
 import com.nirima.jenkins.plugins.docker.publisher.DockerPublisherControl;
 import hudson.Extension;
@@ -33,6 +31,9 @@ public class DockerRunListener extends RunListener<Run<?,?>> {
 
                 if( action.pushOnSuccess ) {
 
+                    // TODO:
+
+                    /*
                     DockerRegistryClient registryClient;
 
                     try {
@@ -53,7 +54,7 @@ public class DockerRunListener extends RunListener<Run<?,?>> {
 
                         LOGGER.log(Level.WARNING, "Failed to clean up", ex);
                     }
-
+                          */
                 }
             }
         }

@@ -1,7 +1,8 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.nirima.docker.client.DockerClient;
-import com.nirima.docker.client.DockerException;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerException;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
