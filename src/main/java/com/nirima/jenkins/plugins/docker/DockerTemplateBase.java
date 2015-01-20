@@ -1,25 +1,28 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.nirima.docker.client.DockerClient;
-import com.nirima.docker.client.DockerException;
-import com.nirima.docker.client.model.ContainerConfig;
-import com.nirima.docker.client.model.ContainerCreateResponse;
-import com.nirima.docker.client.model.ContainerInspectResponse;
-import com.nirima.docker.client.model.HostConfig;
-import com.nirima.docker.client.model.PortBinding;
-import com.nirima.docker.client.model.PortMapping;
-import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.model.LxcConf;
+import com.github.dockerjava.api.model.PortBinding;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+import javax.annotation.Nullable;
 
 /**
  * Base for docker templates - does not include Jenkins items like labels.
@@ -117,21 +120,24 @@ public abstract class DockerTemplateBase {
         return "Image of " + image;
     }
 
-    public ContainerInspectResponse provisionNew(DockerClient dockerClient) throws DockerException {
+    public InspectContainerResponse provisionNew(DockerClient dockerClient) throws DockerException {
 
-        ContainerConfig containerConfig = createContainerConfig();
+        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(image);
 
-        ContainerCreateResponse container = dockerClient.containers().create(containerConfig);
+        createContainerConfig(containerConfig);
 
+        CreateContainerResponse response = containerConfig.exec();
+        String containerId = response.getId();
         // Launch it.. :
 
-        HostConfig hostConfig = createHostConfig();
+        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
+        createHostConfig(startCommand);
 
-        dockerClient.container(container.getId()).start(hostConfig);
+        startCommand.exec();
 
-        String containerId = container.getId();
+        return dockerClient.inspectContainerCmd(containerId).exec();
 
-        return dockerClient.container(containerId).inspect();
+
     }
 
     protected String[] getDockerCommandArray() {
@@ -143,60 +149,73 @@ public abstract class DockerTemplateBase {
         return dockerCommandArray;
     }
 
-    protected Iterable<PortMapping> getPortMappings() {
+    protected Iterable<PortBinding> getPortMappings() {
 
         if(Strings.isNullOrEmpty(bindPorts) ) {
             return Collections.EMPTY_LIST;
         }
 
-        return PortMapping.parse(bindPorts);
+        return Iterables.transform(Splitter.on(' ')
+                                       .trimResults()
+                                       .omitEmptyStrings()
+                                       .split(bindPorts),
+                                   new Function<String, PortBinding>() {
+            @Nullable
+            @Override
+            public PortBinding apply(String s) {
+                return PortBinding.parse(s);
+            }
+        });
+
+
     }
 
-    public ContainerConfig createContainerConfig() {
-        ContainerConfig containerConfig = new ContainerConfig();
-        containerConfig.setImage(image);
+    public CreateContainerCmd createContainerConfig(CreateContainerCmd containerConfig) {
 
         if (hostname != null && !hostname.isEmpty()) {
-            containerConfig.setHostName(hostname);
+            containerConfig.withHostName(hostname);
         }
         String[] cmd = getDockerCommandArray();
         if( cmd.length > 0)
-            containerConfig.setCmd(cmd);
-        containerConfig.setPortSpecs(new String[]{"22/tcp"});
+            containerConfig.withCmd(cmd);
+        containerConfig.withPortSpecs("22/tcp");
 
         //containerConfig.setPortSpecs(new String[]{"22/tcp"});
         //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
         if( dnsHosts.length > 0 )
-            containerConfig.setDns(dnsHosts);
+            containerConfig.withDns(dnsHosts);
         if( volumesFrom != null && !volumesFrom.isEmpty() )
-            containerConfig.setVolumesFrom(volumesFrom);
-        if(environment != null && environment.length > 0)
-            containerConfig.setEnv(environment);
+            containerConfig.withVolumesFrom(volumesFrom);
+	if(environment != null && environment.length > 0)
+            containerConfig.withEnv(environment);
 
         return containerConfig;
     }
 
-    public HostConfig createHostConfig() {
-        HostConfig hostConfig = new HostConfig();
+    public StartContainerCmd createHostConfig(StartContainerCmd hostConfig) {
 
-        hostConfig.setPortBindings( getPortMappings() );
-        hostConfig.setPublishAllPorts( bindAllPorts );
 
-        hostConfig.setPrivileged(this.privileged);
+        hostConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 
+        hostConfig.withPublishAllPorts(bindAllPorts);
+
+
+        hostConfig.withPrivileged(this.privileged);
         if( dnsHosts.length > 0 )
-            hostConfig.setDns(dnsHosts);
+            hostConfig.withDns(dnsHosts);
 
-        if (volumes.length > 0)
-            hostConfig.setBinds(volumes);
+        // ?
+        //if (volumes.length > 0)
+        //    hostConfig.with VolumesFrom (volumes);
 
-        List<HostConfig.LxcConf> temp = getLxcConf(hostConfig);
+        List<LxcConf> lxcConfs = getLxcConf();
 
-        if (!temp.isEmpty())
-            hostConfig.setLxcConf(temp.toArray(new HostConfig.LxcConf[temp.size()]));
+        if (!lxcConfs.isEmpty()) {
+            hostConfig.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
+        }
 
         if(!Strings.isNullOrEmpty(volumesFrom) )
-            hostConfig.setVolumesFrom(new String[] {volumesFrom});
+            hostConfig.withVolumesFrom(volumesFrom);
 
         return hostConfig;
     }
@@ -209,16 +228,16 @@ public abstract class DockerTemplateBase {
     }
 
 
-    protected List<HostConfig.LxcConf> getLxcConf(HostConfig hostConfig) {
-        List<HostConfig.LxcConf> temp = new ArrayList<HostConfig.LxcConf>();
-        if( lxcConfString == null )
+    protected List<LxcConf> getLxcConf() {
+        List<LxcConf> temp = new ArrayList<LxcConf>();
+        if( lxcConfString == null || lxcConfString.trim().equals(""))
             return temp;
-        for (String item : lxcConfString.split(" ")) {
+        for (String item : lxcConfString.split(",")) {
             String[] keyValuePairs = item.split("=");
             if (keyValuePairs.length == 2 )
             {
                 LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
-                HostConfig.LxcConf optN = hostConfig.new LxcConf();
+                LxcConf optN = new LxcConf();
                 optN.setKey(keyValuePairs[0]);
                 optN.setValue(keyValuePairs[1]);
                 temp.add(optN);

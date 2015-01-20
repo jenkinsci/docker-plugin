@@ -37,17 +37,11 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
     }
 
     public Collection getImages(){
-        return theCloud.connect().images()
-                .finder()
-                .allImages(false)
-                .list();
+        return theCloud.connect().listImagesCmd().exec();
     }
 
     public Collection getProcesses() {
-        return theCloud.connect().containers()
-                .finder()
-                .allContainers(false)
-                .list();
+        return theCloud.connect().listContainersCmd().exec();
     }
 
     public String asTime(Long time) {
@@ -69,8 +63,7 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
             InterruptedException {
 
         theCloud.connect()
-                .container(stopId)
-                .stop();
+            .stopContainerCmd(stopId).exec();
 
         rsp.sendRedirect(".");
     }

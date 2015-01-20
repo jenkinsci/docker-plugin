@@ -1,6 +1,6 @@
 package com.nirima.jenkins.plugins.docker.publisher;
 
-import com.nirima.docker.client.DockerException;
+import com.github.dockerjava.api.DockerException;
 import com.nirima.jenkins.plugins.docker.builder.DockerBuilderControlOptionStopAll;
 import hudson.Extension;
 import hudson.Launcher;
