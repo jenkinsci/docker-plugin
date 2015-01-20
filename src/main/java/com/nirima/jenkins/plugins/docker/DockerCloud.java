@@ -163,7 +163,11 @@ public class DockerCloud extends Cloud {
                                 DockerSlave slave = null;
                                 try {
                                     slave = t.provision(new StreamTaskListener(System.out));
-                                    Jenkins.getInstance().addNode(slave);
+                                    final Jenkins jenkins = Jenkins.getInstance();
+                                    // TODO once the baseline is 1.592+ switch to Queue.withLock
+                                    synchronized (jenkins.getQueue()) {
+                                        jenkins.addNode(slave);
+                                    }
                                     // Docker instances may have a long init script. If we declare
                                     // the provisioning complete by returning without the connect
                                     // operation, NodeProvisioner may decide that it still wants
