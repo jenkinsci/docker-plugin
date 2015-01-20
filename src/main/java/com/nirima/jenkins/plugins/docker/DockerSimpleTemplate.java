@@ -20,7 +20,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase implements Describa
                                 String bindPorts,
                                 boolean bindAllPorts,
                                 boolean privileged,
-                                boolean togglemode) {
+                                boolean exclusiveMode) {
         super(image,
                 dnsString,
                 dockerCommand,
@@ -32,7 +32,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase implements Describa
                 bindPorts,
                 bindAllPorts,
                 privileged,
-                togglemode);
+                exclusiveMode);
     }
 
     public Descriptor<DockerSimpleTemplate> getDescriptor() {

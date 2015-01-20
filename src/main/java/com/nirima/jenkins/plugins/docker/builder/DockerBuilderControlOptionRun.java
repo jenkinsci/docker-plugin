@@ -43,7 +43,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final String environmentsString;
     public final String lxcConfString;
     public final boolean privileged;
-    public final boolean togglemode;
+    public final boolean exclusiveMode;
     public final String hostname;
     public final String bindPorts;
     public final boolean bindAllPorts;
@@ -60,7 +60,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String bindPorts,
             boolean bindAllPorts,
             boolean privileged,
-            boolean togglemode) {
+            boolean exclusiveMode) {
         super(cloudName);
         this.image = image;
 
@@ -71,7 +71,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.volumesFrom = volumesFrom;
         this.environmentsString = environmentsString;
         this.privileged = privileged;
-        this.togglemode = togglemode;
+        this.exclusiveMode = exclusiveMode;
         this.hostname = hostname;
         this.bindPorts = bindPorts;
         this.bindAllPorts = bindAllPorts;
@@ -101,7 +101,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
                 dnsString, xCommand,
-                volumesString, volumesFrom, environmentsString, lxcConfString, xHostname, bindPorts, bindAllPorts, privileged, togglemode);
+                volumesString, volumesFrom, environmentsString, lxcConfString, xHostname, bindPorts, bindAllPorts, privileged, exclusiveMode);
 
         String containerId = template.provisionNew(client).getId();
 

@@ -214,7 +214,7 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Gets {@link DockerTemplate} that has the matching {@link Label}; if {@link Label} is null and togglemode false,
+     * Gets {@link DockerTemplate} that has the matching {@link Label}; if {@link Label} is null and exclusiveMode false,
      * then get this template.
      */
     public DockerTemplate getTemplate(Label label) {

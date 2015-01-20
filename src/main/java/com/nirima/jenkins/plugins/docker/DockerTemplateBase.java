@@ -52,7 +52,7 @@ public abstract class DockerTemplateBase {
 
     public final boolean privileged;
 
-    public final boolean togglemode;
+    public final boolean exclusiveMode;
 
     public DockerTemplateBase(String image,
                           String dnsString,
@@ -64,7 +64,7 @@ public abstract class DockerTemplateBase {
                           String bindPorts,
                           boolean bindAllPorts,
                           boolean privileged,
-                          boolean togglemode
+                          boolean exclusiveMode
 
     ) {
         this.image = image;
@@ -72,7 +72,7 @@ public abstract class DockerTemplateBase {
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
-        this.togglemode = togglemode;
+        this.exclusiveMode = exclusiveMode;
         this.hostname = hostname;
 
         this.bindPorts    = bindPorts;

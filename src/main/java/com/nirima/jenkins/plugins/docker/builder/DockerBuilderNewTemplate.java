@@ -57,7 +57,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String bindPorts;
     public final boolean bindAllPorts;
     public final boolean privileged;
-    public final boolean togglemode;
+    public final boolean exclusiveMode;
     public final String hostname;
 
     @DataBoundConstructor
@@ -75,7 +75,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                                               String bindPorts,
                                               boolean bindAllPorts,
                                               boolean privileged,
-                                              boolean togglemode) {
+                                              boolean exclusiveMode) {
 
         this.image = image;
         this.labelString = labelString;
@@ -98,7 +98,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.bindPorts = bindPorts;
         this.bindAllPorts = bindAllPorts;
         this.privileged = privileged;
-        this.togglemode = togglemode;
+        this.exclusiveMode = exclusiveMode;
         this.hostname = hostname;
     }
 
@@ -142,7 +142,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                         prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
                         dnsString, dockerCommand,
-                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname, bindPorts, bindAllPorts, privileged, togglemode);
+                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname, bindPorts, bindAllPorts, privileged, exclusiveMode);
                 ((DockerCloud) c).addTemplate(t);
             }
         }

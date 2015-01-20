@@ -107,12 +107,12 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String bindPorts,
                           boolean bindAllPorts,
                           boolean privileged,
-                          boolean togglemode
+                          boolean exclusiveMode
 
     ) {
         super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
-                privileged, togglemode);
+                privileged, exclusiveMode);
 
 
         this.labelString = Util.fixNull(labelString);
@@ -178,7 +178,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return labelSet;
     }
 
-    public boolean getToggleMode() { return togglemode; }
+    public boolean getToggleMode() { return exclusiveMode; }
 
     public int getSSHLaunchTimeoutMinutes() {
         if (sshLaunchTimeoutMinutes == null || sshLaunchTimeoutMinutes.trim().isEmpty()) {
@@ -232,7 +232,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         int numExecutors = 1;
         Node.Mode mode;
 
-        if(togglemode) {
+        if(exclusiveMode) {
             mode = Node.Mode.EXCLUSIVE;
         } else {
             mode = Node.Mode.NORMAL;
