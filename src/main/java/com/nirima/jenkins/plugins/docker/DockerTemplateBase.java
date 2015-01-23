@@ -5,7 +5,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 
 import com.github.dockerjava.api.DockerClient;
@@ -16,6 +15,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
+import hudson.model.Node;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,7 +55,7 @@ public abstract class DockerTemplateBase {
 
     public final boolean privileged;
 
-    public final boolean exclusiveMode;
+    public final Node.Mode mode;
 
     public DockerTemplateBase(String image,
                           String dnsString,
@@ -67,7 +67,7 @@ public abstract class DockerTemplateBase {
                           String bindPorts,
                           boolean bindAllPorts,
                           boolean privileged,
-                          boolean exclusiveMode
+                          Node.Mode mode
 
     ) {
         this.image = image;
@@ -75,7 +75,7 @@ public abstract class DockerTemplateBase {
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
-        this.exclusiveMode = exclusiveMode;
+        this.mode = mode;
         this.hostname = hostname;
 
         this.bindPorts    = bindPorts;
@@ -161,7 +161,6 @@ public abstract class DockerTemplateBase {
                                        .split(bindPorts),
                                    new Function<String, PortBinding>() {
             @Nullable
-            @Override
             public PortBinding apply(String s) {
                 return PortBinding.parse(s);
             }

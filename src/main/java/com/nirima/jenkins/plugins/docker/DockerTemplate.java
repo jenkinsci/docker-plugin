@@ -117,12 +117,12 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String bindPorts,
                           boolean bindAllPorts,
                           boolean privileged,
-                          boolean exclusiveMode
+                          Node.Mode mode
 
     ) {
         super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
-                privileged, exclusiveMode);
+                privileged, mode);
 
 
         this.labelString = Util.fixNull(labelString);
@@ -188,7 +188,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return labelSet;
     }
 
-    public boolean getExclusiveMode() { return exclusiveMode; }
+    public Node.Mode getMode() { return mode; }
 
     public int getSSHLaunchTimeoutMinutes() {
         if (sshLaunchTimeoutMinutes == null || sshLaunchTimeoutMinutes.trim().isEmpty()) {
@@ -240,13 +240,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         logger.println("Launching " + image );
 
         int numExecutors = 1;
-        Node.Mode mode;
-
-        if(exclusiveMode) {
-            mode = Node.Mode.EXCLUSIVE;
-        } else {
-            mode = Node.Mode.NORMAL;
-        }
 
         RetentionStrategy retentionStrategy = new OnceRetentionStrategy(idleTerminationMinutes());
 

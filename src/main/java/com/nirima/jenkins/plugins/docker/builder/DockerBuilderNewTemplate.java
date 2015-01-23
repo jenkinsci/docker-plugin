@@ -2,10 +2,7 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.ItemGroup;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.slaves.Cloud;
@@ -57,7 +54,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String bindPorts;
     public final boolean bindAllPorts;
     public final boolean privileged;
-    public final boolean exclusiveMode;
+    public final Node.Mode mode;
     public final String hostname;
 
     @DataBoundConstructor
@@ -75,7 +72,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                                               String bindPorts,
                                               boolean bindAllPorts,
                                               boolean privileged,
-                                              boolean exclusiveMode) {
+                                              Node.Mode mode) {
 
         this.image = image;
         this.labelString = labelString;
@@ -98,7 +95,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.bindPorts = bindPorts;
         this.bindAllPorts = bindAllPorts;
         this.privileged = privileged;
-        this.exclusiveMode = exclusiveMode;
+        this.mode = mode;
         this.hostname = hostname;
     }
 
@@ -142,7 +139,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                         prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
                         dnsString, dockerCommand,
-                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname, bindPorts, bindAllPorts, privileged, exclusiveMode);
+                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname, bindPorts, bindAllPorts, privileged, mode);
                 ((DockerCloud) c).addTemplate(t);
             }
         }

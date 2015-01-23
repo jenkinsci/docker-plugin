@@ -7,8 +7,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsNameProvider;
@@ -16,11 +14,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
 import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.HostnamePortRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.InspectContainerResponse;
@@ -31,12 +25,10 @@ import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.KeystoreSSLConfig;
-import com.trilead.ssh2.Connection;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
-import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
@@ -286,12 +278,12 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Gets {@link DockerTemplate} that has the matching {@link Label}; if {@link Label} is null and exclusiveMode false,
+     * Gets {@link DockerTemplate} that has the matching {@link Label}; if {@link Label} is null and mode false,
      * then get this template.
      */
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
-            if( (label == null && !t.getExclusiveMode()) || (label != null && label.matches(t.getLabelSet())) ) {
+            if( (label == null && t.getMode().equals(Node.Mode.NORMAL)) || (label != null && label.matches(t.getLabelSet())) ) {
                 return t;
             }
         }

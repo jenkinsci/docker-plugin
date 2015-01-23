@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.Node;
 import jenkins.model.Jenkins;
 
 /**
@@ -20,7 +21,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase implements Describa
                                 String bindPorts,
                                 boolean bindAllPorts,
                                 boolean privileged,
-                                boolean exclusiveMode) {
+                                Node.Mode mode) {
         super(image,
                 dnsString,
                 dockerCommand,
@@ -32,7 +33,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase implements Describa
                 bindPorts,
                 bindAllPorts,
                 privileged,
-                exclusiveMode);
+                mode);
     }
 
     public Descriptor<DockerSimpleTemplate> getDescriptor() {

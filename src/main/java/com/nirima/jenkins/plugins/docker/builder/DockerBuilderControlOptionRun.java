@@ -7,6 +7,7 @@ import com.github.dockerjava.api.DockerException;
 import com.nirima.jenkins.plugins.docker.DockerSimpleTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 
+import hudson.model.Node;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -31,7 +32,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final String environmentsString;
     public final String lxcConfString;
     public final boolean privileged;
-    public final boolean exclusiveMode;
+    public final Node.Mode mode;
     public final String hostname;
     public final String bindPorts;
     public final boolean bindAllPorts;
@@ -48,7 +49,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String bindPorts,
             boolean bindAllPorts,
             boolean privileged,
-            boolean exclusiveMode) {
+            Node.Mode mode) {
         super(cloudName);
         this.image = image;
 
@@ -59,7 +60,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.volumesFrom = volumesFrom;
         this.environmentsString = environmentsString;
         this.privileged = privileged;
-        this.exclusiveMode = exclusiveMode;
+        this.mode = mode;
         this.hostname = hostname;
         this.bindPorts = bindPorts;
         this.bindAllPorts = bindAllPorts;
@@ -88,7 +89,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
                 dnsString, xCommand,
-                volumesString, volumesFrom, environmentsString, lxcConfString, xHostname, bindPorts, bindAllPorts, privileged, exclusiveMode);
+                volumesString, volumesFrom, environmentsString, lxcConfString, xHostname, bindPorts, bindAllPorts, privileged, mode);
 
         String containerId = template.provisionNew(client).getId();
 

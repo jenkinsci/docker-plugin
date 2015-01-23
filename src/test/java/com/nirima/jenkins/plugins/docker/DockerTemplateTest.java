@@ -12,7 +12,7 @@ import java.io.IOException;
 public class DockerTemplateTest {
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "remoteFsMapping", "credentialsId", "idleTerminationMinutes", "sshLaunchTimeoutMinutes", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "volumesFrom", "environmentsString", "lxcConf", "hostname", "0.0.0.0:22", true, false, true);
+        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "remoteFsMapping", "credentialsId", "idleTerminationMinutes", "sshLaunchTimeoutMinutes", " jvmOptions", " javaPath", "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "volumesFrom", "environmentsString", "lxcConf", "hostname", "0.0.0.0:22", true, false, Node.Mode.EXCLUSIVE);
         return instance;
     }
 
