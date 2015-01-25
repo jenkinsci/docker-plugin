@@ -195,7 +195,7 @@ public class DockerCloud extends Cloud {
     }
 
     private DockerClient buildConnection() {
-        LOGGER.log(Level.FINE, "Building connection to docker host " + name + " URL " + serverUrl);
+        LOGGER.log(Level.FINE, "Building connection to docker host \"{0}\" at: {1}", new Object[]{name,serverUrl});
 
         return DockerClientBuilder.getInstance(getDockerClientConfig()).build();
     }
@@ -219,11 +219,13 @@ public class DockerCloud extends Cloud {
     public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         try {
 
-            LOGGER.log(Level.INFO, "Excess workload after pending Spot instances: " + excessWorkload);
+            LOGGER.log(Level.INFO, "Asked to provision {0} slave(s) for: {1}", new Object[]{excessWorkload,label});
 
             List<NodeProvisioner.PlannedNode> r = new ArrayList<NodeProvisioner.PlannedNode>();
 
             final DockerTemplate t = getTemplate(label);
+
+            LOGGER.log(Level.INFO, "Will provision \"{0}\" for: {1}", new Object[]{t.image,label});
 
             while (excessWorkload>0) {
 
@@ -269,7 +271,7 @@ public class DockerCloud extends Cloud {
             }
             return r;
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING,"Failed to count the # of live instances on Docker",e);
+            LOGGER.log(Level.SEVERE,"Exception while provisioning for: " + label,e);
             return Collections.emptyList();
         }
     }
@@ -343,7 +345,7 @@ public class DockerCloud extends Cloud {
         });
 
         if (!imageExists) {
-            LOGGER.log(Level.INFO, "Pulling image " + ami + " since one was not found.  This may take awhile...");
+            LOGGER.log(Level.INFO, "Pulling image \"{0}\" since one was not found.  This may take awhile...", ami);
             //Identifier amiId = Identifier.fromCompoundString(ami);
             InputStream imageStream = dockerClient.pullImageCmd(ami).exec();
             int streamValue = 0;
@@ -351,7 +353,7 @@ public class DockerCloud extends Cloud {
                 streamValue = imageStream.read();
             }
             imageStream.close();
-            LOGGER.log(Level.INFO, "Finished pulling image " + ami);
+            LOGGER.log(Level.INFO, "Finished pulling image \"{0}\"", ami);
         }
 
         final InspectImageResponse ir = dockerClient.inspectImageCmd(ami).exec();
@@ -393,25 +395,18 @@ public class DockerCloud extends Cloud {
             estimatedAmiSlaves += currentProvisioning;
 
             if(estimatedTotalSlaves >= containerCap) {
-                LOGGER.log(Level.INFO, "Total container cap of " + containerCap +
-                        " reached, not provisioning.");
+                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Server \"{1}\" full with {2} container(s)", new Object[]{ami,name,containerCap});
                 return false;      // maxed out
             }
 
             if (estimatedAmiSlaves >= amiCap) {
-                LOGGER.log(Level.INFO, "AMI Instance cap of " + amiCap +
-                        " reached for ami " + ami +
-                        ", not provisioning.");
+                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Instance limit of {2} reached on server \"{1}\"", new Object[]{ami,name,amiCap});
                 return false;      // maxed out
             }
 
             LOGGER.log(Level.INFO,
-                    "Provisioning for AMI " + ami + "; " +
-                            "Estimated number of total slaves: "
-                            + String.valueOf(estimatedTotalSlaves) + "; " +
-                            "Estimated number of slaves for ami "
-                            + ami + ": "
-                            + String.valueOf(estimatedAmiSlaves)
+                    "Provisioning \"{0}\" number {2} on \"{1}\"; Total containers: {3}",
+                    new Object[]{ami,name,estimatedAmiSlaves,estimatedTotalSlaves}
             );
 
             provisioningAmis.put(ami, currentProvisioning + 1);
