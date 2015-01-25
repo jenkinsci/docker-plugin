@@ -6,6 +6,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
@@ -31,6 +32,7 @@ import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.KeystoreSSLConfig;
+import com.github.dockerjava.core.NameParser;
 import com.trilead.ssh2.Connection;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -55,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -320,7 +323,7 @@ public class DockerCloud extends Cloud {
      * <p>
      * This includes those instances that may be started outside Hudson.
      */
-    public int countCurrentDockerSlaves(String ami) throws Exception {
+    public int countCurrentDockerSlaves(final String ami) throws Exception {
         final DockerClient dockerClient = connect();
 
         List<Container> containers = dockerClient.listContainersCmd().exec();
@@ -328,16 +331,18 @@ public class DockerCloud extends Cloud {
         if (ami == null)
             return containers.size();
 
-        String theFilter = "{\"RepoTags\":[\"" + ami + "\"]}";
+        List<Image> images = dockerClient.listImagesCmd().exec();
 
-        List<Image> images = dockerClient.listImagesCmd()
-            .withFilters(theFilter)
-            .exec();
+        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(ami);
+        final String fullAmi = repostag.repos + ":" + (repostag.tag.isEmpty()?"latest":repostag.tag);
+        boolean imageExists = Iterables.any(images, new Predicate<Image>(){
+            @Override
+            public boolean apply(Image image) {
+                return Arrays.asList(image.getRepoTags()).contains(fullAmi);
+            }
+        });
 
-
-        LOGGER.log(Level.INFO, "Images found: " + images);
-
-        if (images.size() == 0) {
+        if (!imageExists) {
             LOGGER.log(Level.INFO, "Pulling image " + ami + " since one was not found.  This may take awhile...");
             //Identifier amiId = Identifier.fromCompoundString(ami);
             InputStream imageStream = dockerClient.pullImageCmd(ami).exec();
