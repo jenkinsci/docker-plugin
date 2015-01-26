@@ -373,9 +373,6 @@ public class DockerCloud extends Cloud {
      *
      */
     private synchronized boolean addProvisionedSlave(String ami, int amiCap) throws Exception {
-        if( amiCap == 0 )
-            return true;
-
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);
         int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
 
@@ -399,7 +396,7 @@ public class DockerCloud extends Cloud {
                 return false;      // maxed out
             }
 
-            if (estimatedAmiSlaves >= amiCap) {
+            if (amiCap != 0 && estimatedAmiSlaves >= amiCap) {
                 LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Instance limit of {2} reached on server \"{1}\"", new Object[]{ami,name,amiCap});
                 return false;      // maxed out
             }
