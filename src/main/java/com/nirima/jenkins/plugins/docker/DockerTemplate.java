@@ -144,17 +144,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         readResolve();
     }
 
-    private String[] splitAndFilterEmpty(String s) {
-        List<String> temp = new ArrayList<String>();
-        for (String item : s.split(" ")) {
-            if (!item.isEmpty())
-                temp.add(item);
-        }
-
-        return temp.toArray(new String[temp.size()]);
-
-    }
-
     public String getInstanceCapStr() {
         if (instanceCap==Integer.MAX_VALUE) {
             return "";
