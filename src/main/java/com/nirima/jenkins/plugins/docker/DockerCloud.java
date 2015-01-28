@@ -278,12 +278,14 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Gets {@link DockerTemplate} that has the matching {@link Label}; if {@link Label} is null and mode false,
-     * then get this template.
+     * Gets {@link DockerTemplate} that has the matching {@link Label}; if {@link Label} is null (non-labled job) then return template which is unlabled, too.
      */
     public DockerTemplate getTemplate(Label label) {
+        
         for (DockerTemplate t : templates) {
-            if( (label == null && t.getMode().equals(Node.Mode.NORMAL)) || (label != null && label.matches(t.getLabelSet())) ) {
+            if(label != null && label.matches(t.getLabelSet())) {
+                return t;
+            } else if(label == null && t.getLabelSet().size() == 0) {
                 return t;
             }
         }
