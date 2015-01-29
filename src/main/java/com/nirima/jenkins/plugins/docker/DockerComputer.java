@@ -1,19 +1,20 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.google.common.base.Objects;
-import hudson.model.*;
+import hudson.model.Executor;
+import hudson.model.Queue;
+import hudson.model.Run;
 import hudson.slaves.AbstractCloudComputer;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.google.common.base.Objects;
 
 /**
  * Created by magnayn on 09/01/2014.
  */
 public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
-
-    private int checked = 0;
 
     public DockerComputer(DockerSlave dockerSlave) {
         super(dockerSlave);
@@ -80,16 +81,9 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     private void updateAcceptingTasks() {
         try {
             DockerSlave node = getNode();
-            int pause = 5000;
             if( getOfflineCause() != null) {
-                if(getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
-                    LOGGER.log(Level.INFO, "Slave agent not launched after checking " + checked + " time(s).  Waiting for any retries...");
-                    checked += 1;
-                    Thread.sleep(pause);
-                } else {
-                    setAcceptingTasks(false);
-                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause() );
-                }
+            	setAcceptingTasks(false);
+            	LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause());
             } else if( !node.containerExistsInCloud() ) {
                 setAcceptingTasks(false);
             }
