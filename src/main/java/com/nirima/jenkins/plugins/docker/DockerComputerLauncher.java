@@ -62,7 +62,7 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
             StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(template.credentialsId);
 
-            return new SSHLauncher(host, port, credentials,  template.jvmOptions , template.javaPath, template.prefixStartSlaveCmd, template.suffixStartSlaveCmd, template.getSSHLaunchTimeoutMinutes() * 60);
+            return new SSHLauncher(host, port, credentials,  template.jvmOptions , template.javaPath, template.prefixStartSlaveCmd, template.suffixStartSlaveCmd, template.getSSHLaunchTimeoutMinutes() * 60,3,5);
 
         } catch(NullPointerException ex) {
             throw new RuntimeException("No mapped port 22 in host for SSL. Config=" + detail);
