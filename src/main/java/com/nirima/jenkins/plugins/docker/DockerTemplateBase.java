@@ -5,9 +5,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -88,17 +86,10 @@ public abstract class DockerTemplateBase {
         return this;
     }
 
-    private String[] splitAndFilterEmpty(String s) {
-        List<String> temp = new ArrayList<String>();
-        for (String item : s.split(" ")) {
-            if (!item.isEmpty())
-                temp.add(item);
-        }
-
-        return temp.toArray(new String[temp.size()]);
-
+    public String[] splitAndFilterEmpty(String s) {
+        List<String> list = Splitter.on(' ').omitEmptyStrings().splitToList(s);
+        return list.toArray(new String[0]);
     }
-
 
     public String getDnsString() {
         return Joiner.on(" ").join(dnsHosts);
@@ -136,7 +127,7 @@ public abstract class DockerTemplateBase {
 
     }
 
-    protected String[] getDockerCommandArray() {
+    public String[] getDockerCommandArray() {
          String[] dockerCommandArray = new String[0];
 
         if(dockerCommand != null && !dockerCommand.isEmpty()){
@@ -145,7 +136,7 @@ public abstract class DockerTemplateBase {
         return dockerCommandArray;
     }
 
-    protected Iterable<PortBinding> getPortMappings() {
+    public Iterable<PortBinding> getPortMappings() {
 
         if(Strings.isNullOrEmpty(bindPorts) ) {
             return Collections.EMPTY_LIST;
@@ -224,7 +215,7 @@ public abstract class DockerTemplateBase {
     }
 
 
-    protected List<LxcConf> getLxcConf() {
+    public List<LxcConf> getLxcConf() {
         List<LxcConf> temp = new ArrayList<LxcConf>();
         if( lxcConfString == null || lxcConfString.trim().equals(""))
             return temp;

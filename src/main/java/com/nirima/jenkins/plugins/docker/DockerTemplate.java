@@ -144,17 +144,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         readResolve();
     }
 
-    private String[] splitAndFilterEmpty(String s) {
-        List<String> temp = new ArrayList<String>();
-        for (String item : s.split(" ")) {
-            if (!item.isEmpty())
-                temp.add(item);
-        }
-
-        return temp.toArray(new String[temp.size()]);
-
-    }
-
     public String getInstanceCapStr() {
         if (instanceCap==Integer.MAX_VALUE) {
             return "";
@@ -217,7 +206,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return parent;
     }
 
-    private int idleTerminationMinutes() {
+    public int idleTerminationMinutes() {
         if (idleTerminationMinutes == null || idleTerminationMinutes.trim().isEmpty()) {
             return 0;
         } else {
@@ -286,11 +275,11 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     }
 
     @Override
-    protected String[] getDockerCommandArray() {
+    public String[] getDockerCommandArray() {
         String[] cmd = super.getDockerCommandArray();
 
         if( cmd.length == 0 ) {
-            //default value to preserve comptability
+            //default value to preserve compatibility
             cmd = new String[]{"/usr/sbin/sshd", "-D"};
         }
 
@@ -302,7 +291,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
      * Provide a sensible default - templates are for slaves, and you're mostly going
      * to want port 22 exposed.
      */
-    protected Iterable<PortBinding> getPortMappings() {
+    public Iterable<PortBinding> getPortMappings() {
 
         if(Strings.isNullOrEmpty(bindPorts) ) {
              return ImmutableList.<PortBinding>builder()
