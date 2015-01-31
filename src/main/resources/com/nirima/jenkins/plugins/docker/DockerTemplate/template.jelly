@@ -60,6 +60,14 @@
            <f:textbox/>
        </f:entry>
 
+       <f:entry title="${%CPU Shares}" field="cpuShares">
+           <f:number name="cpuShares" clazz="positive-number" min="0" step="1"/>
+       </f:entry>
+
+       <f:entry title="${%Memory Limit in MB}" field="memoryLimit">
+           <f:number name="memoryLimit" clazz="positive-number" min="4" step="1"/>
+       </f:entry>
+
         <f:entry title="${%Docker Command}" field="dockerCommand">
             <f:textbox />
         </f:entry>

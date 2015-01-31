@@ -17,6 +17,8 @@ public class DockerSimpleTemplate extends DockerTemplateBase implements Describa
                                 String environmentsString,
                                 String lxcConfString,
                                 String hostname,
+                                Integer memoryLimit,
+                                Integer cpuShares,
                                 String bindPorts,
                                 boolean bindAllPorts,
                                 boolean privileged) {
@@ -28,6 +30,8 @@ public class DockerSimpleTemplate extends DockerTemplateBase implements Describa
                 environmentsString,
                 lxcConfString,
                 hostname,
+                memoryLimit,
+                cpuShares,
                 bindPorts,
                 bindAllPorts,
                 privileged);

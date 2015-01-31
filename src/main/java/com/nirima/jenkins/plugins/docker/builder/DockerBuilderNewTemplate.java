@@ -45,6 +45,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String sshLaunchTimeoutMinutes;
     public final String jvmOptions;
     public final String javaPath;
+    public final Integer memoryLimit;
+    public final Integer cpuShares;
     public final String prefixStartSlaveCmd;
     public final String suffixStartSlaveCmd;
     public final String instanceCapStr;
@@ -64,6 +66,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                                               String credentialsId, String idleTerminationMinutes,
                                               String sshLaunchTimeoutMinutes,
                                               String jvmOptions, String javaPath,
+                                              Integer memoryLimit, Integer cpuShares,
                                               String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                                               String instanceCapStr, String dnsString,
                                               String dockerCommand,
@@ -84,6 +87,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.sshLaunchTimeoutMinutes = sshLaunchTimeoutMinutes;
         this.jvmOptions = jvmOptions;
         this.javaPath = javaPath;
+        this.memoryLimit = memoryLimit;
+        this.cpuShares = cpuShares;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.instanceCapStr = instanceCapStr;
@@ -136,6 +141,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                         credentialsId, idleTerminationMinutes,
                         sshLaunchTimeoutMinutes,
                         jvmOptions, javaPath,
+                        memoryLimit, cpuShares,
                         prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
                         dnsString, dockerCommand,

@@ -33,6 +33,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final boolean privileged;
     public final String hostname;
     public final String bindPorts;
+    public final Integer memoryLimit;
+    public final Integer cpuShares;
     public final boolean bindAllPorts;
 
     @DataBoundConstructor
@@ -44,6 +46,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String volumesString, String volumesFrom,
             String environmentsString,
             String hostname,
+            Integer memoryLimit,
+            Integer cpuShares,
             String bindPorts,
             boolean bindAllPorts,
             boolean privileged) {
@@ -59,6 +63,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.privileged = privileged;
         this.hostname = hostname;
         this.bindPorts = bindPorts;
+        this.memoryLimit = memoryLimit;
+        this.cpuShares = cpuShares;
         this.bindAllPorts = bindAllPorts;
     }
 
@@ -85,7 +91,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
                 dnsString, xCommand,
-                volumesString, volumesFrom, environmentsString, lxcConfString, xHostname, bindPorts, bindAllPorts, privileged);
+                volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,  memoryLimit, cpuShares, bindPorts, bindAllPorts, privileged);
 
         String containerId = template.provisionNew(client).getId();
 
