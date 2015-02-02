@@ -14,6 +14,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
+import hudson.model.Node;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,6 +54,8 @@ public abstract class DockerTemplateBase {
 
     public final boolean privileged;
 
+    public final Node.Mode mode;
+
     public DockerTemplateBase(String image,
                           String dnsString,
                           String dockerCommand,
@@ -62,7 +65,8 @@ public abstract class DockerTemplateBase {
                           String hostname,
                           String bindPorts,
                           boolean bindAllPorts,
-                          boolean privileged
+                          boolean privileged,
+                          Node.Mode mode
 
     ) {
         this.image = image;
@@ -70,6 +74,7 @@ public abstract class DockerTemplateBase {
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
+        this.mode = mode;
         this.hostname = hostname;
 
         this.bindPorts    = bindPorts;
@@ -148,7 +153,6 @@ public abstract class DockerTemplateBase {
                                        .split(bindPorts),
                                    new Function<String, PortBinding>() {
             @Nullable
-            @Override
             public PortBinding apply(String s) {
                 return PortBinding.parse(s);
             }

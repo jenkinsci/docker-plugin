@@ -50,6 +50,7 @@
             <f:checkbox/>
         </f:entry>
 
+        <f:slave-mode name="mode" node="${it}" />
 
         </f:advanced>
 </j:jelly>

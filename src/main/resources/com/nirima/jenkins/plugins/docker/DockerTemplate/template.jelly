@@ -84,6 +84,8 @@
             <f:checkbox/>
         </f:entry>
 
+        <f:slave-mode name="mode" node="${it}" />
+
        <f:entry title="${%Prefix Start Slave Command}" field="prefixStartSlaveCmd">
            <f:textbox/>
        </f:entry>

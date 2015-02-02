@@ -116,12 +116,13 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String hostname,
                           String bindPorts,
                           boolean bindAllPorts,
-                          boolean privileged
+                          boolean privileged,
+                          Node.Mode mode
 
     ) {
         super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
-                privileged);
+                privileged, mode);
 
 
         this.labelString = Util.fixNull(labelString);
@@ -176,6 +177,8 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return labelSet;
     }
 
+    public Node.Mode getMode() { return mode; }
+
     public int getSSHLaunchTimeoutMinutes() {
         if (sshLaunchTimeoutMinutes == null || sshLaunchTimeoutMinutes.trim().isEmpty()) {
             return 1;
@@ -226,7 +229,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         logger.println("Launching " + image );
 
         int numExecutors = 1;
-        Node.Mode mode = Node.Mode.NORMAL;
 
         RetentionStrategy retentionStrategy = new OnceRetentionStrategy(idleTerminationMinutes());
 

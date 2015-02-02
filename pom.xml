@@ -79,6 +79,16 @@
 
     <repositories>
         <repository>
+            <id>oss</id>
+            <url>http://oss.sonatype.org/content/groups/public/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
         </repository>
