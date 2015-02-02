@@ -10,6 +10,7 @@ import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 
 import hudson.Extension;
 import hudson.model.*;
+import hudson.model.queue.CauseOfBlockage;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
@@ -64,6 +65,18 @@ public class DockerSlave extends AbstractCloudSlave {
     @Override
     public DockerComputer createComputer() {
         return new DockerComputer(this);
+    }
+
+    @Override
+    public CauseOfBlockage canTake(Queue.BuildableItem item) {
+        if (item.task instanceof Queue.FlyweightTask) {
+          return new CauseOfBlockage() {
+            public String getShortDescription() {
+                return "Don't run FlyweightTask on Docker node";
+            }
+          };
+        }
+        return super.canTake(item);
     }
 
     public boolean containerExistsInCloud() {
