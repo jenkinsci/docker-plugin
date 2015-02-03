@@ -34,13 +34,12 @@ public class WaitForSSHComputerLauncher extends DelegatingComputerLauncher {
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
     	waitForSSH();
         super.launch(computer, listener);
-        
     }
     
     private void waitForSSH() throws IOException, InterruptedException{
     	LOGGER.log(Level.INFO, "Trying to connect to " + host + ":" + port);
     	for(int i=1;i<=NO_TRIES;i++){
-    		Connection c = new Connection(host,port);
+    		Connection c = new Connection(host, port);
 			try {
 				c.connect();
 				break;
@@ -48,7 +47,7 @@ public class WaitForSSHComputerLauncher extends DelegatingComputerLauncher {
 				if(i==NO_TRIES){
 					throw e;
 				}else{
-					LOGGER.log(Level.INFO, "Failed to connect to " + host + ":" + port + " try no. " + i,e);
+					LOGGER.log(Level.INFO, "Failed to connect to " + host + ":" + port + " try no. " + i, e);
 				}
 			}finally{
 				c.close();
