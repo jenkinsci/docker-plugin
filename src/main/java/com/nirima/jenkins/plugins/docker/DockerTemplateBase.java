@@ -87,8 +87,11 @@ public abstract class DockerTemplateBase {
     }
 
     public String[] splitAndFilterEmpty(String s) {
-        List<String> list = Splitter.on(' ').omitEmptyStrings().splitToList(s);
-        return list.toArray(new String[0]);
+        List<String> temp = new ArrayList<String>();
+        for (String item : Splitter.on(' ').omitEmptyStrings().split(s)) {
+            temp.add(item);
+        }
+        return temp.toArray(new String[temp.size()]);
     }
 
     public String getDnsString() {
