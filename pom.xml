@@ -46,6 +46,17 @@
         </dependency>
     </dependencies>
 
+    <!-- lock dependencies to versions included in Jenkins -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>11.0.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <plugins>
             <plugin>
