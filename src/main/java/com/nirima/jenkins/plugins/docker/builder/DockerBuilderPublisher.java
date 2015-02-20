@@ -7,7 +7,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 
 import com.github.dockerjava.api.command.PushImageCmd;
-import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
@@ -168,15 +167,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 listener.getLogger().println("ERROR: Docker will refuse to push tag name " + tagToUse + " because it uses upper case.");
             }
 
-            Identifier identifier = Identifier.fromCompoundString(tagToUse);
+//            Identifier identifier = Identifier.fromCompoundString(tagToUse);
 
-            String repositoryName = identifier.repository.name;
+//            String repositoryName = identifier.repository.name;
 
-            PushImageCmd pushImageCmd = client.pushImageCmd(repositoryName);
+//            PushImageCmd pushImageCmd = client.pushImageCmd(repositoryName);
 
-            if( identifier.tag.isPresent() )
-                pushImageCmd.withTag(identifier.tag.get());
+//            if( identifier.tag.isPresent() )
+//                pushImageCmd.withTag(identifier.tag.get());
 
+            PushImageCmd pushImageCmd = client.pushImageCmd(tagToUse);
             InputStream pushResponse = pushImageCmd.exec();
 
             return IOUtils.toString(pushResponse);

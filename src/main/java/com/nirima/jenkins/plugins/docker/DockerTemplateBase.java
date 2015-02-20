@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.model.VolumesFrom;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -148,7 +149,6 @@ public abstract class DockerTemplateBase {
                                        .split(bindPorts),
                                    new Function<String, PortBinding>() {
             @Nullable
-            @Override
             public PortBinding apply(String s) {
                 return PortBinding.parse(s);
             }
@@ -172,8 +172,8 @@ public abstract class DockerTemplateBase {
         if( dnsHosts.length > 0 )
             containerConfig.withDns(dnsHosts);
         if( volumesFrom != null && !volumesFrom.isEmpty() )
-            containerConfig.withVolumesFrom(volumesFrom);
-	if(environment != null && environment.length > 0)
+            containerConfig.withVolumesFrom(new VolumesFrom(volumesFrom));
+        if(environment != null && environment.length > 0)
             containerConfig.withEnv(environment);
 
         return containerConfig;

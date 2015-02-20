@@ -342,7 +342,6 @@ public class DockerCloud extends Cloud {
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(ami);
         final String fullAmi = repostag.repos + ":" + (repostag.tag.isEmpty()?"latest":repostag.tag);
         boolean imageExists = Iterables.any(images, new Predicate<Image>(){
-            @Override
             public boolean apply(Image image) {
                 return Arrays.asList(image.getRepoTags()).contains(fullAmi);
             }
