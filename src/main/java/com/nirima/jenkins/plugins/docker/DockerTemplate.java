@@ -97,8 +97,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     public final int instanceCap;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
-    public transient DockerCloud parent;
-
 
     @DataBoundConstructor
     public DockerTemplate(String image, String labelString,

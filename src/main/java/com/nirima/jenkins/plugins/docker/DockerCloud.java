@@ -197,7 +197,8 @@ public class DockerCloud extends Cloud {
     private DockerClient buildConnection() {
         LOGGER.log(Level.FINE, "Building connection to docker host \"{0}\" at: {1}", new Object[]{name,serverUrl});
 
-        return DockerClientBuilder.getInstance(getDockerClientConfig()).build();
+        ClassLoader classLoader = Jenkins.getInstance().getPluginManager().uberClassLoader;
+        return DockerClientBuilder.getInstance(getDockerClientConfig()).withServiceLoaderClassLoader(classLoader).build();      
     }
 
     /**
@@ -337,7 +338,9 @@ public class DockerCloud extends Cloud {
         if (ami == null)
             return containers.size();
 
-        List<Image> images = dockerClient.listImagesCmd().exec();
+        List<Image> images = dockerClient.listImagesCmd()
+            .withFilters("{ \"image\": [ \"" + ami + "\" ] }")
+            .exec();
 
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(ami);
         final String fullAmi = repostag.repos + ":" + (repostag.tag.isEmpty()?"latest":repostag.tag);

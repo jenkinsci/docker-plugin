@@ -16,6 +16,9 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
 
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,17 +56,18 @@ public abstract class DockerTemplateBase {
     public final boolean bindAllPorts;
 
     public final boolean privileged;
+    public transient DockerCloud parent;
 
     public DockerTemplateBase(String image,
-                          String dnsString,
-                          String dockerCommand,
-                          String volumesString, String volumesFrom,
-                          String environmentsString,
-                          String lxcConfString,
-                          String hostname,
-                          String bindPorts,
-                          boolean bindAllPorts,
-                          boolean privileged
+                              String dnsString,
+                              String dockerCommand,
+                              String volumesString, String volumesFrom,
+                              String environmentsString,
+                              String lxcConfString,
+                              String hostname,
+                              String bindPorts,
+                              boolean bindAllPorts,
+                              boolean privileged
 
     ) {
         this.image = image;
@@ -73,7 +77,7 @@ public abstract class DockerTemplateBase {
         this.privileged = privileged;
         this.hostname = hostname;
 
-        this.bindPorts    = bindPorts;
+        this.bindPorts = bindPorts;
         this.bindAllPorts = bindAllPorts;
 
         this.dnsHosts = splitAndFilterEmpty(dnsString);
@@ -129,9 +133,9 @@ public abstract class DockerTemplateBase {
     }
 
     public String[] getDockerCommandArray() {
-         String[] dockerCommandArray = new String[0];
+        String[] dockerCommandArray = new String[0];
 
-        if(dockerCommand != null && !dockerCommand.isEmpty()){
+        if (dockerCommand != null && !dockerCommand.isEmpty()) {
             dockerCommandArray = dockerCommand.split(" ");
         }
         return dockerCommandArray;
@@ -139,20 +143,20 @@ public abstract class DockerTemplateBase {
 
     public Iterable<PortBinding> getPortMappings() {
 
-        if(Strings.isNullOrEmpty(bindPorts) ) {
+        if (Strings.isNullOrEmpty(bindPorts)) {
             return Collections.EMPTY_LIST;
         }
 
         return Iterables.transform(Splitter.on(' ')
-                                       .trimResults()
-                                       .omitEmptyStrings()
-                                       .split(bindPorts),
-                                   new Function<String, PortBinding>() {
-            @Nullable
-            public PortBinding apply(String s) {
-                return PortBinding.parse(s);
-            }
-        });
+                        .trimResults()
+                        .omitEmptyStrings()
+                        .split(bindPorts),
+                new Function<String, PortBinding>() {
+                    @Nullable
+                    public PortBinding apply(String s) {
+                        return PortBinding.parse(s);
+                    }
+                });
 
 
     }
@@ -163,17 +167,17 @@ public abstract class DockerTemplateBase {
             containerConfig.withHostName(hostname);
         }
         String[] cmd = getDockerCommandArray();
-        if( cmd.length > 0)
+        if (cmd.length > 0)
             containerConfig.withCmd(cmd);
         containerConfig.withPortSpecs("22/tcp");
 
         //containerConfig.setPortSpecs(new String[]{"22/tcp"});
         //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
-        if( dnsHosts.length > 0 )
+        if (dnsHosts.length > 0)
             containerConfig.withDns(dnsHosts);
-        if( volumesFrom != null && !volumesFrom.isEmpty() )
+        if (volumesFrom != null && !volumesFrom.isEmpty())
             containerConfig.withVolumesFrom(new VolumesFrom(volumesFrom));
-        if(environment != null && environment.length > 0)
+        if (environment != null && environment.length > 0)
             containerConfig.withEnv(environment);
 
         return containerConfig;
@@ -188,7 +192,7 @@ public abstract class DockerTemplateBase {
 
 
         hostConfig.withPrivileged(this.privileged);
-        if( dnsHosts.length > 0 )
+        if (dnsHosts.length > 0)
             hostConfig.withDns(dnsHosts);
 
         // ?
@@ -201,8 +205,19 @@ public abstract class DockerTemplateBase {
             hostConfig.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
         }
 
-        if(!Strings.isNullOrEmpty(volumesFrom) )
+        if (!Strings.isNullOrEmpty(volumesFrom))
             hostConfig.withVolumesFrom(volumesFrom);
+
+        // Add default dockerhost - this is the external IP of the node
+        // that is hosting the container
+        try {
+            String host = URI.create(parent.serverUrl).getHost();
+            String hostIp = InetAddress.getByName(host).getHostAddress();
+            LOGGER.info("Adding dockerhost to image: " + hostIp);
+            hostConfig.withExtraHosts("dockerhost:" + hostIp);
+        } catch (UnknownHostException e) {
+            LOGGER.warning("Could not resolve node IP address");
+        }
 
         return hostConfig;
     }
@@ -217,20 +232,17 @@ public abstract class DockerTemplateBase {
 
     public List<LxcConf> getLxcConf() {
         List<LxcConf> temp = new ArrayList<LxcConf>();
-        if( lxcConfString == null || lxcConfString.trim().equals(""))
+        if (lxcConfString == null || lxcConfString.trim().equals(""))
             return temp;
         for (String item : lxcConfString.split(",")) {
             String[] keyValuePairs = item.split("=");
-            if (keyValuePairs.length == 2 )
-            {
+            if (keyValuePairs.length == 2) {
                 LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
                 LxcConf optN = new LxcConf();
                 optN.setKey(keyValuePairs[0]);
                 optN.setValue(keyValuePairs[1]);
                 temp.add(optN);
-            }
-            else
-            {
+            } else {
                 LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
             }
         }

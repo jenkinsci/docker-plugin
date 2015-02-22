@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.565.3</version>
+        <version>1.580</version>
     </parent>
 
     <groupId>com.nirima</groupId>
@@ -24,9 +24,19 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.nirima.docker-java</groupId>
+            <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
-            <version>0.10.5-SNAPSHOT</version>
+            <!-- Currently build from:
+            https://github.com/kalmanb/docker-java/tree/withExtraHosts
+            Waiting on Pull Request in next version:
+            https://github.com/docker-java/docker-java/pull/156
+            -->
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-core</artifactId>
+            <version>1.580</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -43,6 +53,11 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>durable-task</artifactId>
             <version>0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.4</version>
         </dependency>
     </dependencies>
 
