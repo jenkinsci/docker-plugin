@@ -49,6 +49,21 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <version>1.112</version>
+                <configuration>
+                    <dependentWarExcludes>com.google.guava*</dependentWarExcludes>
+                    <archive>
+                        <manifestEntries>
+                            <Mask-Classes>com.google.common</Mask-Classes>
+                        </manifestEntries>
+                    </archive>
+                    <maskClasses>com.google.common.</maskClasses>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <version>1.7</version>
