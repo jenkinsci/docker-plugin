@@ -1,6 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.github.dockerjava.api.model.VolumesFrom;
+import com.github.dockerjava.api.model.*;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -12,8 +12,6 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
-import com.github.dockerjava.api.model.LxcConf;
-import com.github.dockerjava.api.model.PortBinding;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
@@ -21,6 +19,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -185,30 +184,34 @@ public abstract class DockerTemplateBase {
         return containerConfig;
     }
 
-    public StartContainerCmd createHostConfig(StartContainerCmd hostConfig) {
+    public StartContainerCmd createHostConfig(StartContainerCmd startContainerCmd) {
 
+        startContainerCmd.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 
-        hostConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
+        startContainerCmd.withPublishAllPorts(bindAllPorts);
 
-        hostConfig.withPublishAllPorts(bindAllPorts);
-
-
-        hostConfig.withPrivileged(this.privileged);
+        startContainerCmd.withPrivileged(this.privileged);
         if (dnsHosts.length > 0)
-            hostConfig.withDns(dnsHosts);
+            startContainerCmd.withDns(dnsHosts);
 
-        // ?
-        //if (volumes.length > 0)
-        //    hostConfig.with VolumesFrom (volumes);
-
+        
         List<LxcConf> lxcConfs = getLxcConf();
 
         if (!lxcConfs.isEmpty()) {
-            hostConfig.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
+            startContainerCmd.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
         }
 
         if (!Strings.isNullOrEmpty(volumesFrom))
-            hostConfig.withVolumesFrom(volumesFrom);
+            startContainerCmd.withVolumesFrom(volumesFrom);
+
+        // Add volume binds
+        List<Bind> binds = new ArrayList<Bind>(volumes.length);
+        for (String binding: Arrays.asList(volumes)) {
+          LOGGER.info("Adding volume binding: " + binding);
+          binds.add(Bind.parse(binding));
+        }
+        if (binds.size() > 0)
+            startContainerCmd.withBinds(binds.toArray(new Bind[0]));
 
         // Add default dockerhost - this is the external IP of the node
         // that is hosting the container
@@ -216,12 +219,12 @@ public abstract class DockerTemplateBase {
             String host = URI.create(parent.serverUrl).getHost();
             String hostIp = InetAddress.getByName(host).getHostAddress();
             LOGGER.info("Adding dockerhost to image: " + hostIp);
-            hostConfig.withExtraHosts("dockerhost:" + hostIp);
+            startContainerCmd.withExtraHosts("dockerhost:" + hostIp);
         } catch (UnknownHostException e) {
             LOGGER.warning("Could not resolve node IP address");
         }
 
-        return hostConfig;
+        return startContainerCmd;
     }
 
     @Override

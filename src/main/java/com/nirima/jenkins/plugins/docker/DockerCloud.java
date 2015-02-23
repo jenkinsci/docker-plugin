@@ -339,7 +339,7 @@ public class DockerCloud extends Cloud {
             return containers.size();
 
         List<Image> images = dockerClient.listImagesCmd()
-            .withFilters("{ \"image\": [ \"" + ami + "\" ] }")
+            //.withFilters("{ \"image\": [ \"" + ami + "\" ] }")
             .exec();
 
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(ami);
