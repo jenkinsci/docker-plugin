@@ -1,24 +1,21 @@
 package com.nirima.jenkins.plugins.docker;
 
 
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.google.common.base.Preconditions;
-
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
-import com.nirima.jenkins.plugins.docker.utils.PortUtils;
-import com.nirima.jenkins.plugins.docker.utils.RetryingComputerLauncher;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
+import com.google.common.base.Preconditions;
+import com.nirima.jenkins.plugins.docker.utils.WaitForSSHComputerLauncher;
 
 
 /**
@@ -35,7 +32,7 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
     private static ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
         SSHLauncher sshLauncher = getSSHLauncher(containerInspectResponse, template);
-        return new RetryingComputerLauncher(sshLauncher);
+        return new WaitForSSHComputerLauncher(sshLauncher);
     }
 
     private static SSHLauncher getSSHLauncher(InspectContainerResponse detail, DockerTemplate template)   {
@@ -58,8 +55,6 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
             
-            PortUtils.waitForPort(host, port);
-
             StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(template.credentialsId);
 
             return new SSHLauncher(host, port, credentials,  template.jvmOptions , template.javaPath, template.prefixStartSlaveCmd, template.suffixStartSlaveCmd, template.getSSHLaunchTimeoutMinutes() * 60);
