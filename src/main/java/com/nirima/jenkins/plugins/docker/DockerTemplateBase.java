@@ -6,7 +6,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -15,6 +14,8 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -92,8 +93,9 @@ public abstract class DockerTemplateBase {
     }
 
     public String[] splitAndFilterEmpty(String s) {
-        List<String> list = Splitter.on(' ').omitEmptyStrings().splitToList(s);
-        return list.toArray(new String[0]);
+        Iterable<String> list = Splitter.on(' ').omitEmptyStrings().split(s);
+        List<String> myList = Lists.newArrayList(list);
+        return myList.toArray(new String[0]);
     }
 
     public String getDnsString() {
