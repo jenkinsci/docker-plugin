@@ -31,7 +31,7 @@
             Waiting on Pull Request in next version:
             https://github.com/docker-java/docker-java/pull/156
             -->
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
