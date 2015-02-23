@@ -176,9 +176,9 @@ public abstract class DockerTemplateBase {
         //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
         if (dnsHosts.length > 0)
             containerConfig.withDns(dnsHosts);
-        if (volumesFrom != null && !volumesFrom.isEmpty())
-            containerConfig.withVolumesFrom(new VolumesFrom(volumesFrom));
-        if (environment != null && environment.length > 0)
+        if( volumesFrom != null && !volumesFrom.isEmpty() )
+            containerConfig.withVolumesFrom(VolumesFrom.parse(volumesFrom));
+    	if(environment != null && environment.length > 0)
             containerConfig.withEnv(environment);
 
         return containerConfig;
