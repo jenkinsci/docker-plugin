@@ -31,9 +31,10 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     @Override
     public void taskCompleted(Executor executor, Queue.Task task, long durationMS) {
-        super.taskCompleted(executor, task, durationMS);
-
         Queue.Executable executable = executor.getCurrentExecutable();
+
+        LOGGER.log(Level.FINE, " Computer " + this + " taskCompleted");
+
         if( executable instanceof Run) {
             Run build = (Run) executable;
             DockerSlave slave = getNode();
@@ -43,10 +44,11 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
             } else {
                 slave.setRun(build);
             }
-
         }
-        LOGGER.log(Level.FINE, " Computer " + this + " taskCompleted");
 
+        // May take the slave offline and remove it, in which case getNode()
+        // above would return null and we'd not find our DockerSlave anymore.
+        super.taskCompleted(executor, task, durationMS);
     }
 
 

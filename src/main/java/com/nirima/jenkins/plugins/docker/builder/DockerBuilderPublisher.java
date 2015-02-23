@@ -6,6 +6,7 @@ import com.google.common.base.Throwables;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 
+import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
@@ -51,111 +52,149 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
     }
 
-    @Override
-    public boolean perform(final AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
+    class Run implements Serializable {
+        final AbstractBuild build;
+        final Launcher launcher;
+        final BuildListener listener;
 
-        listener.getLogger().println("Docker Build");
+        FilePath fpChild;
 
-        FilePath fpChild = new FilePath(build.getWorkspace(), dockerFileDirectory);
-
-        final String tagToUse = getTag(build, launcher, listener);
-        final String url = getUrl(build);
+        final String tagToUse;
+        final String url;
         // Marshal the builder across the wire.
-        final DockerClientConfig clientConfig = getDockerClientConfig(build);
+        final DockerClientConfig clientConfig;
+        final DockerClient client;
+
+
+        Run(final AbstractBuild build, final Launcher launcher, final BuildListener listener) {
+            this.build = build;
+            this.launcher = launcher;
+            this.listener = listener;
+
+            fpChild = new FilePath(build.getWorkspace(), dockerFileDirectory);
+
+            tagToUse = getTag(build, launcher, listener);
+            url = getUrl(build);
+            // Marshal the builder across the wire.
+            clientConfig = getDockerClientConfig(build);
+            client = getDockerClient(build);
+        }
+
+        boolean run() throws IOException, InterruptedException {
+            listener.getLogger().println("Docker Build");
+
+            String response = buildImage();
+
+            listener.getLogger().println("Docker Build Response : " + response);
+
+            // The ID of the image we just generated
+            Optional<String> id = getImageId(response);
+            if( !id.isPresent() )
+                return false;
+
+            build.addAction( new DockerBuildImageAction(url, id.get(), tagToUse, cleanupWithJenkinsJobDelete, pushOnSuccess) );
+            build.save();
 
 
 
-        String response = fpChild.act(new FilePath.FileCallable<String>() {
-            public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+            if( pushOnSuccess ) {
+
+                listener.getLogger().println("Pushing " + tagToUse);
+                String stringResponse = pushImage();
+                listener.getLogger().println("Docker Push Response : " + stringResponse);
+            }
+
+            if (cleanImages) {
+
+                // For some reason, docker delete doesn't delete all tagged
+                // versions, despite force = true.
+                // So, do it multiple times (protect against infinite looping).
+                listener.getLogger().println("Cleaning local images [" + id.get() + "]");
+
                 try {
-                    listener.getLogger().println("Docker Build : build with tag " + tagToUse + " at path " + f.getAbsolutePath());
-
-
-                    //TODO:
-                    //DockerClient client = builder
-                    //    .readTimeout(3600000).build();
-
-                    DockerClient client = DockerClientBuilder.getInstance(clientConfig)
-                        .build();
+                    cleanImages(id.get());
+                } catch(Exception ex) {
+                    listener.getLogger().println("Error attempting to clean images");
+                }
+            }
 
 
 
+            listener.getLogger().println("Docker Build Done");
 
-                    File dockerFile;
+            return true;
+        }
 
-                    // Be lenient and allow the user to just specify the path.
-                    if( f.isFile() )
-                        dockerFile = f;
-                    else
-                        dockerFile = new File(f, "Dockerfile");
+        private void cleanImages(String id) {
+            client.removeImageCmd(id)
+                .withForce()
+                .exec();
+        }
 
-                    InputStream is = client.buildImageCmd(dockerFile)
+        private String buildImage() throws IOException, InterruptedException {
+            return fpChild.act(new FilePath.FileCallable<String>() {
+                public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+                    try {
+                        listener.getLogger().println("Docker Build : build with tag " + tagToUse + " at path " + f.getAbsolutePath());
+
+                        DockerClient client = DockerClientBuilder.getInstance(clientConfig)
+                            .build();
+
+                        File dockerFolder;
+
+                        // Be lenient and allow the user to just specify the path.
+                        if( f.isFile() )
+                            dockerFolder = f.getParentFile();
+                        else
+                            dockerFolder = f;
+
+                        InputStream is = client.buildImageCmd(dockerFolder)
                             .withTag(tagToUse)
                             .exec();
 
-                    return IOUtils.toString(is);
+                        return IOUtils.toString(is);
 
-                } catch (DockerException e) {
-                    throw Throwables.propagate(e);
+                    } catch (DockerException e) {
+                        throw Throwables.propagate(e);
+                    }
+
                 }
+            });
+        }
 
-            }
-        });
-
-
-        listener.getLogger().println("Docker Build Response : " + response);
-
-        Optional<String> id = getImageId(response);
-        if( !id.isPresent() )
-           return false;
-
-        build.addAction( new DockerBuildImageAction(url, id.get(), tagToUse, cleanupWithJenkinsJobDelete, pushOnSuccess) );
-        build.save();
-
-        DockerClient client = getDockerClient(build);
-
-        if( pushOnSuccess ) {
-
-            listener.getLogger().println("Pushing " + tagToUse);
+        private String pushImage() throws IOException {
             if( !tagToUse.toLowerCase().equals(tagToUse) ) {
                 listener.getLogger().println("ERROR: Docker will refuse to push tag name " + tagToUse + " because it uses upper case.");
             }
 
 //            Identifier identifier = Identifier.fromCompoundString(tagToUse);
-//
+
 //            String repositoryName = identifier.repository.name;
 
-            InputStream pushResponse = client.pushImageCmd(tagToUse)
-                    .exec();
+//            PushImageCmd pushImageCmd = client.pushImageCmd(repositoryName);
 
-            String stringResponse = IOUtils.toString(pushResponse);
+//            if( identifier.tag.isPresent() )
+//                pushImageCmd.withTag(identifier.tag.get());
 
-            listener.getLogger().println("Docker Push Response : " + stringResponse);
+            PushImageCmd pushImageCmd = client.pushImageCmd(tagToUse);
+            InputStream pushResponse = pushImageCmd.exec();
+
+            return IOUtils.toString(pushResponse);
         }
 
-        if (cleanImages) {
+    }
 
-            // For some reason, docker delete doesn't delete all tagged
-            // versions, despite force = true.
-            // So, do it multiple times (protect against infinite looping).
-            listener.getLogger().println("Cleaning local images");
-
-            client.removeImageCmd(id.get())
-                        .withForce()
-                        .exec();
-        }
-
-
-
-        listener.getLogger().println("Docker Build Done");
-
-        return true;
+    @Override
+    public boolean perform(final AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
+        return new Run(build, launcher, listener).run();
     }
 
     private Optional<String> getImageId(String response) {
         for(String item : response.split("\n") ) {
             if (item.contains("Successfully built")) {
                 String id =  StringUtils.substringAfterLast(item, "Successfully built ").trim();
+                // Seem to have an additional \n in the stream.
+                id = id.substring(0,12);
                 return Optional.of(id);
             }
         }

@@ -48,6 +48,10 @@
                 <f:textbox default="5" />
             </f:entry>
 
+            <f:entry title="${%SSH Launch Timeout}" field="sshLaunchTimeoutMinutes">
+                <f:textbox default="1" />
+            </f:entry>
+
             <f:entry title="${%JavaPath}" field="javaPath">
                 <f:textbox/>
             </f:entry>
@@ -69,6 +73,10 @@
         </f:entry>
 
         <f:entry title="${%Volumes From}" field="volumesFrom">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="${%Environment}" field="environmentsString">
             <f:textbox/>
         </f:entry>
 

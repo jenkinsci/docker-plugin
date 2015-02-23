@@ -63,6 +63,11 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     public final String idleTerminationMinutes;
 
     /**
+     * Minutes before SSHLauncher times out on launch
+     */
+    public final String sshLaunchTimeoutMinutes;
+
+    /**
      * Field jvmOptions.
      */
     public final String jvmOptions;
@@ -92,19 +97,19 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     public final int instanceCap;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
-    public transient DockerCloud parent;
-
 
     @DataBoundConstructor
     public DockerTemplate(String image, String labelString,
                           String remoteFs,
                           String remoteFsMapping,
                           String credentialsId, String idleTerminationMinutes,
+                          String sshLaunchTimeoutMinutes,
                           String jvmOptions, String javaPath,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
                           String dockerCommand,
                           String volumesString, String volumesFrom,
+                          String environmentsString,
                           String lxcConfString,
                           String hostname,
                           String bindPorts,
@@ -112,7 +117,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           boolean privileged
 
     ) {
-        super(image, dnsString,dockerCommand,volumesString,volumesFrom,lxcConfString,hostname,
+        super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
                 privileged);
 
@@ -120,6 +125,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         this.labelString = Util.fixNull(labelString);
         this.credentialsId = credentialsId;
         this.idleTerminationMinutes = idleTerminationMinutes;
+        this.sshLaunchTimeoutMinutes = sshLaunchTimeoutMinutes;
         this.jvmOptions = jvmOptions;
         this.javaPath = javaPath;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
@@ -134,17 +140,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         }
 
         readResolve();
-    }
-
-    private String[] splitAndFilterEmpty(String s) {
-        List<String> temp = new ArrayList<String>();
-        for (String item : s.split(" ")) {
-            if (!item.isEmpty())
-                temp.add(item);
-        }
-
-        return temp.toArray(new String[temp.size()]);
-
     }
 
     public String getInstanceCapStr() {
@@ -179,6 +174,18 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return labelSet;
     }
 
+    public int getSSHLaunchTimeoutMinutes() {
+        if (sshLaunchTimeoutMinutes == null || sshLaunchTimeoutMinutes.trim().isEmpty()) {
+            return 1;
+        } else {
+            try {
+                return Integer.parseInt(sshLaunchTimeoutMinutes);
+            } catch (NumberFormatException nfe) {
+                LOGGER.log(Level.INFO, "Malformed SSH Launch Timeout value: {0}", sshLaunchTimeoutMinutes);
+                return 1;
+            }
+        }
+    }
     /**
      * Initializes data structure that we don't persist.
      */
@@ -197,7 +204,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return parent;
     }
 
-    private int idleTerminationMinutes() {
+    public int idleTerminationMinutes() {
         if (idleTerminationMinutes == null || idleTerminationMinutes.trim().isEmpty()) {
             return 0;
         } else {
@@ -266,11 +273,11 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     }
 
     @Override
-    protected String[] getDockerCommandArray() {
+    public String[] getDockerCommandArray() {
         String[] cmd = super.getDockerCommandArray();
 
         if( cmd.length == 0 ) {
-            //default value to preserve comptability
+            //default value to preserve compatibility
             cmd = new String[]{"/usr/sbin/sshd", "-D"};
         }
 
@@ -282,7 +289,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
      * Provide a sensible default - templates are for slaves, and you're mostly going
      * to want port 22 exposed.
      */
-    protected Iterable<PortBinding> getPortMappings() {
+    public Iterable<PortBinding> getPortMappings() {
 
         if(Strings.isNullOrEmpty(bindPorts) ) {
              return ImmutableList.<PortBinding>builder()
