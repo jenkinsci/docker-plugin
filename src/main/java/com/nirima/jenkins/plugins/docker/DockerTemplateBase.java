@@ -14,6 +14,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.VolumesFrom;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -172,7 +173,7 @@ public abstract class DockerTemplateBase {
         if( dnsHosts.length > 0 )
             containerConfig.withDns(dnsHosts);
         if( volumesFrom != null && !volumesFrom.isEmpty() )
-            containerConfig.withVolumesFrom(volumesFrom);
+            containerConfig.withVolumesFrom(VolumesFrom.parse(volumesFrom));
 	if(environment != null && environment.length > 0)
             containerConfig.withEnv(environment);
 
