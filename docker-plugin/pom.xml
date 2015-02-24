@@ -16,6 +16,12 @@
             <groupId>com.nirima</groupId>
             <artifactId>docker-java-shaded</artifactId>
             <version>${project.version}</version>
+             <exclusions>
+                 <exclusion>
+                     <groupId>org.bouncycastle</groupId>
+                     <artifactId>bcpkix-jdk15on </artifactId>
+                 </exclusion>
+             </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
