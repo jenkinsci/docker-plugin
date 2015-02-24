@@ -1,0 +1,95 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>1.565.3</version>
+    </parent>
+
+    <groupId>com.nirima</groupId>
+    <artifactId>docker-plugin-parent</artifactId>
+    <version>0.9-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Docker plugin parent pom</name>
+
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
+ 
+ <scm>
+    <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/docker-plugin</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <properties>
+    <hpi.plugin.version>1.112</hpi.plugin.version>
+    <stapler.version>1.207</stapler.version>
+     <jclouds.version>1.8.1</jclouds.version>
+        <guava.version>18.0</guava.version>
+        <docker-java.version>1.0.1-SNAPSHOT</docker-java.version>
+        <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
+    </properties>
+
+    <modules>
+        <module>docker-plugin</module>            
+        <module>docker-java-shaded</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jenkins-ci.tools</groupId>
+                    <artifactId>maven-hpi-plugin</artifactId>
+                    <version>${hpi.plugin.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                            <version>${guava.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.kohsuke.stapler</groupId>
+                            <artifactId>stapler</artifactId>
+                            <version>${stapler.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <dependentWarExcludes>com.github.dockerjava*,com.google.guava*</dependentWarExcludes>
+                        <archive>
+                            <manifestEntries>
+                                <Mask-Classes>com.google.common</Mask-Classes>
+                            </manifestEntries>
+                        </archive>
+                        <maskClasses>com.google.common.</maskClasses>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>maven.jenkins-ci.org</id>
+            <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
+        </repository>
+    </distributionManagement>
+
+</project>

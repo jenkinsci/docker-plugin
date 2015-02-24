@@ -1,33 +1,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>1.565.3</version>
+        <groupId>com.nirima</groupId>
+        <artifactId>docker-plugin-parent</artifactId>
+        <version>0.9-SNAPSHOT</version>
     </parent>
 
     <groupId>com.nirima</groupId>
-    <artifactId>docker-plugin</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <artifactId>docker-plugin</artifactId>    
     <packaging>hpi</packaging>
     <name>Docker plugin</name>
 
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
- 
- <scm>
-    <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
-    <url>https://github.com/jenkinsci/docker-plugin</url>
-    <tag>HEAD</tag>
-  </scm>
-
-
     <dependencies>
-        <dependency>
-            <groupId>com.nirima.docker-java</groupId>
-            <artifactId>docker-java</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+         <dependency>
+            <groupId>com.nirima</groupId>
+            <artifactId>docker-java-shaded</artifactId>
+            <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>  
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>ssh-slaves</artifactId>
@@ -49,11 +43,41 @@
     <build>
         <plugins>
             <plugin>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <artifactSet>
+                        <includes>
+                            <include>com.nirima.docker-java:*</include>
+                            <include>com.google.guava:*</include>
+                        </includes>
+                    </artifactSet>
+                    <relocations>
+                        <relocation>
+                            <pattern>com.google.common</pattern>
+                            <shadedPattern>shaded.com.google.common</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>1.112</version>
+                <version>${hpi.plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                        <version>${guava.version}</version>
+                    </dependency>  
+                     <dependency>
+                            <groupId>org.kohsuke.stapler</groupId>
+                            <artifactId>stapler</artifactId>
+                            <version>${stapler.version}</version>
+                        </dependency>               
+                </dependencies>
                 <configuration>
-                    <dependentWarExcludes>com.google.guava*</dependentWarExcludes>
+                    <dependentWarExcludes>org.apache.httpcomponents:*,com.nirima.docker-java*,com.google.guava*</dependentWarExcludes>
                     <archive>
                         <manifestEntries>
                             <Mask-Classes>com.google.common</Mask-Classes>
@@ -92,25 +116,5 @@
         </plugins>
     </build>
 
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
-    <distributionManagement>
-        <repository>
-            <id>maven.jenkins-ci.org</id>
-            <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
-        </repository>
-    </distributionManagement>
 
 </project>

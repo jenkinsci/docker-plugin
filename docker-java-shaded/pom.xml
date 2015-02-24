@@ -1,0 +1,71 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- nb: No parent, otherwise we inherit wrong versions from
+     transient jenkins dependencies. -->
+
+    <groupId>com.nirima</groupId>
+    <artifactId>docker-java-shaded</artifactId>
+    <packaging>jar</packaging>
+    <version>0.9-SNAPSHOT</version>
+    <name>Docker-java shaded jar for jenkins plugin</name>
+
+
+    <properties>
+        <docker-java.version>1.0.1-SNAPSHOT</docker-java.version>
+    </properties>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>com.nirima.docker-java</groupId>
+            <artifactId>docker-java</artifactId>
+            <version>${docker-java.version}</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <id>shade</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <artifactSet>
+                        <includes>
+                            <include>org.glassfish*:*</include>
+                            <include>org.apache.httpcomponents*:*</include>
+                            <include>com.nirima.docker-java:*</include>
+                            <include>com.google.guava:*</include>
+                        </includes>
+                    </artifactSet>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.apache.http</pattern>
+                            <shadedPattern>shaded.org.apache.http</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.google.common</pattern>
+                            <shadedPattern>shaded.com.google.common</shadedPattern>
+                        </relocation>
+                    </relocations>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                    </transformers>
+                    <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
