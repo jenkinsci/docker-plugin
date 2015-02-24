@@ -139,7 +139,7 @@ public class DockerSlave extends AbstractCloudSlave {
          // Commit
         String tag_image = client.commitCmd(containerId)
                     .withRepository(theRun.getParent().getDisplayName())
-                    .withTag(theRun.getDisplayName())
+                    .withTag(theRun.getDisplayName().replace("#","b")) // allowed only ([a-zA-Z_][a-zA-Z0-9_]*)
                     .withAuthor("Jenkins")
                     .exec();
 
