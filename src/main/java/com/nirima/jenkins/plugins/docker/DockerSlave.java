@@ -9,12 +9,15 @@ import com.github.dockerjava.api.DockerException;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 
 import hudson.Extension;
+import hudson.Plugin;
 import hudson.model.*;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -92,7 +95,7 @@ public class DockerSlave extends AbstractCloudSlave {
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
 
-
+	LOGGER.log(Level.FINE, "Terminating container " + containerId);
         try {
             toComputer().disconnect(null);
 
@@ -135,11 +138,13 @@ public class DockerSlave extends AbstractCloudSlave {
 
         DockerClient client = getClient();
 
+        String repository = getImageRepository(listener);
+        String tag = getCommitTag(listener);
 
          // Commit
         String tag_image = client.commitCmd(containerId)
-                    .withRepository(theRun.getParent().getDisplayName())
-                    .withTag(theRun.getDisplayName())
+                    .withRepository(repository)
+                    .withTag(tag)
                     .withAuthor("Jenkins")
                     .exec();
 
@@ -153,7 +158,9 @@ public class DockerSlave extends AbstractCloudSlave {
 
             if( !Strings.isNullOrEmpty(tagToken) ) {
                 // ?? client.image(tag_image).tag(tagToken, false);
-                client.tagImageCmd(tag_image,null,tagToken).exec();
+                client.tagImageCmd(tag_image,
+                        theRun.getParent().getDisplayName(),
+                        tagToken).exec();
                 addJenkinsAction(tagToken);
 
                 if( getJobProperty().pushOnSuccess ) {
@@ -174,6 +181,34 @@ public class DockerSlave extends AbstractCloudSlave {
 
     }
 
+    private String getImageRepository(TaskListener listener) {
+        String repository = getJobProperty().imageRepository;
+        try {
+            if(!Strings.isNullOrEmpty(repository)) {
+                repository = expandString(listener, repository);
+            } else {
+                repository = theRun.getParent().getDisplayName();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return repository;
+    }
+
+    private String getCommitTag(TaskListener listener) {
+        String tagToken = getJobProperty().commitTag;
+        try {
+            if(!Strings.isNullOrEmpty(tagToken)) {
+                tagToken = expandString(listener, tagToken);
+            } else {
+                tagToken = theRun.getDisplayName();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return tagToken;
+    }
+
     private String getAdditionalTag(TaskListener listener) {
         // Do a macro expansion on the addJenkinsAction token
 
@@ -183,11 +218,22 @@ public class DockerSlave extends AbstractCloudSlave {
         // Do any macro expansions
         try {
             if(!Strings.isNullOrEmpty(tagToken)  )
-                tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
+                tagToken = expandString(listener, tagToken);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return tagToken;
+    }
+
+    private String expandString(TaskListener listener, String tagToken)
+            throws MacroEvaluationException, IOException, InterruptedException {
+        /* Check if TokenMacro plugin is installed and enabled */
+        Plugin plugin = Jenkins.getInstance().getPlugin("token-macro");
+        if (plugin != null && plugin.getWrapper().isEnabled()) {
+            return TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
+        } else {
+            return tagToken;
+        }
     }
 
     /**
@@ -231,7 +277,7 @@ public class DockerSlave extends AbstractCloudSlave {
             // Don't care.
         }
         // Safe default
-        return new DockerJobProperty(false,null,false, true);
+        return new DockerJobProperty(false, null, null, null,false, true);
     }
 
     @Extension
