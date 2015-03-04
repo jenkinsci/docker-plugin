@@ -95,7 +95,6 @@ public class DockerSlave extends AbstractCloudSlave {
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
 
-	LOGGER.log(Level.FINE, "Terminating container " + containerId);
         try {
             toComputer().disconnect(null);
 
