@@ -195,7 +195,7 @@ public abstract class DockerTemplateBase {
         if( volumesFrom != null && !volumesFrom.isEmpty() )
             containerConfig.withVolumesFrom(volumesFrom);
         if(environment != null && environment.length > 0)
-                containerConfig.withEnv(environment);
+            containerConfig.withEnv(environment);
 
         return containerConfig;
     }
