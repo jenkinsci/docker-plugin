@@ -54,8 +54,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
     }
 
     class Run implements Serializable {
-        final AbstractBuild build;
-        final Launcher launcher;
+        final transient AbstractBuild build;
+        final transient Launcher launcher;
         final BuildListener listener;
 
         FilePath fpChild;
@@ -64,7 +64,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         final String url;
         // Marshal the builder across the wire.
         final DockerClientConfig clientConfig;
-        final DockerClient client;
+        final transient DockerClient client;
 
 
         Run(final AbstractBuild build, final Launcher launcher, final BuildListener listener) {
@@ -133,23 +133,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         }
 
         private String buildImage() throws IOException, InterruptedException {
-            return fpChild.act(new FilePath.FileCallable<String>() {
+
+          return fpChild.act(new FilePath.FileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
                     try {
-                        listener.getLogger().println("Docker Build : build with tag " + tagToUse + " at path " + f.getAbsolutePath());
+                      listener.getLogger().println("Docker Build : build with tag " + tagToUse + " at path " + f.getAbsolutePath());
 
-                        DockerClient client = DockerClientBuilder.getInstance(clientConfig)
+                      DockerClient client = DockerClientBuilder.getInstance(clientConfig)
                             .build();
 
-                        File dockerFolder;
-
-                        // Be lenient and allow the user to just specify the path.
-                        if( f.isFile() )
-                            dockerFolder = f.getParentFile();
-                        else
-                            dockerFolder = f;
-
-                        InputStream is = client.buildImageCmd(dockerFolder)
+                        InputStream is = client.buildImageCmd(f)
                             .withTag(tagToUse)
                             .exec();
 
@@ -170,12 +163,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
             Identifier identifier = Identifier.fromCompoundString(tagToUse);
 
-            String repositoryName = identifier.repository.name;
-
-            PushImageCmd pushImageCmd = client.pushImageCmd(repositoryName);
-
-            if( identifier.tag.isPresent() )
-                pushImageCmd.withTag(identifier.tag.get());
+            PushImageCmd pushImageCmd = client.pushImageCmd(identifier);
 
             InputStream pushResponse = pushImageCmd.exec();
 
