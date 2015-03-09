@@ -38,6 +38,11 @@
             <artifactId>durable-task</artifactId>
             <version>0.5</version>
         </dependency>
+         <dependency> <!-- Overwrites transitive dependency, otherwise fails with java.lang.ClassNotFoundException: org.apache.http.config.Lookup-->
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.3.6</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -53,6 +53,7 @@ public abstract class DockerTemplateBase {
     public final boolean bindAllPorts;
 
     public final boolean privileged;
+    public final boolean tty;
 
     public DockerTemplateBase(String image,
                           String dnsString,
@@ -63,7 +64,8 @@ public abstract class DockerTemplateBase {
                           String hostname,
                           String bindPorts,
                           boolean bindAllPorts,
-                          boolean privileged
+                          boolean privileged,
+                          boolean tty
 
     ) {
         this.image = image;
@@ -71,6 +73,7 @@ public abstract class DockerTemplateBase {
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
+        this.tty = tty;
         this.hostname = hostname;
 
         this.bindPorts    = bindPorts;
@@ -174,6 +177,7 @@ public abstract class DockerTemplateBase {
             containerConfig.withDns(dnsHosts);
         if( volumesFrom != null && !volumesFrom.isEmpty() )
             containerConfig.withVolumesFrom(VolumesFrom.parse(volumesFrom));
+        containerConfig.withTty(this.tty);
 	if(environment != null && environment.length > 0)
             containerConfig.withEnv(environment);
 

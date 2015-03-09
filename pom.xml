@@ -37,10 +37,10 @@
 
     <build>
         <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.jenkins-ci.tools</groupId>
-                    <artifactId>maven-hpi-plugin</artifactId>
+        <plugins>
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
                     <version>${hpi.plugin.version}</version>
                     <dependencies>
                         <dependency>
@@ -54,17 +54,17 @@
                             <version>${stapler.version}</version>
                         </dependency>
                     </dependencies>
-                    <configuration>
+                <configuration>
                         <dependentWarExcludes>com.github.dockerjava*,com.google.guava*</dependentWarExcludes>
-                        <archive>
-                            <manifestEntries>
-                                <Mask-Classes>com.google.common</Mask-Classes>
-                            </manifestEntries>
-                        </archive>
-                        <maskClasses>com.google.common.</maskClasses>
-                    </configuration>
-                </plugin>
-            </plugins>
+                    <archive>
+                        <manifestEntries>
+                            <Mask-Classes>com.google.common</Mask-Classes>
+                        </manifestEntries>
+                    </archive>
+                    <maskClasses>com.google.common.</maskClasses>
+                </configuration>
+            </plugin>
+        </plugins>
         </pluginManagement>
         <finalName>${project.artifactId}</finalName>
         <plugins>

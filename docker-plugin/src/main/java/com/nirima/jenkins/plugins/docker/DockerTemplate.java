@@ -116,12 +116,13 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String hostname,
                           String bindPorts,
                           boolean bindAllPorts,
-                          boolean privileged
+                          boolean privileged,
+                          boolean tty
 
     ) {
         super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
-                privileged);
+                privileged, tty);
 
 
         this.labelString = Util.fixNull(labelString);
