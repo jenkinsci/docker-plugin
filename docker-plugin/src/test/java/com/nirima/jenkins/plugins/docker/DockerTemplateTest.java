@@ -6,8 +6,55 @@ import hudson.model.Node;
 
 public class DockerTemplateTest {
 
+
+    String image = "image";
+    String labelString;
+    String remoteFs = "remoteFs";
+    String remoteFsMapping = "remoteFsMapping";
+    String credentialsId = "credentialsId";
+    String idleTerminationMinutes = "idleTerminationMinutes";
+    String sshLaunchTimeoutMinutes = "sshLaunchTimeoutMinutes";
+    String jvmOptions = " jvmOptions";
+    String javaPath = " javaPath";
+    Integer memoryLimit = 1024;
+    Integer cpuShares = 1000;
+    String prefixStartSlaveCmd = "prefixStartSlaveCmd";
+    String suffixStartSlaveCmd = " suffixStartSlaveCmd";
+    String instanceCapStr = "";
+
+    String dockerCommand = "dockerCommand";
+    String volumesString = "volumes";
+    String volumesFrom = "volumesFrom";
+    String environmentsString = "environmentString";
+    String lxcConfString = "lxcConf";
+    String hostname = "hostname";
+    String bindPorts = "0.0.0.0:22";
+    boolean bindAllPorts = true;
+    boolean privileged = false;
+    boolean tty = false;
+
+
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        DockerTemplate instance = new DockerTemplate("image", null, "remoteFs", "remoteFsMapping", "credentialsId", "idleTerminationMinutes", "sshLaunchTimeoutMinutes", " jvmOptions", " javaPath", 1024, 1000, "prefixStartSlaveCmd", " suffixStartSlaveCmd", "", dnsString, "dockerCommand", "volumes", "volumesFrom", "environmentsString", "lxcConf", "hostname", "0.0.0.0:22", true, false);
+        DockerTemplate instance = new DockerTemplate(image, labelString,
+                remoteFs,
+                remoteFsMapping,
+                credentialsId, idleTerminationMinutes,
+                sshLaunchTimeoutMinutes,
+                jvmOptions, javaPath,
+                memoryLimit, cpuShares,
+                prefixStartSlaveCmd, suffixStartSlaveCmd,
+                instanceCapStr, dnsString,
+                dockerCommand,
+                volumesString, volumesFrom,
+                environmentsString,
+                lxcConfString,
+                hostname,
+                bindPorts,
+                bindAllPorts,
+                privileged,
+                tty);
+
+              
         return instance;
     }
 
