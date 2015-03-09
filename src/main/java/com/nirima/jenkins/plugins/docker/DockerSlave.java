@@ -17,7 +17,6 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -224,8 +223,7 @@ public class DockerSlave extends AbstractCloudSlave {
         return tagToken;
     }
 
-    private String expandString(TaskListener listener, String tagToken)
-            throws MacroEvaluationException, IOException, InterruptedException {
+    private String expandString(TaskListener listener, String tagToken) throws Exception {
         /* Check if TokenMacro plugin is installed and enabled */
         Plugin plugin = Jenkins.getInstance().getPlugin("token-macro");
         if (plugin != null && plugin.getWrapper().isEnabled()) {
