@@ -107,6 +107,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String credentialsId, String idleTerminationMinutes,
                           String sshLaunchTimeoutMinutes,
                           String jvmOptions, String javaPath,
+                          Integer memoryLimit, Integer cpuShares,
                           String prefixStartSlaveCmd, String suffixStartSlaveCmd,
                           String instanceCapStr, String dnsString,
                           String dockerCommand,
@@ -120,7 +121,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           boolean tty
 
     ) {
-        super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname,
+        super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname, memoryLimit, cpuShares,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
                 privileged, tty);
 
@@ -261,7 +262,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return new DockerSlave(this, containerId,
                 slaveName,
                 nodeDescription,
-                remoteFs, numExecutors, mode, labelString,
+                remoteFs, numExecutors, mode, memoryLimit, cpuShares, labelString,
                 launcher, retentionStrategy, nodeProperties);
 
     }

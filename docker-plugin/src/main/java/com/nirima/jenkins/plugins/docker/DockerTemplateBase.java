@@ -52,6 +52,9 @@ public abstract class DockerTemplateBase {
     public final String bindPorts;
     public final boolean bindAllPorts;
 
+    public final Integer memoryLimit;
+    public final Integer cpuShares;
+
     public final boolean privileged;
     public final boolean tty;
 
@@ -62,6 +65,8 @@ public abstract class DockerTemplateBase {
                           String environmentsString,
                           String lxcConfString,
                           String hostname,
+                          Integer memoryLimit,
+                          Integer cpuShares,
                           String bindPorts,
                           boolean bindAllPorts,
                           boolean privileged,
@@ -78,6 +83,9 @@ public abstract class DockerTemplateBase {
 
         this.bindPorts    = bindPorts;
         this.bindAllPorts = bindAllPorts;
+
+        this.memoryLimit = memoryLimit;
+        this.cpuShares = cpuShares;
 
         this.dnsHosts = splitAndFilterEmpty(dnsString);
         this.volumes = splitAndFilterEmpty(volumesString);
@@ -110,6 +118,10 @@ public abstract class DockerTemplateBase {
     public String getDisplayName() {
         return "Image of " + image;
     }
+
+    public Integer getMemoryLimit() { return memoryLimit; }
+
+    public Integer getCpuShares() { return cpuShares; }
 
     public InspectContainerResponse provisionNew(DockerClient dockerClient) throws DockerException {
 
@@ -173,19 +185,27 @@ public abstract class DockerTemplateBase {
 
         //containerConfig.setPortSpecs(new String[]{"22/tcp"});
         //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
+
+
+        if( cpuShares != null && cpuShares > 0) {
+            containerConfig.withCpuShares(cpuShares);
+        }
+        if( memoryLimit != null && memoryLimit > 0) {
+            Long memoryInByte = new Long(memoryLimit) * 1024 * 1024;
+            containerConfig.withMemoryLimit(memoryInByte);
+        }
         if( dnsHosts.length > 0 )
             containerConfig.withDns(dnsHosts);
         if( volumesFrom != null && !volumesFrom.isEmpty() )
             containerConfig.withVolumesFrom(VolumesFrom.parse(volumesFrom));
         containerConfig.withTty(this.tty);
-	if(environment != null && environment.length > 0)
+        if(environment != null && environment.length > 0)
             containerConfig.withEnv(environment);
 
         return containerConfig;
     }
 
     public StartContainerCmd createHostConfig(StartContainerCmd hostConfig) {
-
 
         hostConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 
