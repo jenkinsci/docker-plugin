@@ -37,6 +37,7 @@ import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
+import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
@@ -50,6 +51,8 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
 
     public final String labelString;
+    
+    public final int numExecutors;
 
     // SSH settings
     /**
@@ -102,6 +105,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     @DataBoundConstructor
     public DockerTemplate(String image, String labelString,
+                          int numExecutors,
                           String remoteFs,
                           String remoteFsMapping,
                           String credentialsId, String idleTerminationMinutes,
@@ -127,6 +131,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
 
         this.labelString = Util.fixNull(labelString);
+        this.numExecutors = numExecutors;
         this.credentialsId = credentialsId;
         this.idleTerminationMinutes = idleTerminationMinutes;
         this.sshLaunchTimeoutMinutes = sshLaunchTimeoutMinutes;
@@ -227,10 +232,14 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         logger.println("Launching " + image );
 
-        int numExecutors = 1;
         Node.Mode mode = Node.Mode.NORMAL;
 
-        RetentionStrategy retentionStrategy = new OnceRetentionStrategy(idleTerminationMinutes());
+        RetentionStrategy retentionStrategy = null;
+        if (numExecutors == 1) {
+            retentionStrategy = new OnceRetentionStrategy(idleTerminationMinutes());
+        } else {
+            retentionStrategy = new CloudRetentionStrategy(idleTerminationMinutes());
+        }
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
 
@@ -273,7 +282,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     }
 
     public int getNumExecutors() {
-        return 1;
+        return numExecutors;
     }
 
     @Override
