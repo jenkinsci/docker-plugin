@@ -1,9 +1,12 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.google.common.base.Objects;
+import com.nirima.jenkins.plugins.docker.utils.Cacheable;
 import hudson.model.*;
 import hudson.slaves.AbstractCloudComputer;
 
+import java.util.Date;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,8 +18,17 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     private int checked = 0;
 
+    // Jenkins calls isUpdatingTasks a lot, and it's expensive to keep
+    // asking the container if it exists or not, so we cache it here.
+    private final Cacheable<Boolean> nodeExistenceStatus;
+
     public DockerComputer(DockerSlave dockerSlave) {
         super(dockerSlave);
+        nodeExistenceStatus = new Cacheable<Boolean>(60000, new Callable<Boolean>() {
+            public Boolean call() throws Exception {
+                return getNode().containerExistsInCloud();
+            }
+        });
     }
 
     public DockerCloud getCloud() {
@@ -79,21 +91,21 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     private void updateAcceptingTasks() {
         try {
-            DockerSlave node = getNode();
+
             int pause = 5000;
-            if( getOfflineCause() != null) {
-                if(getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
+            if (getOfflineCause() != null) {
+                if (getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
                     LOGGER.log(Level.INFO, "Slave agent not launched after checking " + checked + " time(s).  Waiting for any retries...");
                     checked += 1;
                     Thread.sleep(pause);
                 } else {
                     setAcceptingTasks(false);
-                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause() );
+                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause());
                 }
-            } else if( !node.containerExistsInCloud() ) {
+            } else if (!nodeExistenceStatus.get()) {
                 setAcceptingTasks(false);
             }
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             LOGGER.log(Level.INFO, " Computer " + this + " error getting node");
             setAcceptingTasks(false);
         }
@@ -115,4 +127,5 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
                 .add("slave", getNode())
                 .toString();
     }
+
 }
