@@ -148,7 +148,7 @@ public class DockerSlave extends AbstractCloudSlave {
         // Tag it with the jenkins name
         addJenkinsAction(tag_image);
 
-        // SHould we add additional tags?
+        // Should we add additional tags?
         try {
             String tagToken = getAdditionalTag(listener);
 
