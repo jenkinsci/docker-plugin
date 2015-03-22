@@ -211,7 +211,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     }
 
     public String getVolumesString() {
-	return Joiner.on(" ").join(volumes);
+        return volumesString;
     }
 
     public String getVolumesFrom() {

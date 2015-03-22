@@ -6,6 +6,7 @@ import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Splitter;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.collect.Iterables;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -19,6 +20,7 @@ import com.github.dockerjava.api.model.VolumesFrom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nullable;
@@ -28,7 +30,6 @@ import javax.annotation.Nullable;
  */
 public abstract class DockerTemplateBase {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplateBase.class.getName());
-
 
     public final String image;
 
@@ -45,7 +46,7 @@ public abstract class DockerTemplateBase {
     public final String hostname;
 
     public final String[] dnsHosts;
-    public final String[] volumes;
+    public final String volumesString;
     public final String volumesFrom;
     public final String[] environment;
 
@@ -89,7 +90,7 @@ public abstract class DockerTemplateBase {
         this.cpuShares = cpuShares;
 
         this.dnsHosts = splitAndFilterEmpty(dnsString);
-        this.volumes = splitAndFilterEmpty(volumesString);
+        this.volumesString = volumesString;
         this.volumesFrom = volumesFrom;
 
         this.environment = splitAndFilterEmpty(environmentsString);
@@ -109,7 +110,7 @@ public abstract class DockerTemplateBase {
     }
 
     public String getVolumesString() {
-        return Joiner.on(" ").join(volumes);
+        return volumesString;
     }
 
     public String getVolumesFrom() {
@@ -201,8 +202,21 @@ public abstract class DockerTemplateBase {
         if (dnsHosts.length > 0)
             containerConfig.withDns(dnsHosts);
 
-        if (volumesFrom != null && !volumesFrom.isEmpty())
-            containerConfig.withVolumesFrom(VolumesFrom.parse(volumesFrom));
+        if(volumesString!=null) {
+            for (String volume : splitAndFilterEmpty(volumesString)) {
+                try {
+                    containerConfig.withBinds(Bind.parse(volume));
+                } catch (IllegalArgumentException e) {
+                    containerConfig.withVolumes(Volume.parse(volume));
+                }
+            }
+        }
+
+        if(volumesFrom!=null) {
+            for (String volumeFrom : splitAndFilterEmpty(volumesFrom)) {
+                containerConfig.withVolumesFrom(VolumesFrom.parse(volumeFrom));
+            }
+        }
 
         containerConfig.withTty(this.tty);
 
@@ -223,9 +237,16 @@ public abstract class DockerTemplateBase {
         if( dnsHosts.length > 0 )
             hostConfig.withDns(dnsHosts);
 
-        // ?
-        //if (volumes.length > 0)
-        //    hostConfig.with VolumesFrom (volumes);
+        if(volumesString!=null) {
+            for (String volume : splitAndFilterEmpty(volumesString)) {
+                try {
+                    hostConfig.withBinds(Bind.parse(volume));
+                } catch (IllegalArgumentException e) {
+                    LOGGER.log(Level.WARNING,"Cannot create volume "+volume+" when starting host");
+                    //hostConfig.withVolumes(Volume.parse(volume));
+                }
+            }
+        }
 
         List<LxcConf> lxcConfs = getLxcConf();
 
