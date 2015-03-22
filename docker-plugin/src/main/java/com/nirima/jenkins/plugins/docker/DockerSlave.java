@@ -212,7 +212,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
     }
     
-    public String cleanImageName(String imageName) {
+    public static String cleanImageName(String imageName) {
         return imageName.replaceAll("\\s", "_").replaceAll("[^A-Za-z0-9_.-]", "");
     }
 
