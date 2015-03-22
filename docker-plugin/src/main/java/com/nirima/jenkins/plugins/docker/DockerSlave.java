@@ -135,6 +135,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         DockerClient client = getClient();
         
+        // Remove chars which aren't docker-friendly (e.g. #)
         String imageRepository = cleanImageName(theRun.getParent().getDisplayName());
         String imageTag = cleanImageName(theRun.getDisplayName());
 
