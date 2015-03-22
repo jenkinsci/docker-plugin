@@ -145,7 +145,7 @@ public class DockerSlave extends AbstractCloudSlave {
                     .withTag(imageTag)
                     .withAuthor("Jenkins")
                     .exec();
-
+        
         // Tag it with the jenkins name
         addJenkinsAction(tag_image);
 
@@ -154,8 +154,8 @@ public class DockerSlave extends AbstractCloudSlave {
             String tagToken = getAdditionalTag(listener);
 
             if( !Strings.isNullOrEmpty(tagToken) ) {
-                // ?? client.image(tag_image).tag(tagToken, false);
-                client.tagImageCmd(tag_image, null, tagToken).exec();
+                // tagImageCmd(Image ID, Repository name, Tag)
+                client.tagImageCmd(tag_image, imageRepository, tagToken).exec();
                 addJenkinsAction(tagToken);
 
                 if( getJobProperty().pushOnSuccess ) {
