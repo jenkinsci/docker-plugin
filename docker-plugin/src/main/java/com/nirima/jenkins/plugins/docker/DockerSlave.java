@@ -134,12 +134,14 @@ public class DockerSlave extends AbstractCloudSlave {
         }
 
         DockerClient client = getClient();
-
+        
+        String imageRepository = cleanImageName(theRun.getParent().getDisplayName());
+        String imageTag = cleanImageName(theRun.getDisplayName());
 
          // Commit
         String tag_image = client.commitCmd(containerId)
-                    .withRepository(theRun.getParent().getDisplayName())
-                    .withTag(theRun.getDisplayName())
+                    .withRepository(imageRepository)
+                    .withTag(imageTag)
                     .withAuthor("Jenkins")
                     .exec();
 
@@ -147,13 +149,12 @@ public class DockerSlave extends AbstractCloudSlave {
         addJenkinsAction(tag_image);
 
         // SHould we add additional tags?
-        try
-        {
+        try {
             String tagToken = getAdditionalTag(listener);
 
             if( !Strings.isNullOrEmpty(tagToken) ) {
                 // ?? client.image(tag_image).tag(tagToken, false);
-                client.tagImageCmd(tag_image,null,tagToken).exec();
+                client.tagImageCmd(tag_image, null, tagToken).exec();
                 addJenkinsAction(tagToken);
 
                 if( getJobProperty().pushOnSuccess ) {
@@ -209,6 +210,10 @@ public class DockerSlave extends AbstractCloudSlave {
      */
     public void onConnected() {
 
+    }
+    
+    public String cleanImageName(String imageName) {
+        return imageName.replaceAll("\\s", "_").replaceAll("[^A-Za-z0-9_.-]", "");
     }
 
     @Override
