@@ -134,26 +134,28 @@ public class DockerSlave extends AbstractCloudSlave {
         }
 
         DockerClient client = getClient();
-
+        
+        // Remove chars which aren't docker-friendly (e.g. #)
+        String imageRepository = cleanImageName(theRun.getParent().getDisplayName());
+        String imageTag = cleanImageName(theRun.getDisplayName());
 
          // Commit
         String tag_image = client.commitCmd(containerId)
-                    .withRepository(theRun.getParent().getDisplayName())
-                    .withTag(theRun.getDisplayName())
+                    .withRepository(imageRepository)
+                    .withTag(imageTag)
                     .withAuthor("Jenkins")
                     .exec();
-
+        
         // Tag it with the jenkins name
         addJenkinsAction(tag_image);
 
-        // SHould we add additional tags?
-        try
-        {
+        // Should we add additional tags?
+        try {
             String tagToken = getAdditionalTag(listener);
 
             if( !Strings.isNullOrEmpty(tagToken) ) {
-                // ?? client.image(tag_image).tag(tagToken, false);
-                client.tagImageCmd(tag_image,null,tagToken).exec();
+                // tagImageCmd(Image ID, Repository name, Tag)
+                client.tagImageCmd(tag_image, imageRepository, tagToken).exec();
                 addJenkinsAction(tagToken);
 
                 if( getJobProperty().pushOnSuccess ) {
@@ -209,6 +211,10 @@ public class DockerSlave extends AbstractCloudSlave {
      */
     public void onConnected() {
 
+    }
+    
+    public static String cleanImageName(String imageName) {
+        return imageName.replaceAll("\\s", "_").replaceAll("[^A-Za-z0-9_.-]", "");
     }
 
     @Override
