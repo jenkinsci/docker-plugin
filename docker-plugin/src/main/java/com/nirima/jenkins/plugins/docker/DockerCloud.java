@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -197,7 +198,9 @@ public class DockerCloud extends Cloud {
     private DockerClient buildConnection() {
         LOGGER.log(Level.FINE, "Building connection to docker host \"{0}\" at: {1}", new Object[]{name,serverUrl});
 
-        return DockerClientBuilder.getInstance(getDockerClientConfig()).build();
+        return DockerClientBuilder.getInstance(getDockerClientConfig())
+                .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
+                .build();
     }
 
     /**

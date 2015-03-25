@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 
@@ -140,7 +141,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                       listener.getLogger().println("Docker Build : build with tag " + tagToUse + " at path " + f.getAbsolutePath());
 
                       DockerClient client = DockerClientBuilder.getInstance(clientConfig)
-                            .build();
+                              .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
+                              .build();
 
                         InputStream is = client.buildImageCmd(f)
                             .withTag(tagToUse)
