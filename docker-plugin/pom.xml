@@ -53,7 +53,7 @@
                 <configuration>
                     <artifactSet>
                         <includes>
-                            <include>com.nirima.docker-java:*</include>
+                            <include>com.github.docker-java:*</include>
                             <include>com.google.guava:*</include>
                         </includes>
                     </artifactSet>
@@ -82,7 +82,7 @@
                         </dependency>               
                 </dependencies>
                 <configuration>
-                    <dependentWarExcludes>org.apache.httpcomponents:*,com.nirima.docker-java*,com.google.guava*</dependentWarExcludes>
+                    <dependentWarExcludes>org.apache.httpcomponents:*,com.github.docker-java*,com.google.guava*</dependentWarExcludes>
                     <archive>
                         <manifestEntries>
                             <Mask-Classes>com.google.common</Mask-Classes>
