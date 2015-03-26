@@ -426,26 +426,30 @@ public class DockerCloud extends Cloud {
         }
 
         public FormValidation doTestConnection(
-                @QueryParameter URL serverUrl,
+                @QueryParameter String serverUrl,
                 @QueryParameter String credentialsId,
                 @QueryParameter String version
                 ) throws IOException, ServletException, DockerException {
+            try {
+                URL url = new URL(serverUrl); // exclude page fail by creating URL obj in try
+                DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
+                        .createDefaultConfigBuilder()
+                        .withUri(url.toString());
 
-            DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
-                .createDefaultConfigBuilder()
-                .withUri(serverUrl.toString());
+                if (!Strings.isNullOrEmpty(version)) {
+                    config.withVersion(version);
+                }
 
-            if( !Strings.isNullOrEmpty(version)) {
-                config.withVersion(version);
+                addCredentials(config, credentialsId);
+
+                DockerClient dc = DockerClientBuilder.getInstance(config.build()).withDockerCmdExecFactory(new DockerCmdExecFactoryImpl()).build();
+
+                Version v = dc.versionCmd().exec();
+
+                return FormValidation.ok("Version = " + v.getVersion());
+            } catch (Exception e) {
+                return FormValidation.error(e.getMessage());
             }
-
-            addCredentials(config, credentialsId);
-
-            DockerClient dc = DockerClientBuilder.getInstance(config.build()).build();
-
-            Version v = dc.versionCmd().exec();
-
-            return FormValidation.ok("Version = " + v.getVersion());
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
