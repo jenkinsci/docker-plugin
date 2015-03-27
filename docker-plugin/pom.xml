@@ -48,7 +48,6 @@
                 <configuration>
                     <artifactSet>
                         <includes>
-                            <include>com.github.docker-java:*</include>
                             <include>com.google.guava:*</include>
                         </includes>
                     </artifactSet>
