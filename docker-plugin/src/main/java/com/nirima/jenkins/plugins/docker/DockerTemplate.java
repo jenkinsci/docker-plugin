@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -26,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.ws.rs.ProcessingException;
 
 import hudson.Extension;
 import hudson.Util;
@@ -234,8 +235,15 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
 
-        InspectContainerResponse containerInspectResponse = provisionNew();
-        String containerId = containerInspectResponse.getId();
+        String containerId = provisionNew();
+        DockerClient client = getParent().connect();
+        InspectContainerResponse containerInspectResponse = null;
+        try {
+            containerInspectResponse = client.inspectContainerCmd(containerId).exec();
+        } catch(ProcessingException ex) {
+            client.removeContainerCmd(containerId).withForce(true).exec();
+            throw ex;
+        }
 
         ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
 
@@ -267,7 +275,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     }
 
-    public InspectContainerResponse provisionNew() throws DockerException {
+    public String provisionNew() throws DockerException {
         DockerClient dockerClient = getParent().connect();
         return provisionNew(dockerClient);
     }
