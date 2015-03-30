@@ -6,6 +6,7 @@ import shaded.com.google.common.base.Strings;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.NotModifiedException;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 
 import hudson.Extension;
@@ -96,15 +97,19 @@ public class DockerSlave extends AbstractCloudSlave {
         try {
             toComputer().disconnect(null);
 
-            try {
-                DockerClient client = getClient();
-                client.stopContainerCmd(containerId).exec();
-            } catch(Exception ex) {
-                LOGGER.log(Level.SEVERE, "Failed to stop instance " + containerId + " for slave " + name + " due to exception", ex);
-            }
+            // Stop container if "remainsRunning" isn't ticked.
+            if(!getJobProperty().isRemainsRunning()) {
+                try {
+                    DockerClient client = getClient();
+                    LOGGER.log(Level.INFO, "Stopping container: " + containerId);
+                    client.stopContainerCmd(containerId).exec();
+                } catch(NotModifiedException) {
+                    LOGGER.log(Level.INFO, "Container " + containerId + " already not running");
+                }
 
             // If the run was OK, then do any tagging here
-            if( theRun != null ) {
+            // TODO: add options to tag unsuccessful builds
+            if(theRun != null) {
                 try {
                     slaveShutdown(listener);
                 } catch (Exception e) {
@@ -112,11 +117,16 @@ public class DockerSlave extends AbstractCloudSlave {
                 }
             }
 
-            try {
-                DockerClient client = getClient();
-                client.removeContainerCmd(containerId).exec();
-            } catch(Exception ex) {
-                LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception",ex);
+
+            // If we aren't stopping the container, then don't remove it either.
+            if(!getJobProperty().isRemainsRunning()) {
+                try {
+                    DockerClient client = getClient();
+                    client.removeContainerCmd(containerId).exec();
+
+                } catch(Exception ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception",ex);
+                }
             }
 
         } catch (Exception e) {
@@ -152,7 +162,6 @@ public class DockerSlave extends AbstractCloudSlave {
             String tagToken = getAdditionalTag(listener);
 
             if( !Strings.isNullOrEmpty(tagToken) ) {
-                // ?? client.image(tag_image).tag(tagToken, false);
                 client.tagImageCmd(tag_image,null,tagToken).exec();
                 addJenkinsAction(tagToken);
 

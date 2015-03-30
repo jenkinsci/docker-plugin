@@ -43,7 +43,6 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
         Preconditions.checkNotNull(detail);
 
         try {
-
             ExposedPort sshPort = new ExposedPort(22);
             int port = 22;
             String host = null;

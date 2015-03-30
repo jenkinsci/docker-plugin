@@ -58,6 +58,12 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
         return cleanImages;
     }
 
+    // Placeholders.
+    @Exported
+    public boolean isRemainsRunning() {
+        return false;
+    }
+
     @Extension
     public static final class DescriptorImpl extends JobPropertyDescriptor {
         public String getDisplayName() {

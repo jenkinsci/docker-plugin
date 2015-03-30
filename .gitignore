@@ -4,3 +4,4 @@ work
 *.iml
 /target
 .*
+dependency-reduced-pom.xml
