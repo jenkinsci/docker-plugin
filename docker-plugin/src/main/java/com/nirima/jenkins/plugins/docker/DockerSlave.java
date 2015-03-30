@@ -21,6 +21,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -99,13 +100,15 @@ public class DockerSlave extends AbstractCloudSlave {
 
             // Stop container if "remainsRunning" isn't ticked.
             if(!getJobProperty().isRemainsRunning()) {
+                DockerClient client = getClient();
+                LOGGER.log(Level.INFO, "Stopping container: " + containerId);
                 try {
-                    DockerClient client = getClient();
-                    LOGGER.log(Level.INFO, "Stopping container: " + containerId);
                     client.stopContainerCmd(containerId).exec();
-                } catch(NotModifiedException) {
+                    LOGGER.log(Level.INFO, "Successfully stopped container: " + containerId);
+                } catch(NotModifiedException ex) {
                     LOGGER.log(Level.INFO, "Container " + containerId + " already not running");
-                }
+                } 
+            }
 
             // If the run was OK, then do any tagging here
             // TODO: add options to tag unsuccessful builds
@@ -123,7 +126,6 @@ public class DockerSlave extends AbstractCloudSlave {
                 try {
                     DockerClient client = getClient();
                     client.removeContainerCmd(containerId).exec();
-
                 } catch(Exception ex) {
                     LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception",ex);
                 }
@@ -137,7 +139,6 @@ public class DockerSlave extends AbstractCloudSlave {
     private void slaveShutdown(TaskListener listener) throws DockerException, IOException {
 
         // The slave has stopped. Should we commit / tag / push ?
-
         if(!getJobProperty().tagOnCompletion) {
             addJenkinsAction(null);
             return;
@@ -145,42 +146,92 @@ public class DockerSlave extends AbstractCloudSlave {
 
         DockerClient client = getClient();
 
+        // Tag with job name if no repository name is given.
+        String repositoryName;
+        if(Strings.isNullOrEmpty(getJobProperty().getRepositoryName())){
+            repositoryName = cleanImageRepositoryName(
+                    theRun.getParent().getDisplayName()
+                    );
+        } else {
+            repositoryName = cleanImageRepositoryName(
+                    getJobProperty().getRepositoryName()
+                    );
+        }
+        
+        LOGGER.log(Level.INFO, "Tagging with repository: " + repositoryName);
 
-         // Commit
-        String tag_image = client.commitCmd(containerId)
-                    .withRepository(theRun.getParent().getDisplayName())
-                    .withTag(theRun.getDisplayName())
+        // Get our list of tags, or use the build number
+        ArrayList<String> imageTags = getJobProperty().getImageTags();
+        
+        // Tag latest if specified
+        if(getJobProperty().isTagLatest()) {
+            imageTags.add("latest");
+        }
+
+        // Add additionalTag for backwards compatibility
+        String additionalTag = getAdditionalTag(listener);
+        if(!Strings.isNullOrEmpty(additionalTag)) {
+            imageTags.add(
+                    cleanImageTag(additionalTag)
+                    );
+        }
+        
+        // If there's no tags, or if specified, tag with the build number
+        if(imageTags.isEmpty() || getJobProperty().isTagBuildNumber()) {
+            imageTags.add(theRun.getDisplayName());
+        }
+
+        // Commit image and get new image ID
+        String imageId = client.commitCmd(containerId)
                     .withAuthor(getJobProperty().getImageAuthor())
                     .exec();
+        LOGGER.log(Level.INFO, "Commited to image: " + imageId);
 
-        // Tag it with the jenkins name
-        addJenkinsAction(tag_image);
+        // Iterate list of tags, and tag appropriately
+        for(String tag : imageTags) {
+            // Clean up the image tag
+            String cleanTag = cleanImageTag(tag);
 
-        // SHould we add additional tags?
-        try
-        {
-            String tagToken = getAdditionalTag(listener);
+            // Skip empty tags
+            if(Strings.isNullOrEmpty(cleanTag)){
+                continue;
+            }
+            LOGGER.log(Level.INFO, "Tagging with: " + cleanTag);
 
-            if( !Strings.isNullOrEmpty(tagToken) ) {
-                client.tagImageCmd(tag_image,null,tagToken).exec();
-                addJenkinsAction(tagToken);
-
-                if( getJobProperty().pushOnSuccess ) {
-                    client.pushImageCmd(tagToken).exec();
-                }
+            // Tag the image!
+            try {
+                client.tagImageCmd(imageId, repositoryName, cleanTag)
+                    .withForce()
+                    .exec();
+                // addJenkinsAction(cleanTag);
+            } catch(Exception ex) {
+                LOGGER.log(Level.SEVERE, "Could not add tag: " + cleanTag, ex);
             }
         }
-        catch(Exception ex) {
-            LOGGER.log(Level.SEVERE, "Could not add additional tags");
-        }
+
+        // Add a Jenkins 'Action' for the newly committed image
+        addJenkinsAction(imageId);
 
         if( getJobProperty().cleanImages ) {
-
-            client.removeImageCmd(tag_image)
+            client.removeImageCmd(imageId)
                 .withForce()
                 .exec();
         }
+    }
 
+    // Image names are made up of: [registry.domain/][username/]repository:tag
+    // Registry should be a valid domain, with at least one dot (.)
+    // Namespace and repository should match [a-z0-9-_.]
+    // Tags should match [A-Za-z0-9_.-]
+    private static String cleanImageRepositoryName(String repositoryName) {
+        return repositoryName.toLowerCase()
+                             .replaceAll("\\s", "_")
+                             .replaceAll("[^/a-z0-9-_.]", "");
+    }
+
+    private static String cleanImageTag(String imageTag) {
+        return imageTag.replaceAll("\\s", "_")
+                       .replaceAll("[^A-Za-z0-9_.-]", "");
     }
 
     private String getAdditionalTag(TaskListener listener) {
@@ -191,7 +242,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         // Do any macro expansions
         try {
-            if(!Strings.isNullOrEmpty(tagToken)  )
+            if(!Strings.isNullOrEmpty(tagToken))
                 tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
         } catch (Exception e) {
             e.printStackTrace();
@@ -205,7 +256,13 @@ public class DockerSlave extends AbstractCloudSlave {
      * @throws IOException
      */
     private void addJenkinsAction(String tag_image) throws IOException {
-        theRun.addAction( new DockerBuildAction(getCloud().serverUrl, containerId, tag_image, dockerTemplate.remoteFsMapping) );
+        theRun.addAction(
+                new DockerBuildAction(
+                    getCloud().serverUrl, 
+                    containerId, 
+                    tag_image, 
+                    dockerTemplate.remoteFsMapping) 
+                );
         theRun.save();
     }
 

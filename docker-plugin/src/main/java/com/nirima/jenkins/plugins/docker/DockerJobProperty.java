@@ -12,7 +12,7 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.export.Exported;
-
+import java.util.ArrayList;
 import java.util.Map;
 
 
@@ -67,6 +67,27 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
     @Exported
     public String getImageAuthor() {
         return "Jenkins";
+    }
+
+    @Exported
+    public boolean isTagLatest() {
+        return false;
+    }
+
+    @Exported
+    public boolean isTagBuildNumber() {
+        return false;
+    }
+
+    @Exported 
+    public String getRepositoryName() {
+        return null;
+    }
+
+    @Exported 
+    public ArrayList<String> getImageTags() {
+         ArrayList<String> imageTags = new ArrayList<String>();
+         return imageTags;
     }
 
     @Extension
