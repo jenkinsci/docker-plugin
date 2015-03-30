@@ -64,6 +64,11 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
         return false;
     }
 
+    @Exported
+    public String getImageAuthor() {
+        return "Jenkins";
+    }
+
     @Extension
     public static final class DescriptorImpl extends JobPropertyDescriptor {
         public String getDisplayName() {

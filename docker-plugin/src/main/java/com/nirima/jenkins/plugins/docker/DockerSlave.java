@@ -150,7 +150,7 @@ public class DockerSlave extends AbstractCloudSlave {
         String tag_image = client.commitCmd(containerId)
                     .withRepository(theRun.getParent().getDisplayName())
                     .withTag(theRun.getDisplayName())
-                    .withAuthor("Jenkins")
+                    .withAuthor(getJobProperty().getImageAuthor())
                     .exec();
 
         // Tag it with the jenkins name
