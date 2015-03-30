@@ -28,7 +28,7 @@
 
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="serverUrl,credentialsId,version" />
 
-    <f:entry title="${%Container Cap}" field="containerCapStr">
+    <f:entry title="${%Container Cap}" field="instanceCapStr">
         <f:textbox />
     </f:entry>
 

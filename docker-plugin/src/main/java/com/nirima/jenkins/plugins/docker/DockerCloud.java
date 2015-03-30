@@ -42,6 +42,7 @@ import hudson.Extension;
 import hudson.model.*;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
+import hudson.slaves.AbstractCloudImpl;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
@@ -72,7 +73,7 @@ import java.util.HashMap;
 /**
  * Created by magnayn on 08/01/2014.
  */
-public class DockerCloud extends Cloud {
+public class DockerCloud extends AbstractCloudImpl {
 
     private static final Logger LOGGER = Logger.getLogger(DockerCloud.class.getName());
 
@@ -80,7 +81,6 @@ public class DockerCloud extends Cloud {
 
     public final List<DockerTemplate> templates;
     public final String serverUrl;
-    public final int containerCap;
 
     public final int connectTimeout;
     public final int readTimeout;
@@ -98,12 +98,12 @@ public class DockerCloud extends Cloud {
     public DockerCloud(String name,
                        List<? extends DockerTemplate> templates,
                        String serverUrl,
-                       String containerCapStr,
+                       String instanceCapStr,
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
                        String version) {
-        super(name);
+        super(name, instanceCapStr);
 
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -116,24 +116,11 @@ public class DockerCloud extends Cloud {
         else
             this.templates = Collections.emptyList();
 
-        if (containerCapStr.equals("")) {
-            this.containerCap = Integer.MAX_VALUE;
-        } else {
-            this.containerCap = Integer.parseInt(containerCapStr);
-        }
-
         readResolve();
     }
 
-    public String getContainerCapStr() {
-        if (containerCap == Integer.MAX_VALUE) {
-            return "";
-        } else {
-            return String.valueOf(containerCap);
-        }
-    }
-
     protected Object readResolve() {
+
         for (DockerTemplate t : templates)
             t.parent = this;
         return this;
@@ -410,18 +397,19 @@ public class DockerCloud extends Cloud {
 
             estimatedAmiSlaves += currentProvisioning;
 
-            if (estimatedTotalSlaves >= containerCap) {
-                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Server \"{1}\" full with {2} container(s)", new Object[]{ami, name, containerCap});
+            if (estimatedTotalSlaves >= getInstanceCap()) {
+                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Server \"{1}\" full with {2} container(s)",
+                        new Object[]{ami, name, getInstanceCap()});
                 return false;      // maxed out
             }
 
             if (amiCap != 0 && estimatedAmiSlaves >= amiCap) {
-                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Instance limit of {2} reached on server \"{1}\"", new Object[]{ami, name, amiCap});
+                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Instance limit of {2} reached on server \"{1}\"",
+                        new Object[]{ami, name, amiCap});
                 return false;      // maxed out
             }
 
-            LOGGER.log(Level.INFO,
-                    "Provisioning \"{0}\" number {2} on \"{1}\"; Total containers: {3}",
+            LOGGER.log(Level.INFO, "Provisioning \"{0}\" number {2} on \"{1}\"; Total containers: {3}",
                     new Object[]{ami, name, estimatedAmiSlaves, estimatedTotalSlaves}
             );
 
