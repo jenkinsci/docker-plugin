@@ -23,7 +23,7 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
     protected DockerLaunchAction getLaunchAction(AbstractBuild<?, ?> build) {
         List<DockerLaunchAction> launchActionList = build.getActions(DockerLaunchAction.class);
         DockerLaunchAction launchAction;
-        if( launchActionList.size() > 0 ) {
+        if (launchActionList.size() > 0) {
             launchAction = launchActionList.get(0);
         } else {
             launchAction = new DockerLaunchAction();

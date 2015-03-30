@@ -43,7 +43,6 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
         Preconditions.checkNotNull(detail);
 
         try {
-
             ExposedPort sshPort = new ExposedPort(22);
             int port = 22;
 
@@ -70,6 +69,4 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
             throw new RuntimeException("Malformed URL for host " + template);
         }
     }
-
-
 }

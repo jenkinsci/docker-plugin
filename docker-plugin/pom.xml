@@ -6,8 +6,7 @@
         <version>0.9.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.nirima</groupId>
-    <artifactId>docker-plugin</artifactId>    
+    <artifactId>docker-plugin</artifactId>
     <packaging>hpi</packaging>
     <name>Docker plugin</name>
 
@@ -15,7 +14,7 @@
          <dependency>
             <groupId>com.nirima</groupId>
             <artifactId>docker-java-shaded</artifactId>
-            <version>${project.version}</version>            
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -38,14 +37,10 @@
             <artifactId>durable-task</artifactId>
             <version>0.5</version>
         </dependency>
-         <dependency> <!-- Overwrites transitive dependency, otherwise fails with java.lang.ClassNotFoundException: org.apache.http.config.Lookup-->
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.3.6</version>
-        </dependency>
     </dependencies>
 
     <build>
+        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -53,7 +48,6 @@
                 <configuration>
                     <artifactSet>
                         <includes>
-                            <include>com.github.docker-java:*</include>
                             <include>com.google.guava:*</include>
                         </includes>
                     </artifactSet>
@@ -68,21 +62,15 @@
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>${hpi.plugin.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>com.google.guava</groupId>
                         <artifactId>guava</artifactId>
                         <version>${guava.version}</version>
-                    </dependency>  
-                     <dependency>
-                            <groupId>org.kohsuke.stapler</groupId>
-                            <artifactId>stapler</artifactId>
-                            <version>${stapler.version}</version>
-                        </dependency>               
+                    </dependency>
                 </dependencies>
                 <configuration>
-                    <dependentWarExcludes>org.apache.httpcomponents:*,com.github.docker-java*,com.google.guava*</dependentWarExcludes>
+                    <dependentWarExcludes>org.apache.httpcomponents:*,com.google.guava*</dependentWarExcludes>
                     <archive>
                         <manifestEntries>
                             <Mask-Classes>com.google.common</Mask-Classes>
@@ -93,32 +81,13 @@
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <id>add-eclipse-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${basedir}/target/generated-sources/localizer</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5</version>
             </plugin>
 
         </plugins>
+
     </build>
 
 

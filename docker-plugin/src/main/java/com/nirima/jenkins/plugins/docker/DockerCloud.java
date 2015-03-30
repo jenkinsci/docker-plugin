@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -41,6 +42,7 @@ import hudson.Extension;
 import hudson.model.*;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
+import hudson.slaves.AbstractCloudImpl;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
@@ -52,6 +54,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -70,7 +73,7 @@ import java.util.HashMap;
 /**
  * Created by magnayn on 08/01/2014.
  */
-public class DockerCloud extends Cloud {
+public class DockerCloud extends AbstractCloudImpl {
 
     private static final Logger LOGGER = Logger.getLogger(DockerCloud.class.getName());
 
@@ -78,7 +81,6 @@ public class DockerCloud extends Cloud {
 
     public final List<DockerTemplate> templates;
     public final String serverUrl;
-    public final int containerCap;
 
     public final int connectTimeout;
     public final int readTimeout;
@@ -90,11 +92,18 @@ public class DockerCloud extends Cloud {
     /* Track the count per-AMI identifiers for AMIs currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    private static HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
+    private static final HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
 
     @DataBoundConstructor
-    public DockerCloud(String name, List<? extends DockerTemplate> templates, String serverUrl, String containerCapStr, int connectTimeout, int readTimeout, String credentialsId, String version) {
-        super(name);
+    public DockerCloud(String name,
+                       List<? extends DockerTemplate> templates,
+                       String serverUrl,
+                       String instanceCapStr,
+                       int connectTimeout,
+                       int readTimeout,
+                       String credentialsId,
+                       String version) {
+        super(name, instanceCapStr);
 
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -102,29 +111,16 @@ public class DockerCloud extends Cloud {
         this.serverUrl = serverUrl;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
-        if( templates != null )
+        if (templates != null)
             this.templates = new ArrayList<DockerTemplate>(templates);
         else
-            this.templates = new ArrayList<DockerTemplate>();
-
-        if(containerCapStr.equals("")) {
-            this.containerCap = Integer.MAX_VALUE;
-        } else {
-            this.containerCap = Integer.parseInt(containerCapStr);
-        }
+            this.templates = Collections.emptyList();
 
         readResolve();
     }
 
-    public String getContainerCapStr() {
-        if (containerCap==Integer.MAX_VALUE) {
-            return "";
-        } else {
-            return String.valueOf(containerCap);
-        }
-    }
-
     protected Object readResolve() {
+
         for (DockerTemplate t : templates)
             t.parent = this;
         return this;
@@ -144,22 +140,15 @@ public class DockerCloud extends Cloud {
     }
 
     public DockerClientConfig getDockerClientConfig() {
-        DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
-            .createDefaultConfigBuilder()
-            .withUri(serverUrl);
+        DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
 
-        if( !Strings.isNullOrEmpty(version)) {
+        config.withUri(serverUrl);
+
+        if (!Strings.isNullOrEmpty(version)) {
             config.withVersion(version);
         }
 
         addCredentials(config, credentialsId);
-
-
-        // TODO?
-        // .withLogging(DockerClient.Logging.SLF4J);
-
-        //if (connectTimeout > 0)
-        //    builder.connectTimeout(connectTimeout * 1000);
 
         if (readTimeout > 0)
             config.withReadTimeout(readTimeout * 1000);
@@ -167,19 +156,17 @@ public class DockerCloud extends Cloud {
         return config.build();
     }
 
-    private static void addCredentials(DockerClientConfig.DockerClientConfigBuilder config,
-                                       String credentialsId) {
-        if( !Strings.isNullOrEmpty(credentialsId)) {
+    private static void addCredentials(DockerClientConfig.DockerClientConfigBuilder config, String credentialsId) {
+        if (!Strings.isNullOrEmpty(credentialsId)) {
             Credentials credentials = lookupSystemCredentials(credentialsId);
 
-            if( credentials instanceof CertificateCredentials ) {
-                CertificateCredentials certificateCredentials = (CertificateCredentials)credentials;
-                config.withSSLConfig( new KeystoreSSLConfig( certificateCredentials.getKeyStore(), certificateCredentials.getPassword().getPlainText() ));
-            }
-            else if( credentials instanceof StandardUsernamePasswordCredentials ) {
-                StandardUsernamePasswordCredentials usernamePasswordCredentials = ((StandardUsernamePasswordCredentials)credentials);
+            if (credentials instanceof CertificateCredentials) {
+                CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
+                config.withSSLConfig(new KeystoreSSLConfig(certificateCredentials.getKeyStore(), certificateCredentials.getPassword().getPlainText()));
+            } else if (credentials instanceof StandardUsernamePasswordCredentials) {
+                StandardUsernamePasswordCredentials usernamePasswordCredentials = ((StandardUsernamePasswordCredentials) credentials);
 
-                config.withUsername( usernamePasswordCredentials.getUsername() );
+                config.withUsername(usernamePasswordCredentials.getUsername());
                 config.withPassword(usernamePasswordCredentials.getPassword().getPlainText());
             }
         }
@@ -187,16 +174,16 @@ public class DockerCloud extends Cloud {
 
     public static Credentials lookupSystemCredentials(String credentialsId) {
         return CredentialsMatchers.firstOrNull(
-            CredentialsProvider
-                .lookupCredentials(Credentials.class, Jenkins.getInstance(),
-                                   ACL.SYSTEM
-                                   ),
-            CredentialsMatchers.withId(credentialsId)
+                CredentialsProvider.lookupCredentials(Credentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
+                CredentialsMatchers.withId(credentialsId)
         );
     }
 
     private DockerClient buildConnection() {
-        LOGGER.log(Level.FINE, "Building connection to docker host \"{0}\" at: {1}", new Object[]{name,serverUrl});
+        LOGGER.log(Level.FINE, "Building connection to docker host \"{0}\" at: {1}", new Object[]{name, serverUrl});
 
         return DockerClientBuilder.getInstance(getDockerClientConfig())
                 .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
@@ -211,7 +198,7 @@ public class DockerCloud extends Cloud {
             int currentProvisioning;
             try {
                 currentProvisioning = provisioningAmis.get(ami);
-            } catch(NullPointerException npe) {
+            } catch (NullPointerException npe) {
                 return;
             }
             provisioningAmis.put(ami, Math.max(currentProvisioning - 1, 0));
@@ -222,15 +209,15 @@ public class DockerCloud extends Cloud {
     public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         try {
 
-            LOGGER.log(Level.INFO, "Asked to provision {0} slave(s) for: {1}", new Object[]{excessWorkload,label});
+            LOGGER.log(Level.INFO, "Asked to provision {0} slave(s) for: {1}", new Object[]{excessWorkload, label});
 
             List<NodeProvisioner.PlannedNode> r = new ArrayList<NodeProvisioner.PlannedNode>();
 
             final DockerTemplate t = getTemplate(label);
 
-            LOGGER.log(Level.INFO, "Will provision \"{0}\" for: {1}", new Object[]{t.image,label});
+            LOGGER.log(Level.INFO, "Will provision \"{0}\" for: {1}", new Object[]{t.image, label});
 
-            while (excessWorkload>0) {
+            while (excessWorkload > 0) {
 
                 if (!addProvisionedSlave(t.image, t.instanceCap)) {
                     break;
@@ -259,38 +246,37 @@ public class DockerCloud extends Cloud {
                                     // goes successful prevents this problem.
                                     slave.toComputer().connect(false).get();
                                     return slave;
-                                }
-                                catch(Exception ex) {
+                                } catch (Exception ex) {
                                     LOGGER.log(Level.SEVERE, "Error in provisioning; slave=" + slave + ", template=" + t);
 
                                     ex.printStackTrace();
                                     throw Throwables.propagate(ex);
-                                }
-                                finally {
+                                } finally {
                                     decrementAmiSlaveProvision(t.image);
                                 }
                             }
                         })
-                        ,t.getNumExecutors()));
+                        , t.getNumExecutors()));
 
                 excessWorkload -= t.getNumExecutors();
 
             }
             return r;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE,"Exception while provisioning for: " + label,e);
+            LOGGER.log(Level.SEVERE, "Exception while provisioning for: " + label, e);
             return Collections.emptyList();
         }
     }
 
     @Override
     public boolean canProvision(Label label) {
-        return getTemplate(label)!=null;
+        return getTemplate(label) != null;
     }
 
+    @CheckForNull
     public DockerTemplate getTemplate(String template) {
         for (DockerTemplate t : templates) {
-            if(t.image.equals(template)) {
+            if (t.image.equals(template)) {
                 return t;
             }
         }
@@ -300,9 +286,10 @@ public class DockerCloud extends Cloud {
     /**
      * Gets {@link DockerTemplate} that has the matching {@link Label}.
      */
+    @CheckForNull
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
-            if(label == null || label.matches(t.getLabelSet())) {
+            if (label == null || label.matches(t.getLabelSet())) {
                 return t;
             }
         }
@@ -318,7 +305,21 @@ public class DockerCloud extends Cloud {
     }
 
     /**
+     * Multiple amis can have the same label
+     */
+    public List<DockerTemplate> getTemplates(Label label) {
+        ArrayList<DockerTemplate> dockerTemplates = new ArrayList<DockerTemplate>();
+        for (DockerTemplate t : templates) {
+            if (label == null || label.matches(t.getLabelSet())) {
+                dockerTemplates.add(t);
+            }
+        }
+        return dockerTemplates;
+    }
+
+    /**
      * Remove a
+     *
      * @param t
      */
     public void removeTemplate(DockerTemplate t) {
@@ -329,8 +330,8 @@ public class DockerCloud extends Cloud {
      * Counts the number of instances in Docker currently running that are using the specifed image.
      *
      * @param ami If AMI is left null, then all instances are counted.
-     * <p>
-     * This includes those instances that may be started outside Hudson.
+     *            <p/>
+     *            This includes those instances that may be started outside Hudson.
      */
     public int countCurrentDockerSlaves(final String ami) throws Exception {
         final DockerClient dockerClient = connect();
@@ -343,8 +344,8 @@ public class DockerCloud extends Cloud {
         List<Image> images = dockerClient.listImagesCmd().exec();
 
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(ami);
-        final String fullAmi = repostag.repos + ":" + (repostag.tag.isEmpty()?"latest":repostag.tag);
-        boolean imageExists = Iterables.any(images, new Predicate<Image>(){
+        final String fullAmi = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+        boolean imageExists = Iterables.any(images, new Predicate<Image>() {
             @Override
             public boolean apply(Image image) {
                 return Arrays.asList(image.getRepoTags()).contains(fullAmi);
@@ -368,7 +369,7 @@ public class DockerCloud extends Cloud {
         Collection<Container> matching = Collections2.filter(containers, new Predicate<Container>() {
             public boolean apply(@Nullable Container container) {
                 InspectContainerResponse
-                    cis = dockerClient.inspectContainerCmd(container.getId()).exec();
+                        cis = dockerClient.inspectContainerCmd(container.getId()).exec();
                 return (cis.getImageId().equalsIgnoreCase(ir.getId()));
             }
         });
@@ -377,7 +378,6 @@ public class DockerCloud extends Cloud {
 
     /**
      * Check not too many already running.
-     *
      */
     private synchronized boolean addProvisionedSlave(String ami, int amiCap) throws Exception {
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);
@@ -391,26 +391,26 @@ public class DockerCloud extends Cloud {
             }
             try {
                 currentProvisioning = provisioningAmis.get(ami);
-            }
-            catch (NullPointerException npe) {
+            } catch (NullPointerException npe) {
                 currentProvisioning = 0;
             }
 
             estimatedAmiSlaves += currentProvisioning;
 
-            if(estimatedTotalSlaves >= containerCap) {
-                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Server \"{1}\" full with {2} container(s)", new Object[]{ami,name,containerCap});
+            if (estimatedTotalSlaves >= getInstanceCap()) {
+                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Server \"{1}\" full with {2} container(s)",
+                        new Object[]{ami, name, getInstanceCap()});
                 return false;      // maxed out
             }
 
             if (amiCap != 0 && estimatedAmiSlaves >= amiCap) {
-                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Instance limit of {2} reached on server \"{1}\"", new Object[]{ami,name,amiCap});
+                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Instance limit of {2} reached on server \"{1}\"",
+                        new Object[]{ami, name, amiCap});
                 return false;      // maxed out
             }
 
-            LOGGER.log(Level.INFO,
-                    "Provisioning \"{0}\" number {2} on \"{1}\"; Total containers: {3}",
-                    new Object[]{ami,name,estimatedAmiSlaves,estimatedTotalSlaves}
+            LOGGER.log(Level.INFO, "Provisioning \"{0}\" number {2} on \"{1}\"; Total containers: {3}",
+                    new Object[]{ami, name, estimatedAmiSlaves, estimatedTotalSlaves}
             );
 
             provisioningAmis.put(ami, currentProvisioning + 1);
@@ -429,23 +429,26 @@ public class DockerCloud extends Cloud {
                 @QueryParameter URL serverUrl,
                 @QueryParameter String credentialsId,
                 @QueryParameter String version
-                ) throws IOException, ServletException, DockerException {
+        ) throws IOException, ServletException, DockerException {
+            try {
+                DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
+                        .createDefaultConfigBuilder()
+                        .withUri(serverUrl.toString());
 
-            DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
-                .createDefaultConfigBuilder()
-                .withUri(serverUrl.toString());
+                if (!Strings.isNullOrEmpty(version)) {
+                    config.withVersion(version);
+                }
 
-            if( !Strings.isNullOrEmpty(version)) {
-                config.withVersion(version);
+                addCredentials(config, credentialsId);
+
+                DockerClient dc = DockerClientBuilder.getInstance(config.build()).withDockerCmdExecFactory(new DockerCmdExecFactoryImpl()).build();
+
+                Version v = dc.versionCmd().exec();
+
+                return FormValidation.ok("Version = " + v.getVersion());
+            } catch (Exception e) {
+                return FormValidation.error(e.getMessage());
             }
-
-            addCredentials(config, credentialsId);
-
-            DockerClient dc = DockerClientBuilder.getInstance(config.build()).build();
-
-            Version v = dc.versionCmd().exec();
-
-            return FormValidation.ok("Version = " + v.getVersion());
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
@@ -453,13 +456,13 @@ public class DockerCloud extends Cloud {
             List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context);
 
             return new CredentialsListBoxModel().withEmptySelection()
-                                                .withMatching(CredentialsMatchers.always(),
-                                                              credentials);
+                    .withMatching(CredentialsMatchers.always(),
+                            credentials);
         }
     }
 
     public static class CredentialsListBoxModel
-        extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, StandardCertificateCredentials> {
+            extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, StandardCertificateCredentials> {
 
         /**
          * {@inheritDoc}

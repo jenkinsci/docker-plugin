@@ -26,6 +26,7 @@ import jenkins.model.Jenkins;
 
 /**
  * Manage the docker images.
+ * Docker page under "Manage Jenkins" page.
  */
 @Extension
 public class DockerManagement extends ManagementLink implements StaplerProxy, Describable<DockerManagement>, Saveable {
