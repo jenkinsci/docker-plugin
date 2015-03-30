@@ -18,7 +18,7 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
     protected DockerBuilderControlCloudOption(String cloudName) {
         this.cloudName = cloudName;
     }
-    
+
     public String getCloudName() {
         return cloudName;
     }
@@ -27,16 +27,16 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
         DockerCloud cloud = null;
 
         Node node = build.getBuiltOn();
-        if( node instanceof DockerSlave) {
-            DockerSlave dockerSlave = (DockerSlave)node;
+        if (node instanceof DockerSlave) {
+            DockerSlave dockerSlave = (DockerSlave) node;
             cloud = dockerSlave.getCloud();
         }
 
-        if( !Strings.isNullOrEmpty(cloudName) ) {
+        if (!Strings.isNullOrEmpty(cloudName)) {
             cloud = (DockerCloud) Jenkins.getInstance().getCloud(cloudName);
         }
 
-        if( cloud == null ) {
+        if (cloud == null) {
             throw new RuntimeException("Cannot list cloud for docker action");
         }
 

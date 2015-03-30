@@ -59,18 +59,19 @@ public abstract class DockerTemplateBase {
     public final boolean tty;
 
     public DockerTemplateBase(String image,
-                          String dnsString,
-                          String dockerCommand,
-                          String volumesString, String volumesFrom,
-                          String environmentsString,
-                          String lxcConfString,
-                          String hostname,
-                          Integer memoryLimit,
-                          Integer cpuShares,
-                          String bindPorts,
-                          boolean bindAllPorts,
-                          boolean privileged,
-                          boolean tty
+                              String dnsString,
+                              String dockerCommand,
+                              String volumesString,
+                              String volumesFrom,
+                              String environmentsString,
+                              String lxcConfString,
+                              String hostname,
+                              Integer memoryLimit,
+                              Integer cpuShares,
+                              String bindPorts,
+                              boolean bindAllPorts,
+                              boolean privileged,
+                              boolean tty
 
     ) {
         this.image = image;
@@ -81,7 +82,7 @@ public abstract class DockerTemplateBase {
         this.tty = tty;
         this.hostname = hostname;
 
-        this.bindPorts    = bindPorts;
+        this.bindPorts = bindPorts;
         this.bindAllPorts = bindAllPorts;
 
         this.memoryLimit = memoryLimit;
@@ -119,9 +120,13 @@ public abstract class DockerTemplateBase {
         return "Image of " + image;
     }
 
-    public Integer getMemoryLimit() { return memoryLimit; }
+    public Integer getMemoryLimit() {
+        return memoryLimit;
+    }
 
-    public Integer getCpuShares() { return cpuShares; }
+    public Integer getCpuShares() {
+        return cpuShares;
+    }
 
     public InspectContainerResponse provisionNew(DockerClient dockerClient) throws DockerException {
 
@@ -139,14 +144,12 @@ public abstract class DockerTemplateBase {
         startCommand.exec();
 
         return dockerClient.inspectContainerCmd(containerId).exec();
-
-
     }
 
     public String[] getDockerCommandArray() {
-         String[] dockerCommandArray = new String[0];
+        String[] dockerCommandArray = new String[0];
 
-        if(dockerCommand != null && !dockerCommand.isEmpty()){
+        if (dockerCommand != null && !dockerCommand.isEmpty()) {
             dockerCommandArray = dockerCommand.split(" ");
         }
         return dockerCommandArray;
@@ -154,52 +157,56 @@ public abstract class DockerTemplateBase {
 
     public Iterable<PortBinding> getPortMappings() {
 
-        if(Strings.isNullOrEmpty(bindPorts) ) {
-            return Collections.EMPTY_LIST;
+        if (Strings.isNullOrEmpty(bindPorts)) {
+            return Collections.emptyList();
         }
 
         return Iterables.transform(Splitter.on(' ')
-                                       .trimResults()
-                                       .omitEmptyStrings()
-                                       .split(bindPorts),
-                                   new Function<String, PortBinding>() {
-            @Nullable
-            @Override
-            public PortBinding apply(String s) {
-                return PortBinding.parse(s);
-            }
-        });
-
-
+                        .trimResults()
+                        .omitEmptyStrings()
+                        .split(bindPorts),
+                new Function<String, PortBinding>() {
+                    @Nullable
+                    @Override
+                    public PortBinding apply(String s) {
+                        return PortBinding.parse(s);
+                    }
+                });
     }
 
     public CreateContainerCmd createContainerConfig(CreateContainerCmd containerConfig) {
-
         if (hostname != null && !hostname.isEmpty()) {
             containerConfig.withHostName(hostname);
         }
+
         String[] cmd = getDockerCommandArray();
-        if( cmd.length > 0)
+        if (cmd.length > 0)
             containerConfig.withCmd(cmd);
+
         containerConfig.withPortSpecs("22/tcp");
 
         //containerConfig.setPortSpecs(new String[]{"22/tcp"});
         //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
 
 
-        if( cpuShares != null && cpuShares > 0) {
+        if (cpuShares != null && cpuShares > 0) {
             containerConfig.withCpuShares(cpuShares);
         }
-        if( memoryLimit != null && memoryLimit > 0) {
-            Long memoryInByte = new Long(memoryLimit) * 1024 * 1024;
+
+        if (memoryLimit != null && memoryLimit > 0) {
+            Long memoryInByte = (long) memoryLimit * 1024 * 1024;
             containerConfig.withMemoryLimit(memoryInByte);
         }
-        if( dnsHosts.length > 0 )
+
+        if (dnsHosts.length > 0)
             containerConfig.withDns(dnsHosts);
-        if( volumesFrom != null && !volumesFrom.isEmpty() )
+
+        if (volumesFrom != null && !volumesFrom.isEmpty())
             containerConfig.withVolumesFrom(VolumesFrom.parse(volumesFrom));
+
         containerConfig.withTty(this.tty);
-        if(environment != null && environment.length > 0)
+
+        if (environment != null && environment.length > 0)
             containerConfig.withEnv(environment);
 
         return containerConfig;
@@ -213,7 +220,7 @@ public abstract class DockerTemplateBase {
 
 
         hostConfig.withPrivileged(this.privileged);
-        if( dnsHosts.length > 0 )
+        if (dnsHosts.length > 0)
             hostConfig.withDns(dnsHosts);
 
         // ?
@@ -226,7 +233,7 @@ public abstract class DockerTemplateBase {
             hostConfig.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
         }
 
-        if(!Strings.isNullOrEmpty(volumesFrom) )
+        if (!Strings.isNullOrEmpty(volumesFrom))
             hostConfig.withVolumesFrom(volumesFrom);
 
         return hostConfig;
@@ -242,20 +249,17 @@ public abstract class DockerTemplateBase {
 
     public List<LxcConf> getLxcConf() {
         List<LxcConf> temp = new ArrayList<LxcConf>();
-        if( lxcConfString == null || lxcConfString.trim().equals(""))
+        if (lxcConfString == null || lxcConfString.trim().equals(""))
             return temp;
         for (String item : lxcConfString.split(",")) {
             String[] keyValuePairs = item.split("=");
-            if (keyValuePairs.length == 2 )
-            {
+            if (keyValuePairs.length == 2) {
                 LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
                 LxcConf optN = new LxcConf();
                 optN.setKey(keyValuePairs[0]);
                 optN.setValue(keyValuePairs[1]);
                 temp.add(optN);
-            }
-            else
-            {
+            } else {
                 LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
             }
         }
