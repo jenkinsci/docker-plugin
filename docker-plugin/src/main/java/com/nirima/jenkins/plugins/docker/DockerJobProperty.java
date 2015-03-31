@@ -12,35 +12,78 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.export.Exported;
-import java.util.ArrayList;
 import java.util.Map;
+import shaded.com.google.common.base.Strings;
 
 
 public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<?, ?>> {
-
+    
     /**
      * Tag on completion (commit).
      */
     public final boolean tagOnCompletion;
-    public final String additionalTag;
     public final boolean pushOnSuccess;
     public final boolean cleanImages;
 
+    /**
+     * Keep containers running after successful builds
+     */
+    public final boolean remainsRunning;
+
+    /**
+     * Author of the image
+     */
+    public final String imageAuthor;
+
+    /**
+     * Whether to tag the committed image as 'latest'
+     */
+    public final boolean tagLatest;
+
+    /**
+     * Whether to tag the committed image with the build number
+     */
+    public final boolean tagBuildNumber;
+
+    /**
+     * Repository name to use for the image, including domain/namespace
+     */
+    public final String repositoryName;
+
+    /** 
+     * List of tags, delimited by commas or semi-colons
+     */
+    public final String imageTags;
+
+    /**
+     * Kept for backwards compatibility with existing data
+     */
+    public final String additionalTag;
+
+
     @DataBoundConstructor
     public DockerJobProperty(
-            boolean tagOnCompletion,
-            String additionalTag,
-            boolean pushOnSuccess, boolean cleanImages)
+            boolean tagOnCompletion, 
+            boolean pushOnSuccess, 
+            boolean cleanImages,
+            boolean remainsRunning,
+            String imageAuthor,
+            boolean tagLatest,
+            boolean tagBuildNumber,
+            String repositoryName,
+            String imageTags ) 
     {
+        this.additionalTag = "";
         this.tagOnCompletion = tagOnCompletion;
-        this.additionalTag = additionalTag;
         this.pushOnSuccess = pushOnSuccess;
         this.cleanImages = cleanImages;
-    }
-
-    @Exported
-    public String getAdditionalTag() {
-        return additionalTag;
+        this.remainsRunning = remainsRunning;
+        this.imageAuthor = imageAuthor;
+        this.tagLatest = tagLatest;
+        this.tagBuildNumber = tagBuildNumber;
+        this.repositoryName = repositoryName;
+        this.imageTags = imageTags;
+        
     }
 
     @Exported
@@ -58,36 +101,42 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
         return cleanImages;
     }
 
-    // Placeholders.
     @Exported
     public boolean isRemainsRunning() {
-        return false;
+        return remainsRunning;
     }
 
     @Exported
     public String getImageAuthor() {
-        return "Jenkins";
+        return imageAuthor;
     }
 
     @Exported
     public boolean isTagLatest() {
-        return false;
+        return tagLatest;
     }
 
     @Exported
     public boolean isTagBuildNumber() {
-        return false;
+        return tagBuildNumber;
     }
 
     @Exported 
     public String getRepositoryName() {
-        return null;
+        return repositoryName;
     }
 
     @Exported 
-    public ArrayList<String> getImageTags() {
-         ArrayList<String> imageTags = new ArrayList<String>();
-         return imageTags;
+    public String getImageTags() {
+        /*
+         * Adds the additionalTag string here to maintain backward compatibility.
+         * Remove refs in stable?
+         */
+        if(!Strings.isNullOrEmpty(additionalTag)) {
+            return additionalTag + "," + imageTags;
+        } else {
+            return imageTags;
+        }
     }
 
     @Extension
@@ -102,12 +151,20 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
         }
 
         @Override
-        public DockerJobProperty newInstance(StaplerRequest sr, JSONObject formData) throws hudson.model.Descriptor.FormException {
+        public DockerJobProperty newInstance(StaplerRequest sr, JSONObject formData) 
+        throws hudson.model.Descriptor.FormException {
+
             return new DockerJobProperty(
                     (Boolean)formData.get("tagOnCompletion"),
-                    (String)formData.get("additionalTag"),
                     (Boolean)formData.get("pushOnSuccess"),
-                    (Boolean)formData.get("cleanImages"));
+                    (Boolean)formData.get("cleanImages"),
+                    (Boolean)formData.get("remainsRunning"),
+                    (String)formData.get("imageAuthor"),
+                    (Boolean)formData.get("tagLatest"),
+                    (Boolean)formData.get("tagBuildNumber"),
+                    (String)formData.get("repositoryName"),
+                    (String)formData.get("imageTags")
+                    );
         }
     }
 }

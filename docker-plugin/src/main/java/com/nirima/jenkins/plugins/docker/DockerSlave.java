@@ -18,10 +18,10 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -161,21 +161,16 @@ public class DockerSlave extends AbstractCloudSlave {
         LOGGER.log(Level.INFO, "Tagging with repository: " + repositoryName);
 
         // Get our list of tags, or use the build number
-        ArrayList<String> imageTags = getJobProperty().getImageTags();
+        ArrayList<String> imageTags = new ArrayList<String>(
+                Arrays.asList(
+                    getJobProperty().getImageTags().split("[,;:]")
+                    ));
         
         // Tag latest if specified
         if(getJobProperty().isTagLatest()) {
             imageTags.add("latest");
         }
 
-        // Add additionalTag for backwards compatibility
-        String additionalTag = getAdditionalTag(listener);
-        if(!Strings.isNullOrEmpty(additionalTag)) {
-            imageTags.add(
-                    cleanImageTag(additionalTag)
-                    );
-        }
-        
         // If there's no tags, or if specified, tag with the build number
         if(imageTags.isEmpty() || getJobProperty().isTagBuildNumber()) {
             imageTags.add(theRun.getDisplayName());
@@ -219,10 +214,12 @@ public class DockerSlave extends AbstractCloudSlave {
         }
     }
 
-    // Image names are made up of: [registry.domain/][username/]repository:tag
-    // Registry should be a valid domain, with at least one dot (.)
-    // Namespace and repository should match [a-z0-9-_.]
-    // Tags should match [A-Za-z0-9_.-]
+    /* Image names are made up of: [registry.domain/][username/]repository:tag
+     * Registry should be a valid domain, with at least one dot (.)
+     * Namespace and repository should match [a-z0-9-_.]
+     * Tags should match [A-Za-z0-9_.-]
+     * TODO: Match each part of the full repository name.
+     */
     private static String cleanImageRepositoryName(String repositoryName) {
         return repositoryName.toLowerCase()
                              .replaceAll("\\s", "_")
@@ -297,7 +294,8 @@ public class DockerSlave extends AbstractCloudSlave {
             // Don't care.
         }
         // Safe default
-        return new DockerJobProperty(false,null,false, true);
+        return new DockerJobProperty(false, false, true, false, null, false, false, null, null);
+
     }
 
     @Extension
