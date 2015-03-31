@@ -46,15 +46,19 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
             ExposedPort sshPort = new ExposedPort(22);
             int port = 22;
+            String host = null;
 
             Ports.Binding[] bindings = detail.getNetworkSettings().getPorts().getBindings().get(sshPort);
 
             for(Ports.Binding b : bindings) {
                 port = b.getHostPort();
+                host = b.getHostIp();
             }
 
-            URL hostUrl = new URL(template.getParent().serverUrl);
-            String host = hostUrl.getHost();
+            if (host == null) {
+                URL hostUrl = new URL(template.getParent().serverUrl);
+                host = hostUrl.getHost();
+            }
 
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
             
