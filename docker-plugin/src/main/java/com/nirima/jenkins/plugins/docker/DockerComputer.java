@@ -1,6 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.google.common.base.Objects;
+import shaded.com.google.common.base.Objects;
 import com.nirima.jenkins.plugins.docker.utils.Cacheable;
 import hudson.model.*;
 import hudson.slaves.AbstractCloudComputer;

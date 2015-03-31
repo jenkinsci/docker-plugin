@@ -17,11 +17,12 @@
             <artifactId>docker-java-shaded</artifactId>
             <version>${project.version}</version>            
         </dependency>
-        <dependency>
+     <!--   <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
-        </dependency>  
+        </dependency>
+          -->
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>ssh-slaves</artifactId>
@@ -49,7 +50,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.2</version>
+                <version>2.3</version>
                 <configuration>
                     <artifactSet>
                         <includes>

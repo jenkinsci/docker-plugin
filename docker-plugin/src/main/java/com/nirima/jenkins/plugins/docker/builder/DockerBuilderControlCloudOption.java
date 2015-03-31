@@ -1,6 +1,6 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.google.common.base.Strings;
+import shaded.com.google.common.base.Strings;
 
 import com.github.dockerjava.api.DockerClient;
 import com.nirima.jenkins.plugins.docker.DockerCloud;

@@ -1,6 +1,6 @@
 package com.nirima.jenkins.plugins.docker.ws;
 
-import com.google.common.base.Strings;
+import shaded.com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
 import hudson.FilePath;

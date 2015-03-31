@@ -1,9 +1,9 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
+import shaded.com.google.common.base.Joiner;
+import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.Strings;
+import shaded.com.google.common.collect.ImmutableList;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;

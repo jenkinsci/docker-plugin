@@ -1,13 +1,13 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
+import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.Preconditions;
+import shaded.com.google.common.base.Predicate;
+import shaded.com.google.common.base.Strings;
+import shaded.com.google.common.base.Throwables;
+import shaded.com.google.common.collect.Collections2;
+import shaded.com.google.common.collect.Iterables;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;

@@ -1,7 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
+import shaded.com.google.common.base.Function;
+import shaded.com.google.common.collect.Collections2;
 
 import com.github.dockerjava.api.model.Container;
 

@@ -2,7 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.google.common.base.Preconditions;
+import shaded.com.google.common.base.Preconditions;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;

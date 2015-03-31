@@ -1,8 +1,9 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
-import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
+import shaded.com.google.common.base.Optional;
+import shaded.com.google.common.base.Splitter;
+import shaded.com.google.common.base.Throwables;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;

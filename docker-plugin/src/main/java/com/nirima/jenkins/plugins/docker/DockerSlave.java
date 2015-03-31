@@ -1,8 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.Preconditions;
+import shaded.com.google.common.base.Strings;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;

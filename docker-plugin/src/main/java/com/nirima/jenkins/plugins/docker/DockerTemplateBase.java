@@ -1,11 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
+import shaded.com.google.common.base.Function;
+import shaded.com.google.common.base.Joiner;
+import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.Splitter;
+import shaded.com.google.common.base.Strings;
+import shaded.com.google.common.collect.Iterables;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;

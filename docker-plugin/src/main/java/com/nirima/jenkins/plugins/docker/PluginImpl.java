@@ -1,8 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
+import shaded.com.google.common.base.Predicate;
+import shaded.com.google.common.collect.Collections2;
+import shaded.com.google.common.collect.Iterables;
 import hudson.Plugin;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
