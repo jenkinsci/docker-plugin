@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
@@ -13,34 +14,49 @@
     <name>Docker plugin parent pom</name>
 
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
- 
- <scm>
-    <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
-    <url>https://github.com/jenkinsci/docker-plugin</url>
-    <tag>HEAD</tag>
-  </scm>
 
-  <properties>
-    <hpi.plugin.version>1.112</hpi.plugin.version>
-    <stapler.version>1.207</stapler.version>
-     <jclouds.version>1.8.1</jclouds.version>
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/docker-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <hpi.plugin.version>1.112</hpi.plugin.version>
+        <stapler.version>1.207</stapler.version>
+        <jclouds.version>1.8.1</jclouds.version>
         <guava.version>18.0</guava.version>
         <docker-java.version>1.0.1-SNAPSHOT</docker-java.version>
         <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
+        <jdk.debug>true</jdk.debug>
+        <jdk.optimize>false</jdk.optimize>
+        <jdk.source>1.7</jdk.source>
+        <jdk.target>1.7</jdk.target>
     </properties>
 
     <modules>
-        <module>docker-plugin</module>            
+        <module>docker-plugin</module>
         <module>docker-java-shaded</module>
     </modules>
 
     <build>
         <pluginManagement>
-        <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <source>${jdk.source}</source>
+                        <target>${jdk.target}</target>
+                        <debug>${jdk.debug}</debug>
+                        <optimize>${jdk.optimize}</optimize>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.jenkins-ci.tools</groupId>
+                    <artifactId>maven-hpi-plugin</artifactId>
                     <version>${hpi.plugin.version}</version>
                     <dependencies>
                         <dependency>
@@ -54,17 +70,17 @@
                             <version>${stapler.version}</version>
                         </dependency>
                     </dependencies>
-                <configuration>
+                    <configuration>
                         <dependentWarExcludes>com.github.dockerjava*,com.google.guava*</dependentWarExcludes>
-                    <archive>
-                        <manifestEntries>
-                            <Mask-Classes>com.google.common</Mask-Classes>
-                        </manifestEntries>
-                    </archive>
-                    <maskClasses>com.google.common.</maskClasses>
-                </configuration>
-            </plugin>
-        </plugins>
+                        <archive>
+                            <manifestEntries>
+                                <Mask-Classes>com.google.common</Mask-Classes>
+                            </manifestEntries>
+                        </archive>
+                        <maskClasses>com.google.common.</maskClasses>
+                    </configuration>
+                </plugin>
+            </plugins>
         </pluginManagement>
         <finalName>${project.artifactId}</finalName>
         <plugins>
