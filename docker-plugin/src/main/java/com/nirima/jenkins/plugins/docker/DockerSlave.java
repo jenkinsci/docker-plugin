@@ -7,6 +7,7 @@ import shaded.com.google.common.base.Strings;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.NotModifiedException;
+import com.github.dockerjava.api.NotFoundException;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 
 import hudson.Extension;
@@ -201,6 +202,18 @@ public class DockerSlave extends AbstractCloudSlave {
                 // addJenkinsAction(cleanTag);
             } catch(Exception ex) {
                 LOGGER.log(Level.SEVERE, "Could not add tag: " + cleanTag, ex);
+            }
+
+            // Push the image to the registry with all of the tags
+            if(getJobProperty().isPushOnSuccess()) {
+                try {
+                    client.pushImageCmd(repositoryName)
+                        .withTag(cleanTag)
+                        .exec();
+                } catch (NotFoundException ex) {
+                    // This should NEVER happen but just in case.
+                    LOGGER.log(Level.SEVERE, "Couldnt find " + repositoryName + ":" +cleanTag + ". Not pushing.");
+                }
             }
         }
 
