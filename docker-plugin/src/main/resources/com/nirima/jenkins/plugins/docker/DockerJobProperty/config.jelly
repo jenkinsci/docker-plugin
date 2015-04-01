@@ -1,22 +1,53 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
 
     <f:section title="Docker Container">
-        <f:entry title="${%Commit on successful build}" field="tagOnCompletion">
-            <f:checkbox default="false"/>
+
+        <f:entry title="${%Remains Running}" field="remainsRunning">
+            <f:checkbox default="true" />
         </f:entry>
 
-        <f:entry title="${%Additional tag to add}" field="additionalTag">
-            <f:textbox/>
+        <f:entry title="${%Commit on successful build}" field="tagOnCompletion">
+            <f:checkbox />
+        </f:entry>
+
+        <f:entry title="${%Repository Name}" field="repositoryName">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="${%Tag as latest}" field="tagLatest">
+            <f:checkbox />
+        </f:entry>
+
+        <f:entry title="${%Tag with build number}" field="tagBuildNumber">
+            <f:checkbox />
+        </f:entry>
+
+        <f:entry title="${%Additional Tags}" field="imageTags">
+            <f:textbox />
         </f:entry>
 
         <f:entry title="${%Push on successful build}" field="pushOnSuccess">
             <f:checkbox/>
         </f:entry>
 
-        <f:entry title="${%Clean local images}" field="cleanImages">
-            <f:checkbox default="true"/>
+        <f:entry title="${%Image Author}" field="imageAuthor">
+            <f:textbox />
         </f:entry>
+
+        <f:entry title="${%Clean local images}" field="cleanImages">
+            <f:checkbox />
+        </f:entry>
+<!--
+        <f:entry title="${%Remove untagged images}" field="removeUntaggedImages">
+            <f:checkbox default="true" />
+        </f:entry>
+-->
+
+    </f:section>
+
+    <!-- Make an obvious divide before the other options -->
+    <f:section title="">
     </f:section>
 
 </j:jelly>

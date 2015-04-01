@@ -174,7 +174,11 @@ public class DockerCloud extends Cloud {
 
             if( credentials instanceof CertificateCredentials ) {
                 CertificateCredentials certificateCredentials = (CertificateCredentials)credentials;
-                config.withSSLConfig( new KeystoreSSLConfig( certificateCredentials.getKeyStore(), certificateCredentials.getPassword().getPlainText() ));
+                config.withSSLConfig(
+                        new KeystoreSSLConfig(
+                            certificateCredentials.getKeyStore(), 
+                            certificateCredentials.getPassword().getPlainText())
+                        );
             }
             else if( credentials instanceof StandardUsernamePasswordCredentials ) {
                 StandardUsernamePasswordCredentials usernamePasswordCredentials = ((StandardUsernamePasswordCredentials)credentials);
@@ -426,26 +430,37 @@ public class DockerCloud extends Cloud {
         }
 
         public FormValidation doTestConnection(
-                @QueryParameter URL serverUrl,
+                @QueryParameter String serverUrl,
                 @QueryParameter String credentialsId,
                 @QueryParameter String version
                 ) throws IOException, ServletException, DockerException {
 
-            DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
-                .createDefaultConfigBuilder()
-                .withUri(serverUrl.toString());
+             // Check that docker server URL is specified
+             if( Strings.isNullOrEmpty(serverUrl) ){
+                 return FormValidation.error("Error: No URL specified.");
+             } 
 
-            if( !Strings.isNullOrEmpty(version)) {
-                config.withVersion(version);
-            }
+             DockerClientConfig.DockerClientConfigBuilder config = null;
+             try {
+             config = DockerClientConfig
+                 .createDefaultConfigBuilder()
+                 .withUri(serverUrl);
+             } catch (IllegalArgumentException ex) {
+                 return FormValidation.error("Error: Invalid URL: " + serverUrl);
+             }
 
-            addCredentials(config, credentialsId);
+             // Use a version if specified
+             if( !Strings.isNullOrEmpty(version) ) {
+                 config.withVersion(version);
+             }
+ 
+             addCredentials(config, credentialsId);
+ 
+             DockerClient dc = DockerClientBuilder.getInstance(config.build()).build();
 
-            DockerClient dc = DockerClientBuilder.getInstance(config.build()).build();
-
-            Version v = dc.versionCmd().exec();
-
-            return FormValidation.ok("Version = " + v.getVersion());
+             Version v = dc.versionCmd().exec();
+           
+             return FormValidation.ok("Connection successful. Version: " + v.getVersion());
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
