@@ -441,11 +441,13 @@ public class DockerCloud extends Cloud {
 
             addCredentials(config, credentialsId);
 
-            DockerClient dc = DockerClientBuilder.getInstance(config.build()).build();
+            DockerClient dc = DockerClientBuilder.getInstance(config.build())
+                .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
+                .build();
 
             Version v = dc.versionCmd().exec();
 
-            return FormValidation.ok("Version = " + v.getVersion());
+            return FormValidation.ok("Connection Successful. Version: " + v.getVersion());
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
