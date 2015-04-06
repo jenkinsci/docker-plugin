@@ -25,7 +25,6 @@
     <properties>
         <hpi.plugin.version>1.112</hpi.plugin.version>
         <stapler.version>1.207</stapler.version>
-        <jclouds.version>1.8.1</jclouds.version>
         <guava.version>18.0</guava.version>
         <docker-java.version>1.0.1-SNAPSHOT</docker-java.version>
         <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
