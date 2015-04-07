@@ -55,7 +55,7 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
                 host = b.getHostIp();
             }
 
-            if (host == null) {
+            if (host == null || host.equals("0.0.0.0")) {
                 URL hostUrl = new URL(template.getParent().serverUrl);
                 host = hostUrl.getHost();
             }
