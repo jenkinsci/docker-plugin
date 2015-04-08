@@ -10,10 +10,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.export.Exported;
 
-import java.util.Map;
 
-
-public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<?, ?>> {
+public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
 
     /**
      * Tag on completion (commit).
@@ -67,7 +65,7 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
         }
 
         @Override
-        public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws hudson.model.Descriptor.FormException {
+        public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             DockerJobProperty dockerJobProperty;
 
             if (req.hasParameter("hasDockerContainer")) {
