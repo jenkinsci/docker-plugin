@@ -127,7 +127,6 @@ public class DockerSlave extends AbstractCloudSlave {
     private void slaveShutdown(TaskListener listener) throws DockerException, IOException {
 
         // The slave has stopped. Should we commit / tag / push ?
-
         if(!getJobProperty().tagOnCompletion) {
             addJenkinsAction(null);
             return;
@@ -156,7 +155,11 @@ public class DockerSlave extends AbstractCloudSlave {
                 client.tagImageCmd(tag_image,null,tagToken).exec();
                 addJenkinsAction(tagToken);
 
-                if( getJobProperty().pushOnSuccess ) {
+                Result result = theRun.getResult();
+                boolean push = (getJobProperty().pushOnSuccess && result.equals(Result.SUCCESS)) ||
+                        (getJobProperty().pushOnFailure && result.equals(Result.FAILURE)) ||
+                        (getJobProperty().pushOnUnstable && result.equals(Result.UNSTABLE));
+                if( push ) {
                     client.pushImageCmd(tagToken).exec();
                 }
             }
@@ -231,7 +234,7 @@ public class DockerSlave extends AbstractCloudSlave {
             // Don't care.
         }
         // Safe default
-        return new DockerJobProperty(false,null,false, true);
+        return new DockerJobProperty(false, null, false, false, false, true);
     }
 
     @Extension

@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
     <f:section title="Docker Container">
-        <f:entry title="${%Commit on successful build}" field="tagOnCompletion">
+        <f:entry title="${%Commit on completed build}" field="tagOnCompletion">
             <f:checkbox default="false"/>
         </f:entry>
 
@@ -11,6 +11,14 @@
         </f:entry>
 
         <f:entry title="${%Push on successful build}" field="pushOnSuccess">
+            <f:checkbox/>
+        </f:entry>
+
+        <f:entry title="${%Push on unstable build}" field="pushOnUnstable">
+            <f:checkbox/>
+        </f:entry>
+
+        <f:entry title="${%Push on failed build}" field="pushOnFailure">
             <f:checkbox/>
         </f:entry>
 
