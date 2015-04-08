@@ -1,13 +1,10 @@
 package com.nirima.jenkins.plugins.docker;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Descriptor;
 import hudson.model.Job;
+import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
-import hudson.tasks.Publisher;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -70,12 +67,16 @@ public class DockerJobProperty extends hudson.model.JobProperty<AbstractProject<
         }
 
         @Override
-        public DockerJobProperty newInstance(StaplerRequest sr, JSONObject formData) throws hudson.model.Descriptor.FormException {
-            return new DockerJobProperty(
-                    (Boolean)formData.get("tagOnCompletion"),
-                    (String)formData.get("additionalTag"),
-                    (Boolean)formData.get("pushOnSuccess"),
-                    (Boolean)formData.get("cleanImages"));
+        public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws hudson.model.Descriptor.FormException {
+            DockerJobProperty dockerJobProperty;
+
+            if (req.hasParameter("hasDockerContainer")) {
+                dockerJobProperty = req.bindJSON(DockerJobProperty.class, formData);
+            } else {
+                dockerJobProperty = null;
+            }
+
+            return dockerJobProperty;
         }
     }
 }
