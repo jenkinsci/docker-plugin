@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-    <f:section title="Docker Container">
+    <f:optionalBlock title="Docker Container" name="hasDockerContainer" inline="true" checked="${instance!=null}" >
         <f:entry title="${%Commit on successful build}" field="tagOnCompletion">
             <f:checkbox default="false"/>
         </f:entry>
@@ -17,6 +17,6 @@
         <f:entry title="${%Clean local images}" field="cleanImages">
             <f:checkbox default="true"/>
         </f:entry>
-    </f:section>
+    </f:optionalBlock>
 
 </j:jelly>

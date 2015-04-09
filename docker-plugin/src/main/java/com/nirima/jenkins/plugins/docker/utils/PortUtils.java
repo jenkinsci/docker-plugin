@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker.utils;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,13 +54,13 @@ public class PortUtils {
         for (String container : containerPorts) {
             String[] idPorts = container.split(" ", 2);
             if (idPorts.length < 2)
-                throw new IllegalArgumentException("Cannot parse " + idPorts + " as '[conainerId] [port1],[port2],...'");
+                throw new IllegalArgumentException("Cannot parse " + Arrays.toString(idPorts) + " as '[conainerId] [port1],[port2],...'");
             String containerId = idPorts[0].trim();
             String portsStr = idPorts[1].trim();
 
             List<Integer> ports = new ArrayList<Integer>();
             for (String port : portsStr.split(",")) {
-                ports.add(new Integer(port));
+                ports.add(Integer.valueOf(port));
             }
             containers.put(containerId, ports);
         }
