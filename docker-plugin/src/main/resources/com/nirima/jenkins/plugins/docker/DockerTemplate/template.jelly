@@ -11,6 +11,10 @@
             <f:textbox/>
         </f:entry>
 
+        <f:entry title="${%Num Executors}" field="numExecutors">
+           <f:number name="numExecutors" clazz="positive-number" min="1" step="1"/>
+        </f:entry>
+
         <f:entry title="${%Credentials}" field="credentialsId">
             <c:select/>
         </f:entry>

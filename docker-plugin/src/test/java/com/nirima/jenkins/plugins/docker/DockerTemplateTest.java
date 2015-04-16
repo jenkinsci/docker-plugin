@@ -9,6 +9,7 @@ public class DockerTemplateTest {
 
     String image = "image";
     String labelString;
+    int numExecutors = 1;
     String remoteFs = "remoteFs";
     String remoteFsMapping = "remoteFsMapping";
     String credentialsId = "credentialsId";
@@ -36,6 +37,7 @@ public class DockerTemplateTest {
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         DockerTemplate instance = new DockerTemplate(image, labelString,
+                numExecutors,
                 remoteFs,
                 remoteFsMapping,
                 credentialsId, idleTerminationMinutes,
