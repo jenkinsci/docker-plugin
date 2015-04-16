@@ -425,6 +425,11 @@ public class DockerCloud extends Cloud {
         }
     }
 
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
         @Override
