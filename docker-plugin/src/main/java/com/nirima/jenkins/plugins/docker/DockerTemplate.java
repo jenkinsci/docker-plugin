@@ -170,10 +170,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return remoteFsMapping;
     }
 
-    public Descriptor<DockerTemplate> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(getClass());
-    }
-
     public Set<LabelAtom> getLabelSet(){
         return labelSet;
     }
@@ -301,6 +297,11 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                  .build();
         }
         return super.getPortMappings();
+    }
+
+    @Override
+    public Descriptor<DockerTemplate> getDescriptor() {
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
     @Extension

@@ -10,6 +10,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.export.Exported;
 
+import javax.annotation.CheckForNull;
+
 
 public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
 
@@ -17,6 +19,7 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
      * Tag on completion (commit).
      */
     public final boolean tagOnCompletion;
+    @CheckForNull
     public final String additionalTag;
     public final boolean pushOnSuccess;
     public final boolean cleanImages;
