@@ -311,11 +311,16 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-
-            return new SSHUserListBoxModel().withMatching(SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
-                            ACL.SYSTEM, SSHLauncher.SSH_SCHEME));
+            return new SSHUserListBoxModel().withMatching(
+                    SSHAuthenticator.matcher(Connection.class),
+                    CredentialsProvider.lookupCredentials(
+                            StandardUsernameCredentials.class,
+                            context,
+                            ACL.SYSTEM,
+                            SSHLauncher.SSH_SCHEME)
+            );
         }
+
     }
 
     @Override
