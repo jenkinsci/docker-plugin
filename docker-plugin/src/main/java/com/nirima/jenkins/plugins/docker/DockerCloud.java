@@ -152,22 +152,15 @@ public class DockerCloud extends Cloud {
     }
 
     public DockerClientConfig getDockerClientConfig() {
-        DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
-            .createDefaultConfigBuilder()
-            .withUri(serverUrl);
+        DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
 
-        if( !Strings.isNullOrEmpty(version)) {
+        config.withUri(serverUrl);
+
+        if (!Strings.isNullOrEmpty(version)) {
             config.withVersion(version);
         }
 
         addCredentials(config, credentialsId);
-
-
-        // TODO?
-        // .withLogging(DockerClient.Logging.SLF4J);
-
-        //if (connectTimeout > 0)
-        //    builder.connectTimeout(connectTimeout * 1000);
 
         if (readTimeout > 0)
             config.withReadTimeout(readTimeout * 1000);
