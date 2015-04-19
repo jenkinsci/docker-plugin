@@ -185,7 +185,7 @@ public class DockerSlave extends AbstractCloudSlave {
             if(!Strings.isNullOrEmpty(tagToken)  )
                 tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "can't expand macroses", e);
         }
         return tagToken;
     }

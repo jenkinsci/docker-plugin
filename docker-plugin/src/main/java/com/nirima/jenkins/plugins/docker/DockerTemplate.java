@@ -185,7 +185,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             try {
                 return Integer.parseInt(sshLaunchTimeoutMinutes);
             } catch (NumberFormatException nfe) {
-                LOGGER.log(Level.INFO, "Malformed SSH Launch Timeout value: {0}", sshLaunchTimeoutMinutes);
+                LOGGER.log(Level.INFO, "Malformed SSH Launch Timeout value: {0}. Fallback to 1 min.", sshLaunchTimeoutMinutes);
                 return 1;
             }
         }
@@ -215,7 +215,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             try {
                 return Integer.parseInt(idleTerminationMinutes);
             } catch (NumberFormatException nfe) {
-                LOGGER.log(Level.INFO, "Malformed idleTermination value: {0}", idleTerminationMinutes);
+                LOGGER.log(Level.INFO, "Malformed idleTermination value: {0}. Fallback to 30.", idleTerminationMinutes);
                 return 30;
             }
         }
@@ -254,9 +254,8 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         try
         {
             slaveName = slaveName + "@" + getParent().getDisplayName();
-        }
-        catch(Exception ex) {
-            LOGGER.warning("Error fetching name of cloud");
+        } catch(Exception ex) {
+            LOGGER.warning("Error fetching cloud name");
         }
 
         return new DockerSlave(this, containerId,

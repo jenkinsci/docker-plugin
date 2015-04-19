@@ -38,21 +38,21 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     @Override
     public void taskAccepted(Executor executor, Queue.Task task) {
         super.taskAccepted(executor, task);
-        LOGGER.fine(" Computer " + this + " taskAccepted");
+        LOGGER.log(Level.FINE, " Computer {0} taskAccepted", this);
     }
 
     @Override
     public void taskCompleted(Executor executor, Queue.Task task, long durationMS) {
         Queue.Executable executable = executor.getCurrentExecutable();
 
-        LOGGER.log(Level.FINE, " Computer " + this + " taskCompleted");
+        LOGGER.log(Level.FINE, " Computer {0} taskCompleted", this);
 
-        if( executable instanceof Run) {
+        if (executable instanceof Run) {
             Run build = (Run) executable;
             DockerSlave slave = getNode();
 
-            if( slave == null ) {
-                LOGGER.log(Level.FINE, " Ignoring TaskCompleted for " + this + " as node has already been removed.");
+            if (slave == null) {
+                LOGGER.log(Level.FINE, " Ignoring TaskCompleted for {0} as node has already been removed.", this);
             } else {
                 slave.setRun(build);
             }
@@ -64,11 +64,10 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     }
 
 
-
     @Override
     public void taskCompletedWithProblems(Executor executor, Queue.Task task, long durationMS, Throwable problems) {
         super.taskCompletedWithProblems(executor, task, durationMS, problems);
-        LOGGER.log(Level.FINE, " Computer " + this + " taskCompletedWithProblems");
+        LOGGER.log(Level.FINE, " Computer {0} taskCompletedWithProblems", this);
     }
 
     @Override
