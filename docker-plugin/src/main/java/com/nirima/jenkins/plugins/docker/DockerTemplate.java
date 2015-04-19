@@ -171,7 +171,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     }
 
     public Descriptor<DockerTemplate> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(getClass());
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
     public Set<LabelAtom> getLabelSet(){
