@@ -40,7 +40,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase implements Describa
     }
 
     public Descriptor<DockerSimpleTemplate> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(getClass());
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
     @Extension
