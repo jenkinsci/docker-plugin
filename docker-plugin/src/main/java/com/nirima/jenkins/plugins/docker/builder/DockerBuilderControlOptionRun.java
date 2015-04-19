@@ -95,7 +95,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
                 dnsString, xCommand,
-                volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,  memoryLimit, cpuShares, bindPorts, bindAllPorts, privileged, tty);
+                volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,
+                memoryLimit, cpuShares, bindPorts, bindAllPorts, privileged, tty);
 
         String containerId = template.provisionNew(client).getId();
 
