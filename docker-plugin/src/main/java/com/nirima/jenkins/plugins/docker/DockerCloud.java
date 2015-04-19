@@ -90,7 +90,7 @@ public class DockerCloud extends Cloud {
     /* Track the count per-AMI identifiers for AMIs currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    private static HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
+    private static final HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
 
     @DataBoundConstructor
     public DockerCloud(String name,
