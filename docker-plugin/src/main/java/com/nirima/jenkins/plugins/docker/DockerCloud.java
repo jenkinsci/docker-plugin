@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Preconditions;
@@ -194,11 +195,11 @@ public class DockerCloud extends Cloud {
 
     public static Credentials lookupSystemCredentials(String credentialsId) {
         return CredentialsMatchers.firstOrNull(
-            CredentialsProvider
-                .lookupCredentials(Credentials.class, Jenkins.getInstance(),
-                                   ACL.SYSTEM
-                                   ),
-            CredentialsMatchers.withId(credentialsId)
+                CredentialsProvider.lookupCredentials(Credentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
+                CredentialsMatchers.withId(credentialsId)
         );
     }
 
