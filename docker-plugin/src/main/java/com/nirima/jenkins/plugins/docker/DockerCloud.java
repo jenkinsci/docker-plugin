@@ -53,6 +53,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -289,6 +290,7 @@ public class DockerCloud extends Cloud {
         return getTemplate(label)!=null;
     }
 
+    @CheckForNull
     public DockerTemplate getTemplate(String template) {
         for (DockerTemplate t : templates) {
             if(t.image.equals(template)) {
@@ -301,6 +303,7 @@ public class DockerCloud extends Cloud {
     /**
      * Gets {@link DockerTemplate} that has the matching {@link Label}.
      */
+    @CheckForNull
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
             if(label == null || label.matches(t.getLabelSet())) {
