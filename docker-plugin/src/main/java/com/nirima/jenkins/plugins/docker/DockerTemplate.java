@@ -43,6 +43,7 @@ import hudson.slaves.RetentionStrategy;
 import hudson.util.ListBoxModel;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
+import org.kohsuke.stapler.DataBoundSetter;
 
 
 public class DockerTemplate extends DockerTemplateBase implements Describable<DockerTemplate> {
@@ -95,6 +96,8 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     public final String remoteFs; // = "/home/jenkins";
 
     public final int instanceCap;
+
+    private Node.Mode mode = Node.Mode.NORMAL;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     public transient DockerCloud parent;
@@ -151,6 +154,15 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         }
 
         readResolve();
+    }
+
+    @DataBoundSetter
+    public void setMode(Node.Mode mode) {
+        this.mode = mode;
+    }
+
+    public Node.Mode getMode() {
+        return mode;
     }
 
     public String getInstanceCapStr() {
@@ -234,7 +246,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         logger.println("Launching " + image );
 
         int numExecutors = 1;
-        Node.Mode mode = Node.Mode.NORMAL;
 
         RetentionStrategy retentionStrategy = new OnceRetentionStrategy(idleTerminationMinutes());
 
@@ -265,7 +276,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return new DockerSlave(this, containerId,
                 slaveName,
                 nodeDescription,
-                remoteFs, numExecutors, mode, memoryLimit, cpuShares, labelString,
+                remoteFs, numExecutors, getMode(), memoryLimit, cpuShares, labelString,
                 launcher, retentionStrategy, nodeProperties);
 
     }

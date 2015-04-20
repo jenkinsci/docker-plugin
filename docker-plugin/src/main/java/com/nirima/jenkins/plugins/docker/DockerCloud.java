@@ -70,6 +70,8 @@ import java.util.logging.Logger;
 import java.util.HashMap;
 
 /**
+ * Docker Cloud configuration. Contains connection configuration,
+ * {@link DockerTemplate} contains configuration for running docker image.
  * Created by magnayn on 08/01/2014.
  */
 public class DockerCloud extends Cloud {
@@ -223,19 +225,27 @@ public class DockerCloud extends Cloud {
     @Override
     public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         try {
-
             LOGGER.log(Level.INFO, "Asked to provision {0} slave(s) for: {1}", new Object[]{excessWorkload,label});
 
             List<NodeProvisioner.PlannedNode> r = new ArrayList<NodeProvisioner.PlannedNode>();
 
-            final DockerTemplate t = getTemplate(label);
+            final List<DockerTemplate> templates = getTemplates(label);
 
-            LOGGER.log(Level.INFO, "Will provision \"{0}\" for: {1}", new Object[]{t.image,label});
+            while (excessWorkload > 0 && !templates.isEmpty()) {
+                final DockerTemplate t = templates.get(0); // get first
 
-            while (excessWorkload>0) {
+                LOGGER.log(Level.INFO, "Will provision \"{0}\" for: {1}", new Object[]{t.image,label});
 
-                if (!addProvisionedSlave(t.image, t.instanceCap)) {
-                    break;
+                try {
+                    if (!addProvisionedSlave(t)) {
+                        templates.remove(t);
+                        continue;
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "Bad template {0}: {1}. Trying next template...",
+                            new Object[]{t.image, e.getMessage()});
+                    templates.remove(t);
+                    continue;
                 }
 
                 r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(),
@@ -301,15 +311,15 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Gets {@link DockerTemplate} that has the matching {@link Label}.
+     * Gets first {@link DockerTemplate} that has the matching {@link Label}.
      */
     @CheckForNull
     public DockerTemplate getTemplate(Label label) {
-        for (DockerTemplate t : templates) {
-            if(label == null || label.matches(t.getLabelSet())) {
-                return t;
-            }
+        List<DockerTemplate> templates = getTemplates(label);
+        if (!templates.isEmpty()) {
+            return templates.get(0);
         }
+
         return null;
     }
 
@@ -317,8 +327,28 @@ public class DockerCloud extends Cloud {
      * Add a new template to the cloud
      */
     public void addTemplate(DockerTemplate t) {
-        this.templates.add(t);
         t.parent = this;
+        templates.add(t);
+    }
+
+    /**
+     * Multiple amis can have the same label.
+     * @return Templates matched to requested label assuming slave Mode
+     */
+    public List<DockerTemplate> getTemplates(Label label) {
+        ArrayList<DockerTemplate> dockerTemplates = new ArrayList<DockerTemplate>();
+
+        for (DockerTemplate t : templates) {
+            if (label == null && t.getMode() == Node.Mode.NORMAL) {
+                dockerTemplates.add(t);
+            }
+
+            if (label != null && label.matches(t.getLabelSet())) {
+                dockerTemplates.add(t);
+            }
+        }
+
+        return dockerTemplates;
     }
 
     /**
@@ -326,7 +356,7 @@ public class DockerCloud extends Cloud {
      * @param t
      */
     public void removeTemplate(DockerTemplate t) {
-        this.templates.remove(t);
+        templates.remove(t);
     }
 
     /**
@@ -384,7 +414,10 @@ public class DockerCloud extends Cloud {
      * Check not too many already running.
      *
      */
-    private synchronized boolean addProvisionedSlave(String ami, int amiCap) throws Exception {
+    private synchronized boolean addProvisionedSlave(DockerTemplate t) throws Exception {
+        String ami = t.image;
+        int amiCap = t.instanceCap;
+
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);
         int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
 
