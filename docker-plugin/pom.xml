@@ -44,6 +44,17 @@
     <build>
         <plugins>
             <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <!-- should be inherited, but doesn't see this, so duplicate config -->
+                <configuration>
+                    <source>${jdk.source}</source>
+                    <target>${jdk.target}</target>
+                    <debug>${jdk.debug}</debug>
+                    <optimize>${jdk.optimize}</optimize>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <version>${hpi.plugin.version}</version>
