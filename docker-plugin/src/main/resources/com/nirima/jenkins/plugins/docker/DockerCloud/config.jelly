@@ -34,9 +34,8 @@
 
 
   <f:entry title="${%Images}" description="${%List of Images to be launched as slaves}">
-   <f:repeatable field="templates">
-      <st:include page="config.jelly" class="${descriptor.clazz}" />
-    </f:repeatable>
+   <f:repeatableHeteroProperty field="templates" hasHeader="true" addCaption="Add Docker Template"
+                               deleteCaption="Delete Docker Template" />
   </f:entry>
 
 </j:jelly>

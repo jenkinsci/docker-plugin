@@ -8,5 +8,5 @@
         <f:textbox />
     </f:entry>
 
-    <st:include page="template.jelly" class="com.nirima.jenkins.plugins.docker.DockerSimpleTemplate" />
+    <st:include page="config.jelly" class="com.nirima.jenkins.plugins.docker.DockerSimpleTemplate" />
 </j:jelly>
