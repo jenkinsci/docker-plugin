@@ -101,17 +101,24 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
 
     @DataBoundConstructor
-    public DockerTemplate(String image, String labelString,
+    public DockerTemplate(String image,
+                          String labelString,
                           String remoteFs,
                           String remoteFsMapping,
-                          String credentialsId, String idleTerminationMinutes,
+                          String credentialsId,
+                          String idleTerminationMinutes,
                           String sshLaunchTimeoutMinutes,
-                          String jvmOptions, String javaPath,
-                          Integer memoryLimit, Integer cpuShares,
-                          String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                          String instanceCapStr, String dnsString,
+                          String jvmOptions,
+                          String javaPath,
+                          Integer memoryLimit,
+                          Integer cpuShares,
+                          String prefixStartSlaveCmd,
+                          String suffixStartSlaveCmd,
+                          String instanceCapStr,
+                          String dnsString,
                           String dockerCommand,
-                          String volumesString, String volumesFrom,
+                          String volumesString,
+                          String volumesFrom,
                           String environmentsString,
                           String lxcConfString,
                           String hostname,
@@ -134,7 +141,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         this.javaPath = javaPath;
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
-        this.remoteFs =  Strings.isNullOrEmpty(remoteFs)?"/home/jenkins":remoteFs;
+        this.remoteFs =  Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
         this.remoteFsMapping = remoteFsMapping;
 
         if (instanceCapStr.equals("")) {
@@ -171,7 +178,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     }
 
     public Descriptor<DockerTemplate> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(getClass());
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
     public Set<LabelAtom> getLabelSet(){
@@ -185,7 +192,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             try {
                 return Integer.parseInt(sshLaunchTimeoutMinutes);
             } catch (NumberFormatException nfe) {
-                LOGGER.log(Level.INFO, "Malformed SSH Launch Timeout value: {0}", sshLaunchTimeoutMinutes);
+                LOGGER.log(Level.INFO, "Malformed SSH Launch Timeout value: {0}. Fallback to 1 min.", sshLaunchTimeoutMinutes);
                 return 1;
             }
         }
@@ -215,15 +222,14 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             try {
                 return Integer.parseInt(idleTerminationMinutes);
             } catch (NumberFormatException nfe) {
-                LOGGER.log(Level.INFO, "Malformed idleTermination value: {0}", idleTerminationMinutes);
+                LOGGER.log(Level.INFO, "Malformed idleTermination value: {0}. Fallback to 30.", idleTerminationMinutes);
                 return 30;
             }
         }
     }
 
     public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException {
-            PrintStream logger = listener.getLogger();
-
+        PrintStream logger = listener.getLogger();
 
         logger.println("Launching " + image );
 
@@ -243,20 +249,17 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         String nodeDescription = "Docker Node [" + image + " on ";
         try {
             nodeDescription += getParent().getDisplayName();
-        } catch(Exception ex)
-        {
+        } catch (Exception ex) {
             nodeDescription += "???";
         }
         nodeDescription += "]";
 
-        String slaveName = containerId.substring(0,12);
+        String slaveName = containerId.substring(0, 12);
 
-        try
-        {
+        try {
             slaveName = slaveName + "@" + getParent().getDisplayName();
-        }
-        catch(Exception ex) {
-            LOGGER.warning("Error fetching name of cloud");
+        } catch(Exception ex) {
+            LOGGER.warning("Error fetching cloud name");
         }
 
         return new DockerSlave(this, containerId,
@@ -312,11 +315,16 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-
-            return new SSHUserListBoxModel().withMatching(SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
-                            ACL.SYSTEM, SSHLauncher.SSH_SCHEME));
+            return new SSHUserListBoxModel().withMatching(
+                    SSHAuthenticator.matcher(Connection.class),
+                    CredentialsProvider.lookupCredentials(
+                            StandardUsernameCredentials.class,
+                            context,
+                            ACL.SYSTEM,
+                            SSHLauncher.SSH_SCHEME)
+            );
         }
+
     }
 
     @Override

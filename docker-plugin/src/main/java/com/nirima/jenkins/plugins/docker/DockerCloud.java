@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Preconditions;
@@ -52,6 +53,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -90,7 +92,7 @@ public class DockerCloud extends Cloud {
     /* Track the count per-AMI identifiers for AMIs currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    private static HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
+    private static final HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
 
     @DataBoundConstructor
     public DockerCloud(String name,
@@ -109,12 +111,12 @@ public class DockerCloud extends Cloud {
         this.serverUrl = serverUrl;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
-        if( templates != null )
+        if (templates != null)
             this.templates = new ArrayList<DockerTemplate>(templates);
         else
-            this.templates = new ArrayList<DockerTemplate>();
+            this.templates = Collections.emptyList();
 
-        if(containerCapStr.equals("")) {
+        if (containerCapStr.equals("")) {
             this.containerCap = Integer.MAX_VALUE;
         } else {
             this.containerCap = Integer.parseInt(containerCapStr);
@@ -151,22 +153,15 @@ public class DockerCloud extends Cloud {
     }
 
     public DockerClientConfig getDockerClientConfig() {
-        DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
-            .createDefaultConfigBuilder()
-            .withUri(serverUrl);
+        DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
 
-        if( !Strings.isNullOrEmpty(version)) {
+        config.withUri(serverUrl);
+
+        if (!Strings.isNullOrEmpty(version)) {
             config.withVersion(version);
         }
 
         addCredentials(config, credentialsId);
-
-
-        // TODO?
-        // .withLogging(DockerClient.Logging.SLF4J);
-
-        //if (connectTimeout > 0)
-        //    builder.connectTimeout(connectTimeout * 1000);
 
         if (readTimeout > 0)
             config.withReadTimeout(readTimeout * 1000);
@@ -194,11 +189,11 @@ public class DockerCloud extends Cloud {
 
     public static Credentials lookupSystemCredentials(String credentialsId) {
         return CredentialsMatchers.firstOrNull(
-            CredentialsProvider
-                .lookupCredentials(Credentials.class, Jenkins.getInstance(),
-                                   ACL.SYSTEM
-                                   ),
-            CredentialsMatchers.withId(credentialsId)
+                CredentialsProvider.lookupCredentials(Credentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
+                CredentialsMatchers.withId(credentialsId)
         );
     }
 
@@ -295,6 +290,7 @@ public class DockerCloud extends Cloud {
         return getTemplate(label)!=null;
     }
 
+    @CheckForNull
     public DockerTemplate getTemplate(String template) {
         for (DockerTemplate t : templates) {
             if(t.image.equals(template)) {
@@ -307,6 +303,7 @@ public class DockerCloud extends Cloud {
     /**
      * Gets {@link DockerTemplate} that has the matching {@link Label}.
      */
+    @CheckForNull
     public DockerTemplate getTemplate(Label label) {
         for (DockerTemplate t : templates) {
             if(label == null || label.matches(t.getLabelSet())) {

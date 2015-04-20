@@ -34,7 +34,11 @@ public class DockerSlave extends AbstractCloudSlave {
     private transient Run theRun;
 
     @DataBoundConstructor
-    public DockerSlave(DockerTemplate dockerTemplate, String containerId, String name, String nodeDescription, String remoteFS, int numExecutors, Mode mode, Integer memoryLimit, Integer cpuShares, String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties) throws Descriptor.FormException, IOException {
+    public DockerSlave(DockerTemplate dockerTemplate, String containerId, String name, String nodeDescription,
+                       String remoteFS, int numExecutors, Mode mode, Integer memoryLimit, Integer cpuShares,
+                       String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy,
+                       List<? extends NodeProperty<?>> nodeProperties)
+            throws Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
         Preconditions.checkNotNull(dockerTemplate);
         Preconditions.checkNotNull(containerId);
@@ -185,7 +189,7 @@ public class DockerSlave extends AbstractCloudSlave {
             if(!Strings.isNullOrEmpty(tagToken)  )
                 tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "can't expand macroses", e);
         }
         return tagToken;
     }
