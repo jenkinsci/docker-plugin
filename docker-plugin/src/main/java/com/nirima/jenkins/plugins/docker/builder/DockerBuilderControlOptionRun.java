@@ -85,8 +85,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         LOGGER.info("Pulling image " + xImage);
 
-        InputStream result = client.pullImageCmd(xImage)
-                .exec();
+        InputStream result = client.pullImageCmd(xImage).exec();
 
         String strResult = IOUtils.toString(result);
         LOGGER.log(Level.INFO, "Pull result = {0}", strResult);
@@ -106,9 +105,9 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
     private String expand(AbstractBuild<?, ?> build, String text) {
         try {
-            if(!Strings.isNullOrEmpty(text)  )
+            if (!Strings.isNullOrEmpty(text)) {
                 text = TokenMacro.expandAll((AbstractBuild) build, TaskListener.NULL, text);
-
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
