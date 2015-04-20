@@ -358,12 +358,13 @@ public class DockerCloud extends Cloud {
         if (!imageExists) {
             LOGGER.log(Level.INFO, "Pulling image \"{0}\" since one was not found.  This may take awhile...", ami);
             //Identifier amiId = Identifier.fromCompoundString(ami);
-            InputStream imageStream = dockerClient.pullImageCmd(ami).exec();
-            int streamValue = 0;
-            while (streamValue != -1) {
-                streamValue = imageStream.read();
+            try (InputStream imageStream = dockerClient.pullImageCmd(ami).exec()) {
+                int streamValue = 0;
+                while (streamValue != -1) {
+                    streamValue = imageStream.read();
+                }
             }
-            imageStream.close();
+
             LOGGER.log(Level.INFO, "Finished pulling image \"{0}\"", ami);
         }
 
