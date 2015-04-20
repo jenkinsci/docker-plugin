@@ -99,13 +99,17 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     private Node.Mode mode = Node.Mode.NORMAL;
 
+    private RetentionStrategy retentionStrategy = new OnceRetentionStrategy(0);
+
     private transient /*almost final*/ Set<LabelAtom> labelSet;
+
     public transient DockerCloud parent;
 
 
     @DataBoundConstructor
     public DockerTemplate(String image,
                           String labelString,
+                          RetentionStrategy retentionStrategy,
                           String remoteFs,
                           String remoteFsMapping,
                           String credentialsId,
@@ -137,6 +141,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
 
         this.labelString = Util.fixNull(labelString);
+        this.retentionStrategy = retentionStrategy;
         this.credentialsId = credentialsId;
         this.idleTerminationMinutes = idleTerminationMinutes;
         this.sshLaunchTimeoutMinutes = sshLaunchTimeoutMinutes;
@@ -227,7 +232,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return parent;
     }
 
-    public int idleTerminationMinutes() {
+    public int getIdleTerminationMinutes() {
         if (idleTerminationMinutes == null || idleTerminationMinutes.trim().isEmpty()) {
             return 0;
         } else {
@@ -247,7 +252,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         int numExecutors = 1;
 
-        RetentionStrategy retentionStrategy = new OnceRetentionStrategy(idleTerminationMinutes());
+        RetentionStrategy retentionStrategy = new OnceRetentionStrategy(getIdleTerminationMinutes());
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
 
