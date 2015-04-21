@@ -146,7 +146,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
                 DockerTemplate t = new DockerTemplate(image, labelString,
-                        retentionStrategy, remoteFs, remoteFsMapping,
+                        remoteFs, remoteFsMapping,
                         credentialsId, idleTerminationMinutes,
                         sshLaunchTimeoutMinutes,
                         jvmOptions, javaPath,

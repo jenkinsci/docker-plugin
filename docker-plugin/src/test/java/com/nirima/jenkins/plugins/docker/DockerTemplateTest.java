@@ -1,10 +1,9 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.slaves.RetentionStrategy;
-import org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy;
-import org.junit.Test;
 import static org.junit.Assert.*;
-import hudson.model.Node;
+import org.junit.Test;
 
 public class DockerTemplateTest {
 
@@ -12,7 +11,6 @@ public class DockerTemplateTest {
     String image = "image";
     String labelString;
     String remoteFs = "remoteFs";
-    RetentionStrategy retentionStrategy = OnceRetentionStrategy.INSTANCE;
     String remoteFsMapping = "remoteFsMapping";
     String credentialsId = "credentialsId";
     String idleTerminationMinutes = "idleTerminationMinutes";
@@ -38,7 +36,7 @@ public class DockerTemplateTest {
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        DockerTemplate instance = new DockerTemplate(image, labelString, retentionStrategy,
+        DockerTemplate instance = new DockerTemplate(image, labelString,
                 remoteFs,
                 remoteFsMapping,
                 credentialsId, idleTerminationMinutes,
