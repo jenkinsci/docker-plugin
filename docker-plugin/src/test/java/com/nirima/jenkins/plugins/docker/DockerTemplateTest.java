@@ -1,8 +1,9 @@
 package com.nirima.jenkins.plugins.docker;
 
-import org.junit.Test;
+import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import hudson.slaves.RetentionStrategy;
 import static org.junit.Assert.*;
-import hudson.model.Node;
+import org.junit.Test;
 
 public class DockerTemplateTest {
 

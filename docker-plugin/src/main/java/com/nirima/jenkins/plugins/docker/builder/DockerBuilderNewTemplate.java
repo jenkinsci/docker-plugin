@@ -6,6 +6,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.ItemGroup;
+import hudson.slaves.RetentionStrategy;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.slaves.Cloud;
@@ -38,6 +39,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
 
     public final String image;
     public final String labelString;
+    public final RetentionStrategy retentionStrategy;
     public final String remoteFsMapping;
     public final String remoteFs;
     public final String credentialsId;
@@ -63,7 +65,9 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final String hostname;
 
     @DataBoundConstructor
-    public DockerBuilderNewTemplate(String image, String labelString, String remoteFs, String remoteFsMapping,
+    public DockerBuilderNewTemplate(String image, String labelString,
+                                    RetentionStrategy retentionStrategy,
+                                    String remoteFs, String remoteFsMapping,
                                               String credentialsId, String idleTerminationMinutes,
                                               String sshLaunchTimeoutMinutes,
                                               String jvmOptions, String javaPath,
@@ -82,6 +86,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
 
         this.image = image;
         this.labelString = labelString;
+        this.retentionStrategy = retentionStrategy;
         this.remoteFs = remoteFs;
         this.remoteFsMapping = remoteFsMapping;
         this.credentialsId = credentialsId;
@@ -140,7 +145,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
-                DockerTemplate t = new DockerTemplate(image, labelString, remoteFs, remoteFsMapping, 
+                DockerTemplate t = new DockerTemplate(image, labelString,
+                        remoteFs, remoteFsMapping,
                         credentialsId, idleTerminationMinutes,
                         sshLaunchTimeoutMinutes,
                         jvmOptions, javaPath,

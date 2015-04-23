@@ -1,5 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import hudson.util.FormValidation;
+import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.Joiner;
 import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Strings;
@@ -15,7 +18,6 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.PortBinding;
 import com.trilead.ssh2.Connection;
 
-import org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -93,15 +95,19 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
      */
     public final String remoteFsMapping;
 
-    public final String remoteFs; // = "/home/jenkins";
+    public String remoteFs = "/home/jenkins";
 
     public final int instanceCap;
 
     private Node.Mode mode = Node.Mode.NORMAL;
 
+    private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(0);
+
     private transient /*almost final*/ Set<LabelAtom> labelSet;
+
     public transient DockerCloud parent;
 
+    private int numExecutors = 1;
 
     @DataBoundConstructor
     public DockerTemplate(String image,
@@ -163,6 +169,31 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     public Node.Mode getMode() {
         return mode;
+    }
+
+    /**
+     * Experimental option allows set number of executors
+     */
+    @DataBoundSetter
+    public void setNumExecutors(int numExecutors) {
+        this.numExecutors = numExecutors;
+    }
+
+    public int getNumExecutors() {
+        if (getRetentionStrategy() instanceof DockerOnceRetentionStrategy) {
+            return 1; // works only with one executor!
+        }
+
+        return numExecutors;
+    }
+
+    @DataBoundSetter
+    public void setRetentionStrategy(RetentionStrategy retentionStrategy) {
+        this.retentionStrategy = retentionStrategy;
+    }
+
+    public RetentionStrategy getRetentionStrategy() {
+        return retentionStrategy;
     }
 
     public String getInstanceCapStr() {
@@ -227,7 +258,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return parent;
     }
 
-    public int idleTerminationMinutes() {
+    public int getIdleTerminationMinutes() {
         if (idleTerminationMinutes == null || idleTerminationMinutes.trim().isEmpty()) {
             return 0;
         } else {
@@ -245,11 +276,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         logger.println("Launching " + image );
 
-        int numExecutors = 1;
-
-        RetentionStrategy retentionStrategy = new OnceRetentionStrategy(idleTerminationMinutes());
-
-        List<? extends NodeProperty<?>> nodeProperties = new ArrayList();
+        List<? extends NodeProperty<?>> nodeProperties = new ArrayList<>();
 
         InspectContainerResponse containerInspectResponse = provisionNew();
         String containerId = containerInspectResponse.getId();
@@ -276,18 +303,14 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return new DockerSlave(this, containerId,
                 slaveName,
                 nodeDescription,
-                remoteFs, numExecutors, getMode(), memoryLimit, cpuShares, labelString,
-                launcher, retentionStrategy, nodeProperties);
+                remoteFs, getNumExecutors(), getMode(), memoryLimit, cpuShares, labelString,
+                launcher, getRetentionStrategy(), nodeProperties);
 
     }
 
     public InspectContainerResponse provisionNew() throws DockerException {
         DockerClient dockerClient = getParent().connect();
         return provisionNew(dockerClient);
-    }
-
-    public int getNumExecutors() {
-        return 1;
     }
 
     @Override
@@ -319,6 +342,14 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<DockerTemplate> {
+        public FormValidation doCheckExecutors(@QueryParameter int executors) {
+            if (executors > 1) {
+                return FormValidation.warning("Experimental, see help");
+            } else if (executors < 1) {
+                return FormValidation.error("Must be > 0");
+            }
+            return FormValidation.ok();
+        }
 
         @Override
         public String getDisplayName() {
