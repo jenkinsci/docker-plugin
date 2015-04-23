@@ -29,6 +29,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.ws.rs.ProcessingException;
+
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -278,8 +280,15 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList<>();
 
-        InspectContainerResponse containerInspectResponse = provisionNew();
-        String containerId = containerInspectResponse.getId();
+        String containerId = provisionNew();
+        DockerClient client = getParent().connect();
+        InspectContainerResponse containerInspectResponse = null;
+        try {
+            containerInspectResponse = client.inspectContainerCmd(containerId).exec();
+        } catch(ProcessingException ex) {
+            client.removeContainerCmd(containerId).withForce(true).exec();
+            throw ex;
+        }
 
         ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
 
@@ -308,7 +317,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     }
 
-    public InspectContainerResponse provisionNew() throws DockerException {
+    public String provisionNew() throws DockerException {
         DockerClient dockerClient = getParent().connect();
         return provisionNew(dockerClient);
     }

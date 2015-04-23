@@ -128,7 +128,7 @@ public abstract class DockerTemplateBase {
         return cpuShares;
     }
 
-    public InspectContainerResponse provisionNew(DockerClient dockerClient) throws DockerException {
+    public String provisionNew(DockerClient dockerClient) throws DockerException {
 
         CreateContainerCmd containerConfig = dockerClient.createContainerCmd(image);
 
@@ -143,7 +143,7 @@ public abstract class DockerTemplateBase {
 
         startCommand.exec();
 
-        return dockerClient.inspectContainerCmd(containerId).exec();
+        return containerId;
     }
 
     public String[] getDockerCommandArray() {
