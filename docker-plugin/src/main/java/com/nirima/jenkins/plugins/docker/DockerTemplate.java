@@ -351,10 +351,10 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<DockerTemplate> {
-        public FormValidation doCheckExecutors(@QueryParameter int executors) {
-            if (executors > 1) {
+        public FormValidation doCheckNumExecutors(@QueryParameter int numExecutors) {
+            if (numExecutors > 1) {
                 return FormValidation.warning("Experimental, see help");
-            } else if (executors < 1) {
+            } else if (numExecutors < 1) {
                 return FormValidation.error("Must be > 0");
             }
             return FormValidation.ok();
