@@ -1,19 +1,23 @@
 # Changelog
 
 
-## Next dev version
+## Next version
 
 *
 
-## 0.9.0-rc1
+## 0.9.0-beta2
 
 * Handle exception inspecting newly created container
 * Added experimental feature for choosing retention strategies and number of executors
+* Allow configure slave Mode: exclusive/inclusive
 * Temp fix for tagging. Fixes container stop.
 * More help files
 * DockerJobProperty optional in job configuration
 * Fix connection test. Print error instead broken page
 * Use host IP from container binding
+
+## 0.9-beta1
+
 * java 1.7 required
 * Support allocating a pseudo-TTY
 * Support CPU and memory constraints
@@ -34,3 +38,51 @@
 * Be graceful on stop if container has already stopped
 
 ## 0.8
+
+- Expand token macros when running containers
+- Use a standardized “one-shot” cloud retention strategy
+- Use identifier to get image by tag
+- Add port bindings capability
+- Added mapped remote filesystem support for workspace browsing
+- Adding support for using lxc conf options
+
+## 0.7
+
+- Feature to delete images from repository when jenkins culls the job
+- Fixed #64 - storing of cloudName and templateId variables
+- Add timeout for a slave that gets provisioned but then has no work
+- Add a new feature that allows you to add a build step of constructing a docker image from a Dockerfile, and optionally push that image to a registry
+- Added 'volumes-from' functionality
+- Pull the image if we do not find it
+- Proper parsing of empty dnsHosts string
+- When the SSH connection fails, back off and retry.
+
+# 0.6.2
+- Allow configuration of an instance cap
+- Allow configuration of image hostname
+
+# 0.6.1
+- Fix for DockerTemplate volumes param
+
+# 0.6
+Docker 1.0 has been released, but has non-backwards compatible changes. Upgrade your hosts to docker >= 1.0.0.
+
+- Restore 1.6 compat, Docker 1.0 compat (jDocker 1.4)
+- volumes parameter in template
+- wiki link in readme
+
+## 0.3.4
+
+- Various fixes; jDocker to released version in maven central.
+
+## 0.3
+
+- Change client library to jDocker
+- Management UI to list running containers and images, and to stop running ones.
+
+## 0.2
+
+- Various bugfixes
+
+## 0.1
+- Initial release. Probably many bugs!
