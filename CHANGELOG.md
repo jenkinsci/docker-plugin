@@ -3,7 +3,10 @@
 
 ## Next version
 
-*
+## 0.9.0-rc1
+
+* More help files
+* Fix executor value validation
 
 ## 0.9.0-beta2
 
