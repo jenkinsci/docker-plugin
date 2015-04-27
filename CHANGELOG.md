@@ -3,6 +3,10 @@
 
 ## Next version
 
+## 0.9.0-rc2
+
+* Show plugin url and description in Jenkins update center
+
 ## 0.9.0-rc1
 
 * More help files

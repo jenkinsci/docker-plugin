@@ -9,7 +9,10 @@
     <groupId>com.nirima</groupId>
     <artifactId>docker-plugin</artifactId>    
     <packaging>hpi</packaging>
+
     <name>Docker plugin</name>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
+    <description>Provide Cloud Provisioning and other Docker features</description>
 
     <dependencies>
          <dependency>
