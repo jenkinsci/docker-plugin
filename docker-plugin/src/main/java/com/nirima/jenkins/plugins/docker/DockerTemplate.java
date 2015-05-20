@@ -206,18 +206,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         }
     }
 
-    public String getDnsString() {
-        return Joiner.on(" ").join(dnsHosts);
-    }
-
-    public String getVolumesString() {
-	return Joiner.on(" ").join(volumes);
-    }
-
-    public String getVolumesFrom() {
-        return volumesFrom;
-    }
-
     public String getRemoteFsMapping() {
         return remoteFsMapping;
     }
@@ -250,10 +238,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         labelSet = Label.parse(labelString);
         return this;
-    }
-
-    public String getDisplayName() {
-        return "Image of " + image;
     }
 
     public DockerCloud getParent() {
