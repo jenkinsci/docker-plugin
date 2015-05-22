@@ -1,23 +1,27 @@
 package com.nirima.jenkins.plugins.docker.ws;
 
-import shaded.com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.WorkspaceBrowser;
+
 import java.io.File;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.apache.commons.io.FileUtils.getFile;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 
 @Extension
-public class MappedFsWorkspaceBrowser extends WorkspaceBrowser  {
+public class MappedFsWorkspaceBrowser extends WorkspaceBrowser {
 
     private static final Logger LOGGER = Logger.getLogger(MappedFsWorkspaceBrowser.class.getName());
 
     public MappedFsWorkspaceBrowser() {
-        LOGGER.info(this.getClass().getName() + " initializing.");
+        LOGGER.log(Level.INFO, "{0} initializing...", this.getClass().getName());
     }
 
     @Override
@@ -25,17 +29,13 @@ public class MappedFsWorkspaceBrowser extends WorkspaceBrowser  {
         Run lastBuild = job.getLastBuild();
 
         if (lastBuild != null) {
-            DockerBuildAction a = lastBuild.getAction(DockerBuildAction.class);
+            DockerBuildAction action = lastBuild.getAction(DockerBuildAction.class);
 
-            if (a != null && !Strings.isNullOrEmpty(a.remoteFsMapping)) {
-                File mappedRemoteWorkspace = new File(a.remoteFsMapping);
-                mappedRemoteWorkspace = new File(mappedRemoteWorkspace, "workspace");
-                mappedRemoteWorkspace = new File(mappedRemoteWorkspace, job.getName());
-                return new FilePath(mappedRemoteWorkspace);
+            if (action != null && isNotBlank(action.remoteFsMapping)) {
+                return new FilePath(getFile(new File(action.remoteFsMapping), "workspace", job.getName()));
             }
         }
 
         return null;
-
     }
 }

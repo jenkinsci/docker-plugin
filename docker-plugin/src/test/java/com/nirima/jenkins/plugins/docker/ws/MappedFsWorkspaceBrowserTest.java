@@ -19,9 +19,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
- * User: lanwen
- * Date: 22.05.15
- * Time: 17:01
+ * @author lanwen (Merkushev Kirill)
  */
 @RunWith(MockitoJUnitRunner.class)
 public class MappedFsWorkspaceBrowserTest {
