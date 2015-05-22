@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.model.*;
 import shaded.com.google.common.base.Function;
 import shaded.com.google.common.base.Joiner;
 import shaded.com.google.common.base.Objects;
@@ -10,17 +11,14 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
-import com.github.dockerjava.api.model.LxcConf;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.VolumesFrom;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 
 /**
@@ -45,8 +43,23 @@ public abstract class DockerTemplateBase {
     public final String hostname;
 
     public final String[] dnsHosts;
-    public final String[] volumes;
-    public final String volumesFrom;
+
+    /**
+     * Every String is volume specification
+     */
+    public String[] volumes;
+
+    /**
+     * @deprecated use {@link #volumesFrom2}
+     */
+    @Deprecated
+    public String volumesFrom;
+
+    /**
+     * Every String is volumeFrom specification
+     */
+    public String[] volumesFrom2;
+
     public final String[] environment;
 
     public final String bindPorts;
@@ -62,7 +75,7 @@ public abstract class DockerTemplateBase {
                               String dnsString,
                               String dockerCommand,
                               String volumesString,
-                              String volumesFrom,
+                              String volumesFromString,
                               String environmentsString,
                               String lxcConfString,
                               String hostname,
@@ -88,19 +101,24 @@ public abstract class DockerTemplateBase {
         this.memoryLimit = memoryLimit;
         this.cpuShares = cpuShares;
 
-        this.dnsHosts = splitAndFilterEmpty(dnsString);
-        this.volumes = splitAndFilterEmpty(volumesString);
-        this.volumesFrom = volumesFrom;
+        this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
+        this.volumes = splitAndFilterEmpty(volumesString, "\n");
+        setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
 
-        this.environment = splitAndFilterEmpty(environmentsString);
+        this.environment = splitAndFilterEmpty(environmentsString, " ");
     }
 
     protected Object readResolve() {
+        if (volumesFrom != null) {
+            setVolumesFrom2(new String[]{volumesFrom});
+            volumesFrom = null;
+        }
+
         return this;
     }
 
-    public String[] splitAndFilterEmpty(String s) {
-        List<String> list = Splitter.on(' ').omitEmptyStrings().splitToList(s);
+    public String[] splitAndFilterEmpty(String s, String separator) {
+        List<String> list = Splitter.on(separator).omitEmptyStrings().splitToList(s);
         return list.toArray(new String[0]);
     }
 
@@ -108,12 +126,34 @@ public abstract class DockerTemplateBase {
         return Joiner.on(" ").join(dnsHosts);
     }
 
-    public String getVolumesString() {
-        return Joiner.on(" ").join(volumes);
+    @CheckForNull
+    public String[] getVolumes() {
+        return volumes;
     }
 
+    public String getVolumesString() {
+        return Joiner.on("\n").join(volumes);
+    }
+
+    /**
+     *
+     * @deprecated use {@link #getVolumesFrom2()}
+     */
+    @Deprecated
     public String getVolumesFrom() {
         return volumesFrom;
+    }
+
+    public String[] getVolumesFrom2() {
+        return volumesFrom2;
+    }
+
+    public void setVolumesFrom2(String[] volumes) {
+        this.volumesFrom2 = volumes;
+    }
+
+    public String getVolumesFromString() {
+        return Joiner.on("\n").join(getVolumesFrom2());
     }
 
     public String getDisplayName() {
@@ -132,7 +172,7 @@ public abstract class DockerTemplateBase {
 
         CreateContainerCmd containerConfig = dockerClient.createContainerCmd(image);
 
-        createContainerConfig(containerConfig);
+        fillContainerConfig(containerConfig);
 
         CreateContainerResponse response = containerConfig.exec();
         String containerId = response.getId();
@@ -174,7 +214,7 @@ public abstract class DockerTemplateBase {
                 });
     }
 
-    public CreateContainerCmd createContainerConfig(CreateContainerCmd containerConfig) {
+    public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         if (hostname != null && !hostname.isEmpty()) {
             containerConfig.withHostName(hostname);
         }
@@ -201,8 +241,38 @@ public abstract class DockerTemplateBase {
         if (dnsHosts.length > 0)
             containerConfig.withDns(dnsHosts);
 
-        if (volumesFrom != null && !volumesFrom.isEmpty())
-            containerConfig.withVolumesFrom(VolumesFrom.parse(volumesFrom));
+        // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196
+        if (getVolumes().length > 0) {
+            ArrayList<Volume> vols = new ArrayList<>();
+            ArrayList<Bind> binds = new ArrayList<>();
+
+            for (String vol : getVolumes()) {
+                final String[] group = vol.split(":");
+                if (group.length > 1) {
+                    if (group[1].equals("/")) {
+                        throw new IllegalArgumentException("Invalid bind mount: destination can't be '/'");
+                    }
+
+                    binds.add(Bind.parse(vol));
+                } else if (vol.equals("/")) {
+                    throw new IllegalArgumentException("Invalid volume: path can't be '/'");
+                } else {
+                    vols.add(Volume.parse(vol));
+                }
+            }
+
+            containerConfig.withVolumes(vols.toArray(new Volume[vols.size()]));
+            containerConfig.withBinds(binds.toArray(new Bind[binds.size()]));
+        }
+
+        if (getVolumesFrom2().length > 0) {
+            ArrayList<VolumesFrom> volFrom = new ArrayList<>();
+            for (String volFromStr : getVolumesFrom2()) {
+                volFrom.add(new VolumesFrom(volFromStr));
+            }
+
+            containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
+        }
 
         containerConfig.withTty(this.tty);
 

@@ -110,11 +110,11 @@
         </f:entry>
 
         <f:entry title="${%Volumes}" field="volumesString">
-            <f:textbox/>
+            <f:expandableTextbox/>
         </f:entry>
 
-        <f:entry title="${%Volumes From}" field="volumesFrom">
-            <f:textbox/>
+        <f:entry title="${%Volumes From}" field="volumesFromString">
+            <f:expandableTextbox/>
         </f:entry>
 
         <f:entry title="${%Environment}" field="environmentsString">

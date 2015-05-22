@@ -129,7 +129,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String dnsString,
                           String dockerCommand,
                           String volumesString,
-                          String volumesFrom,
+                          String volumesFromString,
                           String environmentsString,
                           String lxcConfString,
                           String hostname,
@@ -139,7 +139,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           boolean tty
 
     ) {
-        super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname, memoryLimit, cpuShares,
+        super(image, dnsString,dockerCommand,volumesString,volumesFromString,environmentsString,lxcConfString,hostname, memoryLimit, cpuShares,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
                 privileged, tty);
 
