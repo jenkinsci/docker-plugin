@@ -11,8 +11,10 @@
 
              <b>Original Container Id:</b> ${it.containerId}
              <br/>
+             <j:if test="${it.taggedId != null}">
              <b>Committed Container Id:</b> ${it.taggedId}
              <br/>
+             </j:if>
 
 	</t:summary>
 </j:jelly>
