@@ -63,6 +63,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
     public final boolean privileged;
     public final boolean tty;
     public final String hostname;
+    public final String macAddress;
 
     @DataBoundConstructor
     public DockerBuilderNewTemplate(String image, String labelString,
@@ -82,7 +83,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                                               String bindPorts,
                                               boolean bindAllPorts,
                                               boolean privileged,
-                                              boolean tty) {
+                                              boolean tty,
+                                    String macAddress) {
 
         this.image = image;
         this.labelString = labelString;
@@ -110,6 +112,7 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.privileged = privileged;
         this.tty = tty;
         this.hostname = hostname;
+        this.macAddress = macAddress;
     }
 
     @Override
@@ -154,7 +157,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                         prefixStartSlaveCmd,
                         suffixStartSlaveCmd, instanceCapStr,
                         dnsString, dockerCommand,
-                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname, bindPorts, bindAllPorts, privileged, tty);
+                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname,
+                        bindPorts, bindAllPorts, privileged, tty, macAddress);
                 ((DockerCloud) c).addTemplate(t);
             }
         }

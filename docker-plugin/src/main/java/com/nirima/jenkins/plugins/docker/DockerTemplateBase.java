@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.model.*;
+import org.apache.commons.lang.StringUtils;
 import shaded.com.google.common.base.Function;
 import shaded.com.google.common.base.Joiner;
 import shaded.com.google.common.base.Objects;
@@ -20,6 +21,8 @@ import java.util.logging.Logger;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+
+import static org.apache.commons.lang.StringUtils.*;
 
 /**
  * Base for docker templates - does not include Jenkins items like labels.
@@ -71,6 +74,8 @@ public abstract class DockerTemplateBase {
     public final boolean privileged;
     public final boolean tty;
 
+    @CheckForNull private String macAddress;
+
     public DockerTemplateBase(String image,
                               String dnsString,
                               String dockerCommand,
@@ -84,7 +89,8 @@ public abstract class DockerTemplateBase {
                               String bindPorts,
                               boolean bindAllPorts,
                               boolean privileged,
-                              boolean tty
+                              boolean tty,
+                              String macAddress
 
     ) {
         this.image = image;
@@ -106,6 +112,8 @@ public abstract class DockerTemplateBase {
         setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
 
         this.environment = splitAndFilterEmpty(environmentsString, " ");
+
+        setMacAddress(macAddress);
     }
 
     protected Object readResolve() {
@@ -154,6 +162,15 @@ public abstract class DockerTemplateBase {
 
     public String getVolumesFromString() {
         return Joiner.on("\n").join(getVolumesFrom2());
+    }
+
+    @CheckForNull
+    public String getMacAddress() {
+        return trimToNull(macAddress);
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = trimToNull(macAddress);
     }
 
     public String getDisplayName() {
@@ -278,6 +295,10 @@ public abstract class DockerTemplateBase {
 
         if (environment != null && environment.length > 0)
             containerConfig.withEnv(environment);
+
+        if (getMacAddress() != null) {
+            containerConfig.withMacAddress(getMacAddress());
+        }
 
         return containerConfig;
     }

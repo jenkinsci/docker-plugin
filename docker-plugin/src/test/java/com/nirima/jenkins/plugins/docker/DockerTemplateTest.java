@@ -33,6 +33,7 @@ public class DockerTemplateTest {
     boolean bindAllPorts = true;
     boolean privileged = false;
     boolean tty = false;
+    String macAddress = "92:d0:c6:0a:29:33";
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
@@ -53,7 +54,8 @@ public class DockerTemplateTest {
                 bindPorts,
                 bindAllPorts,
                 privileged,
-                tty);
+                tty,
+                macAddress);
 
               
         return instance;
