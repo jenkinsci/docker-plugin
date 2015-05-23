@@ -5,6 +5,10 @@
 
 ## 0.9.0-rc2
 
+* Fix idleMinutes shadowing for DockerOnceRetentionStrategy
+* Form validation for volume configuration
+* Support multiple volumesFrom
+* Fix volume binding and volume creation
 * hide empty commit in action
 * Show plugin url and description in Jenkins update center
 
