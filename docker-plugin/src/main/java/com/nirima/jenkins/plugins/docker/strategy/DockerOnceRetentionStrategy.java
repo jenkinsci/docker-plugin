@@ -39,6 +39,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
     @DataBoundConstructor
     public DockerOnceRetentionStrategy(int idleMinutes) {
         super(idleMinutes);
+        this.idleMinutes = idleMinutes;
     }
 
     public int getIdleMinutes() {
