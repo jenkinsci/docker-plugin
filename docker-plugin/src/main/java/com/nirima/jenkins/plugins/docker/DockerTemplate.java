@@ -1,13 +1,5 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
-import hudson.util.FormValidation;
-import org.kohsuke.stapler.QueryParameter;
-import shaded.com.google.common.base.Joiner;
-import shaded.com.google.common.base.Objects;
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.ImmutableList;
-
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -15,12 +7,34 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Volume;
+import com.github.dockerjava.api.model.VolumesFrom;
+import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import com.trilead.ssh2.Connection;
-
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.*;
+import hudson.model.labels.LabelAtom;
+import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.security.ACL;
+import hudson.slaves.ComputerLauncher;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.RetentionStrategy;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import hudson.util.StreamTaskListener;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.Strings;
+import shaded.com.google.common.collect.ImmutableList;
 
+import javax.ws.rs.ProcessingException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -28,26 +42,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.ws.rs.ProcessingException;
-
-import hudson.Extension;
-import hudson.Util;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.ItemGroup;
-import hudson.model.Label;
-import hudson.model.Node;
-import hudson.model.labels.LabelAtom;
-import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.security.ACL;
-import hudson.slaves.ComputerLauncher;
-import hudson.slaves.NodeProperty;
-import hudson.slaves.RetentionStrategy;
-import hudson.util.ListBoxModel;
-import hudson.util.StreamTaskListener;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.DataBoundSetter;
 
 
 public class DockerTemplate extends DockerTemplateBase implements Describable<DockerTemplate> {
@@ -129,7 +123,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String dnsString,
                           String dockerCommand,
                           String volumesString,
-                          String volumesFrom,
+                          String volumesFromString,
                           String environmentsString,
                           String lxcConfString,
                           String hostname,
@@ -139,7 +133,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           boolean tty
 
     ) {
-        super(image, dnsString,dockerCommand,volumesString,volumesFrom,environmentsString,lxcConfString,hostname, memoryLimit, cpuShares,
+        super(image, dnsString,dockerCommand,volumesString,volumesFromString,environmentsString,lxcConfString,hostname, memoryLimit, cpuShares,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
                 privileged, tty);
 
@@ -206,18 +200,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         }
     }
 
-    public String getDnsString() {
-        return Joiner.on(" ").join(dnsHosts);
-    }
-
-    public String getVolumesString() {
-	return Joiner.on(" ").join(volumes);
-    }
-
-    public String getVolumesFrom() {
-        return volumesFrom;
-    }
-
     public String getRemoteFsMapping() {
         return remoteFsMapping;
     }
@@ -250,10 +232,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         labelSet = Label.parse(labelString);
         return this;
-    }
-
-    public String getDisplayName() {
-        return "Image of " + image;
     }
 
     public DockerCloud getParent() {
@@ -357,6 +335,49 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             } else if (numExecutors < 1) {
                 return FormValidation.error("Must be > 0");
             }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckVolumesString(@QueryParameter String volumesString) {
+            try {
+                final String[] strings = splitAndFilterEmpty(volumesString, "\n");
+                for (String s : strings) {
+                    if (s.equals("/")) {
+                        return FormValidation.error("Invalid volume: path can't be '/'");
+                    }
+
+                    final String[] group = s.split(":");
+                    if (group.length > 3) {
+                        return FormValidation.error("Wrong syntax: " + s);
+                    } else if (group.length == 2 || group.length == 3) {
+                        if (group[1].equals("/")) {
+                            return FormValidation.error("Invalid bind mount: destination can't be '/'");
+                        }
+                        Bind.parse(s);
+                    } else if (group.length == 1) {
+                        Volume.parse(s);
+                    } else {
+                        return FormValidation.error("Wrong line: " + s);
+                    }
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+
+            return FormValidation.ok();
+
+        }
+
+        public FormValidation doCheckVolumesFromString(@QueryParameter String volumesFromString) {
+            try {
+                final String[] strings = splitAndFilterEmpty(volumesFromString, "\n");
+                for (String volFrom : strings) {
+                    VolumesFrom.parse(volFrom);
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+
             return FormValidation.ok();
         }
 

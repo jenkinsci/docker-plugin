@@ -80,7 +80,7 @@ public class DockerCloud extends Cloud {
 
     public static final String CLOUD_ID_PREFIX = "docker-";
 
-    public final List<DockerTemplate> templates;
+    private List<DockerTemplate> templates;
     public final String serverUrl;
     public final int containerCap;
 
@@ -329,6 +329,10 @@ public class DockerCloud extends Cloud {
     public void addTemplate(DockerTemplate t) {
         t.parent = this;
         templates.add(t);
+    }
+
+    public List<DockerTemplate> getTemplates() {
+        return templates;
     }
 
     /**
