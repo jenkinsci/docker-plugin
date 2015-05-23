@@ -257,7 +257,7 @@ public abstract class DockerTemplateBase {
                 } else if (vol.equals("/")) {
                     throw new IllegalArgumentException("Invalid volume: path can't be '/'");
                 } else {
-                    vols.add(Volume.parse(vol));
+                    vols.add(new Volume(vol));
                 }
             }
 
