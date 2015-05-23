@@ -5,6 +5,7 @@
 
 ## 0.9.0-rc2
 
+* hide empty commit in action
 * Show plugin url and description in Jenkins update center
 
 ## 0.9.0-rc1
