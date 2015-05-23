@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerTemplateTest2 {
+public class DockerTemplate2Test {
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
