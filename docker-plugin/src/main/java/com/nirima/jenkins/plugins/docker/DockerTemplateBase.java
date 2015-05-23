@@ -293,10 +293,6 @@ public abstract class DockerTemplateBase {
         if( dnsHosts.length > 0 )
             hostConfig.withDns(dnsHosts);
 
-        // ?
-        //if (volumes.length > 0)
-        //    hostConfig.with VolumesFrom (volumes);
-
         List<LxcConf> lxcConfs = getLxcConf();
 
         if (!lxcConfs.isEmpty()) {
