@@ -355,7 +355,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                         }
                         Bind.parse(s);
                     } else if (group.length == 1) {
-                        Volume.parse(s);
+                        new Volume(s);
                     } else {
                         return FormValidation.error("Wrong line: " + s);
                     }
