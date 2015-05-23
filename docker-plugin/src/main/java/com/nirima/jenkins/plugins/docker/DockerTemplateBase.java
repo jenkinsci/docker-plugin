@@ -117,7 +117,7 @@ public abstract class DockerTemplateBase {
         return this;
     }
 
-    public String[] splitAndFilterEmpty(String s, String separator) {
+    public static String[] splitAndFilterEmpty(String s, String separator) {
         List<String> list = Splitter.on(separator).omitEmptyStrings().splitToList(s);
         return list.toArray(new String[0]);
     }
