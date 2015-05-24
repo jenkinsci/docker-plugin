@@ -69,6 +69,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.HashMap;
 
+import static com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin.dockerClient;
+
 /**
  * Docker Cloud configuration. Contains connection configuration,
  * {@link DockerTemplate} contains configuration for running docker image.
@@ -149,62 +151,9 @@ public class DockerCloud extends Cloud {
     public synchronized DockerClient connect() {
 
         if (connection == null) {
-            connection = buildConnection();
+            connection = dockerClient().forCloud(this);
         }
         return connection;
-    }
-
-    public DockerClientConfig getDockerClientConfig() {
-        DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
-
-        config.withUri(serverUrl);
-
-        if (!Strings.isNullOrEmpty(version)) {
-            config.withVersion(version);
-        }
-
-        addCredentials(config, credentialsId);
-
-        if (readTimeout > 0)
-            config.withReadTimeout(readTimeout * 1000);
-
-        return config.build();
-    }
-
-    private static void addCredentials(DockerClientConfig.DockerClientConfigBuilder config,
-                                       String credentialsId) {
-        if( !Strings.isNullOrEmpty(credentialsId)) {
-            Credentials credentials = lookupSystemCredentials(credentialsId);
-
-            if( credentials instanceof CertificateCredentials ) {
-                CertificateCredentials certificateCredentials = (CertificateCredentials)credentials;
-                config.withSSLConfig( new KeystoreSSLConfig( certificateCredentials.getKeyStore(), certificateCredentials.getPassword().getPlainText() ));
-            }
-            else if( credentials instanceof StandardUsernamePasswordCredentials ) {
-                StandardUsernamePasswordCredentials usernamePasswordCredentials = ((StandardUsernamePasswordCredentials)credentials);
-
-                config.withUsername( usernamePasswordCredentials.getUsername() );
-                config.withPassword(usernamePasswordCredentials.getPassword().getPlainText());
-            }
-        }
-    }
-
-    public static Credentials lookupSystemCredentials(String credentialsId) {
-        return CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(Credentials.class,
-                        Jenkins.getInstance(),
-                        ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()),
-                CredentialsMatchers.withId(credentialsId)
-        );
-    }
-
-    private DockerClient buildConnection() {
-        LOGGER.log(Level.FINE, "Building connection to docker host \"{0}\" at: {1}", new Object[]{name,serverUrl});
-
-        return DockerClientBuilder.getInstance(getDockerClientConfig())
-                .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
-                .build();
     }
 
     /**
@@ -473,22 +422,13 @@ public class DockerCloud extends Cloud {
                 @QueryParameter String version
                 ) throws IOException, ServletException, DockerException {
             try {
-                URL url = new URL(serverUrl); // exclude page fail by creating URL obj in try
-                DockerClientConfig.DockerClientConfigBuilder config = DockerClientConfig
-                        .createDefaultConfigBuilder()
-                        .withUri(url.toString());
+                DockerClient dc = dockerClient()
+                        .forServer(serverUrl, version)
+                        .withCredentials(credentialsId);
 
-                if (!Strings.isNullOrEmpty(version)) {
-                    config.withVersion(version);
-                }
+                Version verResult = dc.versionCmd().exec();
 
-                addCredentials(config, credentialsId);
-
-                DockerClient dc = DockerClientBuilder.getInstance(config.build()).withDockerCmdExecFactory(new DockerCmdExecFactoryImpl()).build();
-
-                Version v = dc.versionCmd().exec();
-
-                return FormValidation.ok("Version = " + v.getVersion());
+                return FormValidation.ok("Version = " + verResult.getVersion());
             } catch (Exception e) {
                 return FormValidation.error(e.getMessage());
             }
@@ -500,7 +440,7 @@ public class DockerCloud extends Cloud {
 
             return new CredentialsListBoxModel().withEmptySelection()
                                                 .withMatching(CredentialsMatchers.always(),
-                                                              credentials);
+                                                        credentials);
         }
     }
 

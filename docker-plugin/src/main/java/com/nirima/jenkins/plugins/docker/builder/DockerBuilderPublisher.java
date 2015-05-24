@@ -65,7 +65,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         final String tagToUse;
         final String url;
         // Marshal the builder across the wire.
-        final DockerClientConfig clientConfig;
         final transient DockerClient client;
 
 
@@ -79,7 +78,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             tagToUse = getTag(build, launcher, listener);
             url = getUrl(build);
             // Marshal the builder across the wire.
-            clientConfig = getDockerClientConfig(build);
             client = getDockerClient(build);
         }
 
@@ -141,10 +139,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                     try {
                       listener.getLogger().println("Docker Build : build with tag " + tagToUse + " at path " + f.getAbsolutePath());
 
-                      DockerClient client = DockerClientBuilder.getInstance(clientConfig)
-                              .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
-                              .build();
-
                         InputStream is = client.buildImageCmd(f)
                             .withTag(tagToUse)
                             .exec();
@@ -200,16 +194,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         if( node instanceof DockerSlave ) {
             DockerSlave slave = (DockerSlave)node;
             return slave.getCloud().connect();
-        }
-
-        return null;
-    }
-
-    private DockerClientConfig getDockerClientConfig(AbstractBuild build) {
-        Node node = build.getBuiltOn();
-        if( node instanceof DockerSlave ) {
-            DockerSlave slave = (DockerSlave)node;
-            return slave.getCloud().getDockerClientConfig();
         }
 
         return null;
