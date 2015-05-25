@@ -38,7 +38,6 @@ public class DockerTemplate2Test {
 
     @Test
     @LocalData
-    @Ignore("#227")
     public void shouldLoadEmptyVolumesFrom() {
         final DockerCloud dock = (DockerCloud) j.getInstance().getCloud("dock");
         final DockerTemplate template = dock.getTemplate("jenkins-ubuntu-slave");
