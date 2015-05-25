@@ -19,6 +19,38 @@
       <name>dock</name>
       <templates>
         <com.nirima.jenkins.plugins.docker.DockerTemplate>
+          <image>jenkins-ubuntu-slave</image>
+          <dockerCommand></dockerCommand>
+          <lxcConfString></lxcConfString>
+          <hostname></hostname>
+          <dnsHosts/>
+          <volumes/>
+          <volumesFrom></volumesFrom>
+          <environment/>
+          <bindPorts></bindPorts>
+          <bindAllPorts>false</bindAllPorts>
+          <privileged>false</privileged>
+          <tty>false</tty>
+          <labelString>rhel65-sandbox</labelString>
+          <credentialsId>e54a52c8-fc2c-4165-a3a6-a5683369713f</credentialsId>
+          <idleTerminationMinutes>5</idleTerminationMinutes>
+          <sshLaunchTimeoutMinutes>1</sshLaunchTimeoutMinutes>
+          <jvmOptions></jvmOptions>
+          <javaPath></javaPath>
+          <prefixStartSlaveCmd></prefixStartSlaveCmd>
+          <suffixStartSlaveCmd></suffixStartSlaveCmd>
+          <remoteFsMapping></remoteFsMapping>
+          <remoteFs>/home/jenkins</remoteFs>
+          <instanceCap>2147483647</instanceCap>
+          <mode>NORMAL</mode>
+          <retentionStrategy class="com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy">
+            <idleMinutes>0</idleMinutes>
+            <idleMinutes defined-in="com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy">0</idleMinutes>
+          </retentionStrategy>
+          <numExecutors>1</numExecutors>
+        </com.nirima.jenkins.plugins.docker.DockerTemplate>
+
+        <com.nirima.jenkins.plugins.docker.DockerTemplate>
           <image>image:b25</image>
           <dockerCommand></dockerCommand>
           <lxcConfString></lxcConfString>
