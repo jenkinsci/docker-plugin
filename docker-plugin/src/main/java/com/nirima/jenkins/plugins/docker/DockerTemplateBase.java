@@ -130,6 +130,10 @@ public abstract class DockerTemplateBase {
 
     //TODO move/replace
     public static String[] splitAndFilterEmpty(String s, String separator) {
+        if (s == null) {
+            return new String[0];
+        }
+
         List<String> list = Splitter.on(separator).omitEmptyStrings().splitToList(s);
         return list.toArray(new String[list.size()]);
     }
