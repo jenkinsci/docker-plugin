@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.model.*;
+import org.apache.commons.lang.StringUtils;
 import shaded.com.google.common.base.Function;
 import shaded.com.google.common.base.Joiner;
 import shaded.com.google.common.base.Objects;
@@ -110,16 +111,32 @@ public abstract class DockerTemplateBase {
 
     protected Object readResolve() {
         if (volumesFrom != null) {
-            setVolumesFrom2(new String[]{volumesFrom});
+            if (StringUtils.isNotBlank(volumesFrom)) {
+                setVolumesFrom2(new String[]{volumesFrom});
+            }
             volumesFrom = null;
         }
 
         return this;
     }
 
+    //TODO move/replace
     public static String[] splitAndFilterEmpty(String s, String separator) {
         List<String> list = Splitter.on(separator).omitEmptyStrings().splitToList(s);
-        return list.toArray(new String[0]);
+        return list.toArray(new String[list.size()]);
+    }
+
+    //TODO move/replace
+    public static String[] filterStringArray(String[] arr) {
+        final ArrayList<String> strings = new ArrayList<>();
+        if (arr != null) {
+            for (String s : arr) {
+                if (StringUtils.isNotEmpty(s)) {
+                    strings.add(s.trim());
+                }
+            }
+        }
+        return strings.toArray(new String[strings.size()]);
     }
 
     public String getDnsString() {
@@ -145,7 +162,7 @@ public abstract class DockerTemplateBase {
     }
 
     public String[] getVolumesFrom2() {
-        return volumesFrom2;
+        return filterStringArray(volumesFrom2);
     }
 
     public void setVolumesFrom2(String[] volumes) {
