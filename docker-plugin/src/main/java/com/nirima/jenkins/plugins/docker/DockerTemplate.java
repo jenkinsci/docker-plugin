@@ -16,6 +16,7 @@ import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import com.trilead.ssh2.Connection;
 
 import hudson.Extension;
+import hudson.Functions;
 import hudson.Util;
 import hudson.model.*;
 import hudson.model.labels.LabelAtom;
@@ -65,33 +66,42 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     /**
      * Minutes before terminating an idle slave
+     * @deprecated  migrated to retention strategy?
      */
-    public final String idleTerminationMinutes;
+    @Deprecated
+    private String idleTerminationMinutes;
 
     /**
      * Minutes before SSHLauncher times out on launch
      */
-    public final String sshLaunchTimeoutMinutes;
+    @Deprecated
+    private String sshLaunchTimeoutMinutes;
 
     /**
      * Field jvmOptions.
      */
-    public final String jvmOptions;
+    @Deprecated
+    private String jvmOptions;
 
     /**
      * Field javaPath.
      */
-    public final String javaPath;
+    @Deprecated
+    private String javaPath;
 
     /**
      * Field prefixStartSlaveCmd.
      */
-    public final String prefixStartSlaveCmd;
+    @Deprecated
+    private String prefixStartSlaveCmd;
 
     /**
      *  Field suffixStartSlaveCmd.
      */
-    public final String suffixStartSlaveCmd;
+    @Deprecated
+    public String suffixStartSlaveCmd;
+
+    private DockerComputer launcher;
 
     /**
      *  Field remoteFSMapping.
@@ -118,14 +128,8 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String remoteFs,
                           String remoteFsMapping,
                           String credentialsId,
-                          String idleTerminationMinutes,
-                          String sshLaunchTimeoutMinutes,
-                          String jvmOptions,
-                          String javaPath,
                           Integer memoryLimit,
                           Integer cpuShares,
-                          String prefixStartSlaveCmd,
-                          String suffixStartSlaveCmd,
                           String instanceCapStr,
                           String dnsString,
                           String dockerCommand,
@@ -139,7 +143,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           boolean privileged,
                           boolean tty,
                           String macAddress
-
     ) {
         super(image, dnsString,dockerCommand,volumesString,volumesFromString,environmentsString,lxcConfString,hostname, memoryLimit, cpuShares,
                 Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
@@ -148,12 +151,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         this.labelString = Util.fixNull(labelString);
         this.credentialsId = credentialsId;
-        this.idleTerminationMinutes = idleTerminationMinutes;
-        this.sshLaunchTimeoutMinutes = sshLaunchTimeoutMinutes;
-        this.jvmOptions = jvmOptions;
-        this.javaPath = javaPath;
-        this.prefixStartSlaveCmd = prefixStartSlaveCmd;
-        this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
         this.remoteFsMapping = remoteFsMapping;
 
@@ -162,7 +159,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         } else {
             this.instanceCap = Integer.parseInt(instanceCapStr);
         }
-
         readResolve();
     }
 
@@ -198,6 +194,15 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
     public RetentionStrategy getRetentionStrategy() {
         return retentionStrategy;
+    }
+
+    @DataBoundSetter
+    public void setLauncher(ComputerLauncher launcher) {
+        this.launcher = launcher;
+    }
+
+    public ComputerLauncher getLauncher() {
+        return launcher;
     }
 
     public String getInstanceCapStr() {
@@ -246,6 +251,10 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return parent;
     }
 
+    /**
+     * @deprecated migrated to retention strategy?
+     */
+    @Deprecated
     public int getIdleTerminationMinutes() {
         if (idleTerminationMinutes == null || idleTerminationMinutes.trim().isEmpty()) {
             return 0;
@@ -276,8 +285,9 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             throw ex;
         }
 
-        ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
-
+//        ComputerLauncher launcher = new DockerComputerSSHLauncher(this, containerInspectResponse);
+        getLauncher().make;
+//        launcher.se
         // Build a description up:
         String nodeDescription = "Docker Node [" + getImage() + " on ";
         try {
@@ -298,7 +308,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return new DockerSlave(this, containerId,
                 slaveName,
                 nodeDescription,
-                remoteFs, getNumExecutors(), getMode(), memoryLimit, cpuShares, labelString,
+                remoteFs, getNumExecutors(), getMode(), labelString,
                 launcher, getRetentionStrategy(), nodeProperties);
 
     }
@@ -320,11 +330,12 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return cmd;
     }
 
-    @Override
+
     /**
      * Provide a sensible default - templates are for slaves, and you're mostly going
      * to want port 22 exposed.
      */
+    @Override
     public Iterable<PortBinding> getPortMappings() {
 
         if(Strings.isNullOrEmpty(bindPorts) ) {
@@ -403,7 +414,11 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             return "Docker Template";
         }
 
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+        public Class getDockerTemplateBase(){
+            return DockerTemplateBase.class;
+        }
+
+        public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             return new SSHUserListBoxModel().withMatching(
                     SSHAuthenticator.matcher(Connection.class),
                     CredentialsProvider.lookupCredentials(
@@ -413,6 +428,22 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                             SSHLauncher.SSH_SCHEME)
             );
         }
+
+        public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
+            List<Descriptor<ComputerLauncher>> r = new ArrayList<Descriptor<ComputerLauncher>>();
+            for (Descriptor<ComputerLauncher> d : Functions.getComputerLauncherDescriptors()) {
+                if (DockerComputerLauncher.class.isAssignableFrom(d.clazz)) {
+                    r.add(d);
+                }
+            }
+            return r;
+        }
+
+//        public List<DockerComputerLauncher> getDockerComputerLaunchers() {
+//            final ArrayList<DockerComputerLauncher> dockerComputerLaunchers = new ArrayList<DockerComputerLauncher>();
+//            dockerComputerLaunchers.add()
+//        }
+
 
     }
 

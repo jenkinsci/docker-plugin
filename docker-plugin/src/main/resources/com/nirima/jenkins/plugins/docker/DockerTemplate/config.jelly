@@ -3,7 +3,18 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
 
-    <f:entry title="${%ID}" field="image">
+    <!-- docker template base options -->
+    <st:include page="config.jelly" class="${descriptor.dockerTemplateBase}"/>
+
+    <f:entry title="${%Instance Cap}" field="instanceCapStr">
+        <f:textbox/>
+    </f:entry>
+
+    <!--<f:entry title="${%Credentials}" field="credentialsId">-->
+        <!--<c:select/>-->
+    <!--</f:entry>-->
+
+    <f:entry title="${%Remote Filing System Root}" field="remoteFs">
         <f:textbox/>
     </f:entry>
 
@@ -14,131 +25,61 @@
 
     <f:slave-mode name="mode" node="${instance}"/>
 
-    <f:entry title="${%Credentials}" field="credentialsId">
-        <c:select/>
+<f:advanced title="Experimental Options" align="left">
+    <!-- reworked strategy choosed from core -->
+    <f:dropdownList name="retentionStrategy" title="${%Availability}"
+                    help="/help/system-config/master-slave/availability.html">
+        <j:forEach var="d" items="${instance.descriptor.dockerRetentionStrategies}">
+            <j:if test="${d != null}">
+                <!-- TODO find instanceof method in jelly-->
+                <j:set var="prefix" value="${d.displayName=='Docker Once Retention Strategy'? '': 'Experimental: '}" />
+                <f:dropdownListBlock value="${d.clazz.name}" name="${d.displayName}"
+                                     selected="${instance.retentionStrategy.descriptor==d}"
+                                     title="${prefix}${d.displayName}">
+                    <j:set var="descriptor" value="${d}"/>
+                    <j:set var="instance"
+                           value="${instance.retentionStrategy.descriptor==d ? instance.retentionStrategy : null}"/>
+                    <!--<f:class-entry descriptor="${d}"/>-->
+                    <tr>
+                        <td>
+                            <input type="hidden" name="stapler-class" value="${d.clazz.name}"/>
+                        </td>
+                    </tr>
+                    <st:include from="${d}" page="${d.configPage}" optional="true"/>
+                </f:dropdownListBlock>
+            </j:if>
+        </j:forEach>
+    </f:dropdownList>
+
+    <f:entry title="# of executors" field="numExecutors">
+        <f:number default="1"/>
     </f:entry>
 
-    <f:entry title="${%Remote Filing System Root}" field="remoteFs">
-        <f:textbox/>
-    </f:entry>
+</f:advanced>
 
+    <!-- copied from core DumbSlave -->
+    <!-- TODO: should be packaged as a tag -->
+    <f:dropdownList name="slave.launcher" title="${%Launch method}"
+                    help="${descriptor.getHelpFile('launcher')}">
+        <j:forEach var="d" items="${descriptor.getDockerComputerLauncherDescriptors()}">
+            <f:dropdownListBlock value="${d.clazz.name}" name="${d.displayName}"
+                                 selected="${instance.launcher.descriptor==d}"
+                                 title="${d.displayName}">
+                <j:set var="descriptor" value="${d}"/>
+                <j:set var="instance"
+                       value="${instance.launcher.descriptor==d ? instance.launcher : null}"/>
+                <!--<f:class-entry descriptor="${d}" />-->
+                <f:invisibleEntry>
+                    <input type="hidden" name="stapler-class" value="${d.clazz.name}" />
+                </f:invisibleEntry>
+                <st:include from="${d}" page="${d.configPage}" optional="true"/>
+            </f:dropdownListBlock>
+        </j:forEach>
+    </f:dropdownList>
+
+    <!-- map dir between jenkins and docker container -->
     <f:entry title="${%Remote FS Root Mapping}" field="remoteFsMapping">
         <f:textbox/>
     </f:entry>
 
-        <f:entry title="${%Instance Cap}" field="instanceCapStr">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%DNS}" field="dnsString">
-            <f:textbox/>
-        </f:entry>
-
-    <f:entry title="${%Port bindings}" field="bindPorts">
-        <f:textbox/>
-    </f:entry>
-
-    <f:entry title="${%Bind all declared ports}" field="bindAllPorts">
-        <f:checkbox/>
-    </f:entry>
-
-        <f:entry title="${%Hostname}" field="hostname">
-            <f:textbox/>
-        </f:entry>
-
-        <f:advanced>
-            <!-- reworked strategy choosed from core -->
-            <f:dropdownList name="retentionStrategy" title="${%Availability}"
-                            help="/help/system-config/master-slave/availability.html">
-                <j:forEach var="d" items="${instance.descriptor.dockerRetentionStrategies}">
-                    <j:if test="${d != null}">
-                        <!-- TODO find instanceof method in jelly-->
-                        <j:set var="prefix" value="${d.displayName=='Docker Once Retention Strategy'? '': 'Experimental: '}" />
-                        <f:dropdownListBlock value="${d.clazz.name}" name="${d.displayName}"
-                                             selected="${instance.retentionStrategy.descriptor==d}"
-                                             title="${prefix}${d.displayName}">
-                            <j:set var="descriptor" value="${d}"/>
-                            <j:set var="instance"
-                                   value="${instance.retentionStrategy.descriptor==d ? instance.retentionStrategy : null}"/>
-                            <!--<f:class-entry descriptor="${d}"/>-->
-                            <tr>
-                                <td>
-                                    <input type="hidden" name="stapler-class" value="${d.clazz.name}"/>
-                                </td>
-                            </tr>
-                            <st:include from="${d}" page="${d.configPage}" optional="true"/>
-                        </f:dropdownListBlock>
-                    </j:if>
-                </j:forEach>
-            </f:dropdownList>
-
-            <f:entry title="Executors number" field="numExecutors">
-                <f:number default="1"/>
-            </f:entry>
-
-            <f:entry title="${%Idle termination time}" field="idleTerminationMinutes">
-                <f:number default="5" />
-            </f:entry>
-
-            <f:entry title="${%SSH Launch Timeout}" field="sshLaunchTimeoutMinutes">
-                <f:number default="1" />
-            </f:entry>
-
-            <f:entry title="${%JavaPath}" field="javaPath">
-                <f:textbox/>
-            </f:entry>
-
-       <f:entry title="${%JVM Options}" field="jvmOptions">
-           <f:textbox/>
-       </f:entry>
-
-       <f:entry title="${%CPU Shares}" field="cpuShares">
-           <f:number name="cpuShares" clazz="positive-number" min="0" step="1"/>
-       </f:entry>
-
-       <f:entry title="${%Memory Limit in MB}" field="memoryLimit">
-           <f:number name="memoryLimit" clazz="positive-number" min="4" step="1"/>
-       </f:entry>
-
-        <f:entry title="${%Docker Command}" field="dockerCommand">
-            <f:textbox />
-        </f:entry>
-
-        <f:entry title="${%LXC Conf Options}" field="lxcConfString">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%Volumes}" field="volumesString">
-            <f:expandableTextbox/>
-        </f:entry>
-
-        <f:entry title="${%Volumes From}" field="volumesFromString">
-            <f:expandableTextbox/>
-        </f:entry>
-
-        <f:entry title="${%Environment}" field="environmentsString">
-            <f:textbox/>
-        </f:entry>
-
-        <f:entry title="${%Run container privileged}" field="privileged">
-            <f:checkbox/>
-        </f:entry>
-
-        <f:entry title="${%Allocate a pseudo-TTY}" field="tty">
-            <f:checkbox/>
-        </f:entry>
-
-       <f:entry title="${%Prefix Start Slave Command}" field="prefixStartSlaveCmd">
-           <f:textbox/>
-       </f:entry>
-
-       <f:entry title="${%Suffix Start Slave Command}" field="suffixStartSlaveCmd">
-           <f:textbox/>
-       </f:entry>
-
-            <f:entry title="${%MAC address}" field="macAddress">
-                <f:textbox/>
-            </f:entry>
-
-        </f:advanced>
 </j:jelly>

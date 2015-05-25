@@ -34,9 +34,11 @@ public class DockerSlave extends AbstractCloudSlave {
     private transient Run theRun;
 
     @DataBoundConstructor
-    public DockerSlave(DockerTemplate dockerTemplate, String containerId, String name, String nodeDescription,
-                       String remoteFS, int numExecutors, Mode mode, Integer memoryLimit, Integer cpuShares,
-                       String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy,
+    public DockerSlave(DockerTemplate dockerTemplate, String containerId,
+                       String name, String nodeDescription,
+                       String remoteFS, int numExecutors, Mode mode,
+                       String labelString, ComputerLauncher launcher,
+                       RetentionStrategy retentionStrategy,
                        List<? extends NodeProperty<?>> nodeProperties)
             throws Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
@@ -98,7 +100,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
 
         try {
-            toComputer().disconnect(null);
+            toComputer().disconnect(new DockerOfflineCause());
 
             try {
                 DockerClient client = getClient();
