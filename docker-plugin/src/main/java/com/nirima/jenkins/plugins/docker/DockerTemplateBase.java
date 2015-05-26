@@ -29,7 +29,7 @@ public abstract class DockerTemplateBase {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplateBase.class.getName());
 
 
-    public final String image;
+    private String image;
 
     /**
      * Field dockerCommand
@@ -88,7 +88,7 @@ public abstract class DockerTemplateBase {
                               boolean tty
 
     ) {
-        this.image = image;
+        setImage(image);
 
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
@@ -103,7 +103,8 @@ public abstract class DockerTemplateBase {
         this.cpuShares = cpuShares;
 
         this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
-        this.volumes = splitAndFilterEmpty(volumesString, "\n");
+
+        setVolumes(splitAndFilterEmpty(volumesString, "\n"));
         setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
 
         this.environment = splitAndFilterEmpty(environmentsString, " ");
@@ -131,12 +132,21 @@ public abstract class DockerTemplateBase {
         final ArrayList<String> strings = new ArrayList<>();
         if (arr != null) {
             for (String s : arr) {
-                if (StringUtils.isNotEmpty(s)) {
-                    strings.add(s.trim());
+                s = StringUtils.stripToNull(s);
+                if (s != null) {
+                    strings.add(s);
                 }
             }
         }
         return strings.toArray(new String[strings.size()]);
+    }
+
+    public void setImage(String image) {
+        this.image = image.trim();
+    }
+
+    public String getImage() {
+        return image.trim();
     }
 
     public String getDnsString() {
@@ -145,7 +155,11 @@ public abstract class DockerTemplateBase {
 
     @CheckForNull
     public String[] getVolumes() {
-        return volumes;
+        return filterStringArray(volumes);
+    }
+
+    public void setVolumes(String[] volumes) {
+        this.volumes = volumes;
     }
 
     public String getVolumesString() {
@@ -174,7 +188,7 @@ public abstract class DockerTemplateBase {
     }
 
     public String getDisplayName() {
-        return "Image of " + image;
+        return "Image of " + getImage();
     }
 
     public Integer getMemoryLimit() {
@@ -187,7 +201,7 @@ public abstract class DockerTemplateBase {
 
     public String provisionNew(DockerClient dockerClient) throws DockerException {
 
-        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(image);
+        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(getImage());
 
         fillContainerConfig(containerConfig);
 
@@ -325,7 +339,7 @@ public abstract class DockerTemplateBase {
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
-                .add("image", image)
+                .add("image", getImage())
                 .toString();
     }
 

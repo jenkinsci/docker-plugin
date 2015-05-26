@@ -254,7 +254,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException {
         PrintStream logger = listener.getLogger();
 
-        logger.println("Launching " + image );
+        logger.println("Launching " + getImage() );
 
         List<? extends NodeProperty<?>> nodeProperties = new ArrayList<>();
 
@@ -271,7 +271,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         ComputerLauncher launcher = new DockerComputerLauncher(this, containerInspectResponse);
 
         // Build a description up:
-        String nodeDescription = "Docker Node [" + image + " on ";
+        String nodeDescription = "Docker Node [" + getImage() + " on ";
         try {
             nodeDescription += getParent().getDisplayName();
         } catch (Exception ex) {
@@ -402,7 +402,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
-                .add("image", image)
+                .add("image", getImage())
                 .add("parent", parent)
                 .toString();
     }
