@@ -3,8 +3,10 @@
 
 ## Next version
 
-## 0.9.0-rc2
+## 0.9.0
 
+* Add MAC address configuration
+* Filter image name from configuration more carefully
 * Fix idleMinutes shadowing for DockerOnceRetentionStrategy
 * Form validation for volume configuration
 * Support multiple volumesFrom
