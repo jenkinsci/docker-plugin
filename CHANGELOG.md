@@ -5,6 +5,7 @@
 
 ## 0.9.0
 
+* Fixed maven-release-plugin, shaded jar with sources now should be available
 * Add MAC address configuration
 * Filter image name from configuration more carefully
 * Fix idleMinutes shadowing for DockerOnceRetentionStrategy
