@@ -234,7 +234,7 @@ public class DockerCloud extends Cloud {
             while (excessWorkload > 0 && !templates.isEmpty()) {
                 final DockerTemplate t = templates.get(0); // get first
 
-                LOGGER.log(Level.INFO, "Will provision \"{0}\" for: {1}", new Object[]{t.image,label});
+                LOGGER.log(Level.INFO, "Will provision \"{0}\" for: {1}", new Object[]{t.getImage(),label});
 
                 try {
                     if (!addProvisionedSlave(t)) {
@@ -243,7 +243,7 @@ public class DockerCloud extends Cloud {
                     }
                 } catch (Exception e) {
                     LOGGER.log(Level.WARNING, "Bad template {0}: {1}. Trying next template...",
-                            new Object[]{t.image, e.getMessage()});
+                            new Object[]{t.getImage(), e.getMessage()});
                     templates.remove(t);
                     continue;
                 }
@@ -279,7 +279,7 @@ public class DockerCloud extends Cloud {
                                     throw Throwables.propagate(ex);
                                 }
                                 finally {
-                                    decrementAmiSlaveProvision(t.image);
+                                    decrementAmiSlaveProvision(t.getImage());
                                 }
                             }
                         })
@@ -303,7 +303,7 @@ public class DockerCloud extends Cloud {
     @CheckForNull
     public DockerTemplate getTemplate(String template) {
         for (DockerTemplate t : templates) {
-            if(t.image.equals(template)) {
+            if(t.getImage().equals(template)) {
                 return t;
             }
         }
@@ -419,7 +419,7 @@ public class DockerCloud extends Cloud {
      *
      */
     private synchronized boolean addProvisionedSlave(DockerTemplate t) throws Exception {
-        String ami = t.image;
+        String ami = t.getImage();
         int amiCap = t.instanceCap;
 
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);

@@ -51,14 +51,15 @@
         </com.nirima.jenkins.plugins.docker.DockerTemplate>
 
         <com.nirima.jenkins.plugins.docker.DockerTemplate>
-          <image>image:b25</image>
+          <image> image:b25 </image>
           <dockerCommand></dockerCommand>
           <lxcConfString></lxcConfString>
           <hostname></hostname>
           <dnsHosts/>
           <volumes>
-            <string>/host/path:/container/path:ro</string>
-            <string>/host/path2:/container/path2:ro</string>
+            <string>  /host/path:/container/path:ro </string>
+            <string> /host/path2:/container/path2:ro  </string>
+            <string> </string>
           </volumes>
           <volumesFrom>otherContainer:ro</volumesFrom>
           <environment/>

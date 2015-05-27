@@ -34,6 +34,8 @@ public class DockerTemplate2Test {
         assertThat("volumesFrom2", asList(volumesFrom2), hasSize(1));
         assertThat(volumesFrom2[0], equalTo("otherContainer:ro"));
         assertThat("volumesFrom", template.getVolumesFrom(), nullValue());
+
+        assertThat(template.getImage(), equalTo("image:b25"));
     }
 
     @Test
