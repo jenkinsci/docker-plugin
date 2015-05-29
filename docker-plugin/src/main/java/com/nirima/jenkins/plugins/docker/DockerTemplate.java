@@ -6,7 +6,10 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
@@ -56,12 +59,13 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
 
 
-    public final String labelString;
+    private final String labelString;
 
     // SSH settings
     /**
      * The id of the credentials to use.
      */
+    @Deprecated
     public final String credentialsId;
 
     /**
@@ -101,7 +105,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     @Deprecated
     public String suffixStartSlaveCmd;
 
-    private DockerComputer launcher;
+    private DockerComputerLauncher launcher;
 
     /**
      *  Field remoteFSMapping.
@@ -159,7 +163,12 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         } else {
             this.instanceCap = Integer.parseInt(instanceCapStr);
         }
+
         readResolve();
+    }
+
+    public String getLabelString() {
+        return labelString;
     }
 
     @DataBoundSetter
@@ -197,12 +206,16 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     }
 
     @DataBoundSetter
-    public void setLauncher(ComputerLauncher launcher) {
+    public void setLauncher(DockerComputerLauncher launcher) {
         this.launcher = launcher;
     }
 
-    public ComputerLauncher getLauncher() {
+    public DockerComputerLauncher getLauncher() {
         return launcher;
+    }
+
+    public String getRemoteFs() {
+        return remoteFs;
     }
 
     public String getInstanceCapStr() {
@@ -243,6 +256,8 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     protected Object readResolve() {
         super.readResolve();
 
+        launcher.setDockerTemplate(this); // launcher must know template
+
         labelSet = Label.parse(labelString);
         return this;
     }
@@ -268,55 +283,8 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         }
     }
 
-    public DockerSlave provision(StreamTaskListener listener) throws IOException, Descriptor.FormException, DockerException {
-        PrintStream logger = listener.getLogger();
 
-        logger.println("Launching " + getImage() );
 
-        List<? extends NodeProperty<?>> nodeProperties = new ArrayList<>();
-
-        String containerId = provisionNew();
-        DockerClient client = getParent().connect();
-        InspectContainerResponse containerInspectResponse = null;
-        try {
-            containerInspectResponse = client.inspectContainerCmd(containerId).exec();
-        } catch(ProcessingException ex) {
-            client.removeContainerCmd(containerId).withForce(true).exec();
-            throw ex;
-        }
-
-//        ComputerLauncher launcher = new DockerComputerSSHLauncher(this, containerInspectResponse);
-        getLauncher().make;
-//        launcher.se
-        // Build a description up:
-        String nodeDescription = "Docker Node [" + getImage() + " on ";
-        try {
-            nodeDescription += getParent().getDisplayName();
-        } catch (Exception ex) {
-            nodeDescription += "???";
-        }
-        nodeDescription += "]";
-
-        String slaveName = containerId.substring(0, 12);
-
-        try {
-            slaveName = slaveName + "@" + getParent().getDisplayName();
-        } catch(Exception ex) {
-            LOGGER.warning("Error fetching cloud name");
-        }
-
-        return new DockerSlave(this, containerId,
-                slaveName,
-                nodeDescription,
-                remoteFs, getNumExecutors(), getMode(), labelString,
-                launcher, getRetentionStrategy(), nodeProperties);
-
-    }
-
-    public String provisionNew() throws DockerException {
-        DockerClient dockerClient = getParent().connect();
-        return provisionNew(dockerClient);
-    }
 
     @Override
     public String[] getDockerCommandArray() {
@@ -337,12 +305,12 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
      */
     @Override
     public Iterable<PortBinding> getPortMappings() {
-
-        if(Strings.isNullOrEmpty(bindPorts) ) {
+        if (Strings.isNullOrEmpty(bindPorts) ) {
              return ImmutableList.<PortBinding>builder()
                 .add(PortBinding.parse("0.0.0.0::22"))
                  .build();
         }
+
         return super.getPortMappings();
     }
 

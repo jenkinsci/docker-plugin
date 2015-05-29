@@ -59,15 +59,10 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.HashMap;
 
 import static com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin.dockerClient;
 
@@ -203,7 +198,8 @@ public class DockerCloud extends Cloud {
                                 // TODO: record the output somewhere
                                 DockerSlave slave = null;
                                 try {
-                                    slave = t.provision(new StreamTaskListener(System.out));
+//                                    slave = t.provision(new StreamTaskListener(System.out));
+                                    slave = provision(t);
                                     final Jenkins jenkins = Jenkins.getInstance();
                                     // TODO once the baseline is 1.592+ switch to Queue.withLock
                                     synchronized (jenkins.getQueue()) {
@@ -220,8 +216,7 @@ public class DockerCloud extends Cloud {
                                     // goes successful prevents this problem.
                                     slave.toComputer().connect(false).get();
                                     return slave;
-                                }
-                                catch(Exception ex) {
+                                } catch(Exception ex) {
                                     LOGGER.log(Level.SEVERE, "Error in provisioning; slave=" + slave + ", template=" + t);
 
                                     ex.printStackTrace();
@@ -239,9 +234,16 @@ public class DockerCloud extends Cloud {
             }
             return r;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE,"Exception while provisioning for: " + label,e);
+            LOGGER.log(Level.SEVERE,"Exception while provisioning for: " + label, e);
             return Collections.emptyList();
         }
+    }
+
+    private DockerSlave provision(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
+        // we can't create slave with real docker container hash,
+        // because real container will be created from DockerSlave.createComputer() -> DockerComputer
+        String name = "docker-" + UUID.randomUUID().toString();
+        return new DockerSlave(name, dockerTemplate);
     }
 
     @Override
