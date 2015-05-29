@@ -226,6 +226,7 @@ public abstract class DockerTemplateBase {
         // Launch it.. :
 
         StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
+        // start command request nullifies properties that was configured in create command
         createHostConfig(startCommand);
 
         startCommand.exec();
@@ -350,8 +351,16 @@ public abstract class DockerTemplateBase {
             hostConfig.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
         }
 
-        if(!Strings.isNullOrEmpty(volumesFrom) )
-            hostConfig.withVolumesFrom(volumesFrom);
+        if (getVolumesFrom2().length > 0) {
+            ArrayList<VolumesFrom> volFrom = new ArrayList<>();
+            for (String volFromStr : getVolumesFrom2()) {
+                volFrom.add(new VolumesFrom(volFromStr));
+            }
+            //hack until https://github.com/docker-java/docker-java/pull/234
+            if (volFrom.size() > 1) {
+                hostConfig.withVolumesFrom(volFrom.get(0).toString());
+            }
+        }
 
         return hostConfig;
     }
