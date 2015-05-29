@@ -24,7 +24,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     public DockerComputer(DockerSlave dockerSlave) {
         super(dockerSlave);
-        nodeExistenceStatus = new Cacheable<Boolean>(60000, new Callable<Boolean>() {
+        nodeExistenceStatus = new Cacheable<>(60000, new Callable<Boolean>() {
             public Boolean call() throws Exception {
                 return getNode().containerExistsInCloud();
             }

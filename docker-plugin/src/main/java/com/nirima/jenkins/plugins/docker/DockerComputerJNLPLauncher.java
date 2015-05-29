@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Descriptor;
@@ -24,6 +25,11 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Override
     public boolean isLaunchSupported() {
         return true;
+    }
+
+    @Override
+    public ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
+        return null;
     }
 
     @Override

@@ -219,21 +219,7 @@ public abstract class DockerTemplateBase {
         return cpuShares;
     }
 
-    public String provisionNew(DockerClient dockerClient) throws DockerException {
 
-        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(getImage());
-
-        fillContainerConfig(containerConfig);
-
-        CreateContainerResponse response = containerConfig.exec();
-        String containerId = response.getId();
-        // Launch it.. :
-
-        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
-        startCommand.exec();
-
-        return containerId;
-    }
 
     public String[] getDockerCommandArray() {
         String[] dockerCommandArray = new String[0];
