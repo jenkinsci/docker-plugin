@@ -3,6 +3,10 @@
 
 ## Next version
 
+## 0.9.2
+
+* Don't use deprecated(?) api. Fixes not applied container configuration options. 
+
 ## 0.9.1
 
 * Temp fix: VolumeFrom now works with the first entry (multiple will work after upstream fix in docker-java library)
