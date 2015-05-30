@@ -3,6 +3,10 @@
 
 ## Next version
 
+## 0.9.1
+
+* Temp fix: VolumeFrom now works with the first entry (multiple will work after upstream fix in docker-java library)
+
 ## 0.9.0
 
 * Fixed maven-release-plugin, shaded jar with sources now should be available
