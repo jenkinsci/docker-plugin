@@ -226,9 +226,6 @@ public abstract class DockerTemplateBase {
         // Launch it.. :
 
         StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
-        // start command request nullifies properties that was configured in create command
-        createHostConfig(startCommand);
-
         startCommand.exec();
 
         return containerId;
@@ -268,14 +265,22 @@ public abstract class DockerTemplateBase {
         }
 
         String[] cmd = getDockerCommandArray();
-        if (cmd.length > 0)
+        if (cmd.length > 0) {
             containerConfig.withCmd(cmd);
+        }
 
         containerConfig.withPortSpecs("22/tcp");
 
-        //containerConfig.setPortSpecs(new String[]{"22/tcp"});
-        //containerConfig.getExposedPorts().put("22/tcp",new ExposedPort());
+        containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 
+        containerConfig.withPublishAllPorts(bindAllPorts);
+
+        containerConfig.withPrivileged(privileged);
+
+        List<LxcConf> lxcConfs = getLxcConf();
+        if (!lxcConfs.isEmpty()) {
+            containerConfig.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
+        }
 
         if (cpuShares != null && cpuShares > 0) {
             containerConfig.withCpuShares(cpuShares);
@@ -286,8 +291,9 @@ public abstract class DockerTemplateBase {
             containerConfig.withMemoryLimit(memoryInByte);
         }
 
-        if (dnsHosts.length > 0)
+        if (dnsHosts.length > 0) {
             containerConfig.withDns(dnsHosts);
+        }
 
         // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196
         if (getVolumes().length > 0) {
@@ -322,47 +328,17 @@ public abstract class DockerTemplateBase {
             containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
         }
 
-        containerConfig.withTty(this.tty);
+        containerConfig.withTty(tty);
 
-        if (environment != null && environment.length > 0)
+        if (environment != null && environment.length > 0) {
             containerConfig.withEnv(environment);
+        }
 
         if (getMacAddress() != null) {
             containerConfig.withMacAddress(getMacAddress());
         }
 
         return containerConfig;
-    }
-
-    public StartContainerCmd createHostConfig(StartContainerCmd hostConfig) {
-
-        hostConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
-
-        hostConfig.withPublishAllPorts(bindAllPorts);
-
-
-        hostConfig.withPrivileged(this.privileged);
-        if( dnsHosts.length > 0 )
-            hostConfig.withDns(dnsHosts);
-
-        List<LxcConf> lxcConfs = getLxcConf();
-
-        if (!lxcConfs.isEmpty()) {
-            hostConfig.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
-        }
-
-        if (getVolumesFrom2().length > 0) {
-            ArrayList<VolumesFrom> volFrom = new ArrayList<>();
-            for (String volFromStr : getVolumesFrom2()) {
-                volFrom.add(new VolumesFrom(volFromStr));
-            }
-            //hack until https://github.com/docker-java/docker-java/pull/234
-            if (volFrom.size() > 1) {
-                hostConfig.withVolumesFrom(volFrom.get(0).toString());
-            }
-        }
-
-        return hostConfig;
     }
 
     @Override
