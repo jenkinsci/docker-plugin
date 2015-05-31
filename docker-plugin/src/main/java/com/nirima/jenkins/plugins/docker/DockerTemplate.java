@@ -243,13 +243,16 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             }
         }
     }
+
     /**
      * Initializes data structure that we don't persist.
      */
     protected Object readResolve() {
         super.readResolve();
 
-        launcher.setDockerTemplate(this); // launcher must know template
+        if (launcher != null) {
+            launcher.setDockerTemplate(this); // launcher must know template
+        }
 
         labelSet = Label.parse(labelString);
         return this;
@@ -390,13 +393,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             }
             return r;
         }
-
-//        public List<DockerComputerLauncher> getDockerComputerLaunchers() {
-//            final ArrayList<DockerComputerLauncher> dockerComputerLaunchers = new ArrayList<DockerComputerLauncher>();
-//            dockerComputerLaunchers.add()
-//        }
-
-
     }
 
     @Override

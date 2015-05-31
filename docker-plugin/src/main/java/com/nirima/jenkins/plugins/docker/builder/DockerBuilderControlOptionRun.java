@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.nirima.jenkins.plugins.docker.DockerComputer;
+import com.nirima.jenkins.plugins.docker.DockerSlave;
 import shaded.com.google.common.base.Strings;
 
 import com.github.dockerjava.api.DockerClient;
@@ -100,7 +102,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
                 volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,
                 memoryLimit, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
 
-        String containerId = template.provisionNew(client);
+        String containerId = DockerSlave.runContainer(template, client);
 
         LOGGER.log(Level.INFO, "Started container {0}", containerId);
         getLaunchAction(build).started(client, containerId);
@@ -125,7 +127,4 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         }
 
     }
-
-
-
 }

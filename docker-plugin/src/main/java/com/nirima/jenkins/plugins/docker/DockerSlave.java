@@ -1,15 +1,12 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import hudson.util.StreamTaskListener;
-import shaded.com.google.common.base.Objects;
-import shaded.com.google.common.base.Preconditions;
-import shaded.com.google.common.base.Strings;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.StartContainerCmd;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
-
 import hudson.Extension;
 import hudson.model.*;
 import hudson.model.queue.CauseOfBlockage;
@@ -17,13 +14,16 @@ import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
+import hudson.util.StreamTaskListener;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
-import org.kohsuke.stapler.DataBoundConstructor;
+import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.Preconditions;
+import shaded.com.google.common.base.Strings;
 
+import javax.annotation.CheckForNull;
 import javax.ws.rs.ProcessingException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -36,11 +36,12 @@ public class DockerSlave extends AbstractCloudSlave {
 
     public DockerTemplate dockerTemplate;
 
+    @CheckForNull
     public String containerId;
 
     private transient Run theRun;
 
-//    @DataBoundConstructor
+    //    @DataBoundConstructor
     public DockerSlave(DockerTemplate dockerTemplate, String containerId,
                        String name, String nodeDescription,
                        String remoteFS, int numExecutors, Mode mode,
@@ -58,14 +59,14 @@ public class DockerSlave extends AbstractCloudSlave {
 
     public DockerSlave(String name, DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
         super(name,
-                "Some description!",
+                "",
                 dockerTemplate.getRemoteFs(),
                 dockerTemplate.getNumExecutors(),
                 dockerTemplate.getMode(),
                 dockerTemplate.getLabelString(),
                 dockerTemplate.getLauncher(),
                 dockerTemplate.getRetentionStrategy(),
-                Collections.<NodeProperty<?>> emptyList());
+                Collections.<NodeProperty<?>>emptyList());
         setDockerTemplate(dockerTemplate);
     }
 
@@ -80,7 +81,7 @@ public class DockerSlave extends AbstractCloudSlave {
     public DockerCloud getCloud() {
         DockerCloud theCloud = dockerTemplate.getParent();
 
-        if( theCloud == null ) {
+        if (theCloud == null) {
             throw new RuntimeException("Docker template " + dockerTemplate + " has no parent ");
         }
 
@@ -99,57 +100,71 @@ public class DockerSlave extends AbstractCloudSlave {
     @Override
     public DockerComputer createComputer() {
         final StreamTaskListener listener = new StreamTaskListener(System.out);
-        if (getLauncher() instanceof DockerComputerSSHLauncher) {
+//        if (getLauncher() instanceof DockerComputerSSHLauncher) {
 
-            PrintStream logger = listener.getLogger();
+        PrintStream logger = listener.getLogger();
 
-            logger.println("Launching " + getDockerTemplate().getImage() );
+        logger.println("Running container " + getDockerTemplate().getImage());
 
-            List<? extends NodeProperty<?>> nodeProperties = new ArrayList<>();
+        containerId = runContainer(getDockerTemplate(), getClient());
 
-            String containerId = provisionNew(getClient());
+        logger.println("Run container with id: " + containerId);
 
-            InspectContainerResponse containerInspectResponse = null;
-            try {
-                containerInspectResponse = getClient().inspectContainerCmd(containerId).exec();
-            } catch(ProcessingException ex) {
-                getClient().removeContainerCmd(containerId).withForce(true).exec();
-                throw ex;
-            }
-
-            // Build a description up:
-            String nodeDescription = "Docker Node [" + getDockerTemplate().getImage() + " on ";
-            try {
-                nodeDescription += getDockerTemplate().getParent().getDisplayName();
-            } catch (Exception ex) {
-                nodeDescription += "???";
-            }
-            nodeDescription += "]";
-
-            String slaveName = containerId.substring(0, 12);
-
-            try {
-                slaveName = slaveName + "@" + getDockerTemplate().getParent().getDisplayName();
-            } catch(Exception ex) {
-                LOGGER.warning("Error fetching cloud name");
-            }
+        InspectContainerResponse containerInspectResponse = null;
+        try {
+            containerInspectResponse = getClient().inspectContainerCmd(containerId).exec();
+        } catch (ProcessingException ex) {
+            getClient().removeContainerCmd(containerId).withForce(true).exec();
+            throw ex;
         }
 
-//        getLauncher()
+//            // Build a description up:
+//            String nodeDescription = "Docker Node [" + getDockerTemplate().getImage() + " on ";
+//            try {
+//                nodeDescription += getDockerTemplate().getParent().getDisplayName();
+//            } catch (Exception ex) {
+//                nodeDescription += "???";
+//            }
+//            nodeDescription += "]";
+//
+//            String slaveName = containerId.substring(0, 12);
+//
+//            try {
+//                slaveName = slaveName + "@" + getDockerTemplate().getParent().getDisplayName();
+//            } catch(Exception ex) {
+//                LOGGER.warning("Error fetching cloud name");
+//            }
+//        }
 
-        return new DockerComputer(this);
+        return new DockerComputer(containerId, this);
     }
 
+    public static String runContainer(DockerTemplateBase dockerTemplate, DockerClient dockerClient) throws DockerException {
+        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplate.getImage());
 
+        dockerTemplate.fillContainerConfig(containerConfig);
+        // contribute launcher specific options
+        if (dockerTemplate instanceof DockerTemplate) {
+            ((DockerTemplate) dockerTemplate).getLauncher().appendContainerConfig(containerConfig);
+        }
+        // create
+        CreateContainerResponse response = containerConfig.exec();
+        String containerId = response.getId();
+        // start
+        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
+        startCommand.exec();
+
+        return containerId;
+    }
 
     @Override
     public CauseOfBlockage canTake(Queue.BuildableItem item) {
         if (item.task instanceof Queue.FlyweightTask) {
-          return new CauseOfBlockage() {
-            public String getShortDescription() {
-                return "Don't run FlyweightTask on Docker node";
-            }
-          };
+            return new CauseOfBlockage() {
+                public String getShortDescription() {
+                    return "Don't run FlyweightTask on Docker node";
+                }
+            };
         }
         return super.canTake(item);
     }
@@ -159,7 +174,7 @@ public class DockerSlave extends AbstractCloudSlave {
             DockerClient client = getClient();
             client.inspectContainerCmd(containerId).exec();
             return true;
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             return false;
         }
     }
@@ -168,32 +183,35 @@ public class DockerSlave extends AbstractCloudSlave {
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
         try {
             toComputer().disconnect(new DockerOfflineCause());
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Can't disconnect", e);
+        }
 
+        if (containerId != null) {
             try {
                 DockerClient client = getClient();
                 client.stopContainerCmd(containerId).exec();
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to stop instance " + containerId + " for slave " + name + " due to exception", ex);
             }
 
             // If the run was OK, then do any tagging here
-            if( theRun != null ) {
+            if (theRun != null) {
                 try {
                     slaveShutdown(listener);
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Failure to slaveShutdown instance " + containerId+ " for slave " + name , e);
+                    LOGGER.log(Level.SEVERE, "Failure to slaveShutdown instance " + containerId + " for slave " + name, e);
                 }
             }
 
             try {
                 DockerClient client = getClient();
                 client.removeContainerCmd(containerId).exec();
-            } catch(Exception ex) {
-                LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception",ex);
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception", ex);
             }
-
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failure to terminate instance " + containerId + " for slave " + name ,e);
+        } else {
+            LOGGER.log(Level.SEVERE, "ContainerId is absent, no way to remove/stop container");
         }
     }
 
@@ -201,7 +219,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         // The slave has stopped. Should we commit / tag / push ?
 
-        if(!getJobProperty().tagOnCompletion) {
+        if (!getJobProperty().tagOnCompletion) {
             addJenkinsAction(null);
             return;
         }
@@ -209,40 +227,38 @@ public class DockerSlave extends AbstractCloudSlave {
         DockerClient client = getClient();
 
 
-         // Commit
+        // Commit
         String tag_image = client.commitCmd(containerId)
-                    .withRepository(theRun.getParent().getDisplayName())
-                    .withTag(theRun.getDisplayName().replace("#","b")) // allowed only ([a-zA-Z_][a-zA-Z0-9_]*)
-                    .withAuthor("Jenkins")
-                    .exec();
+                .withRepository(theRun.getParent().getDisplayName())
+                .withTag(theRun.getDisplayName().replace("#", "b")) // allowed only ([a-zA-Z_][a-zA-Z0-9_]*)
+                .withAuthor("Jenkins")
+                .exec();
 
         // Tag it with the jenkins name
         addJenkinsAction(tag_image);
 
         // SHould we add additional tags?
-        try
-        {
+        try {
             String tagToken = getAdditionalTag(listener);
 
-            if( !Strings.isNullOrEmpty(tagToken) ) {
+            if (!Strings.isNullOrEmpty(tagToken)) {
                 // ?? client.image(tag_image).tag(tagToken, false);
-                client.tagImageCmd(tag_image,null,tagToken).exec();
+                client.tagImageCmd(tag_image, null, tagToken).exec();
                 addJenkinsAction(tagToken);
 
-                if( getJobProperty().pushOnSuccess ) {
+                if (getJobProperty().pushOnSuccess) {
                     client.pushImageCmd(tagToken).exec();
                 }
             }
-        }
-        catch(Exception ex) {
+        } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Could not add additional tags");
         }
 
-        if( getJobProperty().cleanImages ) {
+        if (getJobProperty().cleanImages) {
 
             client.removeImageCmd(tag_image)
-                .withForce()
-                .exec();
+                    .withForce()
+                    .exec();
         }
 
     }
@@ -255,7 +271,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         // Do any macro expansions
         try {
-            if(!Strings.isNullOrEmpty(tagToken)  )
+            if (!Strings.isNullOrEmpty(tagToken))
                 tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "can't expand macroses", e);
@@ -265,11 +281,12 @@ public class DockerSlave extends AbstractCloudSlave {
 
     /**
      * Add a built on docker action.
+     *
      * @param tag_image
      * @throws IOException
      */
     private void addJenkinsAction(String tag_image) throws IOException {
-        theRun.addAction( new DockerBuildAction(getCloud().serverUrl, containerId, tag_image, dockerTemplate.remoteFsMapping) );
+        theRun.addAction(new DockerBuildAction(getCloud().serverUrl, containerId, tag_image, dockerTemplate.remoteFsMapping));
         theRun.save();
     }
 
@@ -300,25 +317,27 @@ public class DockerSlave extends AbstractCloudSlave {
 
             if (p != null)
                 return p;
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             // Don't care.
         }
         // Safe default
-        return new DockerJobProperty(false,null,false, true);
+        return new DockerJobProperty(false, null, false, true);
     }
 
     @Extension
-	public static final class DescriptorImpl extends SlaveDescriptor {
+    public static final class DescriptorImpl extends SlaveDescriptor {
 
-    	@Override
-		public String getDisplayName() {
-			return "Docker Slave";
-    	};
+        @Override
+        public String getDisplayName() {
+            return "Docker Slave";
+        }
 
-		@Override
-		public boolean isInstantiable() {
-			return false;
-		}
+        ;
 
-	}
+        @Override
+        public boolean isInstantiable() {
+            return false;
+        }
+
+    }
 }

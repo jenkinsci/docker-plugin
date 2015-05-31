@@ -11,7 +11,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by magnayn on 09/01/2014.
+ * Represents remote (running) container
+ *
+ * @author magnayn
  */
 public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
@@ -22,8 +24,11 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     // asking the container if it exists or not, so we cache it here.
     private final Cacheable<Boolean> nodeExistenceStatus;
 
-    public DockerComputer(DockerSlave dockerSlave) {
+    private String containerId;
+
+    public DockerComputer(String containerId, DockerSlave dockerSlave) {
         super(dockerSlave);
+        setContainerId(containerId);
         nodeExistenceStatus = new Cacheable<>(60000, new Callable<Boolean>() {
             public Boolean call() throws Exception {
                 return getNode().containerExistsInCloud();
@@ -117,7 +122,13 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         }
     }
 
+    public String getContainerId() {
+        return containerId;
+    }
 
+    public void setContainerId(String containerId) {
+        this.containerId = containerId;
+    }
 
     @Override
     public String toString() {
@@ -126,5 +137,4 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
                 .add("slave", getNode())
                 .toString();
     }
-
 }

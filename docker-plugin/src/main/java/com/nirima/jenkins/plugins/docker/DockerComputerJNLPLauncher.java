@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import hudson.Extension;
 import hudson.Util;
@@ -30,6 +31,11 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Override
     public ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
         return null;
+    }
+
+    @Override
+    void appendContainerConfig(CreateContainerCmd createContainerCmd) {
+        // jnlp command for connection?
     }
 
     @Override
