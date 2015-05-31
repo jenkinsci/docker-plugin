@@ -91,7 +91,6 @@ public abstract class DockerTemplateBase {
                               boolean privileged,
                               boolean tty,
                               String macAddress
-
     ) {
         setImage(image);
 
@@ -219,8 +218,6 @@ public abstract class DockerTemplateBase {
         return cpuShares;
     }
 
-
-
     public String[] getDockerCommandArray() {
         String[] dockerCommandArray = new String[0];
 
@@ -247,6 +244,28 @@ public abstract class DockerTemplateBase {
                         return PortBinding.parse(s);
                     }
                 });
+    }
+
+    public List<LxcConf> getLxcConf() {
+        List<LxcConf> temp = new ArrayList<LxcConf>();
+        if( lxcConfString == null || lxcConfString.trim().equals(""))
+            return temp;
+        for (String item : lxcConfString.split(",")) {
+            String[] keyValuePairs = item.split("=");
+            if (keyValuePairs.length == 2 )
+            {
+                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
+                LxcConf optN = new LxcConf();
+                optN.setKey(keyValuePairs[0]);
+                optN.setValue(keyValuePairs[1]);
+                temp.add(optN);
+            }
+            else
+            {
+                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
+            }
+        }
+        return temp;
     }
 
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
@@ -336,28 +355,5 @@ public abstract class DockerTemplateBase {
         return Objects.toStringHelper(this)
                 .add("image", getImage())
                 .toString();
-    }
-
-
-    public List<LxcConf> getLxcConf() {
-        List<LxcConf> temp = new ArrayList<LxcConf>();
-        if( lxcConfString == null || lxcConfString.trim().equals(""))
-            return temp;
-        for (String item : lxcConfString.split(",")) {
-            String[] keyValuePairs = item.split("=");
-            if (keyValuePairs.length == 2 )
-            {
-                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
-                LxcConf optN = new LxcConf();
-                optN.setKey(keyValuePairs[0]);
-                optN.setValue(keyValuePairs[1]);
-                temp.add(optN);
-            }
-            else
-            {
-                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
-            }
-        }
-        return temp;
     }
 }

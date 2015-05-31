@@ -5,6 +5,7 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
@@ -72,11 +73,17 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return new RetryingComputerLauncher(sshLauncher);
     }
 
+    @Override
+    void appendContainerConfig(CreateContainerCmd createContainerCmd) {
+        //TODO add ports needed during run
+    }
+
     private SSHLauncher getSSHLauncher(InspectContainerResponse detail, DockerTemplate template)   {
         Preconditions.checkNotNull(template);
         Preconditions.checkNotNull(detail);
 
         try {
+            // get exposed port
             ExposedPort sshPort = new ExposedPort(sshConnector.port);
             String host = null;
             Integer port = 22;
@@ -88,14 +95,17 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
                 host = b.getHostIp();
             }
 
+            //get address, if docker on localhost, then use local?
             if (host == null || host.equals("0.0.0.0")) {
                 URL hostUrl = new URL(template.getParent().serverUrl);
                 host = hostUrl.getHost();
             }
 
-            LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
+            LOGGER.log(Level.INFO, "Waiting for open " + port + " on " + host);
 
             PortUtils.waitForPort(host, port);
+
+            LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
 
             return new SSHLauncher(host, port, sshConnector.getCredentials(),
                     sshConnector.jvmOptions,
@@ -117,16 +127,15 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
         Preconditions.checkNotNull(getDockerTemplate());
-
+        final DockerComputer dockerComputer = (DockerComputer) computer;
         PrintStream logger = listener.getLogger();
 
-        logger.println("Launching " + getDockerTemplate().getImage() );
+        logger.println("Connecting to " + getDockerTemplate().getImage() );
 
-        List<? extends NodeProperty<?>> nodeProperties = new ArrayList<>();
-
-        String containerId = getDockerTemplate().provisionNew();
+        String containerId = dockerComputer.getContainerId();
         DockerClient client = getDockerTemplate().getParent().connect();
-        InspectContainerResponse containerInspectResponse = null;
+
+        InspectContainerResponse containerInspectResponse;
         try {
             containerInspectResponse = client.inspectContainerCmd(containerId).exec();
         } catch(ProcessingException ex) {
@@ -134,24 +143,26 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             throw ex;
         }
 
-        // Build a description up:
-        String nodeDescription = "Docker Node [" + getDockerTemplate().getImage() + " on ";
-        try {
-            nodeDescription += getDockerTemplate().getParent().getDisplayName();
-        } catch (Exception ex) {
-            nodeDescription += "???";
-        }
-        nodeDescription += "]";
+//        no way to set name or description because slave was already created
+//        // Build a description up:
+//        String nodeDescription = "Docker Node [" + getDockerTemplate().getImage() + " on ";
+//        try {
+//            nodeDescription += getDockerTemplate().getParent().getDisplayName();
+//        } catch (Exception ex) {
+//            nodeDescription += "???";
+//        }
+//        nodeDescription += "]";
+//
+//        String slaveName = containerId.substring(0, 12);
+//
+//        try {
+//            slaveName = slaveName + "@" + getDockerTemplate().getParent().getDisplayName();
+//        } catch(Exception ex) {
+//            LOGGER.warning("Error fetching cloud name");
+//        }
 
-        String slaveName = containerId.substring(0, 12);
-
-        try {
-            slaveName = slaveName + "@" + getDockerTemplate().getParent().getDisplayName();
-        } catch(Exception ex) {
-            LOGGER.warning("Error fetching cloud name");
-        }
-
-        makeLauncher(getDockerTemplate(), containerInspectResponse).launch(computer, listener);
+        makeLauncher(getDockerTemplate(), containerInspectResponse)
+                .launch(computer, listener);
     }
 
     @Extension

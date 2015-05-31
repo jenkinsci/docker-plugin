@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
+import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
@@ -28,12 +29,11 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
     public void execute(AbstractBuild<?, ?> build) throws DockerException {
 
         DockerTemplate template = getCloud(build).getTemplate(templateId);
-
-        String containerId = template.provisionNew();
+        DockerClient client = getClient(build);
+        String containerId = DockerSlave.runContainer(template, client);
 
         LOGGER.info("Starting container " + containerId);
-        DockerClient client = getClient(build);
-        
+
         getLaunchAction(build).started(client, containerId);
     }
 

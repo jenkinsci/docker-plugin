@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -50,30 +51,11 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
         return dockerTemplate;
     }
 
-    //    protected ComputerLauncher launcher;
-//
-//    public ComputerLauncher getLauncher() {
-//        return launcher;
-//    }
-//
-//    public void setLauncher(ComputerLauncher launcher) {
-//        this.launcher = launcher;
-//    }
-//
-////    public abstract ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse);
-//
-//    @Override
-//    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-//        getLauncher().launch(computer, listener);
-//    }
-//
-//    @Override
-//    public void afterDisconnect(SlaveComputer computer, TaskListener listener) {
-//        getLauncher().afterDisconnect(computer, listener);
-//    }
-//
-//    @Override
-//    public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
-//        getLauncher().beforeDisconnect(computer, listener);
-//    }
+    abstract ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse);
+
+    /**
+     * Add any container parameters needed for launcher.
+     * i.e. port for exposing
+     */
+    abstract void appendContainerConfig(CreateContainerCmd createContainerCmd);
 }
