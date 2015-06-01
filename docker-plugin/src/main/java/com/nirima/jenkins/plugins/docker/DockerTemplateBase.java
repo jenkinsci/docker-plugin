@@ -220,10 +220,10 @@ public abstract class DockerTemplateBase {
 
     public String[] getDockerCommandArray() {
         String[] dockerCommandArray = new String[0];
-
         if (dockerCommand != null && !dockerCommand.isEmpty()) {
             dockerCommandArray = dockerCommand.split(" ");
         }
+
         return dockerCommandArray;
     }
 
@@ -277,8 +277,6 @@ public abstract class DockerTemplateBase {
         if (cmd.length > 0) {
             containerConfig.withCmd(cmd);
         }
-
-        containerConfig.withPortSpecs("22/tcp");
 
         containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 

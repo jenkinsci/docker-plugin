@@ -8,6 +8,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
 import com.nirima.jenkins.plugins.docker.utils.RetryingComputerLauncher;
@@ -24,16 +25,20 @@ import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.SlaveComputer;
 import hudson.util.ListBoxModel;
+import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import shaded.com.google.common.base.Preconditions;
+import shaded.com.google.common.base.Strings;
+import shaded.com.google.common.collect.ImmutableList;
 
 import javax.ws.rs.ProcessingException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -74,8 +79,30 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    void appendContainerConfig(CreateContainerCmd createContainerCmd) {
-        //TODO add ports needed during run
+    void appendContainerConfig(CreateContainerCmd createCmd) {
+        createCmd.withPortSpecs("22/tcp");
+
+        String[] cmd = getDockerTemplate().getDockerCommandArray();
+        if (cmd.length == 0) {
+            //default value to preserve compatibility
+            cmd = new String[]{"/usr/sbin/sshd", "-D"};
+            createCmd.withCmd(cmd);
+        }
+
+//        /**
+//         * Provide a sensible default - templates are for slaves, and you're mostly going
+//         * to want port 22 exposed.
+//         */
+//        final Ports portBindings = createCmd.getPortBindings();
+//        if (Strings.isNullOrEmpty() {
+//            final ImmutableList<PortBinding> build = ImmutableList.<PortBinding>builder()
+//                    .add(PortBinding.parse("0.0.0.0::22"))
+//                    .build();
+//
+//        }
+        createCmd.withPortBindings(PortBinding.parse("0.0.0.0::22"));
+
+
     }
 
     private SSHLauncher getSSHLauncher(InspectContainerResponse detail, DockerTemplate template)   {
@@ -128,20 +155,30 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
         Preconditions.checkNotNull(getDockerTemplate());
         final DockerComputer dockerComputer = (DockerComputer) computer;
+        final DockerCloud cloud = dockerComputer.getCloud();
+        final DockerClient client = cloud.connect();
+//        final StreamTaskListener listener = new StreamTaskListener(System.out, Charset.defaultCharset());
+//        if (getLauncher() instanceof DockerComputerSSHLauncher) {
+
         PrintStream logger = listener.getLogger();
 
-        logger.println("Connecting to " + getDockerTemplate().getImage() );
+        logger.println("Running container " + getDockerTemplate().getImage());
 
-        String containerId = dockerComputer.getContainerId();
-        DockerClient client = getDockerTemplate().getParent().connect();
+        runContainer(this, getDockerTemplate(), client);
 
-        InspectContainerResponse containerInspectResponse;
+        dockerComputer.setContainerId(getContainerId());
+
+        logger.println("Run container with id: " + getContainerId());
+
+        InspectContainerResponse containerInspectResponse = null;
         try {
-            containerInspectResponse = client.inspectContainerCmd(containerId).exec();
-        } catch(ProcessingException ex) {
-            client.removeContainerCmd(containerId).withForce(true).exec();
+            containerInspectResponse = client.inspectContainerCmd(getContainerId()).exec();
+        } catch (ProcessingException ex) {
+            client.removeContainerCmd(getContainerId()).withForce(true).exec();
             throw ex;
         }
+
+        logger.println("Connecting to " + getDockerTemplate().getImage() );
 
 //        no way to set name or description because slave was already created
 //        // Build a description up:

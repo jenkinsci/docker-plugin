@@ -3,7 +3,10 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.StartContainerCmd;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -43,6 +46,14 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public abstract class DockerComputerLauncher extends ComputerLauncher {
     protected DockerTemplate dockerTemplate;
 
+    /**
+     * Docker container Id that:
+     * - this launcher connecting to
+     * - DockerSlave was created for
+     * - DockerComputer is instance of
+     */
+    protected String containerId;
+
     public void setDockerTemplate(DockerTemplate dockerTemplate) {
         this.dockerTemplate = dockerTemplate;
     }
@@ -51,11 +62,44 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
         return dockerTemplate;
     }
 
+    public String getContainerId() {
+        return containerId;
+    }
+
+    public void setContainerId(String containerId) {
+        this.containerId = containerId;
+    }
+
+    /**
+     * temp method...
+     */
     abstract ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse);
 
     /**
-     * Add any container parameters needed for launcher.
-     * i.e. port for exposing
+     * Contribute container parameters needed for launcher.
+     * i.e. port for exposing, command to run, etc
      */
     abstract void appendContainerConfig(CreateContainerCmd createContainerCmd);
+
+//    @Override
+//    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+//        runContainer()
+//    }
+
+    public void runContainer(DockerComputerLauncher launcher, DockerTemplateBase dockerTemplate, DockerClient dockerClient) throws DockerException {
+        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplate.getImage());
+
+        dockerTemplate.fillContainerConfig(containerConfig);
+        // contribute launcher specific options
+        launcher.appendContainerConfig(containerConfig);
+        // create
+        CreateContainerResponse response = containerConfig.exec();
+        String containerId = response.getId();
+        setContainerId(containerId);
+        // start
+        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
+        startCommand.exec();
+
+//        return containerId;
+    }
 }

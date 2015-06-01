@@ -26,9 +26,9 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     private String containerId;
 
-    public DockerComputer(String containerId, DockerSlave dockerSlave) {
+    public DockerComputer(DockerSlave dockerSlave) {
         super(dockerSlave);
-        setContainerId(containerId);
+//        setContainerId(containerId);
         nodeExistenceStatus = new Cacheable<>(60000, new Callable<Boolean>() {
             public Boolean call() throws Exception {
                 return getNode().containerExistsInCloud();
@@ -67,7 +67,6 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         // above would return null and we'd not find our DockerSlave anymore.
         super.taskCompleted(executor, task, durationMS);
     }
-
 
     @Override
     public void taskCompletedWithProblems(Executor executor, Queue.Task task, long durationMS, Throwable problems) {
@@ -128,6 +127,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     public void setContainerId(String containerId) {
         this.containerId = containerId;
+        getNode().setContainerId(containerId); // set for clean-ups
     }
 
     @Override

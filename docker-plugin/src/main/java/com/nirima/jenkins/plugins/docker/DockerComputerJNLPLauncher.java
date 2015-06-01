@@ -25,7 +25,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     @Override
     public boolean isLaunchSupported() {
-        return true;
+        return false;
     }
 
     @Override
@@ -36,10 +36,14 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Override
     void appendContainerConfig(CreateContainerCmd createContainerCmd) {
         // jnlp command for connection?
+        createContainerCmd.withCmd("wget http://10.6.60.60:8090/jenkins/jnlpJars/slave.jar",
+                "java -jar slave.jar -jnlpUrl http://10.6.60.60:8090/jenkins/computer/jnlp/slave-agent.jnlp");
     }
 
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) {
+        // launch container
+
 
     }
 

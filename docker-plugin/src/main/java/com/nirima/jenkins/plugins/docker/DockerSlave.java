@@ -37,7 +37,7 @@ public class DockerSlave extends AbstractCloudSlave {
     public DockerTemplate dockerTemplate;
 
     @CheckForNull
-    public String containerId;
+    private String containerId;
 
     private transient Run theRun;
 
@@ -70,6 +70,10 @@ public class DockerSlave extends AbstractCloudSlave {
         setDockerTemplate(dockerTemplate);
     }
 
+    public void setContainerId(String containerId) {
+        this.containerId = containerId;
+    }
+
     public DockerTemplate getDockerTemplate() {
         return dockerTemplate;
     }
@@ -99,24 +103,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
     @Override
     public DockerComputer createComputer() {
-        final StreamTaskListener listener = new StreamTaskListener(System.out);
-//        if (getLauncher() instanceof DockerComputerSSHLauncher) {
 
-        PrintStream logger = listener.getLogger();
-
-        logger.println("Running container " + getDockerTemplate().getImage());
-
-        containerId = runContainer(getDockerTemplate(), getClient());
-
-        logger.println("Run container with id: " + containerId);
-
-        InspectContainerResponse containerInspectResponse = null;
-        try {
-            containerInspectResponse = getClient().inspectContainerCmd(containerId).exec();
-        } catch (ProcessingException ex) {
-            getClient().removeContainerCmd(containerId).withForce(true).exec();
-            throw ex;
-        }
 
 //            // Build a description up:
 //            String nodeDescription = "Docker Node [" + getDockerTemplate().getImage() + " on ";
@@ -136,7 +123,7 @@ public class DockerSlave extends AbstractCloudSlave {
 //            }
 //        }
 
-        return new DockerComputer(containerId, this);
+        return new DockerComputer(this);
     }
 
     public static String runContainer(DockerTemplateBase dockerTemplate, DockerClient dockerClient) throws DockerException {
@@ -156,6 +143,12 @@ public class DockerSlave extends AbstractCloudSlave {
 
         return containerId;
     }
+
+
+
+
+
+
 
     @Override
     public CauseOfBlockage canTake(Queue.BuildableItem item) {
