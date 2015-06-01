@@ -36,11 +36,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.ImmutableList;
 
-import javax.ws.rs.ProcessingException;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -141,11 +137,11 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           boolean tty,
                           String macAddress
     ) {
-        super(image, dnsString,dockerCommand,volumesString,volumesFromString,environmentsString,lxcConfString,hostname, memoryLimit, cpuShares,
-                Objects.firstNonNull(bindPorts, "0.0.0.0:22"), bindAllPorts,
-                privileged, tty, macAddress);
-
-
+        super(image, dnsString, dockerCommand, volumesString, volumesFromString, environmentsString,
+                lxcConfString, hostname, memoryLimit, cpuShares,
+                bindPorts, bindAllPorts,
+                privileged, tty, macAddress
+        );
         this.labelString = Util.fixNull(labelString);
         this.credentialsId = credentialsId;
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
@@ -223,10 +219,6 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return remoteFsMapping;
     }
 
-    public Descriptor<DockerTemplate> getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
-    }
-
     public Set<LabelAtom> getLabelSet(){
         return labelSet;
     }
@@ -263,7 +255,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     }
 
     /**
-     * @deprecated migrated to retention strategy?
+     * @deprecated migrated to retention strategy
      */
     @Deprecated
     public int getIdleTerminationMinutes() {
@@ -279,35 +271,16 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         }
     }
 
-
-
-
     @Override
-    public String[] getDockerCommandArray() {
-        String[] cmd = super.getDockerCommandArray();
-
-        if( cmd.length == 0 ) {
-            //default value to preserve compatibility
-            cmd = new String[]{"/usr/sbin/sshd", "-D"};
-        }
-
-        return cmd;
+    public String toString() {
+        return Objects.toStringHelper(this)
+                .add("image", getImage())
+                .add("parent", parent)
+                .toString();
     }
 
-
-    /**
-     * Provide a sensible default - templates are for slaves, and you're mostly going
-     * to want port 22 exposed.
-     */
-    @Override
-    public Iterable<PortBinding> getPortMappings() {
-        if (Strings.isNullOrEmpty(bindPorts) ) {
-             return ImmutableList.<PortBinding>builder()
-                .add(PortBinding.parse("0.0.0.0::22"))
-                 .build();
-        }
-
-        return super.getPortMappings();
+    public Descriptor<DockerTemplate> getDescriptor() {
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
     @Extension
@@ -393,13 +366,5 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             }
             return r;
         }
-    }
-
-    @Override
-    public String toString() {
-        return Objects.toStringHelper(this)
-                .add("image", getImage())
-                .add("parent", parent)
-                .toString();
     }
 }
