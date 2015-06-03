@@ -20,6 +20,8 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 
 /**
  * {@link hudson.slaves.ComputerLauncher} for Docker that waits for the instance to really come up before proceeding to
@@ -62,7 +64,7 @@ public class DockerComputerLauncher extends DelegatingComputerLauncher {
 
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
             
-            PortUtils.waitForPort(host, port);
+            PortUtils.canConnect(host, port).withEveryRetryWaitFor(2, SECONDS);
 
             StandardUsernameCredentials credentials = SSHLauncher.lookupSystemCredentials(template.credentialsId);
 

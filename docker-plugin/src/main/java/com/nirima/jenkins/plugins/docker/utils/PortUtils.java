@@ -1,70 +1,116 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
+import com.trilead.ssh2.Connection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static shaded.com.google.common.base.Preconditions.checkState;
 
 public class PortUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PortUtils.class);
 
-    private static final int RETRIES = 10;
-    private static final int WAIT_TIME_MS = 2000;
+    private final String host;
+    private final int port;
 
-    public static boolean isPortAvailable(String host, int port) {
-        Socket socket = null;
-        boolean available = false;
-        try {
-            socket = new Socket(host, port);
-            available = true;
-        } catch (IOException e) {
-            // no-op
-        } finally {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    // no-op
-                }
-            }
-        }
-        return available;
+    private int retries = 10;
+    private int sshTimeoutMillis = (int) SECONDS.toMillis(2);
+
+    private PortUtils(String host, int port) {
+        this.host = host;
+        this.port = port;
     }
 
-    public static boolean waitForPort(String host, int port) {
-        for (int i = 0; i < RETRIES; i++) {
-            if(isPortAvailable(host, port))
+    /**
+     * @param host hostname to connect to
+     * @param port port to open socket
+     *
+     * @return util class to check connection
+     */
+    public static PortUtils canConnect(String host, int port) {
+        return new PortUtils(host, port);
+    }
+
+    public PortUtils withRetries(int retries) {
+        this.retries = retries;
+        return this;
+    }
+
+    public PortUtils withSshTimeout(int time, TimeUnit units) {
+        this.sshTimeoutMillis = (int) units.toMillis(time);
+        return this;
+    }
+
+    /**
+     * @return true if socket opened successfully, false otherwise
+     */
+    public boolean now() {
+        try (Socket ignored = new Socket(host, port)) {
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Use {@link #now()} to check.
+     * Retries while attempts reached with delay
+     *
+     * @return true if socket opened successfully, false otherwise
+     */
+    public boolean withEveryRetryWaitFor(int time, TimeUnit units) {
+        for (int i = 1; i <= retries; i++) {
+            if (now()) {
                 return true;
-                        
-            try {
-                Thread.sleep(WAIT_TIME_MS);
-            } catch (InterruptedException e) {
-                // no-op
             }
+            sleepFor(time, units);
         }
         return false;
     }
 
-    public static Map<String, List<Integer>> parsePorts(String waitPorts) throws IllegalArgumentException,
-            NumberFormatException {
-        Map<String, List<Integer>> containers = new HashMap<String, List<Integer>>();
-        String[] containerPorts = waitPorts.split(System.getProperty("line.separator"));
-        for (String container : containerPorts) {
-            String[] idPorts = container.split(" ", 2);
-            if (idPorts.length < 2)
-                throw new IllegalArgumentException("Cannot parse " + Arrays.toString(idPorts) + " as '[conainerId] [port1],[port2],...'");
-            String containerId = idPorts[0].trim();
-            String portsStr = idPorts[1].trim();
+    /**
+     * Connects to sshd on host:port
+     * Retries while attempts reached with delay
+     * First with tcp port wait, then with ssh connection wait
+     *
+     * @throws IOException if no retries left
+     */
+    public void bySshWithEveryRetryWaitFor(int time, TimeUnit units) throws IOException {
+        checkState(withEveryRetryWaitFor(time, units), "Port %s is not opened to connect to", port);
 
-            List<Integer> ports = new ArrayList<Integer>();
-            for (String port : portsStr.split(",")) {
-                ports.add(Integer.valueOf(port));
+        for (int i = 1; i <= retries; i++) {
+            Connection connection = new Connection(host, port);
+            try {
+                connection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
+                return;
+            } catch (IOException e) {
+                LOGGER.info("Failed to connect to {}:{} (try {}/{}) - {}", host, port, i, retries, e.getMessage());
+                if (i == retries) {
+                    throw e;
+                }
+            } finally {
+                connection.close();
             }
-            containers.put(containerId, ports);
+            sleepFor(time, units);
         }
-        return containers;
+    }
+
+    /**
+     * Blocks current thread for {@code time} of {@code units}
+     *
+     * @param time  number of units
+     * @param units to convert to millis
+     */
+    public static void sleepFor(int time, TimeUnit units) {
+        try {
+            Thread.sleep(units.toMillis(time));
+        } catch (InterruptedException e) {
+            // no-op
+        }
     }
 
 }
