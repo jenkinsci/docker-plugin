@@ -1,68 +1,45 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
-import shaded.com.google.common.base.Objects;
-import shaded.com.google.common.base.Preconditions;
-import shaded.com.google.common.base.Predicate;
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.base.Throwables;
-import shaded.com.google.common.collect.Collections2;
-import shaded.com.google.common.collect.Iterables;
-
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
-import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
-import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.HostnamePortRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.dockerjava.core.NameParser;
-import com.trilead.ssh2.Connection;
-
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
-import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.security.ACL;
 import hudson.slaves.Cloud;
+import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import hudson.util.StreamTaskListener;
-import jenkins.model.Jenkins;
-
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.Preconditions;
+import shaded.com.google.common.base.Predicate;
+import shaded.com.google.common.base.Throwables;
+import shaded.com.google.common.collect.Collections2;
+import shaded.com.google.common.collect.Iterables;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
+import javax.ws.rs.ProcessingException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin.dockerClient;
 
@@ -73,7 +50,7 @@ import static com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin.do
  */
 public class DockerCloud extends Cloud {
 
-    private static final Logger LOGGER = Logger.getLogger(DockerCloud.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerCloud.class);
 
     public static final String CLOUD_ID_PREFIX = "docker-";
 
@@ -91,7 +68,7 @@ public class DockerCloud extends Cloud {
     /* Track the count per-AMI identifiers for AMIs currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    private static final HashMap<String, Integer> provisioningAmis = new HashMap<String, Integer>();
+    private static final HashMap<String, Integer> provisioningAmis = new HashMap<>();
 
     @DataBoundConstructor
     public DockerCloud(String name,
@@ -144,10 +121,10 @@ public class DockerCloud extends Cloud {
      * @return Docker client.
      */
     public synchronized DockerClient connect() {
-
         if (connection == null) {
             connection = dockerClient().forCloud(this);
         }
+
         return connection;
     }
 
@@ -169,16 +146,16 @@ public class DockerCloud extends Cloud {
     @Override
     public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         try {
-            LOGGER.log(Level.INFO, "Asked to provision {0} slave(s) for: {1}", new Object[]{excessWorkload,label});
+            LOGGER.info("Asked to provision {0} slave(s) for: {1}", new Object[]{excessWorkload,label});
 
-            List<NodeProvisioner.PlannedNode> r = new ArrayList<NodeProvisioner.PlannedNode>();
+            List<NodeProvisioner.PlannedNode> r = new ArrayList<>();
 
             final List<DockerTemplate> templates = getTemplates(label);
 
             while (excessWorkload > 0 && !templates.isEmpty()) {
                 final DockerTemplate t = templates.get(0); // get first
 
-                LOGGER.log(Level.INFO, "Will provision \"{0}\" for: {1}", new Object[]{t.getImage(),label});
+                LOGGER.info("Will provision '{}', for label: '{}'", t.getImage(), label);
 
                 try {
                     if (!addProvisionedSlave(t)) {
@@ -186,66 +163,98 @@ public class DockerCloud extends Cloud {
                         continue;
                     }
                 } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Bad template {0}: {1}. Trying next template...",
-                            new Object[]{t.getImage(), e.getMessage()});
+                    LOGGER.warn("Bad template '{}': '{}'. Trying next template...", t.getImage(), e.getMessage());
                     templates.remove(t);
                     continue;
                 }
 
-                r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(),
+                r.add(new NodeProvisioner.PlannedNode(
+                        t.getDisplayName(),
                         Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                             public Node call() throws Exception {
-                                // TODO: record the output somewhere
-                                DockerSlave slave = null;
                                 try {
-//                                    slave = t.provision(new StreamTaskListener(System.out));
-                                    slave = provision(t);
-                                    final Jenkins jenkins = Jenkins.getInstance();
-                                    // TODO once the baseline is 1.592+ switch to Queue.withLock
-                                    synchronized (jenkins.getQueue()) {
-                                        jenkins.addNode(slave);
-                                    }
-                                    // Docker instances may have a long init script. If we declare
-                                    // the provisioning complete by returning without the connect
-                                    // operation, NodeProvisioner may decide that it still wants
-                                    // one more instance, because it sees that (1) all the slaves
-                                    // are offline (because it's still being launched) and
-                                    // (2) there's no capacity provisioned yet.
-                                    //
-                                    // deferring the completion of provisioning until the launch
-                                    // goes successful prevents this problem.
-//                                    slave.createComputer();
-                                    slave.toComputer().connect(false).get();
-//                                    slave.createComputer().connect(false).get();
-                                    return slave;
-                                } catch(Exception ex) {
-                                    LOGGER.log(Level.SEVERE, "Error in provisioning; slave=" + slave + ", template=" + t);
-
-                                    ex.printStackTrace();
+                                    return provisionWithWait(t);
+                                } catch (Exception ex) {
+                                    LOGGER.error("Error in provisioning; template='{}'", t, ex);
                                     throw Throwables.propagate(ex);
-                                }
-                                finally {
+                                } finally {
                                     decrementAmiSlaveProvision(t.getImage());
                                 }
                             }
-                        })
-                        ,t.getNumExecutors()));
+                        }),
+                        t.getNumExecutors())
+                );
 
                 excessWorkload -= t.getNumExecutors();
-
             }
+
             return r;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE,"Exception while provisioning for: " + label, e);
+            LOGGER.error("Exception while provisioning for: {}", label, e);
             return Collections.emptyList();
         }
     }
 
-    private DockerSlave provision(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
-        // we can't create slave with real docker container hash,
-        // because real container will be created from DockerSlave.createComputer() -> DockerComputer
-        String name = "docker-" + UUID.randomUUID().toString();
-        return new DockerSlave(name, dockerTemplate);
+
+
+    /**
+     * Provisioning
+     */
+    public static String runContainer(DockerTemplateBase dockerTemplate, DockerClient dockerClient) throws DockerException {
+        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplate.getImage());
+
+        dockerTemplate.fillContainerConfig(containerConfig);
+
+        // contribute launcher specific options
+        if (dockerTemplate instanceof DockerTemplate) {
+            ((DockerTemplate) dockerTemplate).getLauncher().appendContainerConfig(dockerTemplate, containerConfig);
+        }
+
+        // create
+        CreateContainerResponse response = containerConfig.exec();
+        String containerId = response.getId();
+        // start
+        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
+        startCommand.exec();
+
+        return containerId;
+    }
+
+    private DockerSlave provisionWithWait(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
+
+        LOGGER.info("Trying to run container for {}", dockerTemplate.getImage());
+        final String containerId = runContainer(dockerTemplate, connect());
+
+        InspectContainerResponse ir;
+        try {
+            ir = connect().inspectContainerCmd(containerId).exec();
+        } catch (ProcessingException ex) {
+            connect().removeContainerCmd(containerId).withForce(true).exec();
+            throw ex;
+        }
+
+        // Build a description up:
+        String nodeDescription = "Docker Node [" + dockerTemplate.getImage() + " on ";
+        try {
+            nodeDescription += dockerTemplate.getParent().getDisplayName();
+        } catch (Exception ex) {
+            nodeDescription += "???";
+        }
+        nodeDescription += "]";
+
+        String slaveName = containerId.substring(0, 12);
+
+        try {
+            slaveName = slaveName + "@" + getDisplayName();
+        } catch(Exception ex) {
+            LOGGER.warn("Error fetching cloud name");
+        }
+
+
+        dockerTemplate.getLauncher().waitUp(dockerTemplate, ir);
+        final ComputerLauncher launcher = dockerTemplate.getLauncher().getPreparedLauncher(dockerTemplate, ir);
+
+        return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate);
     }
 
     @Override
@@ -279,7 +288,7 @@ public class DockerCloud extends Cloud {
     /**
      * Add a new template to the cloud
      */
-    public void addTemplate(DockerTemplate t) {
+    public synchronized void addTemplate(DockerTemplate t) {
         t.parent = this;
         templates.add(t);
     }
@@ -309,10 +318,9 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Remove a
-     * @param t
+     * Remove Docker template
      */
-    public void removeTemplate(DockerTemplate t) {
+    public synchronized void removeTemplate(DockerTemplate t) {
         templates.remove(t);
     }
 
@@ -343,7 +351,7 @@ public class DockerCloud extends Cloud {
         });
 
         if (!imageExists) {
-            LOGGER.log(Level.INFO, "Pulling image \"{0}\" since one was not found.  This may take awhile...", ami);
+            LOGGER.info("Pulling image '{}' since one was not found.  This may take awhile...", ami);
             //Identifier amiId = Identifier.fromCompoundString(ami);
             try (InputStream imageStream = dockerClient.pullImageCmd(ami).exec()) {
                 int streamValue = 0;
@@ -352,7 +360,7 @@ public class DockerCloud extends Cloud {
                 }
             }
 
-            LOGGER.log(Level.INFO, "Finished pulling image \"{0}\"", ami);
+            LOGGER.info("Finished pulling image '{}'", ami);
         }
 
         final InspectImageResponse ir = dockerClient.inspectImageCmd(ami).exec();
@@ -394,22 +402,40 @@ public class DockerCloud extends Cloud {
             estimatedAmiSlaves += currentProvisioning;
 
             if(estimatedTotalSlaves >= containerCap) {
-                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Server \"{1}\" full with {2} container(s)", new Object[]{ami,name,containerCap});
+                LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s)", ami, containerCap, name);
                 return false;      // maxed out
             }
 
             if (amiCap != 0 && estimatedAmiSlaves >= amiCap) {
-                LOGGER.log(Level.INFO, "Not Provisioning \"{0}\"; Instance limit of {2} reached on server \"{1}\"", new Object[]{ami,name,amiCap});
+                LOGGER.info("Not Provisioning '{}'. Instance limit of '{}' reached on server '{}'", ami, amiCap, name);
                 return false;      // maxed out
             }
 
-            LOGGER.log(Level.INFO,
-                    "Provisioning \"{0}\" number {2} on \"{1}\"; Total containers: {3}",
-                    new Object[]{ami,name,estimatedAmiSlaves,estimatedTotalSlaves}
-            );
+            LOGGER.info("Provisioning '{}' number '{}' on '{}'; Total containers: '{}'",
+                    ami, estimatedAmiSlaves, name, estimatedTotalSlaves);
 
             provisioningAmis.put(ami, currentProvisioning + 1);
             return true;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this)
+                .add("name", name)
+                .add("serverUrl", serverUrl)
+                .toString();
+    }
+
+    public static class CredentialsListBoxModel
+        extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, StandardCertificateCredentials> {
+
+        /**
+         * {@inheritDoc}
+         */
+        @NonNull
+        protected String describe(@NonNull StandardCertificateCredentials c) {
+            return CredentialsNameProvider.name(c);
         }
     }
 
@@ -424,7 +450,7 @@ public class DockerCloud extends Cloud {
                 @QueryParameter String serverUrl,
                 @QueryParameter String credentialsId,
                 @QueryParameter String version
-                ) throws IOException, ServletException, DockerException {
+        ) throws IOException, ServletException, DockerException {
             try {
                 DockerClient dc = dockerClient()
                         .forServer(serverUrl, version)
@@ -443,28 +469,9 @@ public class DockerCloud extends Cloud {
             List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context);
 
             return new CredentialsListBoxModel().withEmptySelection()
-                                                .withMatching(CredentialsMatchers.always(),
-                                                        credentials);
+                    .withMatching(CredentialsMatchers.always(),
+                            credentials);
         }
     }
 
-    public static class CredentialsListBoxModel
-        extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, StandardCertificateCredentials> {
-
-        /**
-         * {@inheritDoc}
-         */
-        @NonNull
-        protected String describe(@NonNull StandardCertificateCredentials c) {
-            return CredentialsNameProvider.name(c);
-        }
-    }
-
-    @Override
-    public String toString() {
-        return Objects.toStringHelper(this)
-                .add("name", name)
-                .add("serverUrl", serverUrl)
-                .toString();
-    }
 }

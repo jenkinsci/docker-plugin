@@ -41,65 +41,89 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 
 /**
- * {@link DelegatingComputerLauncher} but with setter
+ * Crappy wrapper... On one hand we need store UI configuration,
+ * on other have valid configured launcher that different for host/port/etc for any slave.
+ * <p>
+ * like {@link DelegatingComputerLauncher}
  */
 public abstract class DockerComputerLauncher extends ComputerLauncher {
-    protected DockerTemplate dockerTemplate;
+    protected transient ComputerLauncher launcher;
+
+    // something can be redundant
+//
+//    protected transient DockerTemplate dockerTemplate;
+//
+//    /**
+//     * Docker container Id that:
+//     * - this launcher connecting to
+//     * - DockerSlave was created for
+//     * - DockerComputer is instance of
+//     */
+//    protected transient String containerId;
 
     /**
-     * Docker container Id that:
-     * - this launcher connecting to
-     * - DockerSlave was created for
-     * - DockerComputer is instance of
+     * Return valid configured launcher that will be used for launching slave
      */
-    protected String containerId;
-
-    public void setDockerTemplate(DockerTemplate dockerTemplate) {
-        this.dockerTemplate = dockerTemplate;
-    }
-
-    public DockerTemplate getDockerTemplate() {
-        return dockerTemplate;
-    }
-
-    public String getContainerId() {
-        return containerId;
-    }
-
-    public void setContainerId(String containerId) {
-        this.containerId = containerId;
-    }
-
-    /**
-     * temp method...
-     */
-    abstract ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse);
+    abstract ComputerLauncher getPreparedLauncher(DockerTemplate dockerTemplate, InspectContainerResponse ir);
 
     /**
      * Contribute container parameters needed for launcher.
      * i.e. port for exposing, command to run, etc
      */
-    abstract void appendContainerConfig(CreateContainerCmd createContainerCmd);
+    abstract void appendContainerConfig(DockerTemplateBase dockerTemplate, CreateContainerCmd createContainerCmd);
 
-//    @Override
-//    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-//        runContainer()
+    /**
+     * Ensure that slave is up and ready for connection
+     */
+    public abstract boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse ir);
+
+
+    public ComputerLauncher getLauncher() {
+        return launcher;
+    }
+
+    public void setLauncher(ComputerLauncher launcher) {
+        this.launcher = launcher;
+    }
+
+
+    @Override
+    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+        getLauncher().launch(computer, listener);
+    }
+
+    @Override
+    public void afterDisconnect(SlaveComputer computer, TaskListener listener) {
+        getLauncher().afterDisconnect(computer, listener);
+    }
+
+    @Override
+    public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
+        getLauncher().beforeDisconnect(computer, listener);
+    }
+
+//    public String getContainerId() {
+//        return containerId;
+//    }
+//
+//    public void setContainerId(String containerId) {
+//        this.containerId = containerId;
+//    }
+//
+//    public DockerTemplate getDockerTemplate() {
+//        return dockerTemplate;
+//    }
+//
+//    public void setDockerTemplate(DockerTemplate dockerTemplate) {
+//        this.dockerTemplate = dockerTemplate;
+//    }
+//
+//    public InspectContainerResponse getIr() {
+//        return ir;
+//    }
+//
+//    public void setIr(InspectContainerResponse ir) {
+//        this.ir = ir;
 //    }
 
-    public void runContainer(DockerComputerLauncher launcher, DockerTemplateBase dockerTemplate, DockerClient dockerClient) throws DockerException {
-        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplate.getImage());
-
-        dockerTemplate.fillContainerConfig(containerConfig);
-        // contribute launcher specific options
-        launcher.appendContainerConfig(containerConfig);
-        // create
-        CreateContainerResponse response = containerConfig.exec();
-        String containerId = response.getId();
-        setContainerId(containerId);
-        // start
-        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
-        startCommand.exec();
-
-//        return containerId;
-    }
 }

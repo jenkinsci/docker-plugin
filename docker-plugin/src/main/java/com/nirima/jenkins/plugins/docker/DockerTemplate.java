@@ -242,9 +242,9 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
     protected Object readResolve() {
         super.readResolve();
 
-        if (launcher != null) {
-            launcher.setDockerTemplate(this); // launcher must know template
-        }
+//        if (launcher != null) {
+//            launcher.setDockerTemplate(this); // launcher must know template
+//        }
 
         labelSet = Label.parse(labelString);
         return this;

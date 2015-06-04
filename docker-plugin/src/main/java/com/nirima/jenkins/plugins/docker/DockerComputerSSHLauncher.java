@@ -1,92 +1,62 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
-import com.nirima.jenkins.plugins.docker.utils.RetryingComputerLauncher;
-import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
-import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.security.ACL;
 import hudson.slaves.ComputerLauncher;
-import hudson.slaves.DelegatingComputerLauncher;
-import hudson.slaves.NodeProperty;
-import hudson.slaves.SlaveComputer;
 import hudson.util.ListBoxModel;
-import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import shaded.com.google.common.base.Preconditions;
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.ImmutableList;
 
-import javax.ws.rs.ProcessingException;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static java.util.Objects.*;
-
 /**
- * Launcher that expects 22 ssh port to be exposed from docker container
+ * Configurable launcher that expects 22 ssh port to be exposed from docker container.
  */
 public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     private static final Logger LOGGER = Logger.getLogger(DockerComputerSSHLauncher.class.getName());
-
-    public SSHConnector sshConnector;
-
-    protected transient DockerTemplate dockerTemplate;
+    // store real UI configuration
+    protected final SSHConnector sshConnector;
 
     @DataBoundConstructor
     public DockerComputerSSHLauncher(SSHConnector sshConnector) {
         this.sshConnector = sshConnector;
     }
 
-    public DockerTemplate getDockerTemplate() {
-        return dockerTemplate;
-    }
-
-    public void setDockerTemplate(DockerTemplate dockerTemplate) {
-        this.dockerTemplate = dockerTemplate;
-    }
-
     public SSHConnector getSshConnector() {
         return sshConnector;
     }
 
-    public ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
-        SSHLauncher sshLauncher = getSSHLauncher(containerInspectResponse, template);
-        return new RetryingComputerLauncher(sshLauncher);
+    public ComputerLauncher getPreparedLauncher(DockerTemplate dockerTemplate, InspectContainerResponse inspect) {
+        final DockerComputerSSHLauncher prepLauncher = new DockerComputerSSHLauncher(null); // don't care, we need only launcher
+
+        prepLauncher.setLauncher(getSSHLauncher(dockerTemplate, inspect));
+
+        return prepLauncher;
     }
 
     @Override
-    void appendContainerConfig(CreateContainerCmd createCmd) {
+    void appendContainerConfig(DockerTemplateBase dockerTemplate, CreateContainerCmd createCmd) {
         createCmd.withPortSpecs("22/tcp");
 
-        String[] cmd = getDockerTemplate().getDockerCommandArray();
+        String[] cmd = dockerTemplate.getDockerCommandArray();
         if (cmd.length == 0) {
             //default value to preserve compatibility
-            cmd = new String[]{"/usr/sbin/sshd", "-D"};
-            createCmd.withCmd(cmd);
+            createCmd.withCmd("/usr/sbin/sshd", "-D");
         }
 
 //        /**
@@ -101,105 +71,64 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 //
 //        }
         createCmd.withPortBindings(PortBinding.parse("0.0.0.0::22"));
-
-
     }
 
-    private SSHLauncher getSSHLauncher(InspectContainerResponse detail, DockerTemplate template)   {
+    @Override
+    public boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
+        final PortUtils portUtils = getPortUtils(dockerTemplate, containerInspect);
+        if (!portUtils.withEveryRetryWaitFor(10, TimeUnit.SECONDS)) {
+            return false;
+        }
+        try {
+            portUtils.bySshWithEveryRetryWaitFor(10, TimeUnit.SECONDS);
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "Can't connect to ssh", ex);
+            return false;
+        }
+
+        return true;
+    }
+
+    private SSHLauncher getSSHLauncher(DockerTemplate template, InspectContainerResponse inspect) {
         Preconditions.checkNotNull(template);
-        Preconditions.checkNotNull(detail);
+        Preconditions.checkNotNull(inspect);
 
         try {
-            // get exposed port
-            ExposedPort sshPort = new ExposedPort(sshConnector.port);
-            String host = null;
-            Integer port = 22;
-
-            Ports.Binding[] bindings = detail.getNetworkSettings().getPorts().getBindings().get(sshPort);
-
-            for (Ports.Binding b : bindings) {
-                port = b.getHostPort();
-                host = b.getHostIp();
-            }
-
-            //get address, if docker on localhost, then use local?
-            if (host == null || host.equals("0.0.0.0")) {
-                URL hostUrl = new URL(template.getParent().serverUrl);
-                host = hostUrl.getHost();
-            }
-
-            LOGGER.log(Level.INFO, "Waiting for open " + port + " on " + host);
-
-            PortUtils.waitForPort(host, port);
-
-            LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + host + ":" + port);
-
-            return new SSHLauncher(host, port, sshConnector.getCredentials(),
+            final PortUtils portUtils = getPortUtils(template, inspect);
+            LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + portUtils.host + ":" + portUtils.port);
+            return new SSHLauncher(portUtils.host, portUtils.port, sshConnector.getCredentials(),
                     sshConnector.jvmOptions,
                     sshConnector.javaPath, sshConnector.prefixStartSlaveCmd,
                     sshConnector.suffixStartSlaveCmd, sshConnector.launchTimeoutSeconds);
-
-        } catch(NullPointerException ex) {
-            throw new RuntimeException("No mapped port 22 in host for SSL. Config=" + detail, ex);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Malformed URL for host " + template, e);
+        } catch (NullPointerException ex) {
+            throw new RuntimeException("No mapped port 22 in host for SSL. Config=" + inspect, ex);
         }
+    }
+
+    public PortUtils getPortUtils(DockerTemplate dockerTemplate, InspectContainerResponse ir) {
+        // get exposed port
+        ExposedPort sshPort = new ExposedPort(sshConnector.port);
+        String host = null;
+        Integer port = 22;
+
+        Ports.Binding[] bindings = ir.getNetworkSettings().getPorts().getBindings().get(sshPort);
+
+        for (Ports.Binding b : bindings) {
+            port = b.getHostPort();
+            host = b.getHostIp();
+        }
+
+        //get address, if docker on localhost, then use local?
+        if (host == null || host.equals("0.0.0.0")) {
+            host = URI.create(dockerTemplate.getParent().serverUrl).getHost();
+        }
+
+        return PortUtils.canConnect(host, port);
     }
 
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(DockerComputerSSHLauncher.class);
-    }
-
-    @Override
-    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        Preconditions.checkNotNull(getDockerTemplate());
-        final DockerComputer dockerComputer = (DockerComputer) computer;
-        final DockerCloud cloud = dockerComputer.getCloud();
-        final DockerClient client = cloud.connect();
-//        final StreamTaskListener listener = new StreamTaskListener(System.out, Charset.defaultCharset());
-//        if (getLauncher() instanceof DockerComputerSSHLauncher) {
-
-        PrintStream logger = listener.getLogger();
-
-        logger.println("Running container " + getDockerTemplate().getImage());
-
-        runContainer(this, getDockerTemplate(), client);
-
-        dockerComputer.setContainerId(getContainerId());
-
-        logger.println("Run container with id: " + getContainerId());
-
-        InspectContainerResponse containerInspectResponse = null;
-        try {
-            containerInspectResponse = client.inspectContainerCmd(getContainerId()).exec();
-        } catch (ProcessingException ex) {
-            client.removeContainerCmd(getContainerId()).withForce(true).exec();
-            throw ex;
-        }
-
-        logger.println("Connecting to " + getDockerTemplate().getImage() );
-
-//        no way to set name or description because slave was already created
-//        // Build a description up:
-//        String nodeDescription = "Docker Node [" + getDockerTemplate().getImage() + " on ";
-//        try {
-//            nodeDescription += getDockerTemplate().getParent().getDisplayName();
-//        } catch (Exception ex) {
-//            nodeDescription += "???";
-//        }
-//        nodeDescription += "]";
-//
-//        String slaveName = containerId.substring(0, 12);
-//
-//        try {
-//            slaveName = slaveName + "@" + getDockerTemplate().getParent().getDisplayName();
-//        } catch(Exception ex) {
-//            LOGGER.warning("Error fetching cloud name");
-//        }
-
-        makeLauncher(getDockerTemplate(), containerInspectResponse)
-                .launch(computer, listener);
     }
 
     @Extension
