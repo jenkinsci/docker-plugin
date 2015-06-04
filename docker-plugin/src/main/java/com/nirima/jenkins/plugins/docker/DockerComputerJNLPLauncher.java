@@ -16,11 +16,15 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
-    public JNLPLauncher jnlpLauncher;
+    protected JNLPLauncher jnlpLauncher;
 
     @DataBoundConstructor
     public DockerComputerJNLPLauncher(JNLPLauncher jnlpLauncher) {
         this.jnlpLauncher = jnlpLauncher;
+    }
+
+    public JNLPLauncher getJnlpLauncher() {
+        return jnlpLauncher;
     }
 
     @Override
@@ -29,22 +33,22 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public ComputerLauncher makeLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
-        return null;
+    public ComputerLauncher getPreparedLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
+        return jnlpLauncher;
     }
 
     @Override
-    void appendContainerConfig(CreateContainerCmd createContainerCmd) {
-        // jnlp command for connection?
+    void appendContainerConfig(DockerTemplateBase dockerTemplate, CreateContainerCmd createContainerCmd) {
+        // jnlp command for connection with secret?
         createContainerCmd.withCmd("wget http://10.6.60.60:8090/jenkins/jnlpJars/slave.jar",
                 "java -jar slave.jar -jnlpUrl http://10.6.60.60:8090/jenkins/computer/jnlp/slave-agent.jnlp");
+
     }
 
     @Override
-    public void launch(SlaveComputer computer, TaskListener listener) {
-        // launch container
-
-
+    public boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse ir) {
+        // wait until container started?
+        return true;
     }
 
     @Extension

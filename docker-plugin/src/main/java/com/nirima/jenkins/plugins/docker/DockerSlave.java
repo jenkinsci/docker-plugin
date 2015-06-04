@@ -41,7 +41,6 @@ public class DockerSlave extends AbstractCloudSlave {
 
     private transient Run theRun;
 
-    //    @DataBoundConstructor
     public DockerSlave(DockerTemplate dockerTemplate, String containerId,
                        String name, String nodeDescription,
                        String remoteFS, int numExecutors, Mode mode,
@@ -57,16 +56,17 @@ public class DockerSlave extends AbstractCloudSlave {
         this.containerId = containerId;
     }
 
-    public DockerSlave(String name, DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
-        super(name,
-                "",
+    public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId, DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
+        super(slaveName,
+                nodeDescription, //description
                 dockerTemplate.getRemoteFs(),
                 dockerTemplate.getNumExecutors(),
                 dockerTemplate.getMode(),
                 dockerTemplate.getLabelString(),
-                dockerTemplate.getLauncher(),
+                launcher,
                 dockerTemplate.getRetentionStrategy(),
                 Collections.<NodeProperty<?>>emptyList());
+        setContainerId(containerId);
         setDockerTemplate(dockerTemplate);
     }
 
@@ -103,52 +103,13 @@ public class DockerSlave extends AbstractCloudSlave {
 
     @Override
     public DockerComputer createComputer() {
-
-
-//            // Build a description up:
-//            String nodeDescription = "Docker Node [" + getDockerTemplate().getImage() + " on ";
-//            try {
-//                nodeDescription += getDockerTemplate().getParent().getDisplayName();
-//            } catch (Exception ex) {
-//                nodeDescription += "???";
-//            }
-//            nodeDescription += "]";
-//
-//            String slaveName = containerId.substring(0, 12);
-//
-//            try {
-//                slaveName = slaveName + "@" + getDockerTemplate().getParent().getDisplayName();
-//            } catch(Exception ex) {
-//                LOGGER.warning("Error fetching cloud name");
-//            }
-//        }
-
         return new DockerComputer(this);
     }
 
-    public static String runContainer(DockerTemplateBase dockerTemplate, DockerClient dockerClient) throws DockerException {
-        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplate.getImage());
-
-        dockerTemplate.fillContainerConfig(containerConfig);
-        // contribute launcher specific options
-        if (dockerTemplate instanceof DockerTemplate) {
-            ((DockerTemplate) dockerTemplate).getLauncher().appendContainerConfig(containerConfig);
-        }
-        // create
-        CreateContainerResponse response = containerConfig.exec();
-        String containerId = response.getId();
-        // start
-        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
-        startCommand.exec();
-
-        return containerId;
+    protected void cancelHoldOff() {
+        // resume the retention strategy work that we've suspended in the constructor
+        holdOffLaunchUntilSave = false;
     }
-
-
-
-
-
-
 
     @Override
     public CauseOfBlockage canTake(Queue.BuildableItem item) {
