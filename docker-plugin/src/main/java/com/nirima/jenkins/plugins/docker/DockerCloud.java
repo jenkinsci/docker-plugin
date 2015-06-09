@@ -146,7 +146,7 @@ public class DockerCloud extends Cloud {
     @Override
     public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         try {
-            LOGGER.info("Asked to provision {0} slave(s) for: {1}", new Object[]{excessWorkload,label});
+            LOGGER.info("Asked to provision {} slave(s) for: {}", new Object[]{excessWorkload,label});
 
             List<NodeProvisioner.PlannedNode> r = new ArrayList<>();
 
@@ -250,8 +250,8 @@ public class DockerCloud extends Cloud {
             LOGGER.warn("Error fetching cloud name");
         }
 
-
         dockerTemplate.getLauncher().waitUp(dockerTemplate, ir);
+
         final ComputerLauncher launcher = dockerTemplate.getLauncher().getPreparedLauncher(dockerTemplate, ir);
 
         return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate);

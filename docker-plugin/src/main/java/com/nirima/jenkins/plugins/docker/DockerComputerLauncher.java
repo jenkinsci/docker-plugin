@@ -101,29 +101,4 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
     public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
         getLauncher().beforeDisconnect(computer, listener);
     }
-
-//    public String getContainerId() {
-//        return containerId;
-//    }
-//
-//    public void setContainerId(String containerId) {
-//        this.containerId = containerId;
-//    }
-//
-//    public DockerTemplate getDockerTemplate() {
-//        return dockerTemplate;
-//    }
-//
-//    public void setDockerTemplate(DockerTemplate dockerTemplate) {
-//        this.dockerTemplate = dockerTemplate;
-//    }
-//
-//    public InspectContainerResponse getIr() {
-//        return ir;
-//    }
-//
-//    public void setIr(InspectContainerResponse ir) {
-//        this.ir = ir;
-//    }
-
 }
