@@ -17,9 +17,12 @@ import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import shaded.com.google.common.base.Preconditions;
+import shaded.com.google.common.base.Strings;
+import shaded.com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -56,15 +59,15 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         String[] cmd = dockerTemplate.getDockerCommandArray();
         if (cmd.length == 0) {
             //default value to preserve compatibility
-            createCmd.withCmd("/usr/sbin/sshd", "-D");
+            createCmd.withCmd("bash", "-c", "sleep 20 && /usr/sbin/sshd -D");
         }
 
-//        /**
-//         * Provide a sensible default - templates are for slaves, and you're mostly going
-//         * to want port 22 exposed.
-//         */
-//        final Ports portBindings = createCmd.getPortBindings();
-//        if (Strings.isNullOrEmpty() {
+        /**
+         * Provide a sensible default - templates are for slaves, and you're mostly going
+         * to want port 22 exposed.
+         */
+        final Ports portBindings = createCmd.getPortBindings();
+//        if (Strings.isNullOrEmpty(portBindings) {
 //            final ImmutableList<PortBinding> build = ImmutableList.<PortBinding>builder()
 //                    .add(PortBinding.parse("0.0.0.0::22"))
 //                    .build();
@@ -75,6 +78,10 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
     @Override
     public boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
+        if (!containerInspect.getState().isRunning()) {
+            throw new IllegalStateException("Container '" + containerInspect.getId() + "' is not running!");
+        }
+
         final PortUtils portUtils = getPortUtils(dockerTemplate, containerInspect);
         if (!portUtils.withEveryRetryWaitFor(10, TimeUnit.SECONDS)) {
             return false;
@@ -111,9 +118,12 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         String host = null;
         Integer port = 22;
 
-        Ports.Binding[] bindings = ir.getNetworkSettings().getPorts().getBindings().get(sshPort);
+        final InspectContainerResponse.NetworkSettings networkSettings = ir.getNetworkSettings();
+        final Ports ports = networkSettings.getPorts();
+        final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
+        final Ports.Binding[] sshBindings = bindings.get(sshPort);
 
-        for (Ports.Binding b : bindings) {
+        for (Ports.Binding b : sshBindings) {
             port = b.getHostPort();
             host = b.getHostIp();
         }

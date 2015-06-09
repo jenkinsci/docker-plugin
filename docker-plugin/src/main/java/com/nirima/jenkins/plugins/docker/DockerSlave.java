@@ -74,6 +74,10 @@ public class DockerSlave extends AbstractCloudSlave {
         this.containerId = containerId;
     }
 
+    public String getContainerId() {
+        return containerId;
+    }
+
     public DockerTemplate getDockerTemplate() {
         return dockerTemplate;
     }
