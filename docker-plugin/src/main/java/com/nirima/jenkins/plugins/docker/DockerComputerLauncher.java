@@ -75,7 +75,13 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
     /**
      * Ensure that slave is up and ready for connection
      */
-    public abstract boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse ir);
+    public boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
+        if (!containerInspect.getState().isRunning()) {
+            throw new IllegalStateException("Container '" + containerInspect.getId() + "' is not running!");
+        }
+
+        return true;
+    }
 
 
     public ComputerLauncher getLauncher() {
