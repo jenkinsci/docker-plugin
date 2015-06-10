@@ -141,6 +141,7 @@ public class DockerSlave extends AbstractCloudSlave {
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
         try {
             toComputer().disconnect(new DockerOfflineCause());
+            LOGGER.log(Level.INFO, "Disconnected computer");
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Can't disconnect", e);
         }
@@ -148,25 +149,28 @@ public class DockerSlave extends AbstractCloudSlave {
         if (containerId != null) {
             try {
                 DockerClient client = getClient();
-                client.stopContainerCmd(containerId).exec();
+                client.stopContainerCmd(getContainerId()).exec();
+                LOGGER.log(Level.INFO, "Stopped container {0}", getContainerId());
             } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, "Failed to stop instance " + containerId + " for slave " + name + " due to exception", ex);
+                LOGGER.log(Level.SEVERE, "Failed to stop instance " + getContainerId() + " for slave " + name + " due to exception", ex.getMessage());
             }
 
             // If the run was OK, then do any tagging here
             if (theRun != null) {
                 try {
                     slaveShutdown(listener);
+                    LOGGER.log(Level.INFO, "Shutdowned slave for {0}", getContainerId());
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Failure to slaveShutdown instance " + containerId + " for slave " + name, e);
+                    LOGGER.log(Level.SEVERE, "Failure to slaveShutdown instance " + getContainerId() + " for slave " + name, e);
                 }
             }
 
             try {
                 DockerClient client = getClient();
                 client.removeContainerCmd(containerId).exec();
+                LOGGER.log(Level.INFO, "Removed container {0}", getContainerId());
             } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception", ex);
+                LOGGER.log(Level.SEVERE, "Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception" + ex.getMessage());
             }
         } else {
             LOGGER.log(Level.SEVERE, "ContainerId is absent, no way to remove/stop container");

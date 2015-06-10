@@ -28,7 +28,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     public DockerComputer(DockerSlave dockerSlave) {
         super(dockerSlave);
-//        setContainerId(containerId);
+        setContainerId(dockerSlave.getContainerId());
         nodeExistenceStatus = new Cacheable<>(60000, new Callable<Boolean>() {
             public Boolean call() throws Exception {
                 return getNode().containerExistsInCloud();
@@ -74,45 +74,45 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         LOGGER.log(Level.FINE, " Computer {0} taskCompletedWithProblems", this);
     }
 
-    @Override
-    public boolean isAcceptingTasks() {
-
-        boolean result = super.isAcceptingTasks();
-
-        // Quit quickly if we aren't accepting tasks
-        if( !result )
-            return false;
-
-        // Update
-        updateAcceptingTasks();
-
-        // Are we still accepting tasks?
-        result = super.isAcceptingTasks();
-
-        return result;
-    }
-
-    private void updateAcceptingTasks() {
-        try {
-
-            int pause = 5000;
-            if (getOfflineCause() != null) {
-                if (getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
-                    LOGGER.log(Level.INFO, "Slave agent not launched after checking " + checked + " time(s).  Waiting for any retries...");
-                    checked += 1;
-                    Thread.sleep(pause);
-                } else {
-                    setAcceptingTasks(false);
-                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause());
-                }
-            } else if (!nodeExistenceStatus.get()) {
-                setAcceptingTasks(false);
-            }
-        } catch (Exception ex) {
-            LOGGER.log(Level.INFO, " Computer " + this + " error getting node");
-            setAcceptingTasks(false);
-        }
-    }
+//    @Override
+//    public boolean isAcceptingTasks() {
+//
+//        boolean result = super.isAcceptingTasks();
+//
+//        // Quit quickly if we aren't accepting tasks
+//        if( !result )
+//            return false;
+//
+//        // Update
+//        updateAcceptingTasks();
+//
+//        // Are we still accepting tasks?
+//        result = super.isAcceptingTasks();
+//
+//        return result;
+//    }
+//
+//    private void updateAcceptingTasks() {
+//        try {
+//
+//            int pause = 5000;
+//            if (getOfflineCause() != null) {
+//                if (getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
+//                    LOGGER.log(Level.INFO, "Slave agent not launched after checking " + checked + " time(s).  Waiting for any retries...");
+//                    checked += 1;
+//                    Thread.sleep(pause);
+//                } else {
+//                    setAcceptingTasks(false);
+//                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause());
+//                }
+//            } else if (!nodeExistenceStatus.get()) {
+//                setAcceptingTasks(false);
+//            }
+//        } catch (Exception ex) {
+//            LOGGER.log(Level.INFO, " Computer " + this + " error getting node");
+//            setAcceptingTasks(false);
+//        }
+//    }
 
     public void onConnected(){
         DockerSlave node = getNode();

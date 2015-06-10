@@ -78,9 +78,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
     @Override
     public boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
-        if (!containerInspect.getState().isRunning()) {
-            throw new IllegalStateException("Container '" + containerInspect.getId() + "' is not running!");
-        }
+        super.waitUp(dockerTemplate, containerInspect);
 
         final PortUtils portUtils = getPortUtils(dockerTemplate, containerInspect);
         if (!portUtils.withEveryRetryWaitFor(10, TimeUnit.SECONDS)) {

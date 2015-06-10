@@ -207,7 +207,9 @@ public class DockerCloud extends Cloud {
 
         // contribute launcher specific options
         if (dockerTemplate instanceof DockerTemplate) {
-            ((DockerTemplate) dockerTemplate).getLauncher().appendContainerConfig(dockerTemplate, containerConfig);
+            ((DockerTemplate) dockerTemplate)
+                    .getLauncher()
+                    .appendContainerConfig(dockerTemplate, containerConfig);
         }
 
         // create
