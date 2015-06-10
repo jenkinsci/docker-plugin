@@ -1,8 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.ExecCreateCmd;
-import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.*;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
@@ -54,19 +53,23 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         String wgetSlaveCmd = "wget " + rootUrl + "jnlpJars/slave.jar -O slave.jar";
         String jnlpCmd = "java -jar slave.jar -jnlpUrl " + rootUrl + dockerComputer.getUrl() + "slave-agent.jnlp";
 
-        final ExecCreateCmd execCreateCmd = dockerComputer.getCloud().connect().execCreateCmd(containerId);
+        final DockerClient connect = dockerComputer.getCloud().connect();
+        final ExecCreateCmd execCreateCmd = connect.execCreateCmd(containerId);
         String[] connectCmd = {
                 "bash", "-c", cdCmd + " && " + wgetSlaveCmd + " && " + jnlpCmd
         };
 
         LOGGER.info("Executing: {}", Arrays.toString(connectCmd));
         try {
-            execCreateCmd.withTty()
+            final ExecCreateCmdResponse response = execCreateCmd.withTty()
                     .withAttachStdin()
                     .withAttachStderr()
                     .withAttachStdout()
                     .withCmd(connectCmd)
                     .exec();
+            final ExecStartCmd execStartCmd = connect.execStartCmd(response.getId());
+            execStartCmd.exec();
+
         } catch (Exception ex) {
             listener.error("Can't execute command");
             LOGGER.error("Can't execute jnlp connection command {}", ex.getMessage());
