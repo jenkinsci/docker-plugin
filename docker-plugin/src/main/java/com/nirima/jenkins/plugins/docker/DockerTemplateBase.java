@@ -17,18 +17,11 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import shaded.com.google.common.base.Function;
-import shaded.com.google.common.base.Joiner;
-import shaded.com.google.common.base.Objects;
-import shaded.com.google.common.base.Splitter;
-import shaded.com.google.common.base.Strings;
+import shaded.com.google.common.base.*;
 import shaded.com.google.common.collect.Iterables;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.StartContainerCmd;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,6 +84,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     @CheckForNull private String macAddress;
 
+    @DataBoundConstructor
     public DockerTemplateBase(String image,
                               String dnsString,
                               String dockerCommand,
@@ -262,7 +256,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     }
 
     public List<LxcConf> getLxcConf() {
-        List<LxcConf> temp = new ArrayList<LxcConf>();
+        List<LxcConf> temp = new ArrayList<>();
         if( lxcConfString == null || lxcConfString.trim().equals(""))
             return temp;
         for (String item : lxcConfString.split(",")) {
@@ -281,6 +275,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
             }
         }
         return temp;
+    }
+
+    public String getEnvironmentsString() {
+        return Joiner.on("\n").join(environment);
     }
 
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
@@ -365,7 +363,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
+        return MoreObjects.toStringHelper(this)
                 .add("image", getImage())
                 .toString();
     }

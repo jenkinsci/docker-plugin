@@ -55,7 +55,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         String cdCmd = "cd /home/jenkins/";
         String wgetSlaveCmd = "wget " + rootUrl + "jnlpJars/slave.jar -O slave.jar";
         String jnlpConnectCmd = "java -jar slave.jar "
-                + "-jnlpUrl " + rootUrl + dockerComputer.getUrl() + "slave-agent.jnlp"
+                + "-jnlpUrl " + rootUrl + dockerComputer.getUrl() + "slave-agent.jnlp "
                 + "-secret " + dockerComputer.getJnlpMac();
 
         String[] connectCmd = {
@@ -85,7 +85,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public ComputerLauncher getPreparedLauncher(DockerTemplate template, InspectContainerResponse containerInspectResponse) {
+    public ComputerLauncher getPreparedLauncher(String cloudId, DockerTemplate template, InspectContainerResponse containerInspectResponse) {
         return new DockerComputerJNLPLauncher(getJnlpLauncher());
     }
 
@@ -98,8 +98,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse ir) {
-        return super.waitUp(dockerTemplate, ir);
+    public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse ir) {
+        return super.waitUp(cloudId, dockerTemplate, ir);
     }
 
     @Extension

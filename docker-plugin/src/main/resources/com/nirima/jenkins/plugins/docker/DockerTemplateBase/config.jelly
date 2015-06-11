@@ -6,7 +6,8 @@
     <f:entry title="${%ID}" field="image">
         <f:textbox/>
     </f:entry>
-    <f:advanced title="Container settings">
+
+    <f:advanced title="Container settings" align="left">
 
     <f:entry title="${%Docker Command}" field="dockerCommand">
         <f:textbox/>

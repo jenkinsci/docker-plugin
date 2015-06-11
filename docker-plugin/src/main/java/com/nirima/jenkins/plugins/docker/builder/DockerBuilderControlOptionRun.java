@@ -99,7 +99,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
                 volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,
                 memoryLimit, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
 
-        String containerId = DockerCloud.runContainer(template, client);
+        String containerId = DockerCloud.runContainer(template, client, null);
 
         LOGGER.log(Level.INFO, "Started container {0}", containerId);
         getLaunchAction(build).started(client, containerId);

@@ -3,16 +3,11 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
 
-    <!-- docker template base options -->
-    <st:include page="config.jelly" class="${descriptor.dockerTemplateBase}"/>
+    <f:property field="dockerTemplateBase"/>
 
     <f:entry title="${%Instance Cap}" field="instanceCapStr">
         <f:textbox/>
     </f:entry>
-
-    <!--<f:entry title="${%Credentials}" field="credentialsId">-->
-        <!--<c:select/>-->
-    <!--</f:entry>-->
 
     <f:entry title="${%Remote Filing System Root}" field="remoteFs">
         <f:textbox/>

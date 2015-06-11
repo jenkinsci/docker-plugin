@@ -1,7 +1,6 @@
 package com.nirima.jenkins.plugins.docker.strategy;
 
 import hudson.Extension;
-import hudson.model.Descriptor;
 import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.RetentionStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
