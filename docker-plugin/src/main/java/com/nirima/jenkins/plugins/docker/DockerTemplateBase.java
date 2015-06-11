@@ -1,7 +1,23 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.model.*;
+import com.trilead.ssh2.Connection;
+import hudson.Extension;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.ItemGroup;
+import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.security.ACL;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.Function;
 import shaded.com.google.common.base.Joiner;
 import shaded.com.google.common.base.Objects;
@@ -27,9 +43,8 @@ import static org.apache.commons.lang.StringUtils.*;
 /**
  * Base for docker templates - does not include Jenkins items like labels.
  */
-public abstract class DockerTemplateBase {
+public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplateBase.class.getName());
-
 
     private String image;
 
@@ -354,4 +369,74 @@ public abstract class DockerTemplateBase {
                 .add("image", getImage())
                 .toString();
     }
+
+    @Override
+    public Descriptor<DockerTemplateBase> getDescriptor() {
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(DockerTemplateBase.class);
+    }
+
+    @Extension
+    public static class DescriptorImpl extends Descriptor<DockerTemplateBase> {
+
+        public FormValidation doCheckVolumesString(@QueryParameter String volumesString) {
+            try {
+                final String[] strings = splitAndFilterEmpty(volumesString, "\n");
+                for (String s : strings) {
+                    if (s.equals("/")) {
+                        return FormValidation.error("Invalid volume: path can't be '/'");
+                    }
+
+                    final String[] group = s.split(":");
+                    if (group.length > 3) {
+                        return FormValidation.error("Wrong syntax: " + s);
+                    } else if (group.length == 2 || group.length == 3) {
+                        if (group[1].equals("/")) {
+                            return FormValidation.error("Invalid bind mount: destination can't be '/'");
+                        }
+                        Bind.parse(s);
+                    } else if (group.length == 1) {
+                        new Volume(s);
+                    } else {
+                        return FormValidation.error("Wrong line: " + s);
+                    }
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+
+            return FormValidation.ok();
+
+        }
+
+        public FormValidation doCheckVolumesFromString(@QueryParameter String volumesFromString) {
+            try {
+                final String[] strings = splitAndFilterEmpty(volumesFromString, "\n");
+                for (String volFrom : strings) {
+                    VolumesFrom.parse(volFrom);
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+
+            return FormValidation.ok();
+        }
+
+
+        public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+            return new SSHUserListBoxModel().withMatching(
+                    SSHAuthenticator.matcher(Connection.class),
+                    CredentialsProvider.lookupCredentials(
+                            StandardUsernameCredentials.class,
+                            context,
+                            ACL.SYSTEM,
+                            SSHLauncher.SSH_SCHEME)
+            );
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Docker template base";
+        }
+    }
+
 }

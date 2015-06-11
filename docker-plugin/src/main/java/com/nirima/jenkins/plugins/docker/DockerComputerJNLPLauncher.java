@@ -23,7 +23,9 @@ import java.util.Arrays;
 public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerComputerJNLPLauncher.class);
 
-
+    /**
+     * Configured from UI
+     */
     protected JNLPLauncher jnlpLauncher;
 
     @DataBoundConstructor
@@ -43,38 +45,43 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
         final PrintStream logger = listener.getLogger();
-        logger.println("Trying to launch jnlp connection");
-
         final DockerComputer dockerComputer = (DockerComputer) computer;
         final String containerId = dockerComputer.getContainerId();
         final String rootUrl = Jenkins.getInstance().getRootUrl();
+        final DockerClient connect = dockerComputer.getCloud().connect();
 
+        // exec jnlp connection in running container
+        // TODO implement PID 1 replacement
         String cdCmd = "cd /home/jenkins/";
         String wgetSlaveCmd = "wget " + rootUrl + "jnlpJars/slave.jar -O slave.jar";
-        String jnlpCmd = "java -jar slave.jar -jnlpUrl " + rootUrl + dockerComputer.getUrl() + "slave-agent.jnlp";
+        String jnlpConnectCmd = "java -jar slave.jar "
+                + "-jnlpUrl " + rootUrl + dockerComputer.getUrl() + "slave-agent.jnlp"
+                + "-secret " + dockerComputer.getJnlpMac();
 
-        final DockerClient connect = dockerComputer.getCloud().connect();
-        final ExecCreateCmd execCreateCmd = connect.execCreateCmd(containerId);
         String[] connectCmd = {
-                "bash", "-c", cdCmd + " && " + wgetSlaveCmd + " && " + jnlpCmd
+                "bash", "-c", cdCmd + " && " + wgetSlaveCmd + " && " + jnlpConnectCmd
         };
 
-        LOGGER.info("Executing: {}", Arrays.toString(connectCmd));
+        LOGGER.info("Executing jnlp connection '{}' for '{}'", Arrays.toString(connectCmd), containerId);
+        logger.println("Executing jnlp connection '" + Arrays.toString(connectCmd) + "' for '" + containerId + "'");
         try {
-            final ExecCreateCmdResponse response = execCreateCmd.withTty()
+            final ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
+                    .withTty()
                     .withAttachStdin()
                     .withAttachStderr()
                     .withAttachStdout()
                     .withCmd(connectCmd)
                     .exec();
-            final ExecStartCmd execStartCmd = connect.execStartCmd(response.getId());
-            execStartCmd.exec();
 
+            connect.execStartCmd(response.getId())
+                    .exec();
         } catch (Exception ex) {
-            listener.error("Can't execute command");
-            LOGGER.error("Can't execute jnlp connection command {}", ex.getMessage());
+            listener.error("Can't execute command: " + ex.getMessage());
+            LOGGER.error("Can't execute jnlp connection command: '{}'", ex.getMessage());
         }
 
+        LOGGER.info("Successfully executed jnlp connection for '{}'", containerId);
+        logger.println("Successfully executed jnlp connection for " + containerId);
     }
 
     @Override
@@ -84,12 +91,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     @Override
     void appendContainerConfig(DockerTemplateBase dockerTemplate, CreateContainerCmd createContainerCmd) {
-        // jnlp command for connection with secret?
-        final String rootUrl = Jenkins.getInstance().getRootUrl();
-
+        // set nop command, real jnlp connection will be called from #launch()
         createContainerCmd.withTty(true);
         createContainerCmd.withStdinOpen(true);
-        createContainerCmd.withCmd("/bin/sh"); //nop
+        createContainerCmd.withCmd("/bin/sh"); // nop
     }
 
     @Override

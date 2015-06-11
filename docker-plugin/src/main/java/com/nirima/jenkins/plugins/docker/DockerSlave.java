@@ -54,6 +54,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         setDockerTemplate(dockerTemplate);
         this.containerId = containerId;
+        holdOffLaunchUntilSave = true;
     }
 
     public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId, DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
@@ -293,8 +294,6 @@ public class DockerSlave extends AbstractCloudSlave {
         public String getDisplayName() {
             return "Docker Slave";
         }
-
-        ;
 
         @Override
         public boolean isInstantiable() {
