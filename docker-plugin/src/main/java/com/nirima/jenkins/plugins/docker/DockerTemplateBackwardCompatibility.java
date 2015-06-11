@@ -1,15 +1,16 @@
 package com.nirima.jenkins.plugins.docker;
 
+import hudson.plugins.sshslaves.SSHConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.logging.Level;
+import shaded.com.google.common.base.Joiner;
 
 /**
  * Deprecated variables
  *
  * @author Kanstantsin Shautsou
  */
+@SuppressWarnings({"deprecation", "UnusedDeclaration"})
 public abstract class DockerTemplateBackwardCompatibility {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTemplateBackwardCompatibility.class);
 
@@ -21,7 +22,8 @@ public abstract class DockerTemplateBackwardCompatibility {
      *
      * @deprecated migrated to retention strategy?
      */
-    @Deprecated protected String idleTerminationMinutes;
+    @Deprecated
+    private String idleTerminationMinutes;
 
 //
 //     SSH Launcher settings
@@ -29,82 +31,130 @@ public abstract class DockerTemplateBackwardCompatibility {
     /**
      * The id of the credentials to use.
      */
-    @Deprecated protected String credentialsId;
+    @Deprecated
+    private String credentialsId;
 
     /**
      * Minutes before SSHLauncher times out on launch
      */
-    @Deprecated protected String sshLaunchTimeoutMinutes;
+    @Deprecated
+    private String sshLaunchTimeoutMinutes;
 
     /**
      * Field jvmOptions.
      */
-    @Deprecated protected String jvmOptions;
+    @Deprecated
+    private String jvmOptions;
 
     /**
      * Field javaPath.
      */
-    @Deprecated protected String javaPath;
+    @Deprecated
+    private String javaPath;
 
     /**
      * Field prefixStartSlaveCmd.
      */
-    @Deprecated protected String prefixStartSlaveCmd;
+    @Deprecated
+    private String prefixStartSlaveCmd;
 
     /**
      * Field suffixStartSlaveCmd.
      */
-    @Deprecated protected String suffixStartSlaveCmd;
+    @Deprecated
+    private String suffixStartSlaveCmd;
 
-//
+    //
 //     DockerTemplateBase values
 //
-    @Deprecated protected String image;
+    @Deprecated
+    private String image;
 
     /**
      * Field dockerCommand
      */
-    @Deprecated protected String dockerCommand;
+    @Deprecated
+    private String dockerCommand;
 
     /**
      * Field lxcConfString
      */
-    @Deprecated protected String lxcConfString;
+    @Deprecated
+    private String lxcConfString;
 
-    @Deprecated protected String hostname;
+    @Deprecated
+    private String hostname;
 
-    @Deprecated protected String[] dnsHosts;
+    @Deprecated
+    private String[] dnsHosts;
 
     /**
      * Every String is volume specification
      */
-    @Deprecated protected String[] volumes;
+    @Deprecated
+    private String[] volumes;
 
     /**
      * @deprecated use {@link #volumesFrom2}
      */
-    @Deprecated protected String volumesFrom;
+    @Deprecated
+    private String volumesFrom;
 
     /**
      * Every String is volumeFrom specification
      */
-    @Deprecated protected String[] volumesFrom2;
-
-    @Deprecated protected String[] environment;
-
-    @Deprecated protected String bindPorts;
-    @Deprecated protected boolean bindAllPorts;
-
-    @Deprecated protected Integer memoryLimit;
-    @Deprecated protected Integer cpuShares;
-
-    @Deprecated protected boolean privileged;
-    @Deprecated protected boolean tty;
-
-    @Deprecated protected String macAddress;
+    @Deprecated
+    private String[] volumesFrom2;
 
     @Deprecated
-    protected int getSSHLaunchTimeoutMinutes() {
+    private String[] environment;
+
+    @Deprecated
+    private String bindPorts;
+    @Deprecated
+    private boolean bindAllPorts;
+
+    @Deprecated
+    private Integer memoryLimit;
+    @Deprecated
+    private Integer cpuShares;
+
+    @Deprecated
+    private boolean privileged;
+    @Deprecated
+    private boolean tty;
+
+    @Deprecated
+    private String macAddress;
+
+    @Deprecated
+    private String getDnsString() {
+        return Joiner.on(" ").join(dnsHosts);
+    }
+
+    @Deprecated
+    private String getVolumesString() {
+        return Joiner.on("\n").join(volumes);
+    }
+
+    @Deprecated
+    private String getEnvironmentsString() {
+        return Joiner.on("\n").join(environment);
+    }
+
+    @Deprecated
+    private String[] getVolumesFrom2() {
+        return DockerTemplateBase.filterStringArray(volumesFrom2);
+    }
+
+    @Deprecated
+    private String getVolumesFromString() {
+        return Joiner.on("\n").join(getVolumesFrom2());
+    }
+
+
+    @Deprecated
+    private int getSSHLaunchTimeoutMinutes() {
         if (sshLaunchTimeoutMinutes == null || sshLaunchTimeoutMinutes.trim().isEmpty()) {
             return 1;
         } else {
@@ -121,7 +171,7 @@ public abstract class DockerTemplateBackwardCompatibility {
      * @deprecated migrated to retention strategy
      */
     @Deprecated
-    public int getIdleTerminationMinutes() {
+    private int getIdleTerminationMinutes() {
         if (idleTerminationMinutes == null || idleTerminationMinutes.trim().isEmpty()) {
             return 0;
         } else {
@@ -134,4 +184,34 @@ public abstract class DockerTemplateBackwardCompatibility {
         }
     }
 
+
+    public abstract void setLauncher(DockerComputerLauncher launcher);
+
+    public abstract void setDockerTemplateBase(DockerTemplateBase dockerTemplateBase);
+
+    protected void convert1() {
+        // migrate launcher
+        final SSHConnector sshConnector = new SSHConnector(22, credentialsId, jvmOptions, javaPath,
+                prefixStartSlaveCmd, suffixStartSlaveCmd, getSSHLaunchTimeoutMinutes() * 60);
+        setLauncher(new DockerComputerSSHLauncher(sshConnector));
+
+        // migrate dockerTemplate
+        setDockerTemplateBase(new DockerTemplateBase(image,
+                        getDnsString(),
+                        dockerCommand,
+                        getVolumesString(),
+                        getVolumesFromString(),
+                        getEnvironmentsString(),
+                        lxcConfString,
+                        hostname,
+                        memoryLimit,
+                        cpuShares,
+                        bindPorts,
+                        bindAllPorts,
+                        privileged,
+                        tty,
+                        macAddress
+                )
+        );
+    }
 }

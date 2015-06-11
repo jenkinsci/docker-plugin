@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 
 /**
  * Configurable SSH launcher that expected ssh port to be exposed from docker container.
- * TODO unhardcode values
  */
 public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     private static final Logger LOGGER = Logger.getLogger(DockerComputerSSHLauncher.class.getName());
@@ -43,43 +42,34 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return sshConnector;
     }
 
-    public ComputerLauncher getPreparedLauncher(DockerTemplate dockerTemplate, InspectContainerResponse inspect) {
+    public ComputerLauncher getPreparedLauncher(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse inspect) {
         final DockerComputerSSHLauncher prepLauncher = new DockerComputerSSHLauncher(null); // don't care, we need only launcher
 
-        prepLauncher.setLauncher(getSSHLauncher(dockerTemplate, inspect));
+        prepLauncher.setLauncher(getSSHLauncher(cloudId, dockerTemplate, inspect));
 
         return prepLauncher;
     }
 
     @Override
     void appendContainerConfig(DockerTemplateBase dockerTemplate, CreateContainerCmd createCmd) {
-        createCmd.withPortSpecs("22/tcp");
+        final int sshPort = getSshConnector().port;
+
+        createCmd.withPortSpecs(sshPort + "/tcp");
 
         String[] cmd = dockerTemplate.getDockerCommandArray();
         if (cmd.length == 0) {
             //default value to preserve compatibility
-            createCmd.withCmd("bash", "-c", "sleep 20 && /usr/sbin/sshd -D");
+            createCmd.withCmd("bash", "-c", "sleep 20 && /usr/sbin/sshd -D -p " + sshPort);
         }
 
-        /**
-         * Provide a sensible default - templates are for slaves, and you're mostly going
-         * to want port 22 exposed.
-         */
-        final Ports portBindings = createCmd.getPortBindings();
-//        if (Strings.isNullOrEmpty(portBindings) {
-//            final ImmutableList<PortBinding> build = ImmutableList.<PortBinding>builder()
-//                    .add(PortBinding.parse("0.0.0.0::22"))
-//                    .build();
-//
-//        }
-        createCmd.withPortBindings(PortBinding.parse("0.0.0.0::22"));
+        createCmd.getPortBindings().add(PortBinding.parse("0.0.0.0::" + sshPort));
     }
 
     @Override
-    public boolean waitUp(DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
-        super.waitUp(dockerTemplate, containerInspect);
+    public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
+        super.waitUp(cloudId, dockerTemplate, containerInspect);
 
-        final PortUtils portUtils = getPortUtils(dockerTemplate, containerInspect);
+        final PortUtils portUtils = getPortUtils(cloudId, dockerTemplate, containerInspect);
         if (!portUtils.withEveryRetryWaitFor(10, TimeUnit.SECONDS)) {
             return false;
         }
@@ -93,12 +83,12 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return true;
     }
 
-    private SSHLauncher getSSHLauncher(DockerTemplate template, InspectContainerResponse inspect) {
+    private SSHLauncher getSSHLauncher(String cloudId, DockerTemplate template, InspectContainerResponse inspect) {
         Preconditions.checkNotNull(template);
         Preconditions.checkNotNull(inspect);
 
         try {
-            final PortUtils portUtils = getPortUtils(template, inspect);
+            final PortUtils portUtils = getPortUtils(cloudId, template, inspect);
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + portUtils.host + ":" + portUtils.port);
             return new SSHLauncher(portUtils.host, portUtils.port, sshConnector.getCredentials(),
                     sshConnector.jvmOptions,
@@ -109,7 +99,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
     }
 
-    public PortUtils getPortUtils(DockerTemplate dockerTemplate, InspectContainerResponse ir) {
+    public PortUtils getPortUtils(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse ir) {
         // get exposed port
         ExposedPort sshPort = new ExposedPort(sshConnector.port);
         String host = null;
@@ -127,7 +117,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
-            host = URI.create(dockerTemplate.getParent().serverUrl).getHost();
+            host = URI.create(DockerCloud.getCloudByName(cloudId).serverUrl).getHost();
         }
 
         return PortUtils.canConnect(host, port);

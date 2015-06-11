@@ -2,28 +2,19 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.StartContainerCmd;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.model.queue.CauseOfBlockage;
-import hudson.slaves.AbstractCloudSlave;
-import hudson.slaves.ComputerLauncher;
-import hudson.slaves.NodeProperty;
-import hudson.slaves.RetentionStrategy;
-import hudson.util.StreamTaskListener;
+import hudson.slaves.*;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
-import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Preconditions;
 import shaded.com.google.common.base.Strings;
 
 import javax.annotation.CheckForNull;
-import javax.ws.rs.ProcessingException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -31,13 +22,15 @@ import java.util.logging.Logger;
 
 
 public class DockerSlave extends AbstractCloudSlave {
-
     private static final Logger LOGGER = Logger.getLogger(DockerSlave.class.getName());
 
     public DockerTemplate dockerTemplate;
 
-    @CheckForNull
-    private String containerId;
+    // remember container id
+    @CheckForNull private String containerId;
+
+    // remember cloud name
+    @CheckForNull private String cloudId;
 
     private transient Run theRun;
 
@@ -54,10 +47,11 @@ public class DockerSlave extends AbstractCloudSlave {
 
         setDockerTemplate(dockerTemplate);
         this.containerId = containerId;
-        holdOffLaunchUntilSave = true;
     }
 
-    public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId, DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
+    public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId,
+                       DockerTemplate dockerTemplate, String cloudId)
+            throws IOException, Descriptor.FormException {
         super(slaveName,
                 nodeDescription, //description
                 dockerTemplate.getRemoteFs(),
@@ -66,17 +60,27 @@ public class DockerSlave extends AbstractCloudSlave {
                 dockerTemplate.getLabelString(),
                 launcher,
                 dockerTemplate.getRetentionStrategy(),
-                Collections.<NodeProperty<?>>emptyList());
+                Collections.<NodeProperty<?>>emptyList()
+        );
         setContainerId(containerId);
         setDockerTemplate(dockerTemplate);
+        setCloudId(cloudId);
+    }
+
+    public String getContainerId() {
+        return containerId;
     }
 
     public void setContainerId(String containerId) {
         this.containerId = containerId;
     }
 
-    public String getContainerId() {
-        return containerId;
+    public String getCloudId() {
+        return cloudId;
+    }
+
+    public void setCloudId(String cloudId) {
+        this.cloudId = cloudId;
     }
 
     public DockerTemplate getDockerTemplate() {
@@ -88,13 +92,17 @@ public class DockerSlave extends AbstractCloudSlave {
     }
 
     public DockerCloud getCloud() {
-        DockerCloud theCloud = dockerTemplate.getParent();
+        final Cloud cloud = Jenkins.getInstance().getCloud(getCloudId());
 
-        if (theCloud == null) {
-            throw new RuntimeException("Docker template " + dockerTemplate + " has no parent ");
+        if (cloud == null) {
+            throw new RuntimeException("Docker template " + dockerTemplate + " has no assigned Cloud.");
         }
 
-        return theCloud;
+        if (cloud.getClass() != DockerCloud.class) {
+            throw new RuntimeException("Assigned cloud is not DockerCloud");
+        }
+
+        return (DockerCloud) cloud;
     }
 
     @Override
@@ -109,11 +117,6 @@ public class DockerSlave extends AbstractCloudSlave {
     @Override
     public DockerComputer createComputer() {
         return new DockerComputer(this);
-    }
-
-    protected void cancelHoldOff() {
-        // resume the retention strategy work that we've suspended in the constructor
-        holdOffLaunchUntilSave = false;
     }
 
     @Override
@@ -244,9 +247,6 @@ public class DockerSlave extends AbstractCloudSlave {
 
     /**
      * Add a built on docker action.
-     *
-     * @param tag_image
-     * @throws IOException
      */
     private void addJenkinsAction(String tag_image) throws IOException {
         theRun.addAction(new DockerBuildAction(getCloud().serverUrl, containerId, tag_image, dockerTemplate.remoteFsMapping));
@@ -264,15 +264,6 @@ public class DockerSlave extends AbstractCloudSlave {
 
     }
 
-    @Override
-    public String toString() {
-        return Objects.toStringHelper(this)
-                .add("name", name)
-                .add("containerId", containerId)
-                .add("template", dockerTemplate)
-                .toString();
-    }
-
     private DockerJobProperty getJobProperty() {
 
         try {
@@ -285,6 +276,15 @@ public class DockerSlave extends AbstractCloudSlave {
         }
         // Safe default
         return new DockerJobProperty(false, null, false, true);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("name", name)
+                .add("containerId", containerId)
+                .add("template", dockerTemplate)
+                .toString();
     }
 
     @Extension

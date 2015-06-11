@@ -10,7 +10,6 @@ import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
-import hudson.plugins.sshslaves.SSHConnector;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
@@ -62,7 +61,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     private DockerTemplateBase dockerTemplateBase;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
-    public transient DockerCloud parent;
 
     @DataBoundConstructor
     public DockerTemplate(DockerTemplateBase dockerTemplateBase,
@@ -82,11 +80,15 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
             this.instanceCap = Integer.parseInt(instanceCapStr);
         }
 
-        readResolve();
+        labelSet = Label.parse(labelString);
     }
 
     public DockerTemplateBase getDockerTemplateBase() {
         return dockerTemplateBase;
+    }
+
+    public void setDockerTemplateBase(DockerTemplateBase dockerTemplateBase) {
+        this.dockerTemplateBase = dockerTemplateBase;
     }
 
     public String getLabelString() {
@@ -163,18 +165,9 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     /**
      * Initializes data structure that we don't persist.
      */
-    protected Object readResolve() {
-
+    public Object readResolve() {
         if (configVersion < 1) {
-            // migrate launcher
-            final SSHConnector sshConnector = new SSHConnector(22, credentialsId, jvmOptions, javaPath,
-                    prefixStartSlaveCmd, suffixStartSlaveCmd, getSSHLaunchTimeoutMinutes() * 60);
-            this.launcher = new DockerComputerSSHLauncher(sshConnector);
-
-
-            // migrate dockerTemplate
-//            this.dockerTemplateBase = new DockerTemplateBase(image, dnsString, dockerCommand, volumes) i want sleep...
-
+            convert1();
             configVersion = 1;
         }
 
@@ -183,15 +176,24 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         return this;
     }
 
-    public DockerCloud getParent() {
-        return parent;
-    }
-
     @Override
     public String toString() {
+        return "DockerTemplate{" +
+                "labelString='" + labelString + '\'' +
+                ", launcher=" + launcher +
+                ", remoteFsMapping='" + remoteFsMapping + '\'' +
+                ", remoteFs='" + remoteFs + '\'' +
+                ", instanceCap=" + instanceCap +
+                ", mode=" + mode +
+                ", retentionStrategy=" + retentionStrategy +
+                ", numExecutors=" + numExecutors +
+                ", dockerTemplateBase=" + dockerTemplateBase +
+                '}';
+    }
+
+    public String getShortDescription() {
         return MoreObjects.toStringHelper(this)
                 .add("image", dockerTemplateBase.getImage())
-                .add("parent", parent)
                 .toString();
     }
 
@@ -229,7 +231,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         }
 
         public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
-            List<Descriptor<ComputerLauncher>> r = new ArrayList<Descriptor<ComputerLauncher>>();
+            List<Descriptor<ComputerLauncher>> r = new ArrayList<>();
             for (Descriptor<ComputerLauncher> d : Functions.getComputerLauncherDescriptors()) {
                 if (DockerComputerLauncher.class.isAssignableFrom(d.clazz)) {
                     r.add(d);

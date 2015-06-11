@@ -31,7 +31,7 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
 
         DockerTemplate template = getCloud(build).getTemplate(templateId);
         DockerClient client = getClient(build);
-        String containerId = DockerCloud.runContainer(template, client);
+        String containerId = DockerCloud.runContainer(template.getDockerTemplateBase(), client, null);
 
         LOGGER.info("Starting container " + containerId);
 
