@@ -17,8 +17,6 @@ import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import shaded.com.google.common.base.Preconditions;
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.net.URI;
@@ -28,7 +26,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Configurable launcher that expects 22 ssh port to be exposed from docker container.
+ * Configurable SSH launcher that expected ssh port to be exposed from docker container.
+ * TODO unhardcode values
  */
 public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     private static final Logger LOGGER = Logger.getLogger(DockerComputerSSHLauncher.class.getName());
@@ -143,7 +142,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            return DockerTemplate.DescriptorImpl.doFillCredentialsIdItems(context);
+            return DockerTemplateBase.DescriptorImpl.doFillCredentialsIdItems(context);
         }
 
         public Class getSshConnectorClass() {

@@ -24,6 +24,9 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     // asking the container if it exists or not, so we cache it here.
     private final Cacheable<Boolean> nodeExistenceStatus;
 
+    /**
+     * remember associated container id
+     */
     private String containerId;
 
     public DockerComputer(DockerSlave dockerSlave) {
