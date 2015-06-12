@@ -391,10 +391,10 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
 
         @Restricted(DoNotUse.class)
         public List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategies() {
-            List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<Descriptor<RetentionStrategy<?>>>();
-            strategies.addAll(RetentionStrategy.all());
+            List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
             strategies.add(DockerOnceRetentionStrategy.DESCRIPTOR);
             strategies.add(DockerCloudRetentionStrategy.DESCRIPTOR);
+            strategies.addAll(RetentionStrategy.all());
             return strategies;
         }
 
