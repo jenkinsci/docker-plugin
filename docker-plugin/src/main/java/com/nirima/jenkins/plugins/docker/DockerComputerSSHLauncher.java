@@ -59,7 +59,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         String[] cmd = dockerTemplate.getDockerCommandArray();
         if (cmd.length == 0) {
             //default value to preserve compatibility
-            createCmd.withCmd("bash", "-c", "sleep 20 && /usr/sbin/sshd -D -p " + sshPort);
+            createCmd.withCmd("bash", "-c", "/usr/sbin/sshd -D -p " + sshPort);
         }
 
         createCmd.getPortBindings().add(PortBinding.parse("0.0.0.0::" + sshPort));
