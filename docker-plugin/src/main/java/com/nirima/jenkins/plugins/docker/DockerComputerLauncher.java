@@ -18,7 +18,7 @@ import java.io.IOException;
  * like {@link DelegatingComputerLauncher}
  */
 public abstract class DockerComputerLauncher extends ComputerLauncher {
-    protected transient ComputerLauncher launcher;
+    protected ComputerLauncher launcher;
 
     /**
      * Return valid configured launcher that will be used for launching slave
@@ -43,6 +43,10 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
     }
 
     public ComputerLauncher getLauncher() {
+        if (launcher == null) {
+            throw new IllegalStateException("Launcher must not be null");
+        }
+
         return launcher;
     }
 

@@ -55,7 +55,7 @@ public class DockerCloud extends Cloud {
     public final String serverUrl;
     public final int containerCap;
 
-    public final int connectTimeout;
+    private int connectTimeout;
     public final int readTimeout;
     public final String version;
     public final String credentialsId;
@@ -96,6 +96,10 @@ public class DockerCloud extends Cloud {
         } else {
             this.containerCap = Integer.parseInt(containerCapStr);
         }
+    }
+
+    public int getConnectTimeout() {
+        return connectTimeout;
     }
 
     public String getContainerCapStr() {

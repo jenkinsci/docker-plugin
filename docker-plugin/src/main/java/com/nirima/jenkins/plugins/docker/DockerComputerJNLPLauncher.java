@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.NotFoundException;
 import com.github.dockerjava.api.command.*;
 import hudson.Extension;
 import hudson.model.Descriptor;
@@ -14,10 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 
 /**
+ * JNLP launcher. Doesn't require open ports on docker host.
+ *
+ * Steps:
+ * - runs container with nop command
+ * - as launch action executes jnlp connection to master
+ *
  * @author Kanstantsin Shautsou
  */
 public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
@@ -52,19 +60,23 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         // exec jnlp connection in running container
         // TODO implement PID 1 replacement
+
+        final InputStream resourceAsStream = DockerComputerJNLPLauncher.class.getResourceAsStream("init.sh");
+
         String cdCmd = "cd /home/jenkins/";
         String wgetSlaveCmd = "wget " + rootUrl + "jnlpJars/slave.jar -O slave.jar";
         String jnlpConnectCmd = "java -jar slave.jar "
-                + "-jnlpUrl " + rootUrl + dockerComputer.getUrl() + "slave-agent.jnlp "
-                + "-secret " + dockerComputer.getJnlpMac();
+                + "-jnlpUrl " + rootUrl + dockerComputer.getUrl() + "slave-agent.jnlp ";
+//                + "-secret " + dockerComputer.getJnlpMac();
 
         String[] connectCmd = {
                 "bash", "-c", cdCmd + " && " + wgetSlaveCmd + " && " + jnlpConnectCmd
         };
 
-        LOGGER.info("Executing jnlp connection '{}' for '{}'", Arrays.toString(connectCmd), containerId);
-        logger.println("Executing jnlp connection '" + Arrays.toString(connectCmd) + "' for '" + containerId + "'");
         try {
+            LOGGER.info("Creating jnlp connection command '{}' for '{}'", Arrays.toString(connectCmd), containerId);
+            logger.println("Creating jnlp connection command '" + Arrays.toString(connectCmd) + "' for '" + containerId + "'");
+
             final ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
                     .withTty()
                     .withAttachStdin()
@@ -73,11 +85,20 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                     .withCmd(connectCmd)
                     .exec();
 
-            connect.execStartCmd(response.getId())
-                    .exec();
+            LOGGER.info("Starting connection command for {}", containerId);
+            logger.println("Starting connection command for " + containerId);
+
+            try (InputStream exec = connect.execStartCmd(response.getId()).withDetach().withTty().exec()){
+                //nothing, just want to be closed
+            } catch (NotFoundException ex) {
+                listener.error("Can't execute command: " + ex.getMessage());
+                LOGGER.error("Can't execute jnlp connection command: '{}'", ex.getMessage());
+            }
+
         } catch (Exception ex) {
             listener.error("Can't execute command: " + ex.getMessage());
             LOGGER.error("Can't execute jnlp connection command: '{}'", ex.getMessage());
+            throw ex;
         }
 
         LOGGER.info("Successfully executed jnlp connection for '{}'", containerId);

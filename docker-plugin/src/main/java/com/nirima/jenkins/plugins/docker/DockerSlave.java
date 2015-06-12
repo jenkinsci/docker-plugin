@@ -174,7 +174,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 client.removeContainerCmd(containerId).exec();
                 LOGGER.log(Level.INFO, "Removed container {0}", getContainerId());
             } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, "Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception" + ex.getMessage());
+                LOGGER.log(Level.SEVERE, "Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception: " + ex.getMessage());
             }
         } else {
             LOGGER.log(Level.SEVERE, "ContainerId is absent, no way to remove/stop container");

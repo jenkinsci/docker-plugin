@@ -31,6 +31,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -166,12 +167,21 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
      * Initializes data structure that we don't persist.
      */
     public Object readResolve() {
-        if (configVersion < 1) {
-            convert1();
+            if (configVersion < 1) {
+            try {
+                convert1();
+            } catch (Throwable t) {
+                LOGGER.log(Level.SEVERE, "Can't convert old values to new: ", t);
+            }
+
             configVersion = 1;
         }
 
-        labelSet = Label.parse(labelString); // fails sometimes under debugger
+        try {
+            labelSet = Label.parse(labelString); // fails sometimes under debugger
+        } catch (Throwable t) {
+            LOGGER.log(Level.SEVERE, "Can't parse labels: ", t);
+        }
 
         return this;
     }
