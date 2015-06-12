@@ -23,7 +23,7 @@ public abstract class DockerTemplateBackwardCompatibility {
      * @deprecated migrated to retention strategy?
      */
     @Deprecated
-    private String idleTerminationMinutes;
+    private transient String idleTerminationMinutes;
 
 //
 //     SSH Launcher settings
@@ -32,100 +32,100 @@ public abstract class DockerTemplateBackwardCompatibility {
      * The id of the credentials to use.
      */
     @Deprecated
-    private String credentialsId;
+    private transient String credentialsId;
 
     /**
      * Minutes before SSHLauncher times out on launch
      */
     @Deprecated
-    private String sshLaunchTimeoutMinutes;
+    private transient String sshLaunchTimeoutMinutes;
 
     /**
      * Field jvmOptions.
      */
     @Deprecated
-    private String jvmOptions;
+    private transient String jvmOptions;
 
     /**
      * Field javaPath.
      */
     @Deprecated
-    private String javaPath;
+    private transient String javaPath;
 
     /**
      * Field prefixStartSlaveCmd.
      */
     @Deprecated
-    private String prefixStartSlaveCmd;
+    private transient String prefixStartSlaveCmd;
 
     /**
      * Field suffixStartSlaveCmd.
      */
     @Deprecated
-    private String suffixStartSlaveCmd;
+    private transient String suffixStartSlaveCmd;
 
     //
 //     DockerTemplateBase values
 //
     @Deprecated
-    private String image;
+    private transient String image;
 
     /**
      * Field dockerCommand
      */
     @Deprecated
-    private String dockerCommand;
+    private transient String dockerCommand;
 
     /**
      * Field lxcConfString
      */
     @Deprecated
-    private String lxcConfString;
+    private transient String lxcConfString;
 
     @Deprecated
-    private String hostname;
+    private transient String hostname;
 
     @Deprecated
-    private String[] dnsHosts;
+    private transient String[] dnsHosts;
 
     /**
      * Every String is volume specification
      */
     @Deprecated
-    private String[] volumes;
+    private transient String[] volumes;
 
     /**
      * @deprecated use {@link #volumesFrom2}
      */
     @Deprecated
-    private String volumesFrom;
+    private transient String volumesFrom;
 
     /**
      * Every String is volumeFrom specification
      */
     @Deprecated
-    private String[] volumesFrom2;
+    private transient String[] volumesFrom2;
 
     @Deprecated
-    private String[] environment;
+    private transient String[] environment;
 
     @Deprecated
-    private String bindPorts;
+    private transient String bindPorts;
     @Deprecated
-    private boolean bindAllPorts;
+    private transient boolean bindAllPorts;
 
     @Deprecated
-    private Integer memoryLimit;
+    private transient Integer memoryLimit;
     @Deprecated
-    private Integer cpuShares;
+    private transient Integer cpuShares;
 
     @Deprecated
-    private boolean privileged;
+    private transient boolean privileged;
     @Deprecated
-    private boolean tty;
+    private transient boolean tty;
 
     @Deprecated
-    private String macAddress;
+    private transient String macAddress;
 
     @Deprecated
     private String getDnsString() {
