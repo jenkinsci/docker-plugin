@@ -200,7 +200,7 @@ public abstract class DockerTemplateBackwardCompatibility {
                         getDnsString(),
                         dockerCommand,
                         getVolumesString(),
-                        getVolumesFromString(),
+                        volumesFrom != null ? volumesFrom : getVolumesFromString(),
                         getEnvironmentsString(),
                         lxcConfString,
                         hostname,

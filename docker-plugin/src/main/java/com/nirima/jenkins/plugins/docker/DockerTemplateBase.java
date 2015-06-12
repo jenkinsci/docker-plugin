@@ -118,7 +118,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
 
         setVolumes(splitAndFilterEmpty(volumesString, "\n"));
-        setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
+        setVolumesFromString(volumesFromString);
 
         this.environment = splitAndFilterEmpty(environmentsString, " ");
 
@@ -200,6 +200,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     public void setVolumesFrom2(String[] volumes) {
         this.volumesFrom2 = volumes;
+    }
+
+    public void setVolumesFromString(String volumesFromString) {
+        setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
     }
 
     public String getVolumesFromString() {
