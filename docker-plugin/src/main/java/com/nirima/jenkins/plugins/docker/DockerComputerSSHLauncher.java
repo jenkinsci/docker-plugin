@@ -14,6 +14,8 @@ import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import shaded.com.google.common.base.Preconditions;
@@ -123,12 +125,15 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return PortUtils.canConnect(host, port);
     }
 
+
+    @Restricted(NoExternalUse.class)
+    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+
     @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(DockerComputerSSHLauncher.class);
+    public Descriptor<ComputerLauncher> getDescriptor() {
+        return DESCRIPTOR;
     }
 
-    @Extension
     public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {

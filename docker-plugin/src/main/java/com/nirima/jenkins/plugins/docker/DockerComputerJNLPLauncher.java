@@ -10,6 +10,8 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import jenkins.model.Jenkins;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +125,15 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         return super.waitUp(cloudId, dockerTemplate, ir);
     }
 
-    @Extension
+
+    @Restricted(NoExternalUse.class)
+    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+
+    @Override
+    public Descriptor<ComputerLauncher> getDescriptor() {
+        return DESCRIPTOR;
+    }
+
     public static class DescriptorImpl extends Descriptor<ComputerLauncher> {
 
         public Class getJNLPLauncher() {

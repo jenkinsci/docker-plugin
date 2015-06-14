@@ -241,13 +241,12 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         }
 
         public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
-            List<Descriptor<ComputerLauncher>> r = new ArrayList<>();
-            for (Descriptor<ComputerLauncher> d : Functions.getComputerLauncherDescriptors()) {
-                if (DockerComputerLauncher.class.isAssignableFrom(d.clazz)) {
-                    r.add(d);
-                }
-            }
-            return r;
+            List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
+
+            launchers.add(DockerComputerSSHLauncher.DESCRIPTOR);
+            launchers.add(DockerComputerJNLPLauncher.DESCRIPTOR);
+
+            return launchers;
         }
     }
 }
