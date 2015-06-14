@@ -3,6 +3,10 @@
 
 ## Next version
 
+## 0.9.3
+
+* Hide Docker strategies for non-docker slaves.
+
 ## 0.9.2
 
 * Don't use deprecated(?) api. Fixes not applied container configuration options. 
