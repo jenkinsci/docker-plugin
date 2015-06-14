@@ -47,11 +47,10 @@
         </f:entry>
 
         <f:advanced>
-
             <!-- reworked strategy choosed from core -->
             <f:dropdownList name="retentionStrategy" title="${%Availability}"
                             help="/help/system-config/master-slave/availability.html">
-                <j:forEach var="d" items="${h.getRetentionStrategyDescriptors()}">
+                <j:forEach var="d" items="${instance.descriptor.dockerRetentionStrategies}">
                     <j:if test="${d != null}">
                         <!-- TODO find instanceof method in jelly-->
                         <j:set var="prefix" value="${d.displayName=='Docker Once Retention Strategy'? '': 'Experimental: '}" />

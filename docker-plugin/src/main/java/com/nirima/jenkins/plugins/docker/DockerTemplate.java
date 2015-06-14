@@ -11,8 +11,10 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
+import com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import com.trilead.ssh2.Connection;
+
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.*;
@@ -26,15 +28,20 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
+
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+
 import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.collect.ImmutableList;
 
 import javax.ws.rs.ProcessingException;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -380,6 +387,15 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
             }
 
             return FormValidation.ok();
+        }
+
+        @Restricted(DoNotUse.class)
+        public List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategies() {
+            List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
+            strategies.add(DockerOnceRetentionStrategy.DESCRIPTOR);
+            strategies.add(DockerCloudRetentionStrategy.DESCRIPTOR);
+            strategies.addAll(RetentionStrategy.all());
+            return strategies;
         }
 
         @Override
