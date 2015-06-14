@@ -79,7 +79,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         LOGGER.log(Level.FINE, " Computer {0} taskCompletedWithProblems", this);
     }
 
-    public void onConnected(){
+    public void onConnected() {
         DockerSlave node = getNode();
         if (node != null) {
             node.onConnected();
@@ -101,6 +101,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     public void setCloudId(String cloudId) {
         this.cloudId = cloudId;
+        getNode().setCloudId(cloudId);
     }
 
     @Override
