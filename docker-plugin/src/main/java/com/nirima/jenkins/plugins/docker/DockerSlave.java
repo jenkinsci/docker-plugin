@@ -119,7 +119,7 @@ public class DockerSlave extends AbstractCloudSlave {
             }
 
             try {
-                DockerClient client = getClient(); // dockerTemplate.removeVolumes
+                DockerClient client = getClient();
                 client.removeContainerCmd(containerId).withRemoveVolumes(volumesRemove).exec();
             } catch(Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception",ex);
