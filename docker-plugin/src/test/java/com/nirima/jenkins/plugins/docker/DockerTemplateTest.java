@@ -26,6 +26,7 @@ public class DockerTemplateTest {
     String dockerCommand = "dockerCommand";
     String volumesString = "volumes";
     String volumesFrom = "volumesFrom";
+    boolean volumesRemove = false;
     String environmentsString = "environmentString";
     String lxcConfString = "lxcConf";
     String hostname = "hostname";
@@ -47,7 +48,7 @@ public class DockerTemplateTest {
                 prefixStartSlaveCmd, suffixStartSlaveCmd,
                 instanceCapStr, dnsString,
                 dockerCommand,
-                volumesString, volumesFrom,
+                volumesString, volumesFrom, volumesRemove,
                 environmentsString,
                 lxcConfString,
                 hostname,

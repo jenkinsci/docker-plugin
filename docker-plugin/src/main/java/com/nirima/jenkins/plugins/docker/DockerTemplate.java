@@ -98,6 +98,11 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
      */
     public final String remoteFsMapping;
 
+    /**
+     *  Field volumesRemove.
+     */
+    public final boolean volumesRemove;
+
     public String remoteFs = "/home/jenkins";
 
     public final int instanceCap;
@@ -131,6 +136,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                           String dockerCommand,
                           String volumesString,
                           String volumesFromString,
+                          boolean volumesRemove,
                           String environmentsString,
                           String lxcConfString,
                           String hostname,
@@ -156,6 +162,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.remoteFs =  Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
         this.remoteFsMapping = remoteFsMapping;
+	this.volumesRemove = volumesRemove;
 
         if (instanceCapStr.equals("")) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -298,7 +305,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return new DockerSlave(this, containerId,
                 slaveName,
                 nodeDescription,
-                remoteFs, getNumExecutors(), getMode(), memoryLimit, cpuShares, labelString,
+                remoteFs, getNumExecutors(), getMode(), memoryLimit, cpuShares, labelString, volumesRemove,
                 launcher, getRetentionStrategy(), nodeProperties);
 
     }
