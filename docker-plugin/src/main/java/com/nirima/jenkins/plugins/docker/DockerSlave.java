@@ -30,13 +30,14 @@ public class DockerSlave extends AbstractCloudSlave {
 
     public final DockerTemplate dockerTemplate;
     public final String containerId;
+    public final boolean volumesRemove;
 
     private transient Run theRun;
 
     @DataBoundConstructor
     public DockerSlave(DockerTemplate dockerTemplate, String containerId, String name, String nodeDescription,
                        String remoteFS, int numExecutors, Mode mode, Integer memoryLimit, Integer cpuShares,
-                       String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy,
+                       String labelString, boolean volumesRemove, ComputerLauncher launcher, RetentionStrategy retentionStrategy,
                        List<? extends NodeProperty<?>> nodeProperties)
             throws Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
@@ -45,6 +46,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         this.dockerTemplate = dockerTemplate;
         this.containerId = containerId;
+        this.volumesRemove = volumesRemove;
     }
 
     public DockerCloud getCloud() {
@@ -118,7 +120,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
             try {
                 DockerClient client = getClient();
-                client.removeContainerCmd(containerId).exec();
+                client.removeContainerCmd(containerId).withRemoveVolumes(volumesRemove).exec();
             } catch(Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to remove instance " + containerId + " for slave " + name + " due to exception",ex);
             }

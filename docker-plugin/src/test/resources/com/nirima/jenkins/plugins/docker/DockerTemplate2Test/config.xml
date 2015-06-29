@@ -26,6 +26,7 @@
           <dnsHosts/>
           <volumes/>
           <volumesFrom></volumesFrom>
+          <volumesRemove>false</volumesRemove>
           <environment/>
           <bindPorts></bindPorts>
           <bindAllPorts>false</bindAllPorts>
@@ -62,6 +63,7 @@
             <string> </string>
           </volumes>
           <volumesFrom>otherContainer:ro</volumesFrom>
+          <volumesRemove>false</volumesRemove>
           <environment/>
           <bindPorts></bindPorts>
           <bindAllPorts>false</bindAllPorts>
