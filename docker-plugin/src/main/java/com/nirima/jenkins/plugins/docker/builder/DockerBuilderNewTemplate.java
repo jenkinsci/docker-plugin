@@ -1,11 +1,15 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.ItemGroup;
+import hudson.plugins.sshslaves.SSHConnector;
 import hudson.slaves.RetentionStrategy;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
@@ -147,19 +151,22 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
-//TODO restore after review
-//                DockerTemplate t = new DockerTemplate(image, labelString,
+
+//                DockerTemplate t = new DockerTemplate(labelString,
 //                        remoteFs, remoteFsMapping,
-//                        credentialsId,
-//                        memoryLimit, cpuShares,
-//                         instanceCapStr,
+//                        credentialsId
+//                       );
+//                new DockerTemplateBase(image, memoryLimit, cpuShares,
+//                        instanceCapStr,
 //                        dnsString, dockerCommand,
 //                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname,
 //                        bindPorts, bindAllPorts, privileged, tty, macAddress);
+//
+//
 //                final SSHConnector sshConnector = new SSHConnector(22, credentialsId, jvmOptions,
 //                        javaPath, prefixStartSlaveCmd,
 //                        suffixStartSlaveCmd);
-//                t.setLauncher(new DockerComputerSSHLauncher(sshConnector);
+//                t.setLauncher(new DockerComputerSSHLauncher(sshConnector));
 //                ((DockerCloud) c).addTemplate(t);
             }
         }

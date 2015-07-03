@@ -7,12 +7,12 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.nirima.jenkins.plugins.docker.DockerComputer;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
+import hudson.util.TimeUnit2;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
@@ -26,6 +26,8 @@ import shaded.com.google.common.annotations.Beta;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
  * JNLP launcher. Doesn't require open ports on docker host.
@@ -44,6 +46,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
      * Configured from UI
      */
     protected JNLPLauncher jnlpLauncher;
+
+    protected long launchTimeout = 120; //seconds
 
     @DataBoundConstructor
     public DockerComputerJNLPLauncher(JNLPLauncher jnlpLauncher) {
@@ -83,11 +87,11 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         String startCmd =
                 "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
-                        "export JENKINS_URL=\"" + rootUrl + "\"\n" +
-                        "export JENKINS_USER=\"" + dockerTemplate.getUser() + "\"\n" +
-                        "export JENKINS_HOME=\"" + dockerTemplate.getRemoteFs() + "\"\n" +
-                        "export COMPUTER_URL=\"" + dockerComputer.getUrl() + "\"\n" +
-                        "export COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + "\"\n" +
+                        "JENKINS_URL=\"" + rootUrl + "\"\n" +
+                        "JENKINS_USER=\"" + dockerTemplate.getUser() + "\"\n" +
+                        "JENKINS_HOME=\"" + dockerTemplate.getRemoteFs() + "\"\n" +
+                        "COMPUTER_URL=\"" + dockerComputer.getUrl() + "\"\n" +
+                        "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + "\"\n" +
                         "EOF" + "\n";
 
         try {
@@ -106,7 +110,12 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             LOGGER.info("Starting connection command for {}", containerId);
             logger.println("Starting connection command for " + containerId);
 
-            try (InputStream exec = connect.execStartCmd(response.getId()).withDetach().withTty().exec()) {
+            try (InputStream exec = connect
+                    .execStartCmd(response.getId())
+                    .withDetach()
+                    .withTty()
+                    .exec()
+            ) {
                 //nothing, just want to be closed
             } catch (NotFoundException ex) {
                 listener.error("Can't execute command: " + ex.getMessage());
@@ -121,6 +130,23 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         LOGGER.info("Successfully executed jnlp connection for '{}'", containerId);
         logger.println("Successfully executed jnlp connection for " + containerId);
+
+        final long launchTime = System.currentTimeMillis();
+        while (!dockerComputer.isOnline() &&
+                TimeUnit2.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
+            logger.println("Waiting slave connection...");
+            Thread.sleep(1000);
+        }
+
+        if (!dockerComputer.isOnline()) {
+            LOGGER.info("Launch timeout, termintaing slave based on '{}'", containerId);
+            logger.println("Launch timeout, termintaing slave.");
+            dockerComputer.getNode().terminate();
+            throw new IOException("Can't connect slave to jenkins");
+        }
+
+        LOGGER.info("Launched slave '{}' based on '{}'", dockerComputer.getName(), containerId);
+        logger.println("Launched slave for " + containerId);
     }
 
     @Override
@@ -129,7 +155,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public void appendContainerConfig(DockerTemplateBase dockerTemplate, CreateContainerCmd createContainerCmd) throws IOException {
+    public void appendContainerConfig(DockerTemplate dockerTemplate, CreateContainerCmd createContainerCmd) throws IOException {
 
         try (InputStream istream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
             final String initCmd = IOUtils.toString(istream, Charsets.UTF_8);
@@ -146,9 +172,19 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             );
         }
 
-        // set nop command, real jnlp connection will be called from #launch()
+//        final String homeDir = dockerTemplate.getRemoteFs();
+//        if (isNotBlank(homeDir)) {
+//            createContainerCmd.withWorkingDir(homeDir);
+//        }
+//
+//        final String user = dockerTemplate.getUser();
+//        if (isNotBlank(user)) {
+//            createContainerCmd.withUser(user);
+//        }
+
         createContainerCmd.withTty(true);
         createContainerCmd.withStdinOpen(true);
+
     }
 
     @Override
@@ -172,7 +208,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         @Override
         public String getDisplayName() {
-            return "Docker JNLP agent";
+            return "(Experimental) Docker JNLP launcher";
         }
     }
 }

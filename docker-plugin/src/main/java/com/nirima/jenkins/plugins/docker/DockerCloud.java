@@ -195,16 +195,18 @@ public class DockerCloud extends Cloud {
     /**
      * Run docker container
      */
-    public static String runContainer(DockerTemplateBase dockerTemplateBase,
+    public static String runContainer(DockerTemplate dockerTemplate,
                                       DockerClient dockerClient,
-                                      DockerComputerLauncher launcher) throws DockerException, IOException {
+                                      DockerComputerLauncher launcher)
+            throws DockerException, IOException {
+        final DockerTemplateBase dockerTemplateBase = dockerTemplate.getDockerTemplateBase();
         CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplateBase.getImage());
 
         dockerTemplateBase.fillContainerConfig(containerConfig);
 
         // contribute launcher specific options
         if (launcher != null) {
-            launcher.appendContainerConfig(dockerTemplateBase, containerConfig);
+            launcher.appendContainerConfig(dockerTemplate, containerConfig);
         }
 
         // create
@@ -218,9 +220,36 @@ public class DockerCloud extends Cloud {
         return containerId;
     }
 
+    /**
+     * for publishers/builders
+     */
+    public static String runContainer(DockerTemplateBase dockerTemplateBase,
+                                      DockerClient dockerClient,
+                                      DockerComputerLauncher launcher) {
+        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplateBase.getImage());
+
+        dockerTemplateBase.fillContainerConfig(containerConfig);
+
+//        // contribute launcher specific options
+//        if (launcher != null) {
+//            launcher.appendContainerConfig(dockerTemplateBase, containerConfig);
+//        }
+
+        // create
+        CreateContainerResponse response = containerConfig.exec();
+        String containerId = response.getId();
+
+        // start
+        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
+        startCommand.exec();
+
+        return containerId;
+    }
+
+
     private DockerSlave provisionWithWait(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
         LOGGER.info("Trying to run container for {}", dockerTemplate.getDockerTemplateBase().getImage());
-        final String containerId = runContainer(dockerTemplate.getDockerTemplateBase(), connect(), dockerTemplate.getLauncher());
+        final String containerId = runContainer(dockerTemplate, connect(), dockerTemplate.getLauncher());
 
         InspectContainerResponse ir;
         try {
@@ -242,7 +271,7 @@ public class DockerCloud extends Cloud {
         String slaveName = containerId.substring(0, 12);
 
         try {
-            slaveName = slaveName + "@" + getDisplayName();
+            slaveName =  getDisplayName() + "-" + slaveName;
         } catch (Exception ex) {
             LOGGER.warn("Error fetching cloud name");
         }

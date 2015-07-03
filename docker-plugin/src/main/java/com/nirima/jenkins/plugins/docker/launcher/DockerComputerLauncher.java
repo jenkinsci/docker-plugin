@@ -35,7 +35,7 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
      * Contribute container parameters needed for launcher.
      * i.e. port for exposing, command to run, etc.
      */
-    public abstract void appendContainerConfig(DockerTemplateBase dockerTemplate,
+    public abstract void appendContainerConfig(DockerTemplate dockerTemplate,
                                                CreateContainerCmd createContainerCmd) throws IOException;
 
     /**

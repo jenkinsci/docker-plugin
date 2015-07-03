@@ -16,7 +16,6 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
-
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -81,6 +80,31 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         }
 
         labelSet = Label.parse(labelString);
+    }
+
+    /**
+     * Contains all available arguments
+     */
+    public DockerTemplate(DockerTemplateBase dockerTemplateBase,
+                          String labelString,
+                          String remoteFs,
+                          String remoteFsMapping,
+                          String instanceCapStr,
+                          String user,
+                          Node.Mode mode,
+                          int numExecutors,
+                          DockerComputerLauncher launcher,
+                          RetentionStrategy retentionStrategy) {
+        this(dockerTemplateBase,
+                labelString,
+                remoteFs,
+                remoteFsMapping,
+                instanceCapStr);
+        setUser(user);
+        setMode(mode);
+        setNumExecutors(numExecutors);
+        setLauncher(launcher);
+        setRetentionStrategy(retentionStrategy);
     }
 
     public DockerTemplateBase getDockerTemplateBase() {

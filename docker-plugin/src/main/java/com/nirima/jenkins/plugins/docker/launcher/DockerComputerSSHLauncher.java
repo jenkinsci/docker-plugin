@@ -56,12 +56,12 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public void appendContainerConfig(DockerTemplateBase dockerTemplate, CreateContainerCmd createCmd) {
+    public void appendContainerConfig(DockerTemplate dockerTemplate, CreateContainerCmd createCmd) {
         final int sshPort = getSshConnector().port;
 
         createCmd.withPortSpecs(sshPort + "/tcp");
 
-        String[] cmd = dockerTemplate.getDockerCommandArray();
+        String[] cmd = dockerTemplate.getDockerTemplateBase().getDockerCommandArray();
         if (cmd.length == 0) {
             //default value to preserve compatibility
             createCmd.withCmd("bash", "-c", "/usr/sbin/sshd -D -p " + sshPort);
