@@ -1,4 +1,4 @@
-package com.nirima.jenkins.plugins.docker.builder;
+package com.nirima.jenkins.plugins.docker.builder.DockerBuilderControl;
 
 def f = namespace(lib.FormTagLib);
 

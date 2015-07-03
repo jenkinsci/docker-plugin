@@ -1,18 +1,27 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.model.*;
+import com.trilead.ssh2.Connection;
+import hudson.Extension;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.ItemGroup;
+import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.security.ACL;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
-import shaded.com.google.common.base.Function;
-import shaded.com.google.common.base.Joiner;
-import shaded.com.google.common.base.Objects;
-import shaded.com.google.common.base.Splitter;
-import shaded.com.google.common.base.Strings;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import shaded.com.google.common.base.*;
 import shaded.com.google.common.collect.Iterables;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.StartContainerCmd;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,9 +36,8 @@ import static org.apache.commons.lang.StringUtils.*;
 /**
  * Base for docker templates - does not include Jenkins items like labels.
  */
-public abstract class DockerTemplateBase {
+public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplateBase.class.getName());
-
 
     private String image;
 
@@ -76,6 +84,7 @@ public abstract class DockerTemplateBase {
 
     @CheckForNull private String macAddress;
 
+    @DataBoundConstructor
     public DockerTemplateBase(String image,
                               String dnsString,
                               String dockerCommand,
@@ -91,7 +100,6 @@ public abstract class DockerTemplateBase {
                               boolean privileged,
                               boolean tty,
                               String macAddress
-
     ) {
         setImage(image);
 
@@ -110,7 +118,7 @@ public abstract class DockerTemplateBase {
         this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
 
         setVolumes(splitAndFilterEmpty(volumesString, "\n"));
-        setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
+        setVolumesFromString(volumesFromString);
 
         this.environment = splitAndFilterEmpty(environmentsString, " ");
 
@@ -130,6 +138,10 @@ public abstract class DockerTemplateBase {
 
     //TODO move/replace
     public static String[] splitAndFilterEmpty(String s, String separator) {
+        if (s == null) {
+            return new String[0];
+        }
+
         List<String> list = Splitter.on(separator).omitEmptyStrings().splitToList(s);
         return list.toArray(new String[list.size()]);
     }
@@ -190,6 +202,10 @@ public abstract class DockerTemplateBase {
         this.volumesFrom2 = volumes;
     }
 
+    public void setVolumesFromString(String volumesFromString) {
+        setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
+    }
+
     public String getVolumesFromString() {
         return Joiner.on("\n").join(getVolumesFrom2());
     }
@@ -215,28 +231,12 @@ public abstract class DockerTemplateBase {
         return cpuShares;
     }
 
-    public String provisionNew(DockerClient dockerClient) throws DockerException {
-
-        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(getImage());
-
-        fillContainerConfig(containerConfig);
-
-        CreateContainerResponse response = containerConfig.exec();
-        String containerId = response.getId();
-        // Launch it.. :
-
-        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
-        startCommand.exec();
-
-        return containerId;
-    }
-
     public String[] getDockerCommandArray() {
         String[] dockerCommandArray = new String[0];
-
         if (dockerCommand != null && !dockerCommand.isEmpty()) {
             dockerCommandArray = dockerCommand.split(" ");
         }
+
         return dockerCommandArray;
     }
 
@@ -259,6 +259,32 @@ public abstract class DockerTemplateBase {
                 });
     }
 
+    public List<LxcConf> getLxcConf() {
+        List<LxcConf> temp = new ArrayList<>();
+        if( lxcConfString == null || lxcConfString.trim().equals(""))
+            return temp;
+        for (String item : lxcConfString.split(",")) {
+            String[] keyValuePairs = item.split("=");
+            if (keyValuePairs.length == 2 )
+            {
+                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
+                LxcConf optN = new LxcConf();
+                optN.setKey(keyValuePairs[0]);
+                optN.setValue(keyValuePairs[1]);
+                temp.add(optN);
+            }
+            else
+            {
+                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
+            }
+        }
+        return temp;
+    }
+
+    public String getEnvironmentsString() {
+        return Joiner.on("\n").join(environment);
+    }
+
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         if (hostname != null && !hostname.isEmpty()) {
             containerConfig.withHostName(hostname);
@@ -268,8 +294,6 @@ public abstract class DockerTemplateBase {
         if (cmd.length > 0) {
             containerConfig.withCmd(cmd);
         }
-
-        containerConfig.withPortSpecs("22/tcp");
 
         containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
 
@@ -343,31 +367,78 @@ public abstract class DockerTemplateBase {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
+        return MoreObjects.toStringHelper(this)
                 .add("image", getImage())
                 .toString();
     }
 
-
-    public List<LxcConf> getLxcConf() {
-        List<LxcConf> temp = new ArrayList<LxcConf>();
-        if( lxcConfString == null || lxcConfString.trim().equals(""))
-            return temp;
-        for (String item : lxcConfString.split(",")) {
-            String[] keyValuePairs = item.split("=");
-            if (keyValuePairs.length == 2 )
-            {
-                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
-                LxcConf optN = new LxcConf();
-                optN.setKey(keyValuePairs[0]);
-                optN.setValue(keyValuePairs[1]);
-                temp.add(optN);
-            }
-            else
-            {
-                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
-            }
-        }
-        return temp;
+    @Override
+    public Descriptor<DockerTemplateBase> getDescriptor() {
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(DockerTemplateBase.class);
     }
+
+    @Extension
+    public static class DescriptorImpl extends Descriptor<DockerTemplateBase> {
+
+        public FormValidation doCheckVolumesString(@QueryParameter String volumesString) {
+            try {
+                final String[] strings = splitAndFilterEmpty(volumesString, "\n");
+                for (String s : strings) {
+                    if (s.equals("/")) {
+                        return FormValidation.error("Invalid volume: path can't be '/'");
+                    }
+
+                    final String[] group = s.split(":");
+                    if (group.length > 3) {
+                        return FormValidation.error("Wrong syntax: " + s);
+                    } else if (group.length == 2 || group.length == 3) {
+                        if (group[1].equals("/")) {
+                            return FormValidation.error("Invalid bind mount: destination can't be '/'");
+                        }
+                        Bind.parse(s);
+                    } else if (group.length == 1) {
+                        new Volume(s);
+                    } else {
+                        return FormValidation.error("Wrong line: " + s);
+                    }
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+
+            return FormValidation.ok();
+
+        }
+
+        public FormValidation doCheckVolumesFromString(@QueryParameter String volumesFromString) {
+            try {
+                final String[] strings = splitAndFilterEmpty(volumesFromString, "\n");
+                for (String volFrom : strings) {
+                    VolumesFrom.parse(volFrom);
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+
+            return FormValidation.ok();
+        }
+
+
+        public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+            return new SSHUserListBoxModel().withMatching(
+                    SSHAuthenticator.matcher(Connection.class),
+                    CredentialsProvider.lookupCredentials(
+                            StandardUsernameCredentials.class,
+                            context,
+                            ACL.SYSTEM,
+                            SSHLauncher.SSH_SCHEME)
+            );
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Docker template base";
+        }
+    }
+
 }

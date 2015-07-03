@@ -21,7 +21,6 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.trilead.ssh2.Connection;
-import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 
 import java.io.IOException;
@@ -148,18 +147,20 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
                 LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
-                DockerTemplate t = new DockerTemplate(image, labelString,
-                        remoteFs, remoteFsMapping,
-                        credentialsId, idleTerminationMinutes,
-                        sshLaunchTimeoutMinutes,
-                        jvmOptions, javaPath,
-                        memoryLimit, cpuShares,
-                        prefixStartSlaveCmd,
-                        suffixStartSlaveCmd, instanceCapStr,
-                        dnsString, dockerCommand,
-                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname,
-                        bindPorts, bindAllPorts, privileged, tty, macAddress);
-                ((DockerCloud) c).addTemplate(t);
+//TODO restore after review
+//                DockerTemplate t = new DockerTemplate(image, labelString,
+//                        remoteFs, remoteFsMapping,
+//                        credentialsId,
+//                        memoryLimit, cpuShares,
+//                         instanceCapStr,
+//                        dnsString, dockerCommand,
+//                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname,
+//                        bindPorts, bindAllPorts, privileged, tty, macAddress);
+//                final SSHConnector sshConnector = new SSHConnector(22, credentialsId, jvmOptions,
+//                        javaPath, prefixStartSlaveCmd,
+//                        suffixStartSlaveCmd);
+//                t.setLauncher(new DockerComputerSSHLauncher(sshConnector);
+//                ((DockerCloud) c).addTemplate(t);
             }
         }
 

@@ -14,8 +14,8 @@ import static shaded.com.google.common.base.Preconditions.checkState;
 public class PortUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(PortUtils.class);
 
-    private final String host;
-    private final int port;
+    public final String host;
+    public final int port;
 
     private int retries = 10;
     private int sshTimeoutMillis = (int) SECONDS.toMillis(2);
@@ -86,9 +86,10 @@ public class PortUtils {
             Connection connection = new Connection(host, port);
             try {
                 connection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
+                LOGGER.info("SSH port is open on {}:{}", host, port);
                 return;
             } catch (IOException e) {
-                LOGGER.info("Failed to connect to {}:{} (try {}/{}) - {}", host, port, i, retries, e.getMessage());
+                LOGGER.error("Failed to connect to {}:{} (try {}/{}) - {}", host, port, i, retries, e.getMessage());
                 if (i == retries) {
                     throw e;
                 }
@@ -107,6 +108,7 @@ public class PortUtils {
      */
     public static void sleepFor(int time, TimeUnit units) {
         try {
+            LOGGER.trace("Sleeping for {} {}", time, units.toString());
             Thread.sleep(units.toMillis(time));
         } catch (InterruptedException e) {
             // no-op

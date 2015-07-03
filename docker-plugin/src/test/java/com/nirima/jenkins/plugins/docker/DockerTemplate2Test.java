@@ -24,18 +24,18 @@ public class DockerTemplate2Test {
     public void shouldLoad090rc1Config() {
         final DockerCloud dock = (DockerCloud) j.getInstance().getCloud("dock");
         final DockerTemplate template = dock.getTemplate("image:b25");
-        final String[] volumes = template.getVolumes();
+        final String[] volumes = template.getDockerTemplateBase().getVolumes();
 
         assertThat("volumes", asList(volumes), hasSize(2));
         assertThat(volumes[0], equalTo("/host/path:/container/path:ro"));
         assertThat(volumes[1], equalTo("/host/path2:/container/path2:ro"));
 
-        final String[] volumesFrom2 = template.getVolumesFrom2();
+        final String[] volumesFrom2 = template.getDockerTemplateBase().getVolumesFrom2();
         assertThat("volumesFrom2", asList(volumesFrom2), hasSize(1));
         assertThat(volumesFrom2[0], equalTo("otherContainer:ro"));
-        assertThat("volumesFrom", template.getVolumesFrom(), nullValue());
+        assertThat("volumesFrom", template.getDockerTemplateBase().getVolumesFrom(), nullValue());
 
-        assertThat(template.getImage(), equalTo("image:b25"));
+        assertThat(template.getDockerTemplateBase().getImage(), equalTo("image:b25"));
     }
 
     @Test
@@ -43,11 +43,11 @@ public class DockerTemplate2Test {
     public void shouldLoadEmptyVolumesFrom() {
         final DockerCloud dock = (DockerCloud) j.getInstance().getCloud("dock");
         final DockerTemplate template = dock.getTemplate("jenkins-ubuntu-slave");
-        final String[] volumes = template.getVolumes();
-        final String[] volumesFrom2 = template.getVolumesFrom2();
+        final String[] volumes = template.getDockerTemplateBase().getVolumes();
+        final String[] volumesFrom2 = template.getDockerTemplateBase().getVolumesFrom2();
 
         assertThat("volumes", asList(volumes), hasSize(0));
         assertThat("volumesFrom2", asList(volumesFrom2), hasSize(0));
-        assertThat("volumesFrom", template.getVolumesFrom(), nullValue());
+        assertThat("volumesFrom", template.getDockerTemplateBase().getVolumesFrom(), nullValue());
     }
 }

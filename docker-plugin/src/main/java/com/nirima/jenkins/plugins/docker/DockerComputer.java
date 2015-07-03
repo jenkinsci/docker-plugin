@@ -1,17 +1,18 @@
 package com.nirima.jenkins.plugins.docker;
 
-import shaded.com.google.common.base.Objects;
+import shaded.com.google.common.base.MoreObjects;
 import com.nirima.jenkins.plugins.docker.utils.Cacheable;
 import hudson.model.*;
 import hudson.slaves.AbstractCloudComputer;
 
-import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by magnayn on 09/01/2014.
+ * Represents remote (running) container
+ *
+ * @author magnayn
  */
 public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
@@ -22,9 +23,18 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     // asking the container if it exists or not, so we cache it here.
     private final Cacheable<Boolean> nodeExistenceStatus;
 
+    /**
+     * remember associated container id
+     */
+    private String containerId;
+
+    private String cloudId;
+
     public DockerComputer(DockerSlave dockerSlave) {
         super(dockerSlave);
-        nodeExistenceStatus = new Cacheable<Boolean>(60000, new Callable<Boolean>() {
+        setContainerId(dockerSlave.getContainerId());
+        setCloudId(dockerSlave.getCloudId());
+        nodeExistenceStatus = new Cacheable<>(60000, new Callable<Boolean>() {
             public Boolean call() throws Exception {
                 return getNode().containerExistsInCloud();
             }
@@ -63,68 +73,42 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         super.taskCompleted(executor, task, durationMS);
     }
 
-
     @Override
     public void taskCompletedWithProblems(Executor executor, Queue.Task task, long durationMS, Throwable problems) {
         super.taskCompletedWithProblems(executor, task, durationMS, problems);
         LOGGER.log(Level.FINE, " Computer {0} taskCompletedWithProblems", this);
     }
 
-    @Override
-    public boolean isAcceptingTasks() {
-
-        boolean result = super.isAcceptingTasks();
-
-        // Quit quickly if we aren't accepting tasks
-        if( !result )
-            return false;
-
-        // Update
-        updateAcceptingTasks();
-
-        // Are we still accepting tasks?
-        result = super.isAcceptingTasks();
-
-        return result;
-    }
-
-    private void updateAcceptingTasks() {
-        try {
-
-            int pause = 5000;
-            if (getOfflineCause() != null) {
-                if (getOfflineCause().toString().contains("failed to launch the slave agent") && checked < 3) {
-                    LOGGER.log(Level.INFO, "Slave agent not launched after checking " + checked + " time(s).  Waiting for any retries...");
-                    checked += 1;
-                    Thread.sleep(pause);
-                } else {
-                    setAcceptingTasks(false);
-                    LOGGER.log(Level.INFO, " Offline " + this + " due to " + getOfflineCause());
-                }
-            } else if (!nodeExistenceStatus.get()) {
-                setAcceptingTasks(false);
-            }
-        } catch (Exception ex) {
-            LOGGER.log(Level.INFO, " Computer " + this + " error getting node");
-            setAcceptingTasks(false);
-        }
-    }
-
-    public void onConnected(){
+    public void onConnected() {
         DockerSlave node = getNode();
         if (node != null) {
             node.onConnected();
         }
     }
 
+    public String getContainerId() {
+        return containerId;
+    }
 
+    public void setContainerId(String containerId) {
+        this.containerId = containerId;
+        getNode().setContainerId(containerId); // set for clean-ups
+    }
+
+    public String getCloudId() {
+        return cloudId;
+    }
+
+    public void setCloudId(String cloudId) {
+        this.cloudId = cloudId;
+        getNode().setCloudId(cloudId);
+    }
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
+        return MoreObjects.toStringHelper(this)
                 .add("name", super.getName())
                 .add("slave", getNode())
                 .toString();
     }
-
 }
