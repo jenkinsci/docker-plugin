@@ -3,6 +3,10 @@
 
 ## Next version
 
+## 0.9.4
+
+* Fixes termination errors. Sync OnceRetentionStrategy implementation.  
+
 ## 0.9.3
 
 * Hide Docker strategies for non-docker slaves.
