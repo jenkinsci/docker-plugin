@@ -13,10 +13,6 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="${%User}" field="user">
-        <f:textbox/>
-    </f:entry>
-
     <f:entry title="${%Labels}" field="labelString"
              help="/descriptor/com.nirima.jenkins.plugins.docker.DockerSlave/help/labelString">
         <f:textbox/>

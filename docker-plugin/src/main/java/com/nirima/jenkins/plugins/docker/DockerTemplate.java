@@ -47,8 +47,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
 
     public String remoteFs = "/home/jenkins";
 
-    private String user = "jenkins";
-
     public final int instanceCap;
 
     private Node.Mode mode = Node.Mode.NORMAL;
@@ -90,7 +88,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                           String remoteFs,
                           String remoteFsMapping,
                           String instanceCapStr,
-                          String user,
                           Node.Mode mode,
                           int numExecutors,
                           DockerComputerLauncher launcher,
@@ -100,7 +97,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 remoteFs,
                 remoteFsMapping,
                 instanceCapStr);
-        setUser(user);
         setMode(mode);
         setNumExecutors(numExecutors);
         setLauncher(launcher);
@@ -164,15 +160,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
 
     public String getRemoteFs() {
         return remoteFs;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    @DataBoundSetter
-    public void setUser(String user) {
-        this.user = user;
     }
 
     public String getInstanceCapStr() {

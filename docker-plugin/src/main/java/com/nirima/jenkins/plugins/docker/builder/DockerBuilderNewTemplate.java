@@ -1,94 +1,70 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
-import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
+import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.ItemGroup;
-import hudson.plugins.sshslaves.SSHConnector;
+import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.security.ACL;
+import hudson.slaves.Cloud;
 import hudson.slaves.RetentionStrategy;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import hudson.slaves.Cloud;
-import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.AncestorInPath;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.trilead.ssh2.Connection;
-import com.nirima.jenkins.plugins.docker.DockerCloud;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 
 
 /**
- * Created by Jocelyn De La Rosa on 14/05/2014.
+ * Builder that adds template to all clouds.
+ *
+ * @author Jocelyn De La Rosa
  */
-public class DockerBuilderNewTemplate extends Builder implements Serializable {
-    private static final Logger LOGGER = Logger.getLogger(DockerBuilderNewTemplate.class.getName());
+public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCompatibility implements Serializable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderNewTemplate.class);
 
-    public final String image;
-    public final String labelString;
-    public final RetentionStrategy retentionStrategy;
-    public final String remoteFsMapping;
-    public final String remoteFs;
-    public final String credentialsId;
-    public final String idleTerminationMinutes;
-    public final String sshLaunchTimeoutMinutes;
-    public final String jvmOptions;
-    public final String javaPath;
-    public final Integer memoryLimit;
-    public final Integer cpuShares;
-    public final String prefixStartSlaveCmd;
-    public final String suffixStartSlaveCmd;
-    public final String instanceCapStr;
-    public final String dnsString;
-    public final String dockerCommand;
-    public final String volumesString;
-    public final String volumesFrom;
-    public final String environmentsString;
-    public final String lxcConfString;
-    public final String bindPorts;
-    public final boolean bindAllPorts;
-    public final boolean privileged;
-    public final boolean tty;
-    public final String hostname;
-    public final String macAddress;
+    private DockerTemplate dockerTemplate;
+    private int version = 1;
 
-    @DataBoundConstructor
+    /**
+     * @deprecated Don't use. All values migrated.
+     */
+    @Deprecated
     public DockerBuilderNewTemplate(String image, String labelString,
                                     RetentionStrategy retentionStrategy,
                                     String remoteFs, String remoteFsMapping,
-                                              String credentialsId, String idleTerminationMinutes,
-                                              String sshLaunchTimeoutMinutes,
-                                              String jvmOptions, String javaPath,
-                                              Integer memoryLimit, Integer cpuShares,
-                                              String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                                              String instanceCapStr, String dnsString,
-                                              String dockerCommand,
-                                              String volumesString, String volumesFrom,
-                                              String environmentsString,
-                                              String lxcConfString,
-                                              String hostname,
-                                              String bindPorts,
-                                              boolean bindAllPorts,
-                                              boolean privileged,
-                                              boolean tty,
+                                    String credentialsId, String idleTerminationMinutes,
+                                    String sshLaunchTimeoutMinutes,
+                                    String jvmOptions, String javaPath,
+                                    Integer memoryLimit, Integer cpuShares,
+                                    String prefixStartSlaveCmd, String suffixStartSlaveCmd,
+                                    String instanceCapStr, String dnsString,
+                                    String dockerCommand,
+                                    String volumesString, String volumesFrom,
+                                    String environmentsString,
+                                    String lxcConfString,
+                                    String hostname,
+                                    String bindPorts,
+                                    boolean bindAllPorts,
+                                    boolean privileged,
+                                    boolean tty,
                                     String macAddress) {
-
         this.image = image;
         this.labelString = labelString;
         this.retentionStrategy = retentionStrategy;
@@ -116,7 +92,56 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
         this.tty = tty;
         this.hostname = hostname;
         this.macAddress = macAddress;
+        convert1();
+        this.version = 1;
     }
+
+    @DataBoundConstructor
+    public DockerBuilderNewTemplate(DockerTemplate dockerTemplate) {
+        this.dockerTemplate = dockerTemplate;
+    }
+
+    public DockerTemplate getDockerTemplate() {
+        return dockerTemplate;
+    }
+
+    public void setDockerTemplate(DockerTemplate dockerTemplate) {
+        this.dockerTemplate = dockerTemplate;
+    }
+
+    @Override
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws InterruptedException, IOException {
+        final PrintStream llogger = listener.getLogger();
+        final String dockerImage = dockerTemplate.getDockerTemplateBase().getImage();
+
+        for (Cloud c : Jenkins.getInstance().clouds) {
+            if (c instanceof DockerCloud && dockerImage != null) {
+                DockerCloud dockerCloud = (DockerCloud) c;
+                if (dockerCloud.getTemplate(dockerImage) == null) {
+                    LOGGER.info("Adding new template: '{}', to cloud: '{}'", dockerImage, dockerCloud.name);
+                    llogger.println("Adding new template: '" + dockerImage + "', to cloud: '" + dockerCloud.name + "'");
+                    dockerCloud.addTemplate(dockerTemplate);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public Object readResolve() {
+        try {
+            if (version < 1) {
+                convert1();
+                version = 1;
+            }
+        } catch (Throwable t) {
+            LOGGER.error("Can't migrate configuration to version 1", t);
+        }
+
+        return this;
+    }
+
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -142,35 +167,5 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                     CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
                             ACL.SYSTEM, SSHLauncher.SSH_SCHEME));
         }
-    }
-
-
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-
-        for (Cloud c : Jenkins.getInstance().clouds) {
-            if (c instanceof DockerCloud && ((DockerCloud) c).getTemplate(image) == null) {
-                LOGGER.log(Level.INFO, "Adding new template « "+image+" » to cloud " + ((DockerCloud) c).name);
-
-//                DockerTemplate t = new DockerTemplate(labelString,
-//                        remoteFs, remoteFsMapping,
-//                        credentialsId
-//                       );
-//                new DockerTemplateBase(image, memoryLimit, cpuShares,
-//                        instanceCapStr,
-//                        dnsString, dockerCommand,
-//                        volumesString, volumesFrom, environmentsString, lxcConfString, hostname,
-//                        bindPorts, bindAllPorts, privileged, tty, macAddress);
-//
-//
-//                final SSHConnector sshConnector = new SSHConnector(22, credentialsId, jvmOptions,
-//                        javaPath, prefixStartSlaveCmd,
-//                        suffixStartSlaveCmd);
-//                t.setLauncher(new DockerComputerSSHLauncher(sshConnector));
-//                ((DockerCloud) c).addTemplate(t);
-            }
-        }
-
-        return true;
     }
 }

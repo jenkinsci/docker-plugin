@@ -1,4 +1,9 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+
+    <f:entry title="${%User}" field="user">
+        <f:textbox/>
+    </f:entry>
+
     <st:include page="config.jelly" class="${descriptor.getJNLPLauncher()}"/>
 </j:jelly>

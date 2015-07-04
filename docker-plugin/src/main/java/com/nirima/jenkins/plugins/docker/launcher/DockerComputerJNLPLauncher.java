@@ -19,6 +19,7 @@ import org.apache.commons.io.IOUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import shaded.com.google.common.annotations.Beta;
@@ -49,6 +50,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected long launchTimeout = 120; //seconds
 
+    protected String user;
+
     @DataBoundConstructor
     public DockerComputerJNLPLauncher(JNLPLauncher jnlpLauncher) {
         this.jnlpLauncher = jnlpLauncher;
@@ -56,6 +59,15 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     public JNLPLauncher getJnlpLauncher() {
         return jnlpLauncher;
+    }
+
+    @DataBoundSetter
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getUser() {
+        return user;
     }
 
     @Override
@@ -88,7 +100,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         String startCmd =
                 "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
                         "JENKINS_URL=\"" + rootUrl + "\"\n" +
-                        "JENKINS_USER=\"" + dockerTemplate.getUser() + "\"\n" +
+                        "JENKINS_USER=\"" + getUser() + "\"\n" +
                         "JENKINS_HOME=\"" + dockerTemplate.getRemoteFs() + "\"\n" +
                         "COMPUTER_URL=\"" + dockerComputer.getUrl() + "\"\n" +
                         "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + "\"\n" +
