@@ -200,6 +200,17 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
         return retentionStrategy;
     }
 
+    /**
+     * tmp fix for termintaing boolean caching
+    */
+    public RetentionStrategy getRetentionStrategyCopy() {
+        if (retentionStrategy instanceof DockerOnceRetentionStrategy) {
+            DockerOnceRetentionStrategy onceRetention = (DockerOnceRetentionStrategy) retentionStrategy;
+            return new DockerOnceRetentionStrategy(onceRetention.getIdleMinutes());
+        }
+        return retentionStrategy;
+    }
+
     public String getInstanceCapStr() {
         if (instanceCap==Integer.MAX_VALUE) {
             return "";
@@ -299,7 +310,7 @@ public class DockerTemplate extends DockerTemplateBase implements Describable<Do
                 slaveName,
                 nodeDescription,
                 remoteFs, getNumExecutors(), getMode(), memoryLimit, cpuShares, labelString,
-                launcher, getRetentionStrategy(), nodeProperties);
+                launcher, getRetentionStrategyCopy(), nodeProperties);
 
     }
 
