@@ -149,6 +149,19 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         return retentionStrategy;
     }
 
+    /**
+     * tmp fix for termintaing boolean caching
+     */
+    public RetentionStrategy getRetentionStrategyCopy() {
+        if (retentionStrategy instanceof DockerOnceRetentionStrategy) {
+            DockerOnceRetentionStrategy onceRetention = (DockerOnceRetentionStrategy) retentionStrategy;
+            return new DockerOnceRetentionStrategy(onceRetention.getIdleMinutes());
+        }
+        return retentionStrategy;
+    }
+
+
+
     @DataBoundSetter
     public void setLauncher(DockerComputerLauncher launcher) {
         this.launcher = launcher;

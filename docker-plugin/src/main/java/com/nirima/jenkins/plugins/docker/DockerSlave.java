@@ -59,7 +59,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 dockerTemplate.getMode(),
                 dockerTemplate.getLabelString(),
                 launcher,
-                dockerTemplate.getRetentionStrategy(),
+                dockerTemplate.getRetentionStrategyCopy(),
                 Collections.<NodeProperty<?>>emptyList()
         );
         setContainerId(containerId);
