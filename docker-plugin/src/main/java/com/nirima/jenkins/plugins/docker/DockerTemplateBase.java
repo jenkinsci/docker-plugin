@@ -102,7 +102,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                               String macAddress
     ) {
         setImage(image);
-
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
@@ -161,6 +160,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     }
 
     public void setImage(String image) {
+        if (image == null) {
+            throw new IllegalArgumentException("Image can't be null");
+        }
+
         this.image = image.trim();
     }
 
