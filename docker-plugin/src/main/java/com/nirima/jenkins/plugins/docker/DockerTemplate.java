@@ -263,7 +263,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
             List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
 
             launchers.add(DockerComputerSSHLauncher.DESCRIPTOR);
-            launchers.add(DockerComputerJNLPLauncher.DESCRIPTOR);
+//            launchers.add(DockerComputerJNLPLauncher.DESCRIPTOR);
 
             return launchers;
         }
