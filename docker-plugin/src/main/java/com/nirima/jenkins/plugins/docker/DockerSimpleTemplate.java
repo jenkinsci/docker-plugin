@@ -1,14 +1,12 @@
 package com.nirima.jenkins.plugins.docker;
 
 import hudson.Extension;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 
 /**
  * A simple template storage.
  */
-public class DockerSimpleTemplate extends DockerTemplateBase implements Describable<DockerSimpleTemplate> {
+public class DockerSimpleTemplate extends DockerTemplateBase {
     public DockerSimpleTemplate(String image,
                                 String dnsString,
                                 String dockerCommand,
@@ -41,12 +39,13 @@ public class DockerSimpleTemplate extends DockerTemplateBase implements Describa
                 macAddress);
     }
 
-    public Descriptor<DockerSimpleTemplate> getDescriptor() {
+    @Override
+    public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
     @Extension
-    public static final class DescriptorImpl extends Descriptor<DockerSimpleTemplate> {
+    public static final class DescriptorImpl extends DockerTemplateBase.DescriptorImpl {
 
         @Override
         public String getDisplayName() {

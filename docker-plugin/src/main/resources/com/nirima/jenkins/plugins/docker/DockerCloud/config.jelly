@@ -1,18 +1,17 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
 
     <f:entry title="${%Name}" field="name">
-      <f:textbox />
+        <f:textbox/>
     </f:entry>
 
-   <f:entry title="${%Docker URL}" field="serverUrl">
-      <f:textbox />
+    <f:entry title="${%Docker URL}" field="serverUrl">
+        <f:textbox/>
     </f:entry>
 
     <f:entry title="${%Docker Version}" field="version">
-        <f:textbox />
+        <f:textbox/>
     </f:entry>
-
 
     <f:entry title="${%Credentials}" field="credentialsId">
         <c:select/>
@@ -26,16 +25,16 @@
         <f:textbox default="15"/>
     </f:entry>
 
-    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="serverUrl,credentialsId,version" />
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
+                      with="serverUrl,credentialsId,version"/>
 
     <f:entry title="${%Container Cap}" field="containerCapStr">
-        <f:textbox />
+        <f:textbox/>
     </f:entry>
 
-
-  <f:entry title="${%Images}" description="${%List of Images to be launched as slaves}">
-   <f:repeatableHeteroProperty field="templates" hasHeader="true" addCaption="Add Docker Template"
-                               deleteCaption="Delete Docker Template" />
-  </f:entry>
+    <f:entry title="${%Images}" description="${%List of Images to be launched as slaves}">
+        <f:repeatableHeteroProperty field="templates" hasHeader="true" addCaption="Add Docker Template"
+                                    deleteCaption="Delete Docker Template"/>
+    </f:entry>
 
 </j:jelly>

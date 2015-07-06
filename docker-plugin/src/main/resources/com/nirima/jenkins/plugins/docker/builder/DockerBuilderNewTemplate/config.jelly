@@ -4,5 +4,6 @@
          xmlns:f="/lib/form"
         >
 
-    <st:include page="config.jelly" class="com.nirima.jenkins.plugins.docker.DockerTemplate" />
+    <!--<st:include page="config.jelly" class="com.nirima.jenkins.plugins.docker.DockerTemplate" />-->
+    <f:property field="dockerTemplate"/>
 </j:jelly>

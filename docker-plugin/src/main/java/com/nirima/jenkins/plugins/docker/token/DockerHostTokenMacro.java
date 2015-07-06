@@ -20,7 +20,7 @@ public class DockerHostTokenMacro extends DataBoundTokenMacro {
         Node node = abstractBuild.getBuiltOn();
         if( node instanceof DockerSlave) {
             DockerSlave dockerSlave = (DockerSlave)node;
-            return dockerSlave.containerId;
+            return dockerSlave.getContainerId();
         }
 
         return null;
