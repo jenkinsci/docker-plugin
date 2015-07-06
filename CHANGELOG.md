@@ -8,6 +8,7 @@
 * Unbunble launchers
 * Improve provisioning
 * Change '@' delimiter in slave name to '-'
+* Fix not removed "suspended" slaves introduced in 0.9.4
 
 ## 0.9.4
 
