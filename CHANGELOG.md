@@ -3,6 +3,12 @@
 
 ## Next version
 
+## 0.10.0
+
+* Unbunble launchers
+* Improve provisioning
+* Change '@' delimiter in slave name to '-'
+
 ## 0.9.4
 
 * Fixes termination errors. Sync OnceRetentionStrategy implementation.  
