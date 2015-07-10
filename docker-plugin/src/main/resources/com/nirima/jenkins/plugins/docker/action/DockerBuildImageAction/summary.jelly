@@ -11,7 +11,7 @@
 
              <b>Original Container Id:</b> ${it.containerId}
              <br/>
-             <b>Committed Container Id:</b> ${it.taggedId}
+             <b>Committed Container Id(s):</b> ${it.taggedId}
              <br/>
 
 	</t:summary>

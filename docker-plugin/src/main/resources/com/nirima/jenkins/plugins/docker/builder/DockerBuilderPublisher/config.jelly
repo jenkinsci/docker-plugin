@@ -8,8 +8,8 @@
     </f:entry>
 
 
-    <f:entry title="Tag to use" field="tag"
-             description="Tag to give the image.">
+    <f:entry title="Tag(s) to use" field="tag"
+             description="Tag(s) to give the image.">
         <f:textbox />
     </f:entry>
 
