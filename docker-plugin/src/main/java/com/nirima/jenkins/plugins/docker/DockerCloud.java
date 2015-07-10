@@ -249,7 +249,13 @@ public class DockerCloud extends Cloud {
 
     private DockerSlave provisionWithWait(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
         LOGGER.info("Trying to run container for {}", dockerTemplate.getDockerTemplateBase().getImage());
-        final String containerId = runContainer(dockerTemplate, connect(), dockerTemplate.getLauncher());
+
+        String containerId;
+        try {
+            containerId = runContainer(dockerTemplate, connect(), dockerTemplate.getLauncher());
+        } catch(Exception ex) {
+            throw new RuntimeException("Error trying to run a container on " + name, ex);
+        }
 
         InspectContainerResponse ir;
         try {
