@@ -40,7 +40,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin.dockerClient;
+import static com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin.dockerClientConfig;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -118,7 +118,7 @@ public class DockerCloud extends Cloud {
      */
     public synchronized DockerClient connect() {
         if (connection == null) {
-            connection = dockerClient().forCloud(this);
+            connection = dockerClientConfig().forCloud(this).buildClient();
         }
 
         return connection;
@@ -493,9 +493,10 @@ public class DockerCloud extends Cloud {
                 @QueryParameter String version
         ) throws IOException, ServletException, DockerException {
             try {
-                DockerClient dc = dockerClient()
+                DockerClient dc = dockerClientConfig()
                         .forServer(serverUrl, version)
-                        .withCredentials(credentialsId);
+                        .withCredentials(credentialsId)
+                        .buildClient();
 
                 Version verResult = dc.versionCmd().exec();
 

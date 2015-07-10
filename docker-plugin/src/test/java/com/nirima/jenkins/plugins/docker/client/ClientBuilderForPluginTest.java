@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.cloudbees.plugins.credentials.CredentialsScope.GLOBAL;
-import static com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin.dockerClient;
+import static com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin.dockerClientConfig;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,7 +53,7 @@ public class ClientBuilderForPluginTest {
                 HTTP_SERVER_URL,
                 EMPTY_CONTAINER_CAP,
                 CONNECT_TIMEOUT, READ_TIMEOUT, EMPTY_CREDS, DOCKER_API_VER);
-        ClientBuilderForPlugin builder = dockerClient();
+        ClientConfigBuilderForPlugin builder = dockerClientConfig();
         builder.forCloud(cloud);
 
         DockerClientConfig config = builder.config().build();
@@ -64,7 +64,7 @@ public class ClientBuilderForPluginTest {
 
     @Test
     public void shouldFindPasswordCredsFromJenkins() throws Exception {
-        ClientBuilderForPlugin builder = dockerClient();
+        ClientConfigBuilderForPlugin builder = dockerClientConfig();
         builder.forServer(HTTP_SERVER_URL, DOCKER_API_VER).withCredentials(ID_OF_CREDS);
 
         DockerClientConfig config = builder.config().build();
