@@ -3,9 +3,7 @@
 
 ## Next version
 
-## 0.10.0
-
-* #270 Set default timeout to 10 minutes. For existed installations recommended update from 0 to 10. 
+* Set default timeout to 10 minutes. For existed installations recommended update from 0 to 10. 
 
 ## 0.10.0
 
