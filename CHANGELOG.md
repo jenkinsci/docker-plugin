@@ -5,6 +5,10 @@
 
 ## 0.10.0
 
+* #270 Set default timeout to 10 minutes. For existed installations recommended update from 0 to 10. 
+
+## 0.10.0
+
 * Unbunble launchers
 * Improve provisioning
 * Change '@' delimiter in slave name to '-'
