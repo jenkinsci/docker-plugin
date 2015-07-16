@@ -51,7 +51,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
 
     private Node.Mode mode = Node.Mode.NORMAL;
 
-    private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(0);
+    private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(10);
 
     private int numExecutors = 1;
 
