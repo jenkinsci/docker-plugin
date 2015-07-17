@@ -4,6 +4,7 @@
 ## Next version
 
 * Set default timeout to 10 minutes. For existed installations recommended update from 0 to 10. 
+* Update docker-java library to 1.4.0
 
 ## 0.10.0
 
