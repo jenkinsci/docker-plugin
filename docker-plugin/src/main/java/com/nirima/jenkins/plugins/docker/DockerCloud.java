@@ -151,7 +151,8 @@ public class DockerCloud extends Cloud {
             while (excessWorkload > 0 && !templates.isEmpty()) {
                 final DockerTemplate t = templates.get(0); // get first
 
-                LOGGER.info("Will provision '{}', for label: '{}'", t.getDockerTemplateBase().getImage(), label);
+                LOGGER.info("Will provision '{}', for label: '{}', in cloud: '{}'",
+                        t.getDockerTemplateBase().getImage(), label, getDisplayName());
 
                 try {
                     if (!addProvisionedSlave(t)) {
@@ -159,7 +160,8 @@ public class DockerCloud extends Cloud {
                         continue;
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Bad template '{}': '{}'. Trying next template...", t.getDockerTemplateBase().getImage(), e.getMessage());
+                    LOGGER.warn("Bad template '{}': '{}'. Trying next template...",
+                            t.getDockerTemplateBase().getImage(), e.getMessage());
                     templates.remove(t);
                     continue;
                 }
@@ -171,7 +173,8 @@ public class DockerCloud extends Cloud {
                                         try {
                                             return provisionWithWait(t);
                                         } catch (Exception ex) {
-                                            LOGGER.error("Error in provisioning; template='{}'", t, ex);
+                                            LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
+                                                    t, getDisplayName(), ex);
                                             throw Throwables.propagate(ex);
                                         } finally {
                                             decrementAmiSlaveProvision(t.getDockerTemplateBase().getImage());
@@ -186,7 +189,7 @@ public class DockerCloud extends Cloud {
 
             return r;
         } catch (Exception e) {
-            LOGGER.error("Exception while provisioning for: {}", label, e);
+            LOGGER.error("Exception while provisioning for label: '{}', cloud='{}'", label, getDisplayName(), e);
             return Collections.emptyList();
         }
     }
