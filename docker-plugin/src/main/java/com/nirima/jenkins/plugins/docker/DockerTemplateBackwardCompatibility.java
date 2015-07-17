@@ -141,7 +141,7 @@ public abstract class DockerTemplateBackwardCompatibility {
 
     @Deprecated
     private String getEnvironmentsString() {
-        return Joiner.on("\n").join(environment);
+        return environment == null ? "" : Joiner.on("\n").join(environment);
     }
 
     @Deprecated

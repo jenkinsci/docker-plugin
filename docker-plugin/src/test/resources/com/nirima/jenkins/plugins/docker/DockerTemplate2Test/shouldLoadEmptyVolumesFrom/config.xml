@@ -49,42 +49,6 @@
           </retentionStrategy>
           <numExecutors>1</numExecutors>
         </com.nirima.jenkins.plugins.docker.DockerTemplate>
-
-        <com.nirima.jenkins.plugins.docker.DockerTemplate>
-          <image> image:b25 </image>
-          <dockerCommand></dockerCommand>
-          <lxcConfString></lxcConfString>
-          <hostname></hostname>
-          <dnsHosts/>
-          <volumes>
-            <string>  /host/path:/container/path:ro </string>
-            <string> /host/path2:/container/path2:ro  </string>
-            <string> </string>
-          </volumes>
-          <volumesFrom>otherContainer:ro</volumesFrom>
-          <environment/>
-          <bindPorts></bindPorts>
-          <bindAllPorts>false</bindAllPorts>
-          <privileged>false</privileged>
-          <tty>false</tty>
-          <labelString>label2 label-all</labelString>
-          <credentialsId></credentialsId>
-          <idleTerminationMinutes>5</idleTerminationMinutes>
-          <sshLaunchTimeoutMinutes>1</sshLaunchTimeoutMinutes>
-          <jvmOptions></jvmOptions>
-          <javaPath></javaPath>
-          <prefixStartSlaveCmd></prefixStartSlaveCmd>
-          <suffixStartSlaveCmd></suffixStartSlaveCmd>
-          <remoteFsMapping></remoteFsMapping>
-          <remoteFs>/home/jenkins</remoteFs>
-          <instanceCap>1</instanceCap>
-          <mode>NORMAL</mode>
-          <retentionStrategy class="com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy">
-            <idleMinutes>0</idleMinutes>
-            <idleMinutes defined-in="com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy">0</idleMinutes>
-          </retentionStrategy>
-          <numExecutors>2</numExecutors>
-        </com.nirima.jenkins.plugins.docker.DockerTemplate>
       </templates>
       <serverUrl>http://192.168.1.4:2375</serverUrl>
       <containerCap>2</containerCap>
