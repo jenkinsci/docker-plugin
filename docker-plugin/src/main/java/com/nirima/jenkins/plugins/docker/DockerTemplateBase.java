@@ -15,9 +15,11 @@ import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.*;
 import shaded.com.google.common.collect.Iterables;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
@@ -83,6 +86,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     public final boolean tty;
 
     @CheckForNull private String macAddress;
+
+    @CheckForNull private List<String> extraHosts;
 
     @DataBoundConstructor
     public DockerTemplateBase(String image,
@@ -143,6 +148,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
         List<String> list = Splitter.on(separator).omitEmptyStrings().splitToList(s);
         return list.toArray(new String[list.size()]);
+    }
+
+    public static List<String> splitAndFilterEmptyList(String s, String separator) {
+        return Splitter.on(separator).omitEmptyStrings().splitToList(s);
     }
 
     //TODO move/replace
@@ -288,6 +297,28 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         return Joiner.on("\n").join(environment);
     }
 
+    @CheckForNull
+    public List<String> getExtraHosts() {
+        return extraHosts;
+    }
+
+    public void setExtraHosts(List<String> extraHosts) {
+        this.extraHosts = extraHosts;
+    }
+
+    @DataBoundSetter
+    public void setExtraHostsString(String extraHostsString) {
+        setExtraHosts(splitAndFilterEmptyList(extraHostsString, "\n"));
+    }
+
+    public String getExtraHostsString() {
+        if (CollectionUtils.isEmpty(getExtraHosts())) {
+            return "";
+        } else {
+            return Joiner.on("\n").join(getExtraHosts());
+        }
+    }
+
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         if (hostname != null && !hostname.isEmpty()) {
             containerConfig.withHostName(hostname);
@@ -365,6 +396,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
             containerConfig.withMacAddress(getMacAddress());
         }
 
+        final List<String> extraHosts = getExtraHosts();
+        if (CollectionUtils.isNotEmpty(extraHosts)) {
+            containerConfig.withExtraHosts(extraHosts.toArray(new String[extraHosts.size()]));
+        }
+
         return containerConfig;
     }
 
@@ -421,6 +457,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                 }
             } catch (Throwable t) {
                 return FormValidation.error(t.getMessage());
+            }
+
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckExtraHostsString(@QueryParameter String extraHostsString) {
+            final List<String> extraHosts = splitAndFilterEmptyList(extraHostsString, "\n");
+            for (String extraHost : extraHosts) {
+                if (extraHost.trim().split(":").length < 2) {
+                    return FormValidation.error("Wrong extraHost {}", extraHost);
+                }
             }
 
             return FormValidation.ok();
