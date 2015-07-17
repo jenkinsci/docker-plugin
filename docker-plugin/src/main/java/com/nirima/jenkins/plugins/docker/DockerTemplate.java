@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.nirima.jenkins.plugins.docker.launcher.DockerComputerJNLPLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy;
@@ -18,6 +17,7 @@ import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -57,6 +57,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
 
     private DockerTemplateBase dockerTemplateBase;
 
+    private boolean removeVolumes;
+
     private transient /*almost final*/ Set<LabelAtom> labelSet;
 
     @DataBoundConstructor
@@ -83,6 +85,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     /**
      * Contains all available arguments
      */
+    @Restricted(value = NoExternalUse.class)
     public DockerTemplate(DockerTemplateBase dockerTemplateBase,
                           String labelString,
                           String remoteFs,
@@ -91,7 +94,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                           Node.Mode mode,
                           int numExecutors,
                           DockerComputerLauncher launcher,
-                          RetentionStrategy retentionStrategy) {
+                          RetentionStrategy retentionStrategy,
+                          boolean removeVolumes) {
         this(dockerTemplateBase,
                 labelString,
                 remoteFs,
@@ -101,6 +105,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         setNumExecutors(numExecutors);
         setLauncher(launcher);
         setRetentionStrategy(retentionStrategy);
+        setRemoveVolumes(removeVolumes);
     }
 
     public DockerTemplateBase getDockerTemplateBase() {
@@ -109,6 +114,15 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
 
     public void setDockerTemplateBase(DockerTemplateBase dockerTemplateBase) {
         this.dockerTemplateBase = dockerTemplateBase;
+    }
+
+    public boolean isRemoveVolumes() {
+        return removeVolumes;
+    }
+
+    @DataBoundSetter
+    public void setRemoveVolumes(boolean removeVolumes) {
+        this.removeVolumes = removeVolumes;
     }
 
     public String getLabelString() {
@@ -221,7 +235,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     @Override
     public String toString() {
         return "DockerTemplate{" +
-                "labelString='" + labelString + '\'' +
+                "removeVolumes=" + removeVolumes +
+                ", labelString='" + labelString + '\'' +
                 ", launcher=" + launcher +
                 ", remoteFsMapping='" + remoteFsMapping + '\'' +
                 ", remoteFs='" + remoteFs + '\'' +
@@ -230,6 +245,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 ", retentionStrategy=" + retentionStrategy +
                 ", numExecutors=" + numExecutors +
                 ", dockerTemplateBase=" + dockerTemplateBase +
+                ", configVersion=" + configVersion +
                 '}';
     }
 
