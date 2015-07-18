@@ -63,7 +63,8 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
         );
 
         final DockerTemplate dockerTemplate = new DockerTemplate(dockerTemplateBase, labelString, remoteFs,
-                remoteFsMapping, instanceCapStr, Node.Mode.NORMAL, 1, dockerComputerSSHLauncher, new DockerOnceRetentionStrategy(0));
+                remoteFsMapping, instanceCapStr, Node.Mode.NORMAL, 1, dockerComputerSSHLauncher,
+                new DockerOnceRetentionStrategy(0), false);
         setDockerTemplate(dockerTemplate);
     }
 

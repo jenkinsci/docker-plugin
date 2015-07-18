@@ -77,6 +77,8 @@
         <f:textbox/>
     </f:entry>
 
-
+    <f:entry title="${%Remove volumes}" field="removeVolumes">
+        <f:checkbox/>
+    </f:entry>
 
 </j:jelly>

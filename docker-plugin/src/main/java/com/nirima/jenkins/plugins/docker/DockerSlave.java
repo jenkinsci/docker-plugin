@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
 import hudson.model.*;
@@ -171,7 +172,10 @@ public class DockerSlave extends AbstractCloudSlave {
 
             try {
                 DockerClient client = getClient();
-                client.removeContainerCmd(containerId).exec();
+                client.removeContainerCmd(containerId)
+                        .withRemoveVolumes(getDockerTemplate().isRemoveVolumes())
+                        .exec();
+
                 LOGGER.log(Level.INFO, "Removed container {0}", getContainerId());
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception: " + ex.getMessage());
