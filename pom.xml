@@ -23,6 +23,7 @@
 
     <properties>
         <maven-release-plugin.version>2.5.1</maven-release-plugin.version>
+        <maven-findbugs-plugin.version>3.0.1</maven-findbugs-plugin.version>
         <hpi.plugin.version>1.112</hpi.plugin.version>
         <stapler.version>1.207</stapler.version>
         <guava.version>18.0</guava.version>
@@ -83,6 +84,24 @@
                         </archive>
                         <maskClasses>com.google.common.</maskClasses>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>findbugs-maven-plugin</artifactId>
+                    <version>${maven-findbugs-plugin.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Low</threshold>
+                        <xmlOutput>true</xmlOutput>
+                        <failOnError>false</failOnError>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
