@@ -8,6 +8,7 @@
 * Enhance help page #265
 * Fix 0.8 config data loading
 * Fix DockerBuilderPublisher
+* Add removeVolumes option for Docker Template config.
 
 ## 0.10.0
 
