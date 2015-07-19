@@ -1,20 +1,16 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.github.dockerjava.core.DockerClientConfig;
-import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
-import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
-import shaded.com.google.common.base.Optional;
-import shaded.com.google.common.base.Splitter;
-import shaded.com.google.common.base.Throwables;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.model.Identifier;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.NameParser;
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
+import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
+import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -25,32 +21,86 @@ import hudson.model.Node;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-
+import hudson.util.FormValidation;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import shaded.com.google.common.base.Joiner;
+import shaded.com.google.common.base.Optional;
+import shaded.com.google.common.base.Splitter;
+import shaded.com.google.common.base.Throwables;
 
+import javax.annotation.CheckForNull;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Builder extension to build / publish an image from a Dockerfile.
  */
 public class DockerBuilderPublisher extends Builder implements Serializable {
+    private static final Pattern VALID_REPO_PATTERN = Pattern.compile("^([a-z0-9-_.]+)$");
 
     public final String dockerFileDirectory;
-    public final String tag;
+
+    /**
+     * @deprecated use {@link #tags}
+     */
+    @Deprecated
+    public String tag;
+
+    @CheckForNull
+    private List<String> tags;
+
     public final boolean pushOnSuccess;
     public final boolean cleanImages;
     public final boolean cleanupWithJenkinsJobDelete;
 
     @DataBoundConstructor
-    public DockerBuilderPublisher(String dockerFileDirectory, String tag, boolean pushOnSuccess, boolean cleanImages, boolean cleanupWithJenkinsJobDelete) {
+    public DockerBuilderPublisher(String dockerFileDirectory,
+                                  String tagsString,
+                                  boolean pushOnSuccess,
+                                  boolean cleanImages,
+                                  boolean cleanupWithJenkinsJobDelete) {
         this.dockerFileDirectory = dockerFileDirectory;
-        this.tag = tag;
+        setTagsString(tagsString);
+        this.tag = null;
         this.pushOnSuccess = pushOnSuccess;
         this.cleanImages = cleanImages;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public String getTagsString() {
+        return getTags() == null ? "" : Joiner.on("\n").join(getTags());
+    }
+
+    public void setTagsString(String tagsString) {
+        setTags(filterStringToList(tagsString));
+    }
+
+    public static List<String> filterStringToList(String str) {
+        return str == null ? null : Splitter.on("\n").omitEmptyStrings().trimResults().splitToList(str);
+    }
+
+    public static void verifyTags(String tagsString) {
+        final List<String> verifyTags = filterStringToList(tagsString);
+        for (String verifyTag : verifyTags) {
+            if (!VALID_REPO_PATTERN.matcher(verifyTag).matches()) {
+                throw new IllegalArgumentException("Tag " + verifyTag + " doesn't match ^([a-z0-9-_.]+)$");
+            }
+        }
     }
 
     class Run implements Serializable {
@@ -60,7 +110,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
         FilePath fpChild;
 
-        final String tagsToUse;
+        final List<String> tagsToUse;
         final String url;
         // Marshal the builder across the wire.
         private transient DockerClient _client;
@@ -74,38 +124,31 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
             fpChild = new FilePath(build.getWorkspace(), dockerFileDirectory);
 
-            tagsToUse = getTag(build, launcher, listener);
+            tagsToUse = expandTags(build, launcher, listener);
             url = getUrl(build);
 
             Optional<DockerCloud> cloudThatBuildRanOn = getCloudForBuild(build);
 
-            if( cloudThatBuildRanOn.isPresent() ) {
+            if (cloudThatBuildRanOn.isPresent()) {
 
                 // Don't build it yet. This may happen on a remote server.
                 clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
                         .forCloud(cloudThatBuildRanOn.get()).build();
 
-            }else{
+            } else {
                 clientConfig = null;
             }
 
         }
 
-        protected Iterable<String> getTagsToUse() {
-            return Splitter.on(" ").omitEmptyStrings().trimResults().split(tagsToUse);
-        }
-
-
         /**
          * If the build was on a cloud, get the ID of that cloud.
-         * @param build
-         * @return
          */
         public Optional<DockerCloud> getCloudForBuild(AbstractBuild build) {
 
             Node node = build.getBuiltOn();
-            if( node instanceof DockerSlave ) {
-                DockerSlave slave = (DockerSlave)node;
+            if (node instanceof DockerSlave) {
+                DockerSlave slave = (DockerSlave) node;
                 return Optional.of(slave.getCloud());
             }
 
@@ -114,9 +157,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
         private DockerClient getClient() {
 
-            if( _client == null ) {
+            if (_client == null) {
 
-                if( clientConfig == null )
+                if (clientConfig == null)
                     throw new RuntimeException("Could not get client because we could not find the cloud that the project was built on. What this build run on Docker?");
 
                 _client = ClientBuilderForPlugin.getInstance(clientConfig).build();
@@ -133,23 +176,20 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
             // The ID of the image we just generated
             Optional<String> id = getImageId(response);
-            if( !id.isPresent() )
+            if (!id.isPresent())
                 return false;
 
-            build.addAction( new DockerBuildImageAction(url, id.get(), tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess) );
+            build.addAction(new DockerBuildImageAction(url, id.get(), tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
             build.save();
 
 
-
-            if( pushOnSuccess ) {
-
+            if (pushOnSuccess) {
                 listener.getLogger().println("Pushing " + tagsToUse);
-                String stringResponse = pushImage();
+                String stringResponse = pushImages();
                 listener.getLogger().println("Docker Push Response : " + stringResponse);
             }
 
             if (cleanImages) {
-
                 // For some reason, docker delete doesn't delete all tagged
                 // versions, despite force = true.
                 // So, do it multiple times (protect against infinite looping).
@@ -157,11 +197,10 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
                 try {
                     cleanImages(id.get());
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                     listener.getLogger().println("Error attempting to clean images");
                 }
             }
-
 
 
             listener.getLogger().println("Docker Build Done");
@@ -171,20 +210,21 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
         private void cleanImages(String id) {
             getClient().removeImageCmd(id)
-                .withForce()
-                .exec();
+                    .withForce()
+                    .exec();
         }
 
         private String buildImage() throws IOException, InterruptedException {
 
-          return fpChild.act(new FilePath.FileCallable<String>() {
+            return fpChild.act(new FilePath.FileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
                     try {
-                      listener.getLogger().println("Docker Build : build with tags " + tagsToUse + " at path " + f.getAbsolutePath());
+                        listener.getLogger().println("Docker Build : build with tags " + tagsToUse.toString()
+                                + " at path " + f.getAbsolutePath());
 
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-                        for(String tag : getTagsToUse() ) {
+                        for (String tag : tagsToUse) {
                             listener.getLogger().println("Docker Build : building tag " + tag);
 
                             try {
@@ -193,32 +233,29 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                                         .exec();
 
                                 IOUtils.copy(is, baos);
-                            } catch(Exception ex) {
+                            } catch (Exception ex) {
                                 listener.getLogger().println(ex.getMessage());
-                                ex.printStackTrace( listener.getLogger());
+                                ex.printStackTrace(listener.getLogger());
                                 listener.getLogger().println("Error attempting to tag " + tag + ". Continuing anyway.");
                             }
                         }
 
-
-
                         return baos.toString();
-
                     } catch (DockerException e) {
                         throw Throwables.propagate(e);
                     }
-
                 }
             });
         }
 
-        private String pushImage() throws IOException {
+        private String pushImages() throws IOException {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-            for(String tagToUse : getTagsToUse()) {
+            for (String tagToUse : tagsToUse) {
 
                 if (!tagToUse.toLowerCase().equals(tagToUse)) {
-                    listener.getLogger().println("ERROR: Docker will refuse to push tag name " + tagToUse + " because it uses upper case.");
+                    listener.getLogger().println("ERROR: Docker will refuse to push tag name "
+                            + tagToUse + " because it uses upper case.");
                 }
 
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
@@ -229,9 +266,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
                 IOUtils.copy(pushResponse, byteArrayOutputStream);
             }
+
             return byteArrayOutputStream.toString();
         }
-
     }
 
     @Override
@@ -240,11 +277,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
     }
 
     private Optional<String> getImageId(String response) {
-        for(String item : response.split("\n") ) {
+        for (String item : response.split("\n")) {
             if (item.contains("Successfully built")) {
-                String id =  StringUtils.substringAfterLast(item, "Successfully built ").trim();
+                String id = StringUtils.substringAfterLast(item, "Successfully built ").trim();
                 // Seem to have an additional \n in the stream.
-                id = id.substring(0,12);
+                id = id.substring(0, 12);
                 return Optional.of(id);
             }
         }
@@ -253,11 +290,10 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
     }
 
 
-
     private String getUrl(AbstractBuild build) {
         Node node = build.getBuiltOn();
-        if( node instanceof DockerSlave ) {
-            DockerSlave slave = (DockerSlave)node;
+        if (node instanceof DockerSlave) {
+            DockerSlave slave = (DockerSlave) node;
             return slave.getCloud().serverUrl;
         }
 
@@ -265,18 +301,30 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         return null;
     }
 
-    private String getTag(AbstractBuild build, Launcher launcher, BuildListener listener) {
-        try {
-            return TokenMacro.expandAll(build, listener, tag);
-        }catch(Exception ex) {
-            listener.getLogger().println("Couldn't macro expand tag " + tag);
+    private List<String> expandTags(AbstractBuild build, Launcher launcher, BuildListener listener) {
+        List<String> eTags = new ArrayList<>(tags.size());
+        for (String tag : tags) {
+            try {
+                eTags.add(TokenMacro.expandAll(build, listener, tag));
+            } catch (MacroEvaluationException | IOException | InterruptedException e) {
+                listener.getLogger().println("Couldn't macro expand tag " + tag);
+            }
         }
-        return tag;
-
+        return eTags;
     }
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+
+        public FormValidation doCheckTagsString(@QueryParameter String tagsString) {
+            try {
+                verifyTags(tagsString);
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+
+            return FormValidation.ok();
+        }
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {

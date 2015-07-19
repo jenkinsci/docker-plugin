@@ -8,9 +8,9 @@
     </f:entry>
 
 
-    <f:entry title="Tag(s) to use" field="tag"
-             description="Tag(s) to give the image.">
-        <f:textbox />
+    <f:entry title="Tags to use" field="tagsString"
+             description="Tags to give the image.">
+        <f:expandableTextbox/>
     </f:entry>
 
     <f:entry title="${%Push image}" field="pushOnSuccess">
