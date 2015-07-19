@@ -175,13 +175,13 @@ public abstract class DockerTemplateBackwardCompatibility {
     @Deprecated
     private int getIdleTerminationMinutes() {
         if (idleTerminationMinutes == null || idleTerminationMinutes.trim().isEmpty()) {
-            return 0;
+            return 10;
         } else {
             try {
                 return Integer.parseInt(idleTerminationMinutes);
             } catch (NumberFormatException nfe) {
                 LOGGER.info("Malformed idleTermination value: '{}'. Fallback to 30.", idleTerminationMinutes);
-                return 30;
+                return 10;
             }
         }
     }

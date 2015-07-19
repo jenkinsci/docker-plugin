@@ -24,7 +24,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
 
     private static final Logger LOGGER = Logger.getLogger(DockerOnceRetentionStrategy.class.getName());
 
-    private int idleMinutes = 0;
+    private int idleMinutes = 10;
     private transient boolean terminating;
 
     /**
