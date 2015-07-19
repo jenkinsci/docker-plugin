@@ -1,8 +1,5 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import shaded.com.google.common.base.Function;
-import shaded.com.google.common.base.Predicate;
-
 import java.util.Date;
 import java.util.concurrent.Callable;
 

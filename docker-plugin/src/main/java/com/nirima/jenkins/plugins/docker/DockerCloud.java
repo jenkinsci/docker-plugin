@@ -27,7 +27,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import shaded.com.google.common.base.*;
+import shaded.com.google.common.base.MoreObjects;
+import shaded.com.google.common.base.Preconditions;
+import shaded.com.google.common.base.Predicate;
+import shaded.com.google.common.base.Throwables;
 import shaded.com.google.common.collect.Collections2;
 import shaded.com.google.common.collect.Iterables;
 
@@ -274,7 +277,7 @@ public class DockerCloud extends Cloud {
         String slaveName = containerId.substring(0, 12);
 
         try {
-            slaveName =  getDisplayName() + "-" + slaveName;
+            slaveName = getDisplayName() + "-" + slaveName;
         } catch (Exception ex) {
             LOGGER.warn("Error fetching cloud name");
         }

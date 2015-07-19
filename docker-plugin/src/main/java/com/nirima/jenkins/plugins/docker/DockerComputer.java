@@ -1,9 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
-import shaded.com.google.common.base.MoreObjects;
 import com.nirima.jenkins.plugins.docker.utils.Cacheable;
-import hudson.model.*;
+import hudson.model.Executor;
+import hudson.model.Queue;
+import hudson.model.Run;
 import hudson.slaves.AbstractCloudComputer;
+import shaded.com.google.common.base.MoreObjects;
 
 import java.util.concurrent.Callable;
 import java.util.logging.Level;

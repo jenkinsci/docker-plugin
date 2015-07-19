@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import com.github.dockerjava.api.DockerException;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;

@@ -41,7 +41,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     private DockerComputerLauncher launcher;
 
     /**
-     *  Field remoteFSMapping.
+     * Field remoteFSMapping.
      */
     public final String remoteFsMapping;
 
@@ -70,7 +70,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.labelString = Util.fixNull(labelString);
-        this.remoteFs =  Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
+        this.remoteFs = Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
         this.remoteFsMapping = remoteFsMapping;
 
         if (instanceCapStr.equals("")) {
@@ -175,7 +175,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     }
 
 
-
     @DataBoundSetter
     public void setLauncher(DockerComputerLauncher launcher) {
         this.launcher = launcher;
@@ -190,7 +189,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     }
 
     public String getInstanceCapStr() {
-        if (instanceCap==Integer.MAX_VALUE) {
+        if (instanceCap == Integer.MAX_VALUE) {
             return "";
         } else {
             return String.valueOf(instanceCap);
@@ -205,7 +204,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         return remoteFsMapping;
     }
 
-    public Set<LabelAtom> getLabelSet(){
+    public Set<LabelAtom> getLabelSet() {
         return labelSet;
     }
 
@@ -289,13 +288,13 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
             strategies.addAll(RetentionStrategy.all());
             return strategies;
         }
-        
+
         @Override
         public String getDisplayName() {
             return "Docker Template";
         }
 
-        public Class getDockerTemplateBase(){
+        public Class getDockerTemplateBase() {
             return DockerTemplateBase.class;
         }
 
