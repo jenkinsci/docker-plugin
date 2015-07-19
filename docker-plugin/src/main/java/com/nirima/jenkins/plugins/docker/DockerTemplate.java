@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 public class DockerTemplate extends DockerTemplateBackwardCompatibility implements Describable<DockerTemplate> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
 
-    private int configVersion = 1;
+    private int configVersion = 2;
 
     private final String labelString;
 
@@ -213,14 +213,25 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
      * Initializes data structure that we don't persist.
      */
     public Object readResolve() {
+        try {
             if (configVersion < 1) {
-            try {
                 convert1();
-            } catch (Throwable t) {
-                LOGGER.log(Level.SEVERE, "Can't convert old values to new (double conversion?): ", t);
+                configVersion = 1;
             }
 
-            configVersion = 1;
+            // https://github.com/jenkinsci/docker-plugin/issues/270
+            if (configVersion < 2) {
+                if (retentionStrategy instanceof DockerOnceRetentionStrategy) {
+                    DockerOnceRetentionStrategy tmpStrategy = (DockerOnceRetentionStrategy) retentionStrategy;
+                    if (tmpStrategy.getIdleMinutes() == 0) {
+                        setRetentionStrategy(new DockerOnceRetentionStrategy(10));
+                    }
+                }
+                configVersion = 2;
+            }
+
+        } catch (Throwable t) {
+            LOGGER.log(Level.SEVERE, "Can't convert old values to new (double conversion?): ", t);
         }
 
         try {
