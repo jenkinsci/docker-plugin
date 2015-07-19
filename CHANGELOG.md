@@ -3,7 +3,7 @@
 
 ## Next version
 
-* Set default timeout to 10 minutes. For existed installations recommended update from 0 to 10. 
+* Set DockerOnceRetentionStrategy default timeout to 10 minutes. 
 * Update docker-java library to 1.4.0
 * Enhance help page #265
 * Fix 0.8 config data loading
