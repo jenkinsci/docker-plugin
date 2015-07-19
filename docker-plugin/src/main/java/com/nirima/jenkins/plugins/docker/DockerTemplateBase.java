@@ -4,6 +4,7 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.*;
 import com.trilead.ssh2.Connection;
 import hudson.Extension;
@@ -23,18 +24,15 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.*;
 import shaded.com.google.common.collect.Iterables;
-import com.github.dockerjava.api.command.CreateContainerCmd;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
-
-import static org.apache.commons.lang.StringUtils.*;
+import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
  * Base for docker templates - does not include Jenkins items like labels.
@@ -85,9 +83,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     public final boolean privileged;
     public final boolean tty;
 
-    @CheckForNull private String macAddress;
+    @CheckForNull
+    private String macAddress;
 
-    @CheckForNull private List<String> extraHosts;
+    @CheckForNull
+    private List<String> extraHosts;
 
     @DataBoundConstructor
     public DockerTemplateBase(String image,
@@ -198,7 +198,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     }
 
     /**
-     *
      * @deprecated use {@link #getVolumesFrom2()}
      */
     @Deprecated
@@ -273,20 +272,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     public List<LxcConf> getLxcConf() {
         List<LxcConf> temp = new ArrayList<>();
-        if( lxcConfString == null || lxcConfString.trim().equals(""))
+        if (lxcConfString == null || lxcConfString.trim().equals(""))
             return temp;
         for (String item : lxcConfString.split(",")) {
             String[] keyValuePairs = item.split("=");
-            if (keyValuePairs.length == 2 )
-            {
+            if (keyValuePairs.length == 2) {
                 LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
                 LxcConf optN = new LxcConf();
                 optN.setKey(keyValuePairs[0]);
                 optN.setValue(keyValuePairs[1]);
                 temp.add(optN);
-            }
-            else
-            {
+            } else {
                 LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
             }
         }

@@ -13,6 +13,7 @@ import static org.junit.Assert.*;
 /**
  * @author Kanstantsin Shautsou
  */
+@SuppressWarnings("deprecation")
 public class DockerTemplate2Test {
     @Rule
     public JenkinsRule j = new JenkinsRule();
