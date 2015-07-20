@@ -1,18 +1,21 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
-	xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
-	xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-	<t:summary icon="/plugin/docker-plugin/images/48x48/docker.png">
+<j:jelly xmlns:j="jelly:core"
+         xmlns:t="/lib/hudson"
+        >
+    <t:summary icon="/plugin/docker-plugin/images/48x48/docker.png">
 
- 		<h1>Docker Image Build / Publish</h1>
+        <h1>Docker Image Build / Publish</h1>
 
-           	<b>Host:</b> ${it.containerHost}
-             <br/>
+        <b>Host:</b>
+        ${it.containerHost}
+        <br/>
 
-             <b>Original Container Id:</b> ${it.containerId}
-             <br/>
-             <b>Committed Container Id(s):</b> ${it.taggedId}
-             <br/>
+        <b>Original Container Id:</b>
+        ${it.containerId}
+        <br/>
+        <b>Committed Container Id(s):</b>
+        ${it.tags}
+        <br/>
 
-	</t:summary>
+    </t:summary>
 </j:jelly>
