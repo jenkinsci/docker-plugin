@@ -6,5 +6,4 @@
        <f:entry title="${%Container Id}" field="containerId">
           <f:readOnlyTextbox />
        </f:entry>
-
 </j:jelly>
