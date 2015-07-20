@@ -1,15 +1,18 @@
 # Changelog
 
 
-## Next version
+## 0.10.1
 
 * Set DockerOnceRetentionStrategy default timeout to 10 minutes. 
 * Update docker-java library to 1.4.0
 * Enhance help page #265
 * Fix 0.8 config data loading
 * Fix DockerBuilderPublisher
+* Allow multiple tags in DockerBuilderPublisher
 * Add removeVolumes option for Docker Template config.
 * Add ExtraHosts template configuration
+* Fix not shown availability drop-down
+* Convert some UIs from jelly to groovy
 
 ## 0.10.0
 
