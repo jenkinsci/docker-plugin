@@ -1,8 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
-import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
-import com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.Util;
@@ -11,12 +9,10 @@ import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -24,8 +20,6 @@ import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Strings;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,6 +54,15 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     private boolean removeVolumes;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
+
+    /**
+     * fully default
+     */
+    public DockerTemplate() {
+        this.labelString = "";
+        this.remoteFsMapping = "";
+        this.instanceCap = 1;
+    }
 
     @DataBoundConstructor
     public DockerTemplate(DockerTemplateBase dockerTemplateBase,
@@ -280,15 +283,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
             return FormValidation.ok();
         }
 
-        @Restricted(DoNotUse.class)
-        public List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategies() {
-            List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
-            strategies.add(DockerOnceRetentionStrategy.DESCRIPTOR);
-            strategies.add(DockerCloudRetentionStrategy.DESCRIPTOR);
-            strategies.addAll(RetentionStrategy.all());
-            return strategies;
-        }
-
         @Override
         public String getDisplayName() {
             return "Docker Template";
@@ -296,15 +290,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
 
         public Class getDockerTemplateBase() {
             return DockerTemplateBase.class;
-        }
-
-        public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
-            List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
-
-            launchers.add(DockerComputerSSHLauncher.DESCRIPTOR);
-//            launchers.add(DockerComputerJNLPLauncher.DESCRIPTOR);
-
-            return launchers;
         }
     }
 }
