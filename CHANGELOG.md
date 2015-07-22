@@ -1,6 +1,10 @@
 # Changelog
 
 
+## 0.10.2
+
+* Fix UI dropdown selector (show saved value right).
+
 ## 0.10.1
 
 * Set DockerOnceRetentionStrategy default timeout to 10 minutes. 
