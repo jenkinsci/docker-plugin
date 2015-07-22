@@ -36,10 +36,13 @@ f.advanced(title: _("Experimental Options"), align: "left") {
                 def prefix = sd.displayName.equals("Docker Once Retention Strategy") ? "" : "Experimental: "
 
                 f.dropdownListBlock(value: sd.clazz.name, name: sd.displayName,
-                        selected: instance.retentionStrategy != null ?
-                                instance.retentionStrategy.descriptor.equals(sd) : false,
+                        selected: instance.retentionStrategy == null ?
+                                false : instance.retentionStrategy.descriptor.equals(sd),
                         title: prefix + sd.displayName) {
                     descriptor = sd
+                    if (instance.retentionStrategy != null && instance.retentionStrategy.descriptor.equals(sd)) {
+                        instance = instance.retentionStrategy
+                    }
                     f.invisibleEntry() {
                         input(type: "hidden", name: "stapler-class", value: sd.clazz.name)
                     }
@@ -62,6 +65,9 @@ f.dropdownList(name: "launcher", title: _("Launch method"),
                     selected: instance.launcher == null ? false : instance.launcher.descriptor.equals(ld),
                     title: ld.displayName) {
                 descriptor = ld
+                if (instance.launcher != null && instance.launcher.descriptor.equals(ld)) {
+                    instance = instance.launcher
+                }
                 f.invisibleEntry() {
                     input(type: "hidden", name: "stapler-class", value: ld.clazz.name)
                 }
