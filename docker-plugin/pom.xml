@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.nirima</groupId>
         <artifactId>docker-plugin-parent</artifactId>
-        <version>0.10.2</version>
+        <version>0.10.3-SNAPSHOT</version>
     </parent>
 
     <groupId>com.nirima</groupId>
