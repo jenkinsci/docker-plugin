@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.nirima.jenkins.plugins.docker.DockerImagePullStrategy;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
@@ -64,7 +65,7 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
 
         final DockerTemplate dockerTemplate = new DockerTemplate(dockerTemplateBase, labelString, remoteFs,
                 remoteFsMapping, instanceCapStr, Node.Mode.NORMAL, 1, dockerComputerSSHLauncher,
-                new DockerOnceRetentionStrategy(10), false);
+                new DockerOnceRetentionStrategy(10), false, DockerImagePullStrategy.PULL_LATEST);
         setDockerTemplate(dockerTemplate);
     }
 

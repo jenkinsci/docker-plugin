@@ -34,11 +34,9 @@ import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Preconditions;
 import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.base.Throwables;
-import shaded.com.google.common.collect.Collections2;
 import shaded.com.google.common.collect.Iterables;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import javax.ws.rs.ProcessingException;
 import java.io.IOException;
@@ -295,8 +293,38 @@ public class DockerCloud extends Cloud {
         return containerId;
     }
 
-    private void pullImage(DockerTemplate dockerTemplate) {
-        //TODO implement using PullStrategy
+    private void pullImage(DockerTemplate dockerTemplate)  throws IOException {
+        final String imageName = dockerTemplate.getDockerTemplateBase().getImage();
+
+        List<Image> images = getClient().listImagesCmd().exec();
+
+        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
+        // if image was specified without tag, then treat as latest
+        final String fullImageName = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+
+        boolean imageExists = Iterables.any(images, new Predicate<Image>() {
+            @Override
+            public boolean apply(Image image) {
+                return Arrays.asList(image.getRepoTags()).contains(fullImageName);
+            }
+        });
+
+        boolean pull = imageExists ?
+                dockerTemplate.getPullStrategy().pullIfExists(imageName) :
+                dockerTemplate.getPullStrategy().pullIfNotExists(imageName);
+
+        if (pull) {
+            LOGGER.info("Pulling image '{}' since one was not found.  This may take awhile...", imageName);
+            //Identifier amiId = Identifier.fromCompoundString(ami);
+            try (InputStream imageStream = getClient().pullImageCmd(imageName).exec()) {
+                int streamValue = 0;
+                while (streamValue != -1) {
+                    streamValue = imageStream.read();
+                }
+            }
+
+            LOGGER.info("Finished pulling image '{}'", imageName);
+        }
     }
 
     private DockerSlave provisionWithWait(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
