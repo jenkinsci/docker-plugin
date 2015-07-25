@@ -57,8 +57,6 @@ public class DockerCloud extends Cloud {
 
     private List<DockerTemplate> templates;
     public final String serverUrl;
-    public final int containerCap;
-
     private int connectTimeout;
     public final int readTimeout;
     public final String version;
@@ -67,10 +65,15 @@ public class DockerCloud extends Cloud {
     private transient DockerClient connection;
 
     /**
-     * Track the count per-AMI identifiers for AMIs currently being
+     * Total max allowed number of containers
+     */
+    public final int containerCap;
+
+    /**
+     * Track the count per image name for images currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    private static final HashMap<String, Integer> provisioningAmis = new HashMap<>();
+    private static final HashMap<String, Integer> provisionedImages = new HashMap<>();
 
     @DataBoundConstructor
     public DockerCloud(String name,
@@ -131,14 +134,14 @@ public class DockerCloud extends Cloud {
      * Decrease the count of slaves being "provisioned".
      */
     private void decrementAmiSlaveProvision(String ami) {
-        synchronized (provisioningAmis) {
+        synchronized (provisionedImages) {
             int currentProvisioning;
             try {
-                currentProvisioning = provisioningAmis.get(ami);
+                currentProvisioning = provisionedImages.get(ami);
             } catch (NullPointerException npe) {
                 return;
             }
-            provisioningAmis.put(ami, Math.max(currentProvisioning - 1, 0));
+            provisionedImages.put(ami, Math.max(currentProvisioning - 1, 0));
         }
     }
 
@@ -417,14 +420,14 @@ public class DockerCloud extends Cloud {
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);
         int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
 
-        synchronized (provisioningAmis) {
+        synchronized (provisionedImages) {
             int currentProvisioning;
 
-            for (int amiCount : provisioningAmis.values()) {
+            for (int amiCount : provisionedImages.values()) {
                 estimatedTotalSlaves += amiCount;
             }
             try {
-                currentProvisioning = provisioningAmis.get(ami);
+                currentProvisioning = provisionedImages.get(ami);
             } catch (NullPointerException npe) {
                 currentProvisioning = 0;
             }
@@ -444,7 +447,7 @@ public class DockerCloud extends Cloud {
             LOGGER.info("Provisioning '{}' number '{}' on '{}'; Total containers: '{}'",
                     ami, estimatedAmiSlaves, name, estimatedTotalSlaves);
 
-            provisioningAmis.put(ami, currentProvisioning + 1);
+            provisionedImages.put(ami, currentProvisioning + 1);
             return true;
         }
     }
