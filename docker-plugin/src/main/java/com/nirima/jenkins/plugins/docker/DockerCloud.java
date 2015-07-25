@@ -459,15 +459,13 @@ public class DockerCloud extends Cloud {
         int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
 
         synchronized (provisionedImages) {
-            int currentProvisioning;
+            int currentProvisioning = 0;
+            if (provisionedImages.containsKey(ami)) {
+                currentProvisioning = provisionedImages.get(ami);
+            }
 
             for (int amiCount : provisionedImages.values()) {
                 estimatedTotalSlaves += amiCount;
-            }
-            try {
-                currentProvisioning = provisionedImages.get(ami);
-            } catch (NullPointerException npe) {
-                currentProvisioning = 0;
             }
 
             estimatedAmiSlaves += currentProvisioning;
