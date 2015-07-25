@@ -7,7 +7,10 @@ import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxMode
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
@@ -67,7 +70,7 @@ public class DockerCloud extends Cloud {
     /**
      * Total max allowed number of containers
      */
-    public final int containerCap;
+    private int containerCap = 100;
 
     /**
      * Track the count per image name for images currently being
@@ -75,7 +78,7 @@ public class DockerCloud extends Cloud {
      */
     private static final HashMap<String, Integer> provisionedImages = new HashMap<>();
 
-    @DataBoundConstructor
+    @Deprecated
     public DockerCloud(String name,
                        List<? extends DockerTemplate> templates,
                        String serverUrl,
@@ -99,22 +102,60 @@ public class DockerCloud extends Cloud {
         }
 
         if (containerCapStr.equals("")) {
-            this.containerCap = Integer.MAX_VALUE;
+            setContainerCap(Integer.MAX_VALUE);
         } else {
-            this.containerCap = Integer.parseInt(containerCapStr);
+            setContainerCap(Integer.parseInt(containerCapStr));
         }
+    }
+
+    @DataBoundConstructor
+    public DockerCloud(String name,
+                       List<? extends DockerTemplate> templates,
+                       String serverUrl,
+                       int containerCap,
+                       int connectTimeout,
+                       int readTimeout,
+                       String credentialsId,
+                       String version) {
+        super(name);
+        Preconditions.checkNotNull(serverUrl);
+        this.version = version;
+        this.credentialsId = credentialsId;
+        this.serverUrl = serverUrl;
+        this.connectTimeout = connectTimeout;
+        this.readTimeout = readTimeout;
+
+        if (templates != null) {
+            this.templates = new ArrayList<>(templates);
+        } else {
+            this.templates = Collections.emptyList();
+        }
+
+        setContainerCap(containerCap);
     }
 
     public int getConnectTimeout() {
         return connectTimeout;
     }
 
+    /**
+     * @deprecated use {@link #getContainerCap()}
+     */
+    @Deprecated
     public String getContainerCapStr() {
         if (containerCap == Integer.MAX_VALUE) {
             return "";
         } else {
             return String.valueOf(containerCap);
         }
+    }
+
+    public int getContainerCap() {
+        return containerCap;
+    }
+
+    public void setContainerCap(int containerCap) {
+        this.containerCap = containerCap;
     }
 
     /**
