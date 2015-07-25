@@ -107,7 +107,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
             public String getActiveHosts() {
                 try {
-                    List<Container> containers = cloud.connect().listContainersCmd().exec();
+                    List<Container> containers = cloud.getClient().listContainersCmd().exec();
                     return "(" + containers.size() + ")";
                 } catch(Exception ex) {
                     return "Error";

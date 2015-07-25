@@ -28,8 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import static org.apache.commons.lang.StringUtils.isNotBlank;
-
 /**
  * JNLP launcher. Doesn't require open ports on docker host.
  * <p/>
@@ -81,7 +79,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         final DockerComputer dockerComputer = (DockerComputer) computer;
         final String containerId = dockerComputer.getContainerId();
         final String rootUrl = Jenkins.getInstance().getRootUrl();
-        final DockerClient connect = dockerComputer.getCloud().connect();
+        final DockerClient connect = dockerComputer.getCloud().getClient();
         final DockerTemplate dockerTemplate = dockerComputer.getNode().getDockerTemplate();
 
         // exec jnlp connection in running container

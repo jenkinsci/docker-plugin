@@ -163,7 +163,7 @@ public class DockerCloud extends Cloud {
      *
      * @return Docker client.
      */
-    public synchronized DockerClient connect() {
+    public synchronized DockerClient getClient() {
         if (connection == null) {
             connection = dockerClientConfig().forCloud(this).buildClient();
         }
@@ -241,7 +241,6 @@ public class DockerCloud extends Cloud {
         }
     }
 
-
     /**
      * Run docker container
      */
@@ -296,16 +295,15 @@ public class DockerCloud extends Cloud {
         return containerId;
     }
 
-
     private DockerSlave provisionWithWait(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
         LOGGER.info("Trying to run container for {}", dockerTemplate.getDockerTemplateBase().getImage());
-        final String containerId = runContainer(dockerTemplate, connect(), dockerTemplate.getLauncher());
+        final String containerId = runContainer(dockerTemplate, getClient(), dockerTemplate.getLauncher());
 
         InspectContainerResponse ir;
         try {
-            ir = connect().inspectContainerCmd(containerId).exec();
+            ir = getClient().inspectContainerCmd(containerId).exec();
         } catch (ProcessingException ex) {
-            connect().removeContainerCmd(containerId).withForce(true).exec();
+            getClient().removeContainerCmd(containerId).withForce(true).exec();
             throw ex;
         }
 
@@ -408,14 +406,13 @@ public class DockerCloud extends Cloud {
      *            This includes those instances that may be started outside Hudson.
      */
     public int countCurrentDockerSlaves(final String ami) throws Exception {
-        final DockerClient dockerClient = connect();
 
-        List<Container> containers = dockerClient.listContainersCmd().exec();
+        List<Container> containers = getClient().listContainersCmd().exec();
 
         if (ami == null)
             return containers.size();
 
-        List<Image> images = dockerClient.listImagesCmd().exec();
+        List<Image> images = getClient().listImagesCmd().exec();
 
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(ami);
         final String fullAmi = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
@@ -429,7 +426,7 @@ public class DockerCloud extends Cloud {
         if (!imageExists) {
             LOGGER.info("Pulling image '{}' since one was not found.  This may take awhile...", ami);
             //Identifier amiId = Identifier.fromCompoundString(ami);
-            try (InputStream imageStream = dockerClient.pullImageCmd(ami).exec()) {
+            try (InputStream imageStream = getClient().pullImageCmd(ami).exec()) {
                 int streamValue = 0;
                 while (streamValue != -1) {
                     streamValue = imageStream.read();
@@ -439,12 +436,12 @@ public class DockerCloud extends Cloud {
             LOGGER.info("Finished pulling image '{}'", ami);
         }
 
-        final InspectImageResponse ir = dockerClient.inspectImageCmd(ami).exec();
+        final InspectImageResponse ir = getClient().inspectImageCmd(ami).exec();
 
         Collection<Container> matching = Collections2.filter(containers, new Predicate<Container>() {
             public boolean apply(@Nullable Container container) {
                 InspectContainerResponse
-                        cis = dockerClient.inspectContainerCmd(container.getId()).exec();
+                        cis = getClient().inspectContainerCmd(container.getId()).exec();
                 return (cis.getImageId().equalsIgnoreCase(ir.getId()));
             }
         });

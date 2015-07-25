@@ -2,7 +2,6 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
 import hudson.model.*;
@@ -258,7 +257,7 @@ public class DockerSlave extends AbstractCloudSlave {
     }
 
     public DockerClient getClient() {
-        return getCloud().connect();
+        return getCloud().getClient();
     }
 
     /**
