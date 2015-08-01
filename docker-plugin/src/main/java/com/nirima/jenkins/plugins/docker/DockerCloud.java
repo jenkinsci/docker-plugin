@@ -295,7 +295,13 @@ public class DockerCloud extends Cloud {
         return containerId;
     }
 
+    private void pullImage(DockerTemplate dockerTemplate) {
+        //TODO implement using PullStrategy
+    }
+
     private DockerSlave provisionWithWait(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
+        pullImage(dockerTemplate);
+
         LOGGER.info("Trying to run container for {}", dockerTemplate.getDockerTemplateBase().getImage());
         final String containerId = runContainer(dockerTemplate, getClient(), dockerTemplate.getLauncher());
 
@@ -401,51 +407,26 @@ public class DockerCloud extends Cloud {
     /**
      * Counts the number of instances in Docker currently running that are using the specified image.
      *
-     * @param ami If AMI is left null, then all instances are counted.
+     * @param imageName If null, then all instances are counted.
      *            <p/>
      *            This includes those instances that may be started outside Hudson.
      */
-    public int countCurrentDockerSlaves(final String ami) throws Exception {
-
+    public int countCurrentDockerSlaves(final String imageName) throws Exception {
+        int count = 0;
         List<Container> containers = getClient().listContainersCmd().exec();
 
-        if (ami == null)
-            return containers.size();
-
-        List<Image> images = getClient().listImagesCmd().exec();
-
-        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(ami);
-        final String fullAmi = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
-        boolean imageExists = Iterables.any(images, new Predicate<Image>() {
-            @Override
-            public boolean apply(Image image) {
-                return Arrays.asList(image.getRepoTags()).contains(fullAmi);
-            }
-        });
-
-        if (!imageExists) {
-            LOGGER.info("Pulling image '{}' since one was not found.  This may take awhile...", ami);
-            //Identifier amiId = Identifier.fromCompoundString(ami);
-            try (InputStream imageStream = getClient().pullImageCmd(ami).exec()) {
-                int streamValue = 0;
-                while (streamValue != -1) {
-                    streamValue = imageStream.read();
+        if (imageName == null) {
+            count = containers.size();
+        } else {
+            for (Container container : containers) {
+                String containerImage = container.getImage();
+                if (containerImage.equals(imageName)) {
+                    count++;
                 }
             }
-
-            LOGGER.info("Finished pulling image '{}'", ami);
         }
 
-        final InspectImageResponse ir = getClient().inspectImageCmd(ami).exec();
-
-        Collection<Container> matching = Collections2.filter(containers, new Predicate<Container>() {
-            public boolean apply(@Nullable Container container) {
-                InspectContainerResponse
-                        cis = getClient().inspectContainerCmd(container.getId()).exec();
-                return (cis.getImageId().equalsIgnoreCase(ir.getId()));
-            }
-        });
-        return matching.size();
+        return count;
     }
 
     /**
