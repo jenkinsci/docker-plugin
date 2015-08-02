@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import hudson.model.Node;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
@@ -31,6 +33,16 @@ public class DockerTemplate2Test {
         assertThat(template.getLabelString(), equalTo("dockerbuild-local"));
         assertThat(template.remoteFs, equalTo("/home/jenkins"));
 
+        assertNotNull("Must appear default value", template.getPullStrategy());
+        assertThat("Default after migration must be PULL_LATEST",
+                template.getPullStrategy(), equalTo(DockerImagePullStrategy.PULL_LATEST));
+
+        assertNotNull("Must appear default value", template.getMode());
+        assertThat("Changeable mode appeared in some version", template.getMode(), equalTo(Node.Mode.NORMAL));
+
+        assertNotNull("Must appear default value", template.getRetentionStrategy());
+        assertTrue(template.getRetentionStrategy() instanceof DockerOnceRetentionStrategy);
+
         final DockerTemplateBase tBase = template.getDockerTemplateBase();
         assertThat(tBase, notNullValue());
 
@@ -50,18 +62,19 @@ public class DockerTemplate2Test {
     public void shouldLoad090rc1Config() {
         final DockerCloud dock = (DockerCloud) j.getInstance().getCloud("dock");
         final DockerTemplate template = dock.getTemplate("image:b25");
-        final String[] volumes = template.getDockerTemplateBase().getVolumes();
-
+        final DockerTemplateBase dockerTemplateBase = template.getDockerTemplateBase();
+        
+        final String[] volumes = dockerTemplateBase.getVolumes();
         assertThat("volumes", asList(volumes), hasSize(2));
         assertThat(volumes[0], equalTo("/host/path:/container/path:ro"));
         assertThat(volumes[1], equalTo("/host/path2:/container/path2:ro"));
 
-        final String[] volumesFrom2 = template.getDockerTemplateBase().getVolumesFrom2();
+        final String[] volumesFrom2 = dockerTemplateBase.getVolumesFrom2();
         assertThat("volumesFrom2", asList(volumesFrom2), hasSize(1));
         assertThat(volumesFrom2[0], equalTo("otherContainer:ro"));
-        assertThat("volumesFrom", template.getDockerTemplateBase().getVolumesFrom(), nullValue());
+        assertThat("volumesFrom", dockerTemplateBase.getVolumesFrom(), nullValue());
 
-        assertThat(template.getDockerTemplateBase().getImage(), equalTo("image:b25"));
+        assertThat(dockerTemplateBase.getImage(), equalTo("image:b25"));
     }
 
     @Test

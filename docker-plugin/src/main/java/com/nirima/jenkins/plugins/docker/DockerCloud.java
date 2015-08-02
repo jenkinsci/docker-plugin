@@ -501,6 +501,15 @@ public class DockerCloud extends Cloud {
         return (DockerCloud) Jenkins.getInstance().getCloud(name);
     }
 
+    public Object readResolve() {
+        //Xstream is not calling readResolve() for nested Describable's
+        for (DockerTemplate template : getTemplates()) {
+            template.readResolve();
+        }
+
+        return this;
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)

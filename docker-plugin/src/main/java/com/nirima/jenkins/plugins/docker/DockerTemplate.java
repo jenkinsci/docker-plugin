@@ -244,8 +244,18 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                     }
                 }
                 configVersion = 2;
+            } else {
+                // Xstream ignores default field values, so set them explicitly
+                if (mode == null) {
+                    mode = Node.Mode.NORMAL;
+                }
+                if (retentionStrategy == null) {
+                    retentionStrategy = new DockerOnceRetentionStrategy(10);
+                }
+                if (pullStrategy == null) {
+                    pullStrategy = DockerImagePullStrategy.PULL_LATEST;
+                }
             }
-
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Can't convert old values to new (double conversion?): ", t);
         }
