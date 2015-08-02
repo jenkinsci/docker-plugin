@@ -46,6 +46,6 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
     protected DockerClient getClient(AbstractBuild<?, ?> build) {
         DockerCloud cloud = getCloud(build);
 
-        return cloud.connect();
+        return cloud.getClient();
     }
 }

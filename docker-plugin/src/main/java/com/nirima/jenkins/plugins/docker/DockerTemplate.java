@@ -20,6 +20,7 @@ import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Strings;
 
+import javax.annotation.CheckForNull;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -54,6 +55,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     private boolean removeVolumes;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
+
+    private @CheckForNull DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
 
     /**
      * fully default
@@ -98,7 +101,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                           int numExecutors,
                           DockerComputerLauncher launcher,
                           RetentionStrategy retentionStrategy,
-                          boolean removeVolumes) {
+                          boolean removeVolumes,
+                          DockerImagePullStrategy pullStrategy) {
         this(dockerTemplateBase,
                 labelString,
                 remoteFs,
@@ -109,6 +113,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         setLauncher(launcher);
         setRetentionStrategy(retentionStrategy);
         setRemoveVolumes(removeVolumes);
+        setPullStrategy(pullStrategy);
     }
 
     public DockerTemplateBase getDockerTemplateBase() {
@@ -167,7 +172,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     }
 
     /**
-     * tmp fix for termintaing boolean caching
+     * tmp fix for terminating boolean caching
      */
     public RetentionStrategy getRetentionStrategyCopy() {
         if (retentionStrategy instanceof DockerOnceRetentionStrategy) {
@@ -211,6 +216,15 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         return labelSet;
     }
 
+    public DockerImagePullStrategy getPullStrategy() {
+        return pullStrategy;
+    }
+
+    @DataBoundSetter
+    public void setPullStrategy(DockerImagePullStrategy pullStrategy) {
+        this.pullStrategy = pullStrategy;
+    }
+
     /**
      * Initializes data structure that we don't persist.
      */
@@ -230,8 +244,18 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                     }
                 }
                 configVersion = 2;
+            } else {
+                // Xstream ignores default field values, so set them explicitly
+                if (mode == null) {
+                    mode = Node.Mode.NORMAL;
+                }
+                if (retentionStrategy == null) {
+                    retentionStrategy = new DockerOnceRetentionStrategy(10);
+                }
+                if (pullStrategy == null) {
+                    pullStrategy = DockerImagePullStrategy.PULL_LATEST;
+                }
             }
-
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Can't convert old values to new (double conversion?): ", t);
         }
@@ -248,7 +272,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     @Override
     public String toString() {
         return "DockerTemplate{" +
-                "removeVolumes=" + removeVolumes +
+                "configVersion=" + configVersion +
                 ", labelString='" + labelString + '\'' +
                 ", launcher=" + launcher +
                 ", remoteFsMapping='" + remoteFsMapping + '\'' +
@@ -258,7 +282,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 ", retentionStrategy=" + retentionStrategy +
                 ", numExecutors=" + numExecutors +
                 ", dockerTemplateBase=" + dockerTemplateBase +
-                ", configVersion=" + configVersion +
+                ", removeVolumes=" + removeVolumes +
+                ", pullStrategy=" + pullStrategy +
                 '}';
     }
 

@@ -7,7 +7,10 @@ import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxMode
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
@@ -31,11 +34,9 @@ import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Preconditions;
 import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.base.Throwables;
-import shaded.com.google.common.collect.Collections2;
 import shaded.com.google.common.collect.Iterables;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import javax.ws.rs.ProcessingException;
 import java.io.IOException;
@@ -57,8 +58,6 @@ public class DockerCloud extends Cloud {
 
     private List<DockerTemplate> templates;
     public final String serverUrl;
-    public final int containerCap;
-
     private int connectTimeout;
     public final int readTimeout;
     public final String version;
@@ -67,12 +66,17 @@ public class DockerCloud extends Cloud {
     private transient DockerClient connection;
 
     /**
-     * Track the count per-AMI identifiers for AMIs currently being
+     * Total max allowed number of containers
+     */
+    private int containerCap = 100;
+
+    /**
+     * Track the count per image name for images currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    private static final HashMap<String, Integer> provisioningAmis = new HashMap<>();
+    private static final HashMap<String, Integer> provisionedImages = new HashMap<>();
 
-    @DataBoundConstructor
+    @Deprecated
     public DockerCloud(String name,
                        List<? extends DockerTemplate> templates,
                        String serverUrl,
@@ -96,16 +100,46 @@ public class DockerCloud extends Cloud {
         }
 
         if (containerCapStr.equals("")) {
-            this.containerCap = Integer.MAX_VALUE;
+            setContainerCap(Integer.MAX_VALUE);
         } else {
-            this.containerCap = Integer.parseInt(containerCapStr);
+            setContainerCap(Integer.parseInt(containerCapStr));
         }
+    }
+
+    @DataBoundConstructor
+    public DockerCloud(String name,
+                       List<? extends DockerTemplate> templates,
+                       String serverUrl,
+                       int containerCap,
+                       int connectTimeout,
+                       int readTimeout,
+                       String credentialsId,
+                       String version) {
+        super(name);
+        Preconditions.checkNotNull(serverUrl);
+        this.version = version;
+        this.credentialsId = credentialsId;
+        this.serverUrl = serverUrl;
+        this.connectTimeout = connectTimeout;
+        this.readTimeout = readTimeout;
+
+        if (templates != null) {
+            this.templates = new ArrayList<>(templates);
+        } else {
+            this.templates = Collections.emptyList();
+        }
+
+        setContainerCap(containerCap);
     }
 
     public int getConnectTimeout() {
         return connectTimeout;
     }
 
+    /**
+     * @deprecated use {@link #getContainerCap()}
+     */
+    @Deprecated
     public String getContainerCapStr() {
         if (containerCap == Integer.MAX_VALUE) {
             return "";
@@ -114,12 +148,20 @@ public class DockerCloud extends Cloud {
         }
     }
 
+    public int getContainerCap() {
+        return containerCap;
+    }
+
+    public void setContainerCap(int containerCap) {
+        this.containerCap = containerCap;
+    }
+
     /**
      * Connects to Docker.
      *
      * @return Docker client.
      */
-    public synchronized DockerClient connect() {
+    public synchronized DockerClient getClient() {
         if (connection == null) {
             connection = dockerClientConfig().forCloud(this).buildClient();
         }
@@ -131,14 +173,14 @@ public class DockerCloud extends Cloud {
      * Decrease the count of slaves being "provisioned".
      */
     private void decrementAmiSlaveProvision(String ami) {
-        synchronized (provisioningAmis) {
+        synchronized (provisionedImages) {
             int currentProvisioning;
             try {
-                currentProvisioning = provisioningAmis.get(ami);
+                currentProvisioning = provisionedImages.get(ami);
             } catch (NullPointerException npe) {
                 return;
             }
-            provisioningAmis.put(ami, Math.max(currentProvisioning - 1, 0));
+            provisionedImages.put(ami, Math.max(currentProvisioning - 1, 0));
         }
     }
 
@@ -163,8 +205,8 @@ public class DockerCloud extends Cloud {
                         continue;
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Bad template '{}': '{}'. Trying next template...",
-                            t.getDockerTemplateBase().getImage(), e.getMessage());
+                    LOGGER.warn("Bad template '{}' in cloud '{}': '{}'. Trying next template...",
+                            t.getDockerTemplateBase().getImage(), getDisplayName(), e.getMessage());
                     templates.remove(t);
                     continue;
                 }
@@ -196,7 +238,6 @@ public class DockerCloud extends Cloud {
             return Collections.emptyList();
         }
     }
-
 
     /**
      * Run docker container
@@ -252,16 +293,51 @@ public class DockerCloud extends Cloud {
         return containerId;
     }
 
+    private void pullImage(DockerTemplate dockerTemplate)  throws IOException {
+        final String imageName = dockerTemplate.getDockerTemplateBase().getImage();
+
+        List<Image> images = getClient().listImagesCmd().exec();
+
+        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
+        // if image was specified without tag, then treat as latest
+        final String fullImageName = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+
+        boolean imageExists = Iterables.any(images, new Predicate<Image>() {
+            @Override
+            public boolean apply(Image image) {
+                return Arrays.asList(image.getRepoTags()).contains(fullImageName);
+            }
+        });
+
+        boolean pull = imageExists ?
+                dockerTemplate.getPullStrategy().pullIfExists(imageName) :
+                dockerTemplate.getPullStrategy().pullIfNotExists(imageName);
+
+        if (pull) {
+            LOGGER.info("Pulling image '{}' since one was not found.  This may take awhile...", imageName);
+            //Identifier amiId = Identifier.fromCompoundString(ami);
+            try (InputStream imageStream = getClient().pullImageCmd(imageName).exec()) {
+                int streamValue = 0;
+                while (streamValue != -1) {
+                    streamValue = imageStream.read();
+                }
+            }
+
+            LOGGER.info("Finished pulling image '{}'", imageName);
+        }
+    }
 
     private DockerSlave provisionWithWait(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
+        pullImage(dockerTemplate);
+
         LOGGER.info("Trying to run container for {}", dockerTemplate.getDockerTemplateBase().getImage());
-        final String containerId = runContainer(dockerTemplate, connect(), dockerTemplate.getLauncher());
+        final String containerId = runContainer(dockerTemplate, getClient(), dockerTemplate.getLauncher());
 
         InspectContainerResponse ir;
         try {
-            ir = connect().inspectContainerCmd(containerId).exec();
+            ir = getClient().inspectContainerCmd(containerId).exec();
         } catch (ProcessingException ex) {
-            connect().removeContainerCmd(containerId).withForce(true).exec();
+            getClient().removeContainerCmd(containerId).withForce(true).exec();
             throw ex;
         }
 
@@ -359,52 +435,26 @@ public class DockerCloud extends Cloud {
     /**
      * Counts the number of instances in Docker currently running that are using the specified image.
      *
-     * @param ami If AMI is left null, then all instances are counted.
+     * @param imageName If null, then all instances are counted.
      *            <p/>
      *            This includes those instances that may be started outside Hudson.
      */
-    public int countCurrentDockerSlaves(final String ami) throws Exception {
-        final DockerClient dockerClient = connect();
+    public int countCurrentDockerSlaves(final String imageName) throws Exception {
+        int count = 0;
+        List<Container> containers = getClient().listContainersCmd().exec();
 
-        List<Container> containers = dockerClient.listContainersCmd().exec();
-
-        if (ami == null)
-            return containers.size();
-
-        List<Image> images = dockerClient.listImagesCmd().exec();
-
-        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(ami);
-        final String fullAmi = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
-        boolean imageExists = Iterables.any(images, new Predicate<Image>() {
-            @Override
-            public boolean apply(Image image) {
-                return Arrays.asList(image.getRepoTags()).contains(fullAmi);
-            }
-        });
-
-        if (!imageExists) {
-            LOGGER.info("Pulling image '{}' since one was not found.  This may take awhile...", ami);
-            //Identifier amiId = Identifier.fromCompoundString(ami);
-            try (InputStream imageStream = dockerClient.pullImageCmd(ami).exec()) {
-                int streamValue = 0;
-                while (streamValue != -1) {
-                    streamValue = imageStream.read();
+        if (imageName == null) {
+            count = containers.size();
+        } else {
+            for (Container container : containers) {
+                String containerImage = container.getImage();
+                if (containerImage.equals(imageName)) {
+                    count++;
                 }
             }
-
-            LOGGER.info("Finished pulling image '{}'", ami);
         }
 
-        final InspectImageResponse ir = dockerClient.inspectImageCmd(ami).exec();
-
-        Collection<Container> matching = Collections2.filter(containers, new Predicate<Container>() {
-            public boolean apply(@Nullable Container container) {
-                InspectContainerResponse
-                        cis = dockerClient.inspectContainerCmd(container.getId()).exec();
-                return (cis.getImageId().equalsIgnoreCase(ir.getId()));
-            }
-        });
-        return matching.size();
+        return count;
     }
 
     /**
@@ -417,22 +467,20 @@ public class DockerCloud extends Cloud {
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);
         int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
 
-        synchronized (provisioningAmis) {
-            int currentProvisioning;
-
-            for (int amiCount : provisioningAmis.values()) {
-                estimatedTotalSlaves += amiCount;
+        synchronized (provisionedImages) {
+            int currentProvisioning = 0;
+            if (provisionedImages.containsKey(ami)) {
+                currentProvisioning = provisionedImages.get(ami);
             }
-            try {
-                currentProvisioning = provisioningAmis.get(ami);
-            } catch (NullPointerException npe) {
-                currentProvisioning = 0;
+
+            for (int amiCount : provisionedImages.values()) {
+                estimatedTotalSlaves += amiCount;
             }
 
             estimatedAmiSlaves += currentProvisioning;
 
-            if (estimatedTotalSlaves >= containerCap) {
-                LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s)", ami, containerCap, name);
+            if (estimatedTotalSlaves >= getContainerCap()) {
+                LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s)", ami, getContainerCap(), name);
                 return false;      // maxed out
             }
 
@@ -444,13 +492,22 @@ public class DockerCloud extends Cloud {
             LOGGER.info("Provisioning '{}' number '{}' on '{}'; Total containers: '{}'",
                     ami, estimatedAmiSlaves, name, estimatedTotalSlaves);
 
-            provisioningAmis.put(ami, currentProvisioning + 1);
+            provisionedImages.put(ami, currentProvisioning + 1);
             return true;
         }
     }
 
     public static DockerCloud getCloudByName(String name) {
         return (DockerCloud) Jenkins.getInstance().getCloud(name);
+    }
+
+    public Object readResolve() {
+        //Xstream is not calling readResolve() for nested Describable's
+        for (DockerTemplate template : getTemplates()) {
+            template.readResolve();
+        }
+
+        return this;
     }
 
     @Override

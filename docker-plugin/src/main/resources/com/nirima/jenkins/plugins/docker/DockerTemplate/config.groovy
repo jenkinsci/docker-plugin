@@ -84,3 +84,9 @@ f.entry(title: _("Remote FS Root Mapping"), field: "remoteFsMapping") {
 f.entry(title: _("Remove volumes"), field: "removeVolumes") {
     f.checkbox()
 }
+
+f.entry(title: _("Pull strategy"), field: "pullStrategy") {
+    f.enum() {
+        text(my.description)
+    }
+}

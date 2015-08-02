@@ -6,8 +6,6 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class DockerTemplateTest {
-
-
     String image = "image";
     String labelString;
     String remoteFs = "remoteFs";
