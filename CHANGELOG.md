@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0 (next)
+
+* Implement pull strategy
+* UI don't use String for container capacity, make 100 as default
+* Fix data migration update
 
 ## 0.10.2
 
