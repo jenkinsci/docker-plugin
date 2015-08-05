@@ -314,7 +314,10 @@ public class DockerCloud extends Cloud {
                 dockerTemplate.getPullStrategy().pullIfNotExists(imageName);
 
         if (pull) {
-            LOGGER.info("Pulling image '{}' since one was not found.  This may take awhile...", imageName);
+            LOGGER.info("Pulling image '{}' {}. This may take awhile...", imageName,
+                    imageExists ? "again" : "since one was not found");
+
+            long startTime = System.currentTimeMillis();
             //Identifier amiId = Identifier.fromCompoundString(ami);
             try (InputStream imageStream = getClient().pullImageCmd(imageName).exec()) {
                 int streamValue = 0;
@@ -322,8 +325,8 @@ public class DockerCloud extends Cloud {
                     streamValue = imageStream.read();
                 }
             }
-
-            LOGGER.info("Finished pulling image '{}'", imageName);
+            long pullTime = System.currentTimeMillis() - startTime;
+            LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
         }
     }
 
