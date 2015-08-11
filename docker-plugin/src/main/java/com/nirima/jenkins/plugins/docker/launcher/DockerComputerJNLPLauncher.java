@@ -161,7 +161,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     @Override
     public ComputerLauncher getPreparedLauncher(String cloudId, DockerTemplate template, InspectContainerResponse containerInspectResponse) {
-        return new DockerComputerJNLPLauncher(getJnlpLauncher());
+        DockerComputerJNLPLauncher dockerComputerJNLPLauncher = new DockerComputerJNLPLauncher(getJnlpLauncher());
+        DockerComputerJNLPLauncher launcher = (DockerComputerJNLPLauncher) template.getLauncher();
+        dockerComputerJNLPLauncher.setUser(launcher.getUser());
+        return dockerComputerJNLPLauncher;
     }
 
     @Override
