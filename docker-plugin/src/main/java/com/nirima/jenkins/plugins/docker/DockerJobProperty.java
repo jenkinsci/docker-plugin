@@ -18,18 +18,24 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
      */
     public final boolean tagOnCompletion;
     public final String additionalTag;
+    public final boolean forceTag;
     public final boolean pushOnSuccess;
+    public final String customRepository;
     public final boolean cleanImages;
 
     @DataBoundConstructor
     public DockerJobProperty(
             boolean tagOnCompletion,
-            String additionalTag,
-            boolean pushOnSuccess, boolean cleanImages)
+            String additionalTag, 
+            boolean forceTag, boolean pushOnSuccess,
+            String customRepository,
+            boolean cleanImages)
     {
         this.tagOnCompletion = tagOnCompletion;
         this.additionalTag = additionalTag;
+        this.forceTag = forceTag;
         this.pushOnSuccess = pushOnSuccess;
+        this.customRepository = customRepository;
         this.cleanImages = cleanImages;
     }
 
@@ -37,7 +43,17 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
     public String getAdditionalTag() {
         return additionalTag;
     }
+    
+    @Exported
+    public String getCustomRepository() {
+        return customRepository;
+    }
 
+    @Exported
+    public boolean isForceTag() {
+        return forceTag;
+    }
+    
     @Exported
     public boolean isPushOnSuccess() {
         return pushOnSuccess;

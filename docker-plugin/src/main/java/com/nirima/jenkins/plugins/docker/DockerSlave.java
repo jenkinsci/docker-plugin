@@ -188,46 +188,53 @@ public class DockerSlave extends AbstractCloudSlave {
 
         // The slave has stopped. Should we commit / tag / push ?
 
-        if (!getJobProperty().tagOnCompletion) {
+        if(!getJobProperty().tagOnCompletion) {
             addJenkinsAction(null);
             return;
         }
 
         DockerClient client = getClient();
-
-
-        // Commit
+        
+        String customRepository=getJobProperty().getCustomRepository();
+        String imageName = theRun.getParent().getDisplayName();
+        
+        if(customRepository!=null)
+            customRepository += imageName;
+        
+         // Commit
         String tag_image = client.commitCmd(containerId)
-                .withRepository(theRun.getParent().getDisplayName())
-                .withTag(theRun.getDisplayName().replace("#", "b")) // allowed only ([a-zA-Z_][a-zA-Z0-9_]*)
-                .withAuthor("Jenkins")
-                .exec();
+                    .withRepository(customRepository)
+                    .withTag(theRun.getDisplayName().replace("#","b")) // allowed only ([a-zA-Z_][a-zA-Z0-9_]*)
+                    .withAuthor("Jenkins")
+                    .exec();
 
         // Tag it with the jenkins name
         addJenkinsAction(tag_image);
 
-        // SHould we add additional tags?
-        try {
+        // Should we add additional tags?
+        try
+        {
             String tagToken = getAdditionalTag(listener);
-
-            if (!Strings.isNullOrEmpty(tagToken)) {
+            
+            if( !Strings.isNullOrEmpty(tagToken) ) {
                 // ?? client.image(tag_image).tag(tagToken, false);
-                client.tagImageCmd(tag_image, null, tagToken).exec();
+                client.tagImageCmd(tag_image, customRepository, tagToken).withForce(getJobProperty().isForceTag()).exec();
                 addJenkinsAction(tagToken);
 
-                if (getJobProperty().pushOnSuccess) {
-                    client.pushImageCmd(tagToken).exec();
+                if( getJobProperty().pushOnSuccess ) {
+                    client.pushImageCmd(tag_image).withName(customRepository).withTag(tagToken).exec();
                 }
             }
-        } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Could not add additional tags");
+        }
+        catch(Exception ex) {
+            LOGGER.log(Level.SEVERE, "Could not add additional tags/push to registry", ex);
         }
 
-        if (getJobProperty().cleanImages) {
-
+        if( getJobProperty().cleanImages ) {
+            
             client.removeImageCmd(tag_image)
-                    .withForce()
-                    .exec();
+                .withForce()
+                .exec();
         }
 
     }
@@ -240,8 +247,10 @@ public class DockerSlave extends AbstractCloudSlave {
 
         // Do any macro expansions
         try {
-            if (!Strings.isNullOrEmpty(tagToken))
+            if(!Strings.isNullOrEmpty(tagToken)  )
                 tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
+            else //default tag = latest
+                tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, "latest");
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "can't expand macroses", e);
         }
@@ -250,9 +259,11 @@ public class DockerSlave extends AbstractCloudSlave {
 
     /**
      * Add a built on docker action.
+     * @param tag_image
+     * @throws IOException
      */
     private void addJenkinsAction(String tag_image) throws IOException {
-        theRun.addAction(new DockerBuildAction(getCloud().serverUrl, containerId, tag_image, dockerTemplate.remoteFsMapping));
+        theRun.addAction( new DockerBuildAction(getCloud().serverUrl, containerId, tag_image, dockerTemplate.remoteFsMapping) );
         theRun.save();
     }
 
@@ -274,11 +285,11 @@ public class DockerSlave extends AbstractCloudSlave {
 
             if (p != null)
                 return p;
-        } catch (Exception ex) {
+        } catch(Exception ex) {
             // Don't care.
         }
         // Safe default
-        return new DockerJobProperty(false, null, false, true);
+        return new DockerJobProperty(false, null, false, false, null, true);
     }
 
     @Override
