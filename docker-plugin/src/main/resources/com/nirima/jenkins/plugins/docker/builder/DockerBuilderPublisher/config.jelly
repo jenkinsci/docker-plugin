@@ -8,8 +8,8 @@
     </f:entry>
 
 
-    <f:entry title="Tags to use" field="tagsString"
-             description="Tags to give the image.">
+    <f:entry title="Image" field="tagsString"
+             description="Repository name (and optionally a tag)">
         <f:expandableTextbox/>
     </f:entry>
 
