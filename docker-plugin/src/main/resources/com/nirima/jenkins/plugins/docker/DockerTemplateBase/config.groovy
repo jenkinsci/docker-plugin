@@ -40,7 +40,7 @@ f.advanced(title: _("Container settings"), align: "left") {
     }
 
     f.entry(title: _("Bind all declared ports"), field: "bindAllPorts") {
-        f.textbox()
+        f.checkbox()
     }
 
     f.entry(title: _("Memory Limit in MB"), field: "memoryLimit") {

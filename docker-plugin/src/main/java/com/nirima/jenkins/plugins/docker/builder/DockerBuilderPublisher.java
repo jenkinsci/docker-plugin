@@ -3,7 +3,10 @@ package com.nirima.jenkins.plugins.docker.builder;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.model.EventStreamItem;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.Identifier;
+import com.github.dockerjava.api.model.StreamType;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
@@ -160,7 +163,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             if (_client == null) {
 
                 if (clientConfig == null)
-                    throw new RuntimeException("Could not get client because we could not find the cloud that the project was built on. What this build run on Docker?");
+                    throw new RuntimeException("Could not get client because we could not find the cloud that the " +
+                            "project was built on. What this build run on Docker?");
 
                 _client = ClientBuilderForPlugin.getInstance(clientConfig).build();
             }
@@ -170,16 +174,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         boolean run() throws IOException, InterruptedException {
             listener.getLogger().println("Docker Build");
 
-            String response = buildImage();
-
-            listener.getLogger().println("Docker Build Response : " + response);
+            String imageId = buildImage();
 
             // The ID of the image we just generated
-            Optional<String> id = getImageId(response);
-            if (!id.isPresent())
+            if (imageId == null) {
                 return false;
+            }
 
-            build.addAction(new DockerBuildImageAction(url, id.get(), tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
+            listener.getLogger().println("Docker Build Response : " + imageId);
+
+            build.addAction(new DockerBuildImageAction(url, imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
             build.save();
 
 
@@ -193,15 +197,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 // For some reason, docker delete doesn't delete all tagged
                 // versions, despite force = true.
                 // So, do it multiple times (protect against infinite looping).
-                listener.getLogger().println("Cleaning local images [" + id.get() + "]");
+                listener.getLogger().println("Cleaning local images [" + imageId + "]");
 
                 try {
-                    cleanImages(id.get());
+                    cleanImages(imageId);
                 } catch (Exception ex) {
                     listener.getLogger().println("Error attempting to clean images");
                 }
             }
-
 
             listener.getLogger().println("Docker Build Done");
 
@@ -218,21 +221,27 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
             return fpChild.act(new FilePath.FileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+                    String imageId = null;
                     try {
                         listener.getLogger().println("Docker Build : build with tags " + tagsToUse.toString()
                                 + " at path " + f.getAbsolutePath());
-
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
                         for (String tag : tagsToUse) {
                             listener.getLogger().println("Docker Build : building tag " + tag);
 
                             try {
-                                InputStream is = getClient().buildImageCmd(f)
+                                Iterable<EventStreamItem> response = getClient().buildImageCmd(f)
                                         .withTag(tag)
-                                        .exec();
+                                        .exec().getItems();
 
-                                IOUtils.copy(is, baos);
+                                for (EventStreamItem item : response) {
+                                    String text = item.getStream();
+                                    listener.getLogger().append(text);
+                                    if (text.startsWith("Successfully built ")) {
+                                        imageId = StringUtils.substringBetween(text, "Successfully built ", "\n").trim();
+                                    }
+                                }
+
                             } catch (Exception ex) {
                                 listener.getLogger().println(ex.getMessage());
                                 ex.printStackTrace(listener.getLogger());
@@ -240,7 +249,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                             }
                         }
 
-                        return baos.toString();
+                        return imageId;
                     } catch (DockerException e) {
                         throw Throwables.propagate(e);
                     }
@@ -275,20 +284,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
     public boolean perform(final AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
         return new Run(build, launcher, listener).run();
     }
-
-    private Optional<String> getImageId(String response) {
-        for (String item : response.split("\n")) {
-            if (item.contains("Successfully built")) {
-                String id = StringUtils.substringAfterLast(item, "Successfully built ").trim();
-                // Seem to have an additional \n in the stream.
-                id = id.substring(0, 12);
-                return Optional.of(id);
-            }
-        }
-
-        return Optional.absent();
-    }
-
 
     private String getUrl(AbstractBuild build) {
         Node node = build.getBuiltOn();
