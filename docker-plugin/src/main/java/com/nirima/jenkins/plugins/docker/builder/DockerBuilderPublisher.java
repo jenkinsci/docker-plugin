@@ -236,9 +236,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
                                 for (EventStreamItem item : response) {
                                     String text = item.getStream();
-                                    listener.getLogger().append(text);
-                                    if (text.startsWith("Successfully built ")) {
-                                        imageId = StringUtils.substringBetween(text, "Successfully built ", "\n").trim();
+                                    if (text != null) {
+                                        listener.getLogger().append(text);
+                                        if (text.startsWith("Successfully built ")) {
+                                            imageId = StringUtils.substringBetween(text, "Successfully built ", "\n").trim();
+                                        }
                                     }
                                 }
 
