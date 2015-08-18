@@ -160,7 +160,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             if (_client == null) {
 
                 if (clientConfig == null)
-                    throw new RuntimeException("Could not get client because we could not find the cloud that the project was built on. What this build run on Docker?");
+                    throw new RuntimeException("Could not get client because we could not find the cloud that the " +
+                            "project was built on. What this build run on Docker?");
 
                 _client = ClientBuilderForPlugin.getInstance(clientConfig).build();
             }
