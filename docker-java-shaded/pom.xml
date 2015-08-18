@@ -7,7 +7,7 @@
     <groupId>com.nirima</groupId>
     <artifactId>docker-java-shaded</artifactId>
     <packaging>jar</packaging>
-    <version>0.12.1-SNAPSHOT</version>
+    <version>0.12.1</version>
     <name>Docker-java shaded jar for jenkins plugin</name>
 
 
