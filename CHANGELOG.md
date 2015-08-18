@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.11.0 (next)
+## next
+
+## 0.12.0 
+
+* Human readable console output for docker Builder
+* Fix UI checkbox for bindAllPorts
+
+## 0.11.0 
 
 * Implement pull strategy
 * UI don't use String for container capacity, make 100 as default
