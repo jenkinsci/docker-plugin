@@ -2,6 +2,10 @@
 
 ## next
 
+## 0.12.1
+
+* Fix NPE in Builder when build fails
+
 ## 0.12.0 
 
 * Human readable console output for docker Builder
