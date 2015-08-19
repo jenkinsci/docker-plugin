@@ -2,16 +2,15 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.model.EventStreamItem;
-import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.Identifier;
-import com.github.dockerjava.api.model.StreamType;
 import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.NameParser;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
+import com.nirima.jenkins.plugins.docker.apidesc.DockerBuildDescribable;
 import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
 import hudson.Extension;
@@ -30,6 +29,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.Joiner;
 import shaded.com.google.common.base.Optional;
@@ -59,9 +59,26 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
     @CheckForNull
     private List<String> tags;
 
+    /**
+     * push images
+     */
     public final boolean pushOnSuccess;
+
+    /**
+     * force remove images with matching id.
+     */
     public final boolean cleanImages;
+
+    /**
+     * {@see com.nirima.jenkins.plugins.docker.listener.DockerRunListener.class}
+     */
     public final boolean cleanupWithJenkinsJobDelete;
+
+    /**
+     * Contains configuration for docker build api call
+     */
+    @CheckForNull
+    private DockerBuildDescribable dockerBuild;
 
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
@@ -75,6 +92,19 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         this.pushOnSuccess = pushOnSuccess;
         this.cleanImages = cleanImages;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
+    }
+
+    public DockerBuildDescribable getDockerBuild() {
+        return dockerBuild;
+    }
+
+    @DataBoundSetter
+    public void setDockerBuild(DockerBuildDescribable dockerBuild) {
+        this.dockerBuild = dockerBuild;
+    }
+
+    public boolean isCleanupWithJenkinsJobDelete() {
+        return cleanupWithJenkinsJobDelete;
     }
 
     public List<String> getTags() {
@@ -230,9 +260,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                             listener.getLogger().println("Docker Build : building tag " + tag);
 
                             try {
-                                Iterable<EventStreamItem> response = getClient().buildImageCmd(f)
+                                final BuildImageCmd buildImageCmd = getClient().buildImageCmd(f);
+
+                                if (getDockerBuild() != null) {
+                                    getDockerBuild().fillBuildImageCmd(buildImageCmd);
+                                }
+
+                                Iterable<EventStreamItem> response = buildImageCmd
                                         .withTag(tag)
-                                        .exec().getItems();
+                                        .exec()
+                                        .getItems();
 
                                 for (EventStreamItem item : response) {
                                     String text = item.getStream();

@@ -25,4 +25,6 @@
         <f:checkbox default="false"/>
     </f:entry>
 
+    <f:property field="dockerBuild"/>
+
 </j:jelly>
