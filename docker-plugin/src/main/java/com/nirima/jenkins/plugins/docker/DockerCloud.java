@@ -12,7 +12,9 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.NameParser;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
@@ -41,6 +43,8 @@ import javax.servlet.ServletException;
 import javax.ws.rs.ProcessingException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -62,6 +66,7 @@ public class DockerCloud extends Cloud {
     public final int readTimeout;
     public final String version;
     public final String credentialsId;
+    public final boolean displayHostname;
 
     private transient DockerClient connection;
 
@@ -84,7 +89,8 @@ public class DockerCloud extends Cloud {
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
-                       String version) {
+                       String version,
+                       boolean displayHostname) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -92,6 +98,7 @@ public class DockerCloud extends Cloud {
         this.serverUrl = serverUrl;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
+        this.displayHostname = displayHostname;
 
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
@@ -114,7 +121,8 @@ public class DockerCloud extends Cloud {
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
-                       String version) {
+                       String version,
+                       boolean displayHostname) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -122,6 +130,7 @@ public class DockerCloud extends Cloud {
         this.serverUrl = serverUrl;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
+        this.displayHostname = displayHostname;
 
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
@@ -344,28 +353,57 @@ public class DockerCloud extends Cloud {
             throw ex;
         }
 
+        String slaveDisplayName = getSlaveDisplayName(ir);
+
         // Build a description up:
-        String nodeDescription = "Docker Node [" + dockerTemplate.getDockerTemplateBase().getImage() + " on ";
-        try {
-            nodeDescription += getDisplayName();
-        } catch (Exception ex) {
-            nodeDescription += "???";
-        }
-        nodeDescription += "]";
+        String nodeDescription = "Docker Node [" + dockerTemplate.getDockerTemplateBase().getImage() +
+            " on " + slaveDisplayName + "]";
 
-        String slaveName = containerId.substring(0, 12);
-
-        try {
-            slaveName = getDisplayName() + "-" + slaveName;
-        } catch (Exception ex) {
-            LOGGER.warn("Error fetching cloud name");
-        }
+        slaveDisplayName += "-" + containerId.substring(0, 12);
 
         dockerTemplate.getLauncher().waitUp(getDisplayName(), dockerTemplate, ir);
 
         final ComputerLauncher launcher = dockerTemplate.getLauncher().getPreparedLauncher(getDisplayName(), dockerTemplate, ir);
 
-        return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+        return new DockerSlave(slaveDisplayName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+    }
+
+    public String getSlaveDisplayName(InspectContainerResponse inspectContainerResponse) {
+        if (displayHostname) {
+            String hostname = getHostnameFromBinding(inspectContainerResponse);
+            if (hostname != null) {
+                return hostname;
+            }
+        }
+
+        try {
+            return getDisplayName();
+        }
+        catch (Exception e) {
+            LOGGER.warn("Error fetching cloud name");
+            return "???";
+        }
+    }
+
+    private String getHostnameFromBinding(InspectContainerResponse inspectContainerResponse) {
+        Map<ExposedPort, Ports.Binding[]> bindings = inspectContainerResponse.getHostConfig().getPortBindings().getBindings();
+        if (bindings != null && !bindings.isEmpty())  {
+            Ports.Binding[] binding = bindings.values().iterator().next();
+            if (binding != null && binding.length > 0) {
+                String hostIp = binding[0].getHostIp();
+                return getHostnameForIp(hostIp);
+            }
+        }
+
+        return null;
+    }
+
+    private String getHostnameForIp(String hospIp) {
+        try {
+            return InetAddress.getByName(hospIp).getHostName();
+        } catch (UnknownHostException e) {
+            return hospIp;
+        }
     }
 
     @Override

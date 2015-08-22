@@ -17,6 +17,7 @@ public class DockerCloudTest {
                 10, // connectTimeout,
                 10, // readTimeout,
                 null, // credentialsId,
-                null); //version
+                null, //version,
+                false); // display hostname
     }
 }
