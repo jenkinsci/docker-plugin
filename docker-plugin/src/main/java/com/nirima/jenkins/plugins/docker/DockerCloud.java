@@ -14,7 +14,13 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
+import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
+import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
+import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
+import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
+import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -40,11 +46,8 @@ import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 import javax.ws.rs.ProcessingException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
-
-import static com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin.dockerClientConfig;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -163,7 +166,18 @@ public class DockerCloud extends Cloud {
      */
     public synchronized DockerClient getClient() {
         if (connection == null) {
-            connection = dockerClientConfig().forCloud(this).buildClient();
+            final DockerClientConfig clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
+                    .forCloud(this)
+                    .build();
+
+            final DockerCmdExecConfig execConfig = DockerCmdExecConfigBuilderForPlugin.builder()
+                    .forCloud(this)
+                    .build();
+
+            connection = ClientBuilderForPlugin.builder()
+                    .withDockerClientConfig(clientConfig)
+                    .withDockerCmdExecConfig(execConfig)
+                    .build();
         }
 
         return connection;
@@ -319,12 +333,7 @@ public class DockerCloud extends Cloud {
 
             long startTime = System.currentTimeMillis();
             //Identifier amiId = Identifier.fromCompoundString(ami);
-            try (InputStream imageStream = getClient().pullImageCmd(imageName).exec()) {
-                int streamValue = 0;
-                while (streamValue != -1) {
-                    streamValue = imageStream.read();
-                }
-            }
+            getClient().pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitSuccess();
             long pullTime = System.currentTimeMillis() - startTime;
             LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
         }
@@ -550,13 +559,25 @@ public class DockerCloud extends Cloud {
         public FormValidation doTestConnection(
                 @QueryParameter String serverUrl,
                 @QueryParameter String credentialsId,
-                @QueryParameter String version
+                @QueryParameter String version,
+                @QueryParameter Integer readTimeout,
+                @QueryParameter Integer connectTimeout
         ) throws IOException, ServletException, DockerException {
             try {
-                DockerClient dc = dockerClientConfig()
+                final DockerClientConfig clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
                         .forServer(serverUrl, version)
                         .withCredentials(credentialsId)
-                        .buildClient();
+                        .build();
+
+                final DockerCmdExecConfig execConfig = DockerCmdExecConfigBuilderForPlugin.builder()
+                        .withReadTimeout(readTimeout)
+                        .withConnectTimeout(connectTimeout)
+                        .build();
+
+                DockerClient dc = ClientBuilderForPlugin.builder()
+                        .withDockerClientConfig(clientConfig)
+                        .withDockerCmdExecConfig(execConfig)
+                        .build();
 
                 Version verResult = dc.versionCmd().exec();
 

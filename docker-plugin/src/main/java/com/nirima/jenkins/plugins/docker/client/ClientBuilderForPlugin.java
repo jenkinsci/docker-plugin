@@ -6,37 +6,56 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
+import org.apache.commons.lang.Validate;
 
+import java.io.Serializable;
 import java.util.ServiceLoader;
 
 /**
- * Created by magnayn on 10/07/2015.
+ * Builds ClientConfig with helper methods that extracts info for plugin routines.
+ *
+ * @author magnayn
  */
-public class ClientBuilderForPlugin  {
+public class ClientBuilderForPlugin {
 
-    private final DockerClientConfig config;
+    private DockerClientConfig config;
+    private DockerCmdExecFactory dockerCmdExecFactory;
 
-    private ClientBuilderForPlugin(DockerClientConfig config) {
+    private ClientBuilderForPlugin() {
+    }
+
+    private ClientBuilderForPlugin(DockerClientConfig config, DockerCmdExecFactory dockerCmdExecFactory) {
         this.config = config;
+        this.dockerCmdExecFactory = dockerCmdExecFactory;
     }
 
-    public static ClientBuilderForPlugin getInstance(DockerClientConfig.DockerClientConfigBuilder dockerClientConfigBuilder) {
-        return getInstance(dockerClientConfigBuilder.build());
+    public ClientBuilderForPlugin withDockerCmdExecFactory(DockerCmdExecFactory dockerCmdExecFactory) {
+        this.dockerCmdExecFactory = dockerCmdExecFactory;
+        return this;
     }
 
-    public static ClientBuilderForPlugin getInstance(DockerClientConfig dockerClientConfig) {
-        return new ClientBuilderForPlugin(dockerClientConfig);
+    public ClientBuilderForPlugin withDockerCmdExecConfig(DockerCmdExecConfig config) {
+        this.dockerCmdExecFactory = new DockerCmdExecFactoryImpl()
+                .withReadTimeout(config.getReadTimeoutMillis())
+                .withConnectTimeout(config.getConnectTimeout());
+        return this;
     }
 
-    public static ClientBuilderForPlugin getInstance(ClientConfigBuilderForPlugin dockerClientConfig) {
-        return new ClientBuilderForPlugin(dockerClientConfig.build());
+    public static ClientBuilderForPlugin builder() {
+        return new ClientBuilderForPlugin();
     }
 
+    public ClientBuilderForPlugin withDockerClientConfig(DockerClientConfig clientConfig) {
+        this.config = clientConfig;
+        return this;
+    }
 
     public DockerClient build() {
-        return DockerClientBuilder.getInstance(config)
-                .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
-                .build();
+        Validate.notNull(config, "ClientConfig must be set");
+        Validate.notNull(dockerCmdExecFactory, "DockerCmdExecFactory must be set");
 
+        return DockerClientBuilder.getInstance(config)
+                .withDockerCmdExecFactory(dockerCmdExecFactory)
+                .build();
     }
 }
