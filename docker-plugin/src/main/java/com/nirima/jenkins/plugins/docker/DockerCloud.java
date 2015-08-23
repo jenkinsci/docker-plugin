@@ -6,6 +6,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerClientException;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -15,6 +16,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.NameParser;
+import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -319,14 +321,14 @@ public class DockerCloud extends Cloud {
 
             long startTime = System.currentTimeMillis();
             //Identifier amiId = Identifier.fromCompoundString(ami);
-            try (InputStream imageStream = getClient().pullImageCmd(imageName).exec()) {
-                int streamValue = 0;
-                while (streamValue != -1) {
-                    streamValue = imageStream.read();
-                }
+            try {
+                getClient().pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitSuccess();
+                long pullTime = System.currentTimeMillis() - startTime;
+                LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
             }
-            long pullTime = System.currentTimeMillis() - startTime;
-            LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
+            catch (DockerClientException e) {
+                LOGGER.error("Error while pulling image '{}'", imageName, e);
+            }
         }
     }
 

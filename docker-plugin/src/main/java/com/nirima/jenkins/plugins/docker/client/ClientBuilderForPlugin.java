@@ -15,6 +15,7 @@ import java.util.ServiceLoader;
 public class ClientBuilderForPlugin  {
 
     private final DockerClientConfig config;
+    private Integer readTimeout;
 
     private ClientBuilderForPlugin(DockerClientConfig config) {
         this.config = config;
@@ -32,10 +33,17 @@ public class ClientBuilderForPlugin  {
         return new ClientBuilderForPlugin(dockerClientConfig.build());
     }
 
+    public ClientBuilderForPlugin withReadTimeout(Integer readTimeout) {
+        this.readTimeout = readTimeout;
+        return this;
+    }
 
     public DockerClient build() {
+        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+        dockerCmdExecFactory.withReadTimeout(readTimeout);
+
         return DockerClientBuilder.getInstance(config)
-                .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
+                .withDockerCmdExecFactory(dockerCmdExecFactory)
                 .build();
 
     }

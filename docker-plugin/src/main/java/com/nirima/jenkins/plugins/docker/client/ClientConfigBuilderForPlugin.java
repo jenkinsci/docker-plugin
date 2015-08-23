@@ -5,10 +5,8 @@ import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.KeystoreSSLConfig;
-import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
@@ -34,6 +32,7 @@ public class ClientConfigBuilderForPlugin {
     private static final Logger LOGGER = Logger.getLogger(ClientConfigBuilderForPlugin.class.getName());
 
     private DockerClientConfig.DockerClientConfigBuilder config = createDefaultConfigBuilder();
+    private Integer readTimeout;
 
     private ClientConfigBuilderForPlugin() {
     }
@@ -56,7 +55,7 @@ public class ClientConfigBuilderForPlugin {
         forServer(cloud.serverUrl, cloud.version);
 
         if (cloud.readTimeout > 0) {
-            config.withReadTimeout((int) SECONDS.toMillis(cloud.readTimeout));
+            readTimeout = (int) SECONDS.toMillis(cloud.readTimeout);
         }
 
         return withCredentials(cloud.credentialsId);
@@ -104,6 +103,9 @@ public class ClientConfigBuilderForPlugin {
         return this;
     }
 
+    public Integer getReadTimeout() {
+        return readTimeout;
+    }
 
     /**
      * Build the config
@@ -122,7 +124,7 @@ public class ClientConfigBuilderForPlugin {
      * @return
      */
     public DockerClient buildClient() {
-        return ClientBuilderForPlugin.getInstance(build()).build();
+        return ClientBuilderForPlugin.getInstance(build()).withReadTimeout(readTimeout).build();
     }
 
     /**

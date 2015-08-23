@@ -2,13 +2,11 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-import com.github.dockerjava.api.command.PushImageCmd;
-import com.github.dockerjava.api.model.EventStreamItem;
-import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
-import com.github.dockerjava.api.model.StreamType;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.NameParser;
+import com.github.dockerjava.api.model.PushResponseItem;
+import com.github.dockerjava.core.command.BuildImageResultCallback;
+import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
@@ -25,8 +23,6 @@ import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -118,7 +114,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         // Marshal the builder across the wire.
         private transient DockerClient _client;
 
-        final DockerClientConfig clientConfig;
+        final ClientConfigBuilderForPlugin clientConfigBuilder;
 
         Run(final AbstractBuild build, final Launcher launcher, final BuildListener listener) {
             this.build = build;
@@ -135,11 +131,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             if (cloudThatBuildRanOn.isPresent()) {
 
                 // Don't build it yet. This may happen on a remote server.
-                clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
-                        .forCloud(cloudThatBuildRanOn.get()).build();
+                clientConfigBuilder = ClientConfigBuilderForPlugin.dockerClientConfig()
+                        .forCloud(cloudThatBuildRanOn.get());
 
             } else {
-                clientConfig = null;
+                clientConfigBuilder = null;
             }
 
         }
@@ -162,11 +158,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
             if (_client == null) {
 
-                if (clientConfig == null)
+                if (clientConfigBuilder == null)
                     throw new RuntimeException("Could not get client because we could not find the cloud that the " +
                             "project was built on. What this build run on Docker?");
 
-                _client = ClientBuilderForPlugin.getInstance(clientConfig).build();
+                _client = clientConfigBuilder.buildClient();
             }
             return _client;
         }
@@ -230,19 +226,20 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                             listener.getLogger().println("Docker Build : building tag " + tag);
 
                             try {
-                                Iterable<EventStreamItem> response = getClient().buildImageCmd(f)
-                                        .withTag(tag)
-                                        .exec().getItems();
-
-                                for (EventStreamItem item : response) {
-                                    String text = item.getStream();
-                                    if (text != null) {
-                                        listener.getLogger().append(text);
-                                        if (text.startsWith("Successfully built ")) {
-                                            imageId = StringUtils.substringBetween(text, "Successfully built ", "\n").trim();
+                                BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
+                                    public void onNext(BuildResponseItem item) {
+                                        String text = item.getStream();
+                                        if (text != null) {
+                                            listener.getLogger().append(text);
                                         }
+                                        super.onNext(item);
                                     }
-                                }
+                                };
+
+                                imageId = getClient().buildImageCmd(f)
+                                    .withTag(tag)
+                                    .exec(resultCallback)
+                                    .awaitImageId();
 
                             } catch (Exception ex) {
                                 listener.getLogger().println(ex.getMessage());
@@ -260,7 +257,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         }
 
         private String pushImages() throws IOException {
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final StringBuilder resultBuilder = new StringBuilder();
 
             for (String tagToUse : tagsToUse) {
 
@@ -271,14 +268,19 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
 
-                PushImageCmd pushImageCmd = getClient().pushImageCmd(identifier);
+                PushImageResultCallback resultCallback = new PushImageResultCallback() {
 
-                InputStream pushResponse = pushImageCmd.exec();
+                    public void onNext(PushResponseItem item) {
+                        resultBuilder.append(item.toString());
+                        super.onNext(item);
+                    }
 
-                IOUtils.copy(pushResponse, byteArrayOutputStream);
+                };
+
+                getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
             }
 
-            return byteArrayOutputStream.toString();
+            return resultBuilder.toString();
         }
     }
 
