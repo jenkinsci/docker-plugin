@@ -2,6 +2,8 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.model.PullResponseItem;
+import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSimpleTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
@@ -96,18 +98,18 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         LOG.info("Pulling image {}", xImage);
         llog.println("Pulling image " + xImage);
 
-        InputStream result = null;
-        try {
-            result = client.pullImageCmd(xImage).exec();
-            String strResult = IOUtils.toString(result);
 
-            LOG.info("Pull result = {}", strResult);
-            llog.println("Pull result = " + strResult);
-        } finally {
-            if (result != null) {
-                result.close();
+        PullImageResultCallback resultCallback = new PullImageResultCallback() {
+            public void onNext(PullResponseItem item) {
+                if (item.getStatus() != null && item.getProgress() == null) {
+                    llog.print(item.getId() + ":" + item.getStatus());
+                    LOG.info("{} : {}", item.getId(), item.getStatus());
+                }
+                super.onNext(item);
             }
-        }
+        };
+        
+        client.pullImageCmd(xImage).exec(resultCallback).awaitSuccess();
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
                 dnsString, xCommand,
