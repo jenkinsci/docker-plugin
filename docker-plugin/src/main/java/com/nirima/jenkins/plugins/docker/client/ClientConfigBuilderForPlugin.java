@@ -21,7 +21,6 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.github.dockerjava.core.DockerClientConfig.createDefaultConfigBuilder;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
@@ -32,7 +31,7 @@ public class ClientConfigBuilderForPlugin {
     private static final Logger LOGGER = Logger.getLogger(ClientConfigBuilderForPlugin.class.getName());
 
     private DockerClientConfig.DockerClientConfigBuilder config = createDefaultConfigBuilder();
-    private Integer readTimeout;
+    private int readTimeout;
 
     private ClientConfigBuilderForPlugin() {
     }
@@ -54,9 +53,7 @@ public class ClientConfigBuilderForPlugin {
 
         forServer(cloud.serverUrl, cloud.version);
 
-        if (cloud.readTimeout > 0) {
-            readTimeout = (int) SECONDS.toMillis(cloud.readTimeout);
-        }
+        readTimeout = cloud.readTimeout;
 
         return withCredentials(cloud.credentialsId);
     }
