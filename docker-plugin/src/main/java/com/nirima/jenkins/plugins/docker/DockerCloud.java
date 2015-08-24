@@ -321,14 +321,9 @@ public class DockerCloud extends Cloud {
 
             long startTime = System.currentTimeMillis();
             //Identifier amiId = Identifier.fromCompoundString(ami);
-            try {
-                getClient().pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitSuccess();
-                long pullTime = System.currentTimeMillis() - startTime;
-                LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
-            }
-            catch (DockerClientException e) {
-                LOGGER.error("Error while pulling image '{}'", imageName, e);
-            }
+            getClient().pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitSuccess();
+            long pullTime = System.currentTimeMillis() - startTime;
+            LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
         }
     }
 
