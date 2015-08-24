@@ -89,21 +89,16 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         LOGGER.info("Pulling image " + xImage);
 
-        final StringBuilder resultBuilder = new StringBuilder();
-
         PullImageResultCallback resultCallback = new PullImageResultCallback() {
             public void onNext(PullResponseItem item) {
                 if (item.getStatus() != null && item.getProgress() == null) {
-                    resultBuilder.append("\n").append(item.getId()).append(":").append(item.getStatus());
+                    LOGGER.info(item.getId() + ":" + item.getStatus());
                 }
                 super.onNext(item);
             }
         };
 
         client.pullImageCmd(xImage).exec(resultCallback).awaitSuccess();
-
-        String strResult = resultBuilder.toString();
-        LOGGER.log(Level.INFO, "Pull result = {0}", strResult);
 
         LOGGER.log(Level.INFO, "Starting container for image {0}", xImage);
 

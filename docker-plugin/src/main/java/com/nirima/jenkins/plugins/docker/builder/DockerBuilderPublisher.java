@@ -185,8 +185,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
             if (pushOnSuccess) {
                 listener.getLogger().println("Pushing " + tagsToUse);
-                String stringResponse = pushImages();
-                listener.getLogger().println("Docker Push Response : " + stringResponse);
+                pushImages();
             }
 
             if (cleanImages) {
@@ -256,9 +255,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             });
         }
 
-        private String pushImages() throws IOException {
-            final StringBuilder resultBuilder = new StringBuilder();
-
+        private void pushImages() throws IOException {
             for (String tagToUse : tagsToUse) {
 
                 if (!tagToUse.toLowerCase().equals(tagToUse)) {
@@ -271,7 +268,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {
 
                     public void onNext(PushResponseItem item) {
-                        resultBuilder.append(item.toString());
+                        listener.getLogger().println(item.toString());
                         super.onNext(item);
                     }
 
@@ -280,7 +277,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
             }
 
-            return resultBuilder.toString();
         }
     }
 
