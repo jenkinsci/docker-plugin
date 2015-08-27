@@ -3,35 +3,49 @@ package com.nirima.jenkins.plugins.docker.builder;
 import com.github.dockerjava.api.DockerException;
 import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
 import hudson.Extension;
+import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.PrintStream;
 
 /**
- * Created by magnayn on 30/01/2014.
+ * Stop all containers that ???
+ *
+ * @author magnayn
  */
 public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOption {
+    private static final Logger LOG = LoggerFactory.getLogger(DockerBuilderControlOptionStopAll.class);
 
     public final boolean remove;
 
     @DataBoundConstructor
     public DockerBuilderControlOptionStopAll(boolean remove) {
-
         this.remove = remove;
     }
 
     @Override
-    public void execute(AbstractBuild<?, ?> build) throws DockerException {
-        LOGGER.info("Stopping all containers");
-        for(DockerLaunchAction.Item containerItem : getLaunchAction(build).getRunning()) {
-            try {
-                LOGGER.info("Stopping container " + containerItem.id);
-                containerItem.client.stopContainerCmd(containerItem.id).exec();
+    public void execute(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws DockerException {
+        final PrintStream llog = listener.getLogger();
 
-                if( remove )
-                    containerItem.client.removeContainerCmd(containerItem.id).exec();
+        LOG.info("Stopping all containers");
+        llog.println("Stopping all containers");
 
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+        for (DockerLaunchAction.Item containerItem : getLaunchAction(build).getRunning()) {
+            LOG.info("Stopping container {}", containerItem.id);
+            llog.println("Stopping container " + containerItem.id);
+
+            containerItem.client.stopContainerCmd(containerItem.id).exec();
+
+            if (remove) {
+                LOG.info("Removing container {}", containerItem.id);
+                llog.println("Removing container " + containerItem.id);
+
+                containerItem.client.removeContainerCmd(containerItem.id).exec();
             }
         }
     }

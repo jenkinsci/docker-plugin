@@ -1,27 +1,33 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.nirima.jenkins.plugins.docker.*;
-import shaded.com.google.common.base.Strings;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-
+import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.DockerSimpleTemplate;
+import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
+import hudson.model.TaskListener;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import shaded.com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
-
-import hudson.Extension;
-import hudson.model.AbstractBuild;
-import hudson.model.TaskListener;
+import java.io.PrintStream;
 
 /**
- * Created by magnayn on 30/01/2014.
+ * Build step that allows run container through existed DockerCloud
+ *
+ * @author magnayn
  */
 public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOption {
+    private static final Logger LOG = LoggerFactory.getLogger(DockerBuilderControlOptionRun.class);
 
     public final String image;
     public final String dnsString;
@@ -40,12 +46,14 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final String macAddress;
 
     @DataBoundConstructor
-    public DockerBuilderControlOptionRun( String cloudName,
+    public DockerBuilderControlOptionRun(
+            String cloudName,
             String image,
             String lxcConfString,
             String dnsString,
             String dockerCommand,
-            String volumesString, String volumesFrom,
+            String volumesString,
+            String volumesFrom,
             String environmentsString,
             String hostname,
             Integer memoryLimit,
@@ -75,33 +83,44 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     }
 
     @Override
-    public void execute(AbstractBuild<?, ?> build) throws DockerException, IOException {
+    public void execute(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws DockerException, IOException {
+        final PrintStream llog = listener.getLogger();
+
         DockerClient client = getClient(build);
 
-        // Expand some token macros
-
-        String xImage    = expand(build, image);
-        String xCommand  = expand(build, dockerCommand);
+        String xImage = expand(build, image);
+        String xCommand = expand(build, dockerCommand);
         String xHostname = expand(build, hostname);
 
+        LOG.info("Pulling image {}", xImage);
+        llog.println("Pulling image " + xImage);
 
-        LOGGER.info("Pulling image " + xImage);
+        InputStream result = null;
+        try {
+            result = client.pullImageCmd(xImage).exec();
+            String strResult = IOUtils.toString(result);
 
-        InputStream result = client.pullImageCmd(xImage).exec();
-
-        String strResult = IOUtils.toString(result);
-        LOGGER.log(Level.INFO, "Pull result = {0}", strResult);
-
-        LOGGER.log(Level.INFO, "Starting container for image {0}", xImage);
+            LOG.info("Pull result = {}", strResult);
+            llog.println("Pull result = " + strResult);
+        } finally {
+            if (result != null) {
+                result.close();
+            }
+        }
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
                 dnsString, xCommand,
                 volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,
                 memoryLimit, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
 
+        LOG.info("Starting container for image {}", xImage);
+        llog.println("Starting container for image " + xImage);
         String containerId = DockerCloud.runContainer(template, client, null);
 
-        LOGGER.log(Level.INFO, "Started container {0}", containerId);
+        LOG.info("Started container {}", containerId);
+        llog.println("Started container " + containerId);
+
         getLaunchAction(build).started(client, containerId);
     }
 
@@ -117,11 +136,10 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     }
 
     @Extension
-    public static final class DescriptorImpl extends DockerBuilderControlOptionDescriptor  {
+    public static final class DescriptorImpl extends DockerBuilderControlOptionDescriptor {
         @Override
         public String getDisplayName() {
             return "Run Container";
         }
-
     }
 }

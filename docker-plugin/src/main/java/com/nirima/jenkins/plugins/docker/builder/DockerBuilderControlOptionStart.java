@@ -3,13 +3,22 @@ package com.nirima.jenkins.plugins.docker.builder;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import hudson.Extension;
+import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
- * Created by magnayn on 30/01/2014.
+ * Starts container in DockerCloud
+ *
+ * @author by magnayn
  */
 public class DockerBuilderControlOptionStart extends DockerBuilderControlOptionStopStart {
+    private static final Logger LOG = LoggerFactory.getLogger(DockerBuilderControlOptionStart.class);
 
     @DataBoundConstructor
     public DockerBuilderControlOptionStart(String cloudName, String containerId) {
@@ -17,13 +26,15 @@ public class DockerBuilderControlOptionStart extends DockerBuilderControlOptionS
     }
 
     @Override
-    public void execute(AbstractBuild<?, ?> build) throws DockerException {
+    public void execute(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws DockerException, IOException {
+        LOG.info("Starting container {}", containerId);
+        listener.getLogger().println("Starting container " + containerId);
 
-        LOGGER.info("Starting container " + containerId);
         DockerClient client = getClient(build);
         client.startContainerCmd(containerId).exec();
-        getLaunchAction(build).started(client, containerId);
 
+        getLaunchAction(build).started(client, containerId);
     }
 
     @Extension
@@ -32,6 +43,5 @@ public class DockerBuilderControlOptionStart extends DockerBuilderControlOptionS
         public String getDisplayName() {
             return "Start Container";
         }
-
     }
 }

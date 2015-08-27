@@ -268,7 +268,7 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * for publishers/builders
+     * for publishers/builders. Simply runs container in docker cloud
      */
     public static String runContainer(DockerTemplateBase dockerTemplateBase,
                                       DockerClient dockerClient,
