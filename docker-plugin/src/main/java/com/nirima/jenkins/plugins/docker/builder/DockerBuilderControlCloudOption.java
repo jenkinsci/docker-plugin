@@ -10,7 +10,9 @@ import hudson.model.Node;
 import jenkins.model.Jenkins;
 
 /**
- * Created by magnayn on 30/01/2014.
+ * Abstract class for cloud based container "control" actions
+ *
+ * @author magnayn
  */
 public abstract class DockerBuilderControlCloudOption extends DockerBuilderControlOption {
     public final String cloudName;
@@ -27,17 +29,17 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
         DockerCloud cloud = null;
 
         Node node = build.getBuiltOn();
-        if( node instanceof DockerSlave) {
-            DockerSlave dockerSlave = (DockerSlave)node;
+        if (node instanceof DockerSlave) {
+            DockerSlave dockerSlave = (DockerSlave) node;
             cloud = dockerSlave.getCloud();
         }
 
-        if( !Strings.isNullOrEmpty(cloudName) ) {
+        if (!Strings.isNullOrEmpty(cloudName)) {
             cloud = (DockerCloud) Jenkins.getInstance().getCloud(cloudName);
         }
 
-        if( cloud == null ) {
-            throw new RuntimeException("Cannot list cloud for docker action");
+        if (cloud == null) {
+            throw new IllegalStateException("Cannot list cloud for docker action");
         }
 
         return cloud;

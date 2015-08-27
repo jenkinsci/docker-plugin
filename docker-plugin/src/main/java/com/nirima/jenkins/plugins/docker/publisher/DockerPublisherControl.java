@@ -16,10 +16,11 @@ import java.io.Serializable;
 import java.util.logging.Logger;
 
 /**
- * Created by magnayn on 30/01/2014.
+ * Post-build step that allow stop all matched container
+ *
+ * @author magnayn
  */
 public class DockerPublisherControl extends Recorder implements Serializable {
-    private static final Logger LOGGER = Logger.getLogger(DockerPublisherControl.class.getName());
 
     public final boolean remove;
 
@@ -42,7 +43,7 @@ public class DockerPublisherControl extends Recorder implements Serializable {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
         try {
-            new DockerBuilderControlOptionStopAll(remove).execute(build);
+            new DockerBuilderControlOptionStopAll(remove).execute(build, launcher, listener);
         } catch (DockerException e) {
             throw new RuntimeException(e);
         }
