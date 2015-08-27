@@ -1,11 +1,12 @@
 package com.nirima.jenkins.plugins.docker.client;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.ServiceLoader;
 
@@ -15,6 +16,7 @@ import java.util.ServiceLoader;
 public class ClientBuilderForPlugin  {
 
     private final DockerClientConfig config;
+    private int readTimeout;
 
     private ClientBuilderForPlugin(DockerClientConfig config) {
         this.config = config;
@@ -32,10 +34,21 @@ public class ClientBuilderForPlugin  {
         return new ClientBuilderForPlugin(dockerClientConfig.build());
     }
 
+    public ClientBuilderForPlugin withReadTimeout(int readTimeout) {
+        if (readTimeout > 0) {
+            this.readTimeout = (int) SECONDS.toMillis(readTimeout);
+        }
+        return this;
+    }
 
     public DockerClient build() {
+        DockerCmdExecFactoryImpl dockerCmdExecFactory = new DockerCmdExecFactoryImpl();
+        if (readTimeout > 0) {
+            dockerCmdExecFactory.withReadTimeout(readTimeout);
+        }
+
         return DockerClientBuilder.getInstance(config)
-                .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl())
+                .withDockerCmdExecFactory(dockerCmdExecFactory)
                 .build();
 
     }

@@ -5,10 +5,8 @@ import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.KeystoreSSLConfig;
-import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
@@ -23,7 +21,6 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.github.dockerjava.core.DockerClientConfig.createDefaultConfigBuilder;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
@@ -34,6 +31,7 @@ public class ClientConfigBuilderForPlugin {
     private static final Logger LOGGER = Logger.getLogger(ClientConfigBuilderForPlugin.class.getName());
 
     private DockerClientConfig.DockerClientConfigBuilder config = createDefaultConfigBuilder();
+    private int readTimeout;
 
     private ClientConfigBuilderForPlugin() {
     }
@@ -55,9 +53,7 @@ public class ClientConfigBuilderForPlugin {
 
         forServer(cloud.serverUrl, cloud.version);
 
-        if (cloud.readTimeout > 0) {
-            config.withReadTimeout((int) SECONDS.toMillis(cloud.readTimeout));
-        }
+        readTimeout = cloud.readTimeout;
 
         return withCredentials(cloud.credentialsId);
     }
@@ -104,6 +100,9 @@ public class ClientConfigBuilderForPlugin {
         return this;
     }
 
+    public Integer getReadTimeout() {
+        return readTimeout;
+    }
 
     /**
      * Build the config
@@ -122,7 +121,7 @@ public class ClientConfigBuilderForPlugin {
      * @return
      */
     public DockerClient buildClient() {
-        return ClientBuilderForPlugin.getInstance(build()).build();
+        return ClientBuilderForPlugin.getInstance(build()).withReadTimeout(readTimeout).build();
     }
 
     /**

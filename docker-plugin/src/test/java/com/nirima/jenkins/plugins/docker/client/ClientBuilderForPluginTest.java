@@ -59,7 +59,7 @@ public class ClientBuilderForPluginTest {
         DockerClientConfig config = builder.config().build();
         assertThat("server", config.getUri().toString(), equalTo(HTTP_SERVER_URL));
         assertThat("version", config.getVersion(), equalTo(DOCKER_API_VER));
-        assertThat("read TO", config.getReadTimeout(), equalTo((int) SECONDS.toMillis(READ_TIMEOUT)));
+        assertThat("read TO", builder.getReadTimeout(), equalTo(READ_TIMEOUT));
     }
 
     @Test

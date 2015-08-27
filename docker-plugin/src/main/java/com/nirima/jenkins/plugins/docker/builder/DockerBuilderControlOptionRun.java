@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.github.dockerjava.api.model.PullResponseItem;
+import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.nirima.jenkins.plugins.docker.*;
 import shaded.com.google.common.base.Strings;
 
@@ -87,10 +89,16 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         LOGGER.info("Pulling image " + xImage);
 
-        InputStream result = client.pullImageCmd(xImage).exec();
+        PullImageResultCallback resultCallback = new PullImageResultCallback() {
+            public void onNext(PullResponseItem item) {
+                if (item.getStatus() != null && item.getProgress() == null) {
+                    LOGGER.info(item.getId() + ":" + item.getStatus());
+                }
+                super.onNext(item);
+            }
+        };
 
-        String strResult = IOUtils.toString(result);
-        LOGGER.log(Level.INFO, "Pull result = {0}", strResult);
+        client.pullImageCmd(xImage).exec(resultCallback).awaitSuccess();
 
         LOGGER.log(Level.INFO, "Starting container for image {0}", xImage);
 
