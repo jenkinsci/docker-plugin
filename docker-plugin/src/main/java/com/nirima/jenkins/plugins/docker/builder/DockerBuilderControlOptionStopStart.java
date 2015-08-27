@@ -1,7 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 /**
- * Created by magnayn on 30/01/2014.
+ * @author magnayn
  */
 public abstract class DockerBuilderControlOptionStopStart extends DockerBuilderControlCloudOption {
 

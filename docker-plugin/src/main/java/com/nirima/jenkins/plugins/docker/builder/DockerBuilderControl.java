@@ -1,31 +1,38 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-import com.github.dockerjava.api.DockerException;
-
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.logging.Logger;
 
 /**
- * Created by magnayn on 29/01/2014.
+ * Builder that contains one of the possible "option" control step.
+ * @author magnayn
  */
 public class DockerBuilderControl extends Builder implements Serializable {
-    private static final Logger LOGGER = Logger.getLogger(DockerBuilderControl.class.getName());
-
     public final DockerBuilderControlOption option;
 
     @DataBoundConstructor
     public DockerBuilderControl(DockerBuilderControlOption option) {
         this.option = option;
+    }
+
+    @Override
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws InterruptedException, IOException {
+        option.execute(build, launcher, listener);
+
+        // Save the actions
+        build.save();
+        return true;
     }
 
     @Override
@@ -49,20 +56,5 @@ public class DockerBuilderControl extends Builder implements Serializable {
         public static DescriptorExtensionList<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor> getOptionList() {
             return DockerBuilderControlOptionDescriptor.all();
         }
-    }
-
-
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-
-        try {
-            option.execute(build);
-        } catch (DockerException e) {
-            throw new RuntimeException(e);
-        }
-
-        // Save the actions
-        build.save();
-        return true;
     }
 }
