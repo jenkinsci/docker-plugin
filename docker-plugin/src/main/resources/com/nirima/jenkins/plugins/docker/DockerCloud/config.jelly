@@ -18,11 +18,11 @@
     </f:entry>
 
     <f:entry title="${%Connection Timeout (seconds)}" field="connectTimeout">
-        <f:textbox default="5"/>
+        <f:textbox default="0"/>
     </f:entry>
 
     <f:entry title="${%Read Timeout (seconds)}" field="readTimeout">
-        <f:textbox default="15"/>
+        <f:textbox default="0"/>
     </f:entry>
 
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
