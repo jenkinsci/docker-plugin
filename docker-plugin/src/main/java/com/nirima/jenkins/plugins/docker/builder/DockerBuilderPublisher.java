@@ -266,14 +266,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
         private void pushImages() throws IOException {
             for (String tagToUse : tagsToUse) {
-
-                if (!tagToUse.toLowerCase().equals(tagToUse)) {
-                    llog.println("ERROR: Docker will refuse to push tag name "
-                            + tagToUse + " because it uses upper case.");
-                }
-
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
-
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {
 
                     public void onNext(PushResponseItem item) {
@@ -282,10 +275,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                     }
 
                 };
-
                 getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
             }
-
         }
     }
 
