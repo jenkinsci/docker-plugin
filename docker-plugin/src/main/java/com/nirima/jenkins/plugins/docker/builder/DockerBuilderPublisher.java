@@ -110,7 +110,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         final transient AbstractBuild build;
         final transient Launcher launcher;
         final BuildListener listener;
-        private final transient PrintStream llog;
 
         FilePath fpChild;
 
@@ -126,7 +125,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             this.build = build;
             this.launcher = launcher;
             this.listener = listener;
-            this.llog = listener.getLogger();
 
             fpChild = new FilePath(build.getWorkspace(), dockerFileDirectory);
 
@@ -178,6 +176,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         }
 
         boolean run() throws IOException, InterruptedException {
+            final PrintStream llog = listener.getLogger();
             llog.println("Docker Build");
 
             String imageId = buildImage();
@@ -225,6 +224,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
             return fpChild.act(new FilePath.FileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+                    final PrintStream llog = listener.getLogger();
                     String imageId = null;
                     try {
                         llog.println("Docker Build : build with tags " + tagsToUse.toString()
@@ -270,7 +270,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {
 
                     public void onNext(PushResponseItem item) {
-                        llog.println(item.toString());
+                        listener.getLogger().println(item.toString());
                         super.onNext(item);
                     }
 
