@@ -1,6 +1,16 @@
 # Changelog
 
-## next
+## 0.13.0
+
+* Small fix in logging
+* Update to docker-java 2.1.0
+* Progressive logging during build, push
+* Print output into job
+* restore connectionTimeout usage
+* make timeout defaults as in jaxrs (library) 0 = infinite
+* Remove wrong check for image name on push
+* Pretty print push output in job log 
+* Rework build/tag logic
 
 ## 0.12.1
 
