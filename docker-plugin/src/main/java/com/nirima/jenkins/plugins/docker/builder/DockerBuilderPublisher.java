@@ -6,6 +6,7 @@ import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
@@ -15,6 +16,7 @@ import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlugin;
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -43,6 +45,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
  * Builder extension to build / publish an image from a Dockerfile.
@@ -223,45 +226,37 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         }
 
         private String buildImage() throws IOException, InterruptedException {
-
             return fpChild.act(new FilePath.FileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
                     final PrintStream llog = listener.getLogger();
-                    String imageId = null;
-                    try {
-                        llog.println("Docker Build : build with tags " + tagsToUse.toString()
-                                + " at path " + f.getAbsolutePath());
 
-                        for (String tag : tagsToUse) {
-                            llog.println("Docker Build : building tag " + tag);
-
-                            try {
-                                BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
-                                    public void onNext(BuildResponseItem item) {
-                                        String text = item.getStream();
-                                        if (text != null) {
-                                            llog.print(text);
-                                        }
-                                        super.onNext(item);
-                                    }
-                                };
-
-                                imageId = getClient().buildImageCmd(f)
-                                    .withTag(tag)
-                                    .exec(resultCallback)
-                                    .awaitImageId();
-
-                            } catch (Exception ex) {
-                                llog.println(ex.getMessage());
-                                ex.printStackTrace(llog);
-                                llog.println("Error attempting to tag " + tag + ". Continuing anyway.");
+                    llog.println("Docker Build: building image at path " + f.getAbsolutePath());
+                    BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
+                        public void onNext(BuildResponseItem item) {
+                            String text = item.getStream();
+                            if (text != null) {
+                                llog.print(text);
                             }
+                            super.onNext(item);
                         }
+                    };
+                    String imageId = getClient().buildImageCmd(f)
+                            .exec(resultCallback)
+                            .awaitImageId();
 
-                        return imageId;
-                    } catch (DockerException e) {
-                        throw Throwables.propagate(e);
+                    if (imageId == null) {
+                        throw new AbortException("Built image id is null. Some error accured");
                     }
+
+                    // tag built image with tags
+                    for (String tag : tagsToUse) {
+                        final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
+                        final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
+                        llog.println("Tagging built image with " + reposTag.repos + ":" + commitTag);
+                        getClient().tagImageCmd(imageId, reposTag.repos, commitTag).exec();
+                    }
+
+                    return imageId;
                 }
             });
         }
@@ -293,8 +288,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             DockerSlave slave = (DockerSlave) node;
             return slave.getCloud().serverUrl;
         }
-
-
+        
         return null;
     }
 
