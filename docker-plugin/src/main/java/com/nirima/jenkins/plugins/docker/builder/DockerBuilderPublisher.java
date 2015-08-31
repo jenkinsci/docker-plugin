@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
+
 /**
  * Builder extension to build / publish an image from a Dockerfile.
  */
@@ -267,14 +269,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         private void pushImages() throws IOException {
             for (String tagToUse : tagsToUse) {
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
-                PushImageResultCallback resultCallback = new PushImageResultCallback() {
 
+                PushImageResultCallback resultCallback = new PushImageResultCallback() {
                     public void onNext(PushResponseItem item) {
-                        listener.getLogger().println(item.toString());
+                        printResponseItemToListener(listener, item);
                         super.onNext(item);
                     }
-
                 };
+
                 getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
             }
         }
