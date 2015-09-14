@@ -59,7 +59,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     public void appendContainerConfig(DockerTemplate dockerTemplate, CreateContainerCmd createCmd) {
         final int sshPort = getSshConnector().port;
 
-        createCmd.withPortSpecs(sshPort + "/tcp");
+        createCmd.withExposedPorts(new ExposedPort(sshConnector.port));
 
         String[] cmd = dockerTemplate.getDockerTemplateBase().getDockerCommandArray();
         if (cmd.length == 0) {
