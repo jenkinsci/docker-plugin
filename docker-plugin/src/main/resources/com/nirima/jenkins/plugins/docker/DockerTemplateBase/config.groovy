@@ -32,7 +32,7 @@ f.advanced(title: _("Container settings"), align: "left") {
     }
 
     f.entry(title: _("Environment"), field: "environmentsString") {
-        f.textbox()
+        f.expandableTextbox()
     }
 
     f.entry(title: _("Port bindings"), field: "bindPorts") {
