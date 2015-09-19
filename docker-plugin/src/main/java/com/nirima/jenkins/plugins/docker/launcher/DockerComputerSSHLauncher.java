@@ -75,11 +75,11 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         super.waitUp(cloudId, dockerTemplate, containerInspect);
 
         final PortUtils portUtils = getPortUtils(cloudId, dockerTemplate, containerInspect);
-        if (!portUtils.withEveryRetryWaitFor(10, TimeUnit.SECONDS)) {
+        if (!portUtils.withRetries(60).withEveryRetryWaitFor(2, TimeUnit.SECONDS)) {
             return false;
         }
         try {
-            portUtils.bySshWithEveryRetryWaitFor(10, TimeUnit.SECONDS);
+            portUtils.withRetries(60).bySshWithEveryRetryWaitFor(2, TimeUnit.SECONDS);
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "Can't connect to ssh", ex);
             return false;
