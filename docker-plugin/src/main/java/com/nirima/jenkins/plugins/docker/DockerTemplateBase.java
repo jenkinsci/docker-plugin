@@ -80,6 +80,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
      */
     public String[] volumesFrom2;
 
+    @CheckForNull
     public final String[] environment;
 
     public final String bindPorts;
@@ -132,7 +133,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         setVolumes(splitAndFilterEmpty(volumesString, "\n"));
         setVolumesFromString(volumesFromString);
 
-        this.environment = splitAndFilterEmpty(environmentsString, " ");
+        this.environment = splitAndFilterEmpty(environmentsString, "\n");
 
         setMacAddress(macAddress);
     }
