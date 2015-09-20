@@ -1,7 +1,6 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
@@ -28,6 +27,7 @@ import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
+import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.lang.Validate;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
@@ -36,7 +36,6 @@ import org.kohsuke.stapler.QueryParameter;
 import shaded.com.google.common.base.Joiner;
 import shaded.com.google.common.base.Optional;
 import shaded.com.google.common.base.Splitter;
-import shaded.com.google.common.base.Throwables;
 
 import javax.annotation.CheckForNull;
 import java.io.*;
@@ -226,7 +225,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         }
 
         private String buildImage() throws IOException, InterruptedException {
-            return fpChild.act(new FilePath.FileCallable<String>() {
+            return fpChild.act(new MasterToSlaveFileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
                     final PrintStream llog = listener.getLogger();
 
