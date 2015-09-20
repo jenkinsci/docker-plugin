@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.0
+
+* Update docker-java to 2.1.1. Fixes JENKINS-30422
+* Minimise retry delay for ssh launcher to 2 seconds.
+
 ## 0.13.0
 
 * Small fix in logging
