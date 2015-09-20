@@ -1,7 +1,9 @@
 # Changelog
 
-## 0.14.0
+## [0.14.0](https://github.com/jenkinsci/docker-plugin/issues?utf8=%E2%9C%93&q=milestone%3A0.14.0)
 
+* Require 1.609.3 [#328](https://github.com/jenkinsci/docker-plugin/pull/328)
+* Fixed "Environment" variables data binding
 * Update docker-java to 2.1.1. Fixes JENKINS-30422
 * Minimise retry delay for ssh launcher to 2 seconds.
 
