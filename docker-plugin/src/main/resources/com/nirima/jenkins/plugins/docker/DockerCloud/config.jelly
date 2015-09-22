@@ -9,9 +9,9 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="${%Docker Version}" field="version">
-        <f:textbox/>
-    </f:entry>
+    <!--<f:entry title="${%Docker Version}" field="version">-->
+        <!--<f:textbox/>-->
+    <!--</f:entry>-->
 
     <f:entry title="${%Credentials}" field="credentialsId">
         <c:select/>
