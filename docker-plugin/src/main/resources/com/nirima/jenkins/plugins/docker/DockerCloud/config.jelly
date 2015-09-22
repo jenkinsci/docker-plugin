@@ -29,7 +29,7 @@
                       with="serverUrl,credentialsId,version"/>
 
     <f:entry title="${%Container Cap}" field="containerCap">
-        <f:number/>
+        <f:number default="100"/>
     </f:entry>
 
     <f:entry title="${%Images}" description="${%List of Images to be launched as slaves}">
