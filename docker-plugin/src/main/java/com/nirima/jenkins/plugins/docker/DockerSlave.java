@@ -261,13 +261,6 @@ public class DockerSlave extends AbstractCloudSlave {
         return getCloud().getClient();
     }
 
-    /**
-     * Called when the slave is connected to Jenkins
-     */
-    public void onConnected() {
-
-    }
-
     private DockerJobProperty getJobProperty() {
 
         try {

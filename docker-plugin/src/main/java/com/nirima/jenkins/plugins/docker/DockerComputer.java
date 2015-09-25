@@ -81,13 +81,6 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         LOGGER.log(Level.FINE, " Computer {0} taskCompletedWithProblems", this);
     }
 
-    public void onConnected() {
-        DockerSlave node = getNode();
-        if (node != null) {
-            node.onConnected();
-        }
-    }
-
     public String getContainerId() {
         return containerId;
     }
