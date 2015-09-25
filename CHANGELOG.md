@@ -1,5 +1,10 @@
 # Changelog
 
+## NEXT [0.15.0](https://github.com/jenkinsci/docker-plugin/issues?utf8=%E2%9C%93&q=milestone%3A0.15.0)
+
+* Provide 100 as default capacity
+* Remove API version field from user configuration
+
 ## [0.14.0](https://github.com/jenkinsci/docker-plugin/issues?utf8=%E2%9C%93&q=milestone%3A0.14.0)
 
 * Require 1.609.3 [#328](https://github.com/jenkinsci/docker-plugin/pull/328)
