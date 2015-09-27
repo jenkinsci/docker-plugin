@@ -1,9 +1,15 @@
 # Changelog
 
-## NEXT [0.15.0](https://github.com/jenkinsci/docker-plugin/issues?utf8=%E2%9C%93&q=milestone%3A0.15.0)
+## next [0.16.0]
+
+*
+
+## [0.15.0](https://github.com/jenkinsci/docker-plugin/issues?utf8=%E2%9C%93&q=milestone%3A0.15.0)
 
 * Provide 100 as default capacity
 * Remove API version field from user configuration
+* Added build variables `DOCKER_CONTAINER_ID`, `JENKINS_CLOUD_ID` and `DOCKER_HOST` that allows creating simple `--volue-from` bindings for additionally run containers
+* Small code clean-up
 
 ## [0.14.0](https://github.com/jenkinsci/docker-plugin/issues?utf8=%E2%9C%93&q=milestone%3A0.14.0)
 
