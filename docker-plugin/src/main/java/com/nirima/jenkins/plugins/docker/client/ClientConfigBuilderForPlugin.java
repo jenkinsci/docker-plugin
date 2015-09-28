@@ -100,7 +100,6 @@ public class ClientConfigBuilderForPlugin {
 
     /**
      * Build the config
-     * @return
      */
     public DockerClientConfig build() {
         return config.build();
@@ -112,7 +111,6 @@ public class ClientConfigBuilderForPlugin {
      * Consider if you actually want to do this or alternatively
      * build the config then build the client, as if your activity is on a remote
      * node, the client will fail to serialize.
-     * @return
      */
     public DockerClient buildClient() {
         return ClientBuilderForPlugin.builder().withDockerClientConfig(build()).build();

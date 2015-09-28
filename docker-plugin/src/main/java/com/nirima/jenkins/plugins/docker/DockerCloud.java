@@ -64,8 +64,8 @@ public class DockerCloud extends Cloud {
     private int connectTimeout;
     public final int readTimeout;
     /**
-     * Confuses users and no real use cases.
      * TODO remove
+     * @deprecated Confuses users and no real use cases.
      */
     @Deprecated
     public String version;
