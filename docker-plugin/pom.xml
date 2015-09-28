@@ -1,5 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.nirima</groupId>
         <artifactId>docker-plugin-parent</artifactId>
@@ -7,12 +9,24 @@
     </parent>
 
     <groupId>com.nirima</groupId>
-    <artifactId>docker-plugin</artifactId>    
+    <artifactId>docker-plugin</artifactId>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
     <description>Provide Cloud Provisioning and other Docker features</description>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
+
+    <developers>
+        <developer>
+            <id>KostyaSha</id>
+            <name>Kanstantsin Shautsou</name>
+            <timezone>UTC+3</timezone>
+        </developer>
+        <developer>
+            <id>magnayn</id>
+            <name>Nigel Magnay</name>
+        </developer>
+    </developers>
 
     <dependencies>
          <dependency>
@@ -110,6 +124,4 @@
             </plugin>
         </plugins>
     </build>
-
-
 </project>
