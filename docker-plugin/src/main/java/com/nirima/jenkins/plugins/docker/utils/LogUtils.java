@@ -12,7 +12,8 @@ public class LogUtils {
     }
 
     public static void printResponseItemToListener(TaskListener listener, ResponseItem item) {
-        if (item.getStatus() != null) {
+
+        if (item != null && item.getStatus() != null) {
             if (item.getError() != null) {
                 listener.error(item.getError());
             }
