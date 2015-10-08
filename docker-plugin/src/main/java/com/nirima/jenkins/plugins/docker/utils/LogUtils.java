@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker.utils;
 
 import com.github.dockerjava.api.model.ResponseItem;
 import hudson.model.BuildListener;
+import hudson.model.TaskListener;
 
 /**
  * @author Kanstantsin Shautsou
@@ -10,7 +11,7 @@ public class LogUtils {
     private LogUtils() {
     }
 
-    public static void printResponseItemToListener(BuildListener listener, ResponseItem item) {
+    public static void printResponseItemToListener(TaskListener listener, ResponseItem item) {
         if (item.getStatus() != null) {
             if (item.getError() != null) {
                 listener.error(item.getError());
