@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerClientException;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
@@ -19,15 +20,15 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Node;
+import hudson.model.*;
+import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.lang.Validate;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
@@ -49,7 +50,7 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 /**
  * Builder extension to build / publish an image from a Dockerfile.
  */
-public class DockerBuilderPublisher extends Builder implements Serializable {
+public class DockerBuilderPublisher extends Builder implements Serializable, SimpleBuildStep {
     private static final Pattern VALID_REPO_PATTERN = Pattern.compile("^([a-z0-9-_.]+)$");
 
     public final String dockerFileDirectory;
@@ -111,31 +112,32 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
     }
 
     class Run implements Serializable {
-        final transient AbstractBuild build;
-        final transient Launcher launcher;
-        final BuildListener listener;
 
-        FilePath fpChild;
+        final transient Launcher launcher;
+        final TaskListener listener;
+
+        final FilePath fpChild;
 
         final List<String> tagsToUse;
-        final String url;
+
         // Marshal the builder across the wire.
         private transient DockerClient _client;
 
         final DockerClientConfig clientConfig;
         final DockerCmdExecConfig dockerCmdExecConfig;
 
-        Run(final AbstractBuild build, final Launcher launcher, final BuildListener listener) {
-            this.build = build;
+        final transient hudson.model.Run<?,?> run;
+
+        final String url;
+
+
+        private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, Optional<DockerCloud> cloudThatBuildRanOn) {
+
+            this.run = run;
             this.launcher = launcher;
             this.listener = listener;
-
-            fpChild = new FilePath(build.getWorkspace(), dockerFileDirectory);
-
-            tagsToUse = expandTags(build, launcher, listener);
-            url = getUrl(build);
-
-            Optional<DockerCloud> cloudThatBuildRanOn = getCloudForBuild(build);
+            this.fpChild = fpChild;
+            this.tagsToUse = tagsToUse;
 
             if (cloudThatBuildRanOn.isPresent()) {
 
@@ -144,26 +146,26 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                        .forCloud(cloudThatBuildRanOn.get()).build();
                 dockerCmdExecConfig = DockerCmdExecConfigBuilderForPlugin.builder()
                         .forCloud(cloudThatBuildRanOn.get()).build();
+
+                url = cloudThatBuildRanOn.get().serverUrl;
+
             } else {
                 clientConfig = null;
                 dockerCmdExecConfig = null;
+                url = null;
             }
 
         }
 
-        /**
-         * If the build was on a cloud, get the ID of that cloud.
-         */
-        public Optional<DockerCloud> getCloudForBuild(AbstractBuild build) {
-
-            Node node = build.getBuiltOn();
-            if (node instanceof DockerSlave) {
-                DockerSlave slave = (DockerSlave) node;
-                return Optional.of(slave.getCloud());
-            }
-
-            return Optional.absent();
+        public Run(AbstractBuild build, Launcher launcher, BuildListener listener) {
+            //super(launcher, listener);
+            this(build, launcher, listener, new FilePath(build.getWorkspace(), dockerFileDirectory), expandTags(build, launcher, listener), getCloudForBuild(build));
         }
+
+        public Run(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
+            this(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), tags, getCloudForChannel(launcher.getChannel()));
+        }
+
 
         private DockerClient getClient() {
             if (_client == null) {
@@ -192,8 +194,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
 
             llog.println("Docker Build Response : " + imageId);
 
-            build.addAction(new DockerBuildImageAction(url, imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
-            build.save();
+            // Add an action to the build
+            run.addAction(new DockerBuildImageAction(url, imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
+            run.save();
 
             if (pushOnSuccess) {
                 llog.println("Pushing " + tagsToUse);
@@ -227,14 +230,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
         private String buildImage() throws IOException, InterruptedException {
             return fpChild.act(new MasterToSlaveFileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
-                    final PrintStream llog = listener.getLogger();
 
-                    llog.println("Docker Build: building image at path " + f.getAbsolutePath());
+
+                    log("Docker Build: building image at path " + f.getAbsolutePath());
                     BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
                         public void onNext(BuildResponseItem item) {
                             String text = item.getStream();
                             if (text != null) {
-                                llog.print(text);
+                                log(text);
                             }
                             super.onNext(item);
                         }
@@ -251,8 +254,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
                     for (String tag : tagsToUse) {
                         final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
                         final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
-                        llog.println("Tagging built image with " + reposTag.repos + ":" + commitTag);
-                        getClient().tagImageCmd(imageId, reposTag.repos, commitTag).exec();
+                        log("Tagging built image with " + reposTag.repos + ":" + commitTag);
+                        getClient().tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
                     }
 
                     return imageId;
@@ -260,35 +263,85 @@ public class DockerBuilderPublisher extends Builder implements Serializable {
             });
         }
 
+        protected void log(String s)
+        {
+            final PrintStream llog = listener.getLogger();
+            llog.println(s);
+        }
+
+
         private void pushImages() throws IOException {
             for (String tagToUse : tagsToUse) {
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
 
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {
                     public void onNext(PushResponseItem item) {
+                        if( item == null ) {
+                            // docker-java not happy if you pass it nulls.
+                            log("Received NULL Push Response. Ignoring");
+                            return;
+                        }
                         printResponseItemToListener(listener, item);
                         super.onNext(item);
                     }
                 };
-
-                getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
+                try {
+                    getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
+                } catch(DockerClientException ex) {
+                    // Private Docker registries fall over regularly. Tell the user so they
+                    // have some clue as to what to do as the exception gives no hint.
+                    log("Exception pushing docker image. Check that the destination registry is running.");
+                    throw ex;
+                }
             }
         }
     }
 
+    /**
+     * Traditional build.
+     */
     @Override
     public boolean perform(final AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
         return new Run(build, launcher, listener).run();
     }
 
-    private String getUrl(AbstractBuild build) {
+    /**
+     * Workflow
+     */
+    @Override
+    public void perform(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
+        new Run(run, workspace, launcher, listener).run();
+    }
+
+    /**
+     * If the build was on a cloud, get the ID of that cloud.
+     */
+    private static Optional<DockerCloud> getCloudForBuild(AbstractBuild build) {
+
         Node node = build.getBuiltOn();
         if (node instanceof DockerSlave) {
             DockerSlave slave = (DockerSlave) node;
-            return slave.getCloud().serverUrl;
+            return Optional.of(slave.getCloud());
         }
-        
-        return null;
+
+        return Optional.absent();
+    }
+
+    /**
+     * If the build was workflow, get the ID of that channel.
+     */
+    private static Optional<DockerCloud> getCloudForChannel(VirtualChannel channel) {
+
+        if( channel instanceof Channel ) {
+            Channel c = (Channel)channel;
+            Node node = Jenkins.getInstance().getNode( c.getName() );
+            if (node instanceof DockerSlave) {
+                DockerSlave slave = (DockerSlave) node;
+                return Optional.of(slave.getCloud());
+            }
+        }
+
+        return Optional.absent();
     }
 
     private List<String> expandTags(AbstractBuild build, Launcher launcher, BuildListener listener) {
