@@ -41,6 +41,7 @@ import shaded.com.google.common.base.Splitter;
 import javax.annotation.CheckForNull;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -99,7 +100,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     }
 
     public static List<String> filterStringToList(String str) {
-        return str == null ? null : Splitter.on("\n").omitEmptyStrings().trimResults().splitToList(str);
+        return str == null ? Collections.<String>emptyList() : Splitter.on("\n").omitEmptyStrings().trimResults().splitToList(str);
     }
 
     public static void verifyTags(String tagsString) {
