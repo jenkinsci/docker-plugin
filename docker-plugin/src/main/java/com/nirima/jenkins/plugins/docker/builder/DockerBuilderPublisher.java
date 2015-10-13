@@ -271,7 +271,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
 
 
-        private void pushImages() throws IOException {
+        private void pushImages() {
             for (String tagToUse : tagsToUse) {
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
 

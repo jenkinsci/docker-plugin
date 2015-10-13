@@ -2,7 +2,7 @@
 
 ## next [0.16.0]
 
-* Support building images from within jenkins workflow
+* Workflow support for build steps (publish, start/stop containers)
 
 ## [0.15.0](https://github.com/jenkinsci/docker-plugin/issues?utf8=%E2%9C%93&q=milestone%3A0.15.0)
 

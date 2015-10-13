@@ -1,5 +1,9 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
+import hudson.Launcher;
+import hudson.model.Build;
+import hudson.model.Run;
 import shaded.com.google.common.base.Strings;
 
 import com.github.dockerjava.api.DockerClient;
@@ -8,6 +12,11 @@ import com.nirima.jenkins.plugins.docker.DockerSlave;
 import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import jenkins.model.Jenkins;
+
+import shaded.com.google.common.base.Optional;
+
+import javax.annotation.Nonnull;
+
 
 /**
  * Abstract class for cloud based container "control" actions
@@ -25,29 +34,24 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
         return cloudName;
     }
 
-    protected DockerCloud getCloud(AbstractBuild<?, ?> build) {
-        DockerCloud cloud = null;
+    protected @Nonnull DockerCloud getCloud(Run<?, ?> build, Launcher launcher) {
 
-        Node node = build.getBuiltOn();
-        if (node instanceof DockerSlave) {
-            DockerSlave dockerSlave = (DockerSlave) node;
-            cloud = dockerSlave.getCloud();
-        }
-
+        // Did we specify?
         if (!Strings.isNullOrEmpty(cloudName)) {
-            cloud = (DockerCloud) Jenkins.getInstance().getCloud(cloudName);
+            DockerCloud specifiedCloud = (DockerCloud)Jenkins.getInstance().getCloud(cloudName);
+            if( specifiedCloud == null )
+                throw new IllegalStateException("Could not find a cloud named " + cloudName);
+            return specifiedCloud;
         }
 
-        if (cloud == null) {
+        // Otherwise default to where we ran
+        Optional<DockerCloud> cloud = JenkinsUtils.getCloudThatWeBuiltOn(build, launcher);
+
+        if (!cloud.isPresent()) {
             throw new IllegalStateException("Cannot list cloud for docker action");
         }
 
-        return cloud;
+        return cloud.get();
     }
 
-    protected DockerClient getClient(AbstractBuild<?, ?> build) {
-        DockerCloud cloud = getCloud(build);
-
-        return cloud.getClient();
-    }
 }

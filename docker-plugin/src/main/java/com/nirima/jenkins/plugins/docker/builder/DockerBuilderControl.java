@@ -2,12 +2,12 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -17,7 +17,7 @@ import java.io.Serializable;
  * Builder that contains one of the possible "option" control step.
  * @author magnayn
  */
-public class DockerBuilderControl extends Builder implements Serializable {
+public class DockerBuilderControl extends Builder implements Serializable, SimpleBuildStep {
     public final DockerBuilderControlOption option;
 
     @DataBoundConstructor
@@ -33,6 +33,12 @@ public class DockerBuilderControl extends Builder implements Serializable {
         // Save the actions
         build.save();
         return true;
+    }
+
+    @Override
+    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
+        option.execute(run, launcher, listener);
+        run.save();
     }
 
     @Override

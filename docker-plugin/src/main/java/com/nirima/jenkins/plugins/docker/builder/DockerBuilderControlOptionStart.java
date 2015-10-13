@@ -6,6 +6,8 @@ import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +28,12 @@ public class DockerBuilderControlOptionStart extends DockerBuilderControlOptionS
     }
 
     @Override
-    public void execute(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-            throws DockerException, IOException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
+            throws DockerException {
         LOG.info("Starting container {}", containerId);
         listener.getLogger().println("Starting container " + containerId);
 
-        DockerClient client = getClient(build);
+        DockerClient client = getCloud(build,launcher).getClient();
         client.startContainerCmd(containerId).exec();
 
         getLaunchAction(build).started(client, containerId);

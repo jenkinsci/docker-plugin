@@ -7,8 +7,8 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,13 +37,13 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
     }
 
     @Override
-    public void execute(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-            throws DockerException, IOException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
+            throws DockerException {
         final PrintStream llog = listener.getLogger();
 
-        final DockerCloud cloud = getCloud(build);
+        final DockerCloud cloud = getCloud(build, launcher);
         DockerTemplate template = cloud.getTemplate(templateId);
-        DockerClient client = getClient(build);
+        DockerClient client = cloud.getClient();
         String containerId = DockerCloud.runContainer(template.getDockerTemplateBase(), client, null);
 
         LOG.info("Starting container {}, cloud {}", containerId, cloud.getDisplayName());

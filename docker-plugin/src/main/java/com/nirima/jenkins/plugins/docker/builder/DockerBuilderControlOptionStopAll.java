@@ -6,6 +6,8 @@ import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +30,7 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
     }
 
     @Override
-    public void execute(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
             throws DockerException {
         final PrintStream llog = listener.getLogger();
 

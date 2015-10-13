@@ -11,6 +11,7 @@ import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
@@ -85,11 +86,11 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     }
 
     @Override
-    public void execute(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-            throws DockerException, IOException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
+            throws DockerException {
         final PrintStream llog = listener.getLogger();
 
-        DockerClient client = getClient(build);
+        DockerClient client = getCloud(build,launcher).getClient();
 
         String xImage = expand(build, image);
         String xCommand = expand(build, dockerCommand);
@@ -126,9 +127,9 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         getLaunchAction(build).started(client, containerId);
     }
 
-    private String expand(AbstractBuild<?, ?> build, String text) {
+    private String expand(Run<?, ?> build, String text) {
         try {
-            if (!Strings.isNullOrEmpty(text)) {
+            if (build instanceof AbstractBuild && !Strings.isNullOrEmpty(text)) {
                 text = TokenMacro.expandAll((AbstractBuild) build, TaskListener.NULL, text);
             }
         } catch (Exception e) {

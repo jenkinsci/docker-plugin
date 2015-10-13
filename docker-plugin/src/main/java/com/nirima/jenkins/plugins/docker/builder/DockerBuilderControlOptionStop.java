@@ -5,8 +5,8 @@ import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.NotModifiedException;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.PrintStream;
 
 /**
- * Build step taht stops container in DockerCloud
+ * Build step that stops container in DockerCloud
  *
  * @author magnayn
  */
@@ -30,13 +30,13 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
     }
 
     @Override
-    public void execute(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
             throws DockerException {
         final PrintStream llog = listener.getLogger();
         LOG.info("Stopping container " + containerId);
         llog.println("Stopping container " + containerId);
 
-        DockerClient client = getClient(build);
+        DockerClient client = getCloud(build, launcher).getClient();
         try {
             client.stopContainerCmd(containerId).exec();
         } catch (NotModifiedException ex) {
