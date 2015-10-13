@@ -16,6 +16,7 @@ import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlugin;
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -160,13 +161,12 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         public Run(AbstractBuild build, Launcher launcher, BuildListener listener) {
             //super(launcher, listener);
-            this(build, launcher, listener, new FilePath(build.getWorkspace(), dockerFileDirectory), expandTags(build, launcher, listener), getCloudForBuild(build));
+            this(build, launcher, listener, new FilePath(build.getWorkspace(), dockerFileDirectory), expandTags(build, launcher, listener), JenkinsUtils.getCloudForBuild(build));
         }
 
         public Run(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
-            this(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), tags, getCloudForChannel(launcher.getChannel()));
+            this(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), tags, JenkinsUtils.getCloudForChannel(launcher.getChannel()));
         }
-
 
         private DockerClient getClient() {
             if (_client == null) {
@@ -312,37 +312,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     @Override
     public void perform(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
         new Run(run, workspace, launcher, listener).run();
-    }
-
-    /**
-     * If the build was on a cloud, get the ID of that cloud.
-     */
-    private static Optional<DockerCloud> getCloudForBuild(AbstractBuild build) {
-
-        Node node = build.getBuiltOn();
-        if (node instanceof DockerSlave) {
-            DockerSlave slave = (DockerSlave) node;
-            return Optional.of(slave.getCloud());
-        }
-
-        return Optional.absent();
-    }
-
-    /**
-     * If the build was workflow, get the ID of that channel.
-     */
-    private static Optional<DockerCloud> getCloudForChannel(VirtualChannel channel) {
-
-        if( channel instanceof Channel ) {
-            Channel c = (Channel)channel;
-            Node node = Jenkins.getInstance().getNode( c.getName() );
-            if (node instanceof DockerSlave) {
-                DockerSlave slave = (DockerSlave) node;
-                return Optional.of(slave.getCloud());
-            }
-        }
-
-        return Optional.absent();
     }
 
     private List<String> expandTags(AbstractBuild build, Launcher launcher, BuildListener listener) {
