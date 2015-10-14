@@ -87,6 +87,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     public final boolean bindAllPorts;
 
     public final Integer memoryLimit;
+    public final Integer memorySwap;
     public final Integer cpuShares;
 
     public final boolean privileged;
@@ -108,6 +109,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                               String lxcConfString,
                               String hostname,
                               Integer memoryLimit,
+                              Integer memorySwap,
                               Integer cpuShares,
                               String bindPorts,
                               boolean bindAllPorts,
@@ -126,6 +128,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         this.bindAllPorts = bindAllPorts;
 
         this.memoryLimit = memoryLimit;
+        this.memorySwap = memorySwap;
         this.cpuShares = cpuShares;
 
         this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
@@ -246,6 +249,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     public Integer getMemoryLimit() {
         return memoryLimit;
     }
+    
+    public Integer getMemorySwap() {
+   	  return memorySwap;
+    }
 
     public Integer getCpuShares() {
         return cpuShares;
@@ -352,6 +359,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         if (memoryLimit != null && memoryLimit > 0) {
             Long memoryInByte = (long) memoryLimit * 1024 * 1024;
             containerConfig.withMemoryLimit(memoryInByte);
+        }
+        
+        if (memorySwap != null) {
+      	  if(memorySwap > 0) {
+      		  Long memorySwapInByte = (long) memorySwap * 1024 * 1024;
+              containerConfig.withMemorySwap(memorySwapInByte);
+      	  } else {
+      		  containerConfig.withMemorySwap(memorySwap);
+      	  }
         }
 
         if (dnsHosts.length > 0) {

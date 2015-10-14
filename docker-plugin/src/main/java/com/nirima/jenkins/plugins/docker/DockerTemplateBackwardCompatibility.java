@@ -119,6 +119,8 @@ public abstract class DockerTemplateBackwardCompatibility {
     @Deprecated
     private transient Integer memoryLimit;
     @Deprecated
+    private transient Integer memorySwap;
+    @Deprecated
     private transient Integer cpuShares;
 
     @Deprecated
@@ -207,6 +209,7 @@ public abstract class DockerTemplateBackwardCompatibility {
                         lxcConfString,
                         hostname,
                         memoryLimit,
+                        memorySwap,
                         cpuShares,
                         bindPorts,
                         bindAllPorts,
