@@ -46,7 +46,11 @@ f.advanced(title: _("Container settings"), align: "left") {
     f.entry(title: _("Memory Limit in MB"), field: "memoryLimit") {
         f.number(name: "memoryLimit", clazz: "positive-number", min: "4", step: "1")
     }
-
+		
+	f.entry(title: _("Swap Memory Limit in MB"), field: "memorySwap") {
+        f.number(name: "memorySwap")
+    }
+	
     f.entry(title: _("CPU Shares"), field: "cpuShares") {
         f.number(name: "cpuShares", clazz: "positive-number", min: "0", step: "1")
     }

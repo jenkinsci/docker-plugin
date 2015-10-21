@@ -16,6 +16,7 @@ public class DockerTemplateTest {
     String jvmOptions = " jvmOptions";
     String javaPath = " javaPath";
     Integer memoryLimit = 1024;
+    Integer memorySwap = 1280;
     Integer cpuShares = 1000;
     String prefixStartSlaveCmd = "prefixStartSlaveCmd";
     String suffixStartSlaveCmd = " suffixStartSlaveCmd";
@@ -37,7 +38,7 @@ public class DockerTemplateTest {
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString,
                 dockerCommand, volumesString, volumesString, environmentsString,
-                lxcConfString, hostname, memoryLimit, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
+                lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
         DockerTemplate dockerTemplate = new DockerTemplate(
                 dockerTemplateBase,
                 labelString,
@@ -70,7 +71,7 @@ public class DockerTemplateTest {
         assertArrayEquals(expected, instance.getDockerTemplateBase().dnsHosts);
         
         assertTrue("Error, wrong memoryLimit", 1024 == instance.getDockerTemplateBase().memoryLimit);
-
+        assertTrue("Error, wrong memorySwap", 1280 == instance.getDockerTemplateBase().memorySwap);
         assertTrue("Error, wrong cpuShares", 1000 == instance.getDockerTemplateBase().cpuShares);
     }
 

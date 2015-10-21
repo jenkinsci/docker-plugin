@@ -44,7 +44,7 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
     protected transient RetentionStrategy retentionStrategy;
 
     @Deprecated
-    protected transient Integer memoryLimit, cpuShares;
+    protected transient Integer memoryLimit, memorySwap, cpuShares;
 
     @Deprecated
     protected transient boolean bindAllPorts, privileged, tty;
@@ -55,7 +55,7 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
     protected void convert1() {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString, dockerCommand,
                 volumesString, null, environmentsString, lxcConfString,
-                hostname, memoryLimit, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress
+                hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress
         );
 
         final DockerComputerSSHLauncher dockerComputerSSHLauncher = new DockerComputerSSHLauncher(
