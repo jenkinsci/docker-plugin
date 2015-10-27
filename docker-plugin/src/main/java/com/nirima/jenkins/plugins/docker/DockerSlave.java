@@ -1,8 +1,13 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.DockerClientException;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.model.Identifier;
+import com.github.dockerjava.api.model.PushResponseItem;
+import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
 import hudson.model.*;
@@ -20,6 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
 
 public class DockerSlave extends AbstractCloudSlave {
@@ -185,7 +193,7 @@ public class DockerSlave extends AbstractCloudSlave {
         }
     }
 
-    private void slaveShutdown(TaskListener listener) throws DockerException, IOException {
+    private void slaveShutdown(final TaskListener listener) throws DockerException, IOException {
 
         // The slave has stopped. Should we commit / tag / push ?
 
@@ -212,12 +220,31 @@ public class DockerSlave extends AbstractCloudSlave {
             String tagToken = getAdditionalTag(listener);
 
             if (!Strings.isNullOrEmpty(tagToken)) {
-                // ?? client.image(tag_image).tag(tagToken, false);
-                client.tagImageCmd(tag_image, null, tagToken).exec();
+
+
+                final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tagToken);
+                final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
+
+                getClient().tagImageCmd(tag_image, reposTag.repos, commitTag).withForce().exec();
+
                 addJenkinsAction(tagToken);
 
                 if (getJobProperty().pushOnSuccess) {
-                    client.pullImageCmd(tagToken).exec(new PullImageResultCallback()).awaitSuccess();
+                    Identifier identifier = Identifier.fromCompoundString(tagToken);
+
+                    PushImageResultCallback resultCallback = new PushImageResultCallback() {
+                        public void onNext(PushResponseItem item) {
+                            printResponseItemToListener(listener, item);
+                            super.onNext(item);
+                        }
+                    };
+                    try {
+                        getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
+                    } catch(DockerClientException ex) {
+
+                        LOGGER.log(Level.SEVERE, "Exception pushing docker image. Check that the destination registry is running.");
+                        throw ex;
+                    }
                 }
             }
         } catch (Exception ex) {
