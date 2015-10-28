@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +34,10 @@ public class PortUtils {
      */
     public static PortUtils canConnect(String host, int port) {
         return new PortUtils(host, port);
+    }
+
+    public static PortUtils canConnect(InetSocketAddress address) {
+        return new PortUtils(address.getHostString(), address.getPort());
     }
 
     public PortUtils withRetries(int retries) {
@@ -114,5 +119,6 @@ public class PortUtils {
             // no-op
         }
     }
+
 
 }

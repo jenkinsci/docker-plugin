@@ -23,6 +23,7 @@ import shaded.com.google.common.annotations.Beta;
 import shaded.com.google.common.base.Preconditions;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +75,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
         super.waitUp(cloudId, dockerTemplate, containerInspect);
 
-        final PortUtils portUtils = getPortUtils(cloudId, dockerTemplate, containerInspect);
+        final PortUtils portUtils = PortUtils.canConnect(getAddressForSSHD(cloudId, containerInspect));
         if (!portUtils.withRetries(60).withEveryRetryWaitFor(2, TimeUnit.SECONDS)) {
             return false;
         }
@@ -93,9 +94,9 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         Preconditions.checkNotNull(inspect);
 
         try {
-            final PortUtils portUtils = getPortUtils(cloudId, template, inspect);
-            LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + portUtils.host + ":" + portUtils.port);
-            return new SSHLauncher(portUtils.host, portUtils.port, sshConnector.getCredentials(),
+            final InetSocketAddress address = getAddressForSSHD(cloudId, inspect);
+            LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + address);
+            return new SSHLauncher(address.getHostString(), address.getPort(), sshConnector.getCredentials(),
                     sshConnector.jvmOptions,
                     sshConnector.javaPath, sshConnector.prefixStartSlaveCmd,
                     sshConnector.suffixStartSlaveCmd, sshConnector.launchTimeoutSeconds);
@@ -104,7 +105,17 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
     }
 
-    public PortUtils getPortUtils(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse ir) {
+    /**
+     * Given an inspected container, work out where we talk to the SSH daemon.
+     *
+     * I.E: this is usually the port that has been exposed on the container (22) and mapped
+     * to some value on the container host.
+     *
+     * This might - in the case where Jenkins itself is running on the same cloud - be
+     * a direct connection.
+     *
+     */
+    protected InetSocketAddress getAddressForSSHD(String cloudId, InspectContainerResponse ir) {
         // get exposed port
         ExposedPort sshPort = new ExposedPort(sshConnector.port);
         String host = null;
@@ -113,8 +124,11 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         final InspectContainerResponse.NetworkSettings networkSettings = ir.getNetworkSettings();
         final Ports ports = networkSettings.getPorts();
         final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
+
+        // Get the binding that goes to the port that we're interested in (e.g: 22)
         final Ports.Binding[] sshBindings = bindings.get(sshPort);
 
+        // Find where it's mapped to
         for (Ports.Binding b : sshBindings) {
             port = b.getHostPort();
             host = b.getHostIp();
@@ -130,7 +144,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             }
         }
 
-        return PortUtils.canConnect(host, port);
+        return new InetSocketAddress(host, port);
     }
 
     @Override
