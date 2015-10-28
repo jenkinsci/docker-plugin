@@ -31,9 +31,11 @@ public class DockerBuildVariableContributor extends BuildVariableContributor {
             variables.put("JENKINS_CLOUD_ID", dockerComputer.getCloudId());
             try {
                 //replace http:// and https:// from docker-java to tcp://
-                final String dockerHost = new URIBuilder(dockerComputer.getCloud().serverUrl)
-                        .setScheme("tcp")
-                        .toString();
+                final URIBuilder uriBuilder = new URIBuilder(dockerComputer.getCloud().serverUrl);
+                if (uriBuilder.getScheme() == "http" || uriBuilder.getScheme() == "https") {
+                    uriBuilder.setScheme("tcp");
+                }
+                final String dockerHost = uriBuilder.toString();
                 variables.put("DOCKER_HOST", dockerHost);
             } catch (URISyntaxException e) {
                 LOG.error("Can't build 'DOCKER_HOST' var: {}", e.getMessage());
