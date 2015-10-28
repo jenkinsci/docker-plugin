@@ -123,6 +123,11 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
             host = URI.create(DockerCloud.getCloudByName(cloudId).serverUrl).getHost();
+            if (host == null || host.equals("0.0.0.0")) {
+                // Try to connect to the container directly (without going through the host)
+                host = networkSettings.getIpAddress();
+                port = sshConnector.port;
+            }
         }
 
         return PortUtils.canConnect(host, port);
