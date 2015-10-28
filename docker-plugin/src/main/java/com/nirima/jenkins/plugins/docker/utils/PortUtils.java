@@ -15,16 +15,7 @@ import static shaded.com.google.common.base.Preconditions.checkState;
 public class PortUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(PortUtils.class);
 
-    public final String host;
-    public final int port;
 
-    private int retries = 10;
-    private int sshTimeoutMillis = (int) SECONDS.toMillis(2);
-
-    private PortUtils(String host, int port) {
-        this.host = host;
-        this.port = port;
-    }
 
     /**
      * @param host hostname to connect to
@@ -32,93 +23,111 @@ public class PortUtils {
      *
      * @return util class to check connection
      */
-    public static PortUtils canConnect(String host, int port) {
-        return new PortUtils(host, port);
+    public static ConnectionCheck connectionCheck(String host, int port) {
+        return new ConnectionCheck(host, port);
     }
 
-    public static PortUtils canConnect(InetSocketAddress address) {
-        return new PortUtils(address.getHostString(), address.getPort());
+    public static ConnectionCheck connectionCheck(InetSocketAddress address) {
+        return new ConnectionCheck(address.getHostString(), address.getPort());
     }
 
-    public PortUtils withRetries(int retries) {
-        this.retries = retries;
-        return this;
-    }
+    public static class ConnectionCheck {
+        private final String host;
+        private final int port;
 
-    public PortUtils withSshTimeout(int time, TimeUnit units) {
-        this.sshTimeoutMillis = (int) units.toMillis(time);
-        return this;
-    }
+        private int retries = 10;
+        private long retryDelay = (long) SECONDS.toMillis(2);
 
-    /**
-     * @return true if socket opened successfully, false otherwise
-     */
-    public boolean now() {
-        try (Socket ignored = new Socket(host, port)) {
-            return true;
-        } catch (IOException e) {
+        private ConnectionCheck(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
+
+        public ConnectionCheck withRetries(int retries) {
+            this.retries = retries;
+            return this;
+        }
+
+        public ConnectionCheck withEveryRetryWaitFor(int time, TimeUnit units) {
+            retryDelay = units.toMillis(time);
+            return this;
+        }
+
+        public ConnectionCheckSSH useSSH() {
+
+            return new ConnectionCheckSSH(this);
+        }
+
+        /**
+         * @return true if socket opened successfully, false otherwise
+         */
+        public boolean executeOnce() {
+            try (Socket ignored = new Socket(host, port)) {
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        }
+
+        public boolean execute() {
+            for (int i = 1; i <= retries; i++) {
+                if (executeOnce()) {
+                    return true;
+                }
+                try {
+                    Thread.sleep(retryDelay);
+                } catch (InterruptedException e) {
+                    return false; // quit if interrupted
+                }
+            }
             return false;
         }
     }
 
-    /**
-     * Use {@link #now()} to check.
-     * Retries while attempts reached with delay
-     *
-     * @return true if socket opened successfully, false otherwise
-     */
-    public boolean withEveryRetryWaitFor(int time, TimeUnit units) {
-        for (int i = 1; i <= retries; i++) {
-            if (now()) {
-                return true;
-            }
-            sleepFor(time, units);
+    public static class ConnectionCheckSSH {
+        private final ConnectionCheck parent;
+        private int sshTimeoutMillis = (int) SECONDS.toMillis(2);
+
+        ConnectionCheckSSH(ConnectionCheck connectionCheck) {
+            this.parent = connectionCheck;
         }
-        return false;
-    }
 
-    /**
-     * Connects to sshd on host:port
-     * Retries while attempts reached with delay
-     * First with tcp port wait, then with ssh connection wait
-     *
-     * @throws IOException if no retries left
-     */
-    public void bySshWithEveryRetryWaitFor(int time, TimeUnit units) throws IOException {
-        checkState(withEveryRetryWaitFor(time, units), "Port %s is not opened to connect to", port);
+        public ConnectionCheckSSH withSSHTimeout(int time, TimeUnit units) {
+            sshTimeoutMillis = (int)units.toMillis(time);
+            return this;
+        }
 
-        for (int i = 1; i <= retries; i++) {
-            Connection connection = new Connection(host, port);
-            try {
-                connection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
-                LOGGER.info("SSH port is open on {}:{}", host, port);
-                return;
-            } catch (IOException e) {
-                LOGGER.error("Failed to connect to {}:{} (try {}/{}) - {}", host, port, i, retries, e.getMessage());
-                if (i == retries) {
-                    throw e;
+        /**
+         * Connects to sshd on host:port
+         * Retries while attempts reached with delay
+         * First with tcp port wait, then with ssh connection wait
+         */
+        public boolean execute() {
+            checkState(parent.execute(), "Port %s is not opened to connect to", parent.port);
+
+            for (int i = 1; i <= parent.retries; i++) {
+                Connection connection = new Connection(parent.host, parent.port);
+                try {
+                    connection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
+                    LOGGER.info("SSH port is open on {}:{}", parent.host, parent.port);
+                    return true;
+                } catch (IOException e) {
+                    LOGGER.error("Failed to connect to {}:{} (try {}/{}) - {}", parent.host, parent.port, i, parent.retries, e.getMessage());
+                } finally {
+                    connection.close();
                 }
-            } finally {
-                connection.close();
+                try {
+                    Thread.sleep(parent.retryDelay);
+                } catch (InterruptedException e) {
+                    return false; // Quit if interrupted
+                }
             }
-            sleepFor(time, units);
+            // Tried over and again. no joy.
+            return false;
         }
     }
 
-    /**
-     * Blocks current thread for {@code time} of {@code units}
-     *
-     * @param time  number of units
-     * @param units to convert to millis
-     */
-    public static void sleepFor(int time, TimeUnit units) {
-        try {
-            LOGGER.trace("Sleeping for {} {}", time, units.toString());
-            Thread.sleep(units.toMillis(time));
-        } catch (InterruptedException e) {
-            // no-op
-        }
-    }
+
 
 
 }

@@ -11,7 +11,6 @@ import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.nirima.jenkins.plugins.docker.utils.PortUtils.canConnect;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -37,20 +36,20 @@ public class PortUtilsTest {
 
     @Test
     public void shouldConnectToServerSuccessfully() throws Exception {
-        assertThat("Server is up and should connect", canConnect(server.host(), server.port()).now(), is(true));
+        assertThat("Server is up and should connect", PortUtils.connectionCheck(server.host(), server.port()).executeOnce(), is(true));
     }
 
     @Test
     public void shouldNotConnectToUnusedPort() throws Exception {
-        assertThat("Unused port should not be connectible", canConnect("localhost", 0).now(), is(false));
+        assertThat("Unused port should not be connectible", PortUtils.connectionCheck("localhost", 0).executeOnce(), is(false));
     }
 
     @Test
     public void shouldWaitForPortAvailableUntilTimeout() throws Exception {
         long before = currentTimeMillis();
         assertThat("Unused port should not be connectible",
-                canConnect("localhost", 0).withRetries(RETRY_COUNT)
-                        .withEveryRetryWaitFor(DELAY, MILLISECONDS), is(false));
+                PortUtils.connectionCheck("localhost", 0).withRetries(RETRY_COUNT)
+                        .withEveryRetryWaitFor(DELAY, MILLISECONDS).execute(), is(false));
         assertThat("Should wait for timeout", new Date(currentTimeMillis()),
                 greaterThanOrEqualTo(new Date(before + RETRY_COUNT * DELAY)));
     }
@@ -58,28 +57,28 @@ public class PortUtilsTest {
     @Test
     public void shouldThrowIllegalStateExOnNotAvailPort() throws Exception {
         ex.expect(IllegalStateException.class);
-        canConnect("localhost", 0).withRetries(RETRY_COUNT).bySshWithEveryRetryWaitFor(DELAY, MILLISECONDS);
+        PortUtils.connectionCheck("localhost", 0).withRetries(RETRY_COUNT).withEveryRetryWaitFor(DELAY, MILLISECONDS)
+                .useSSH().execute();
     }
 
     @Test
-    public void shouldWaitIfPortAvailableButNotSshUntilTimeoutAndThrowEx() throws Exception {
-        ex.expect(IOException.class);
+    public void shouldWaitIfPortAvailableButNotSshUntilTimeout() throws Exception {
+
         long before = currentTimeMillis();
-        try {
-            canConnect(server.host(), server.port()).withRetries(RETRY_COUNT)
-                    .bySshWithEveryRetryWaitFor(DELAY, MILLISECONDS);
-        } catch (IOException e) {
-            assertThat("Should wait for timeout", new Date(currentTimeMillis()),
-                    greaterThanOrEqualTo(new Date(before + RETRY_COUNT * DELAY)));
-            throw e;
-        }
+
+        assertThat(PortUtils.connectionCheck(server.host(), server.port()).withRetries(RETRY_COUNT)
+                .withEveryRetryWaitFor(DELAY, MILLISECONDS).useSSH().execute(), is(false));
+
+        assertThat("Should wait for timeout", new Date(currentTimeMillis()),
+                greaterThanOrEqualTo(new Date(before + RETRY_COUNT * DELAY)));
+
     }
 
     @Test
     public void shouldReturnWithoutWaitIfPortAvailable() throws Exception {
         long before = currentTimeMillis();
         assertThat("Used port should be connectible",
-                canConnect(server.host(), server.port()).withEveryRetryWaitFor(DELAY, MILLISECONDS), is(true));
+                PortUtils.connectionCheck(server.host(), server.port()).withEveryRetryWaitFor(DELAY, MILLISECONDS).execute(), is(true));
         assertThat("Should not wait", new Date(currentTimeMillis()), lessThan(new Date(before + DELAY)));
     }
 
@@ -91,8 +90,8 @@ public class PortUtilsTest {
         server.stopAndRebindAfter(2 * DELAY, MILLISECONDS);
 
         assertThat("Used port should be connectible",
-                canConnect(server.host(), server.port())
-                        .withRetries(retries).withEveryRetryWaitFor(DELAY, MILLISECONDS), is(true));
+                PortUtils.connectionCheck(server.host(), server.port())
+                        .withRetries(retries).withEveryRetryWaitFor(DELAY, MILLISECONDS).execute(), is(true));
 
         assertThat("Should wait then retry", new Date(currentTimeMillis()),
                 both(greaterThanOrEqualTo(new Date(before + 2 * DELAY)))

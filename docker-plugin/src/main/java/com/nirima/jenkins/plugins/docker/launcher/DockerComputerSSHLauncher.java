@@ -75,18 +75,12 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
         super.waitUp(cloudId, dockerTemplate, containerInspect);
 
-        final PortUtils portUtils = PortUtils.canConnect(getAddressForSSHD(cloudId, containerInspect));
-        if (!portUtils.withRetries(60).withEveryRetryWaitFor(2, TimeUnit.SECONDS)) {
-            return false;
-        }
-        try {
-            portUtils.withRetries(60).bySshWithEveryRetryWaitFor(2, TimeUnit.SECONDS);
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Can't connect to ssh", ex);
-            return false;
-        }
+        final PortUtils.ConnectionCheck connectionCheck =
+                PortUtils.connectionCheck(getAddressForSSHD(cloudId, containerInspect))
+                         .withRetries(60)
+                         .withEveryRetryWaitFor(2, TimeUnit.SECONDS);
 
-        return true;
+        return (connectionCheck.execute() && connectionCheck.useSSH().execute());
     }
 
     private SSHLauncher getSSHLauncher(String cloudId, DockerTemplate template, InspectContainerResponse inspect) {
