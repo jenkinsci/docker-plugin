@@ -1,13 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.nirima.jenkins.plugins.docker.utils.Cacheable;
 import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.slaves.AbstractCloudComputer;
 import shaded.com.google.common.base.MoreObjects;
 
-import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,12 +16,6 @@ import java.util.logging.Logger;
  */
 public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
     private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
-
-    private int checked = 0;
-
-    // Jenkins calls isUpdatingTasks a lot, and it's expensive to keep
-    // asking the container if it exists or not, so we cache it here.
-    private final Cacheable<Boolean> nodeExistenceStatus;
 
     /**
      * remember associated container id
@@ -36,11 +28,6 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
         super(dockerSlave);
         setContainerId(dockerSlave.getContainerId());
         setCloudId(dockerSlave.getCloudId());
-        nodeExistenceStatus = new Cacheable<>(60000, new Callable<Boolean>() {
-            public Boolean call() throws Exception {
-                return getNode().containerExistsInCloud();
-            }
-        });
     }
 
     public DockerCloud getCloud() {

@@ -32,7 +32,7 @@ public class DockerBuildVariableContributor extends BuildVariableContributor {
             try {
                 //replace http:// and https:// from docker-java to tcp://
                 final URIBuilder uriBuilder = new URIBuilder(dockerComputer.getCloud().serverUrl);
-                if (uriBuilder.getScheme() != "unix") {
+                if (!uriBuilder.getScheme().equals("unix")) {
                     uriBuilder.setScheme("tcp");
                 }
                 final String dockerHost = uriBuilder.toString();

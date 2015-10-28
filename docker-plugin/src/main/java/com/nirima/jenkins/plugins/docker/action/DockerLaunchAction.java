@@ -44,7 +44,7 @@ public class DockerLaunchAction implements Action, Serializable, Cloneable{
         }
     }
 
-    private transient List<Item> running = new ArrayList<Item>();
+    private transient List<Item> running = new ArrayList<>();
 
     public String getIconFileName() {
         return null;

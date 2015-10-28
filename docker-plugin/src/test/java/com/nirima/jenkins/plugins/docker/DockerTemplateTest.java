@@ -39,15 +39,14 @@ public class DockerTemplateTest {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString,
                 dockerCommand, volumesString, volumesString, environmentsString,
                 lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
-        DockerTemplate dockerTemplate = new DockerTemplate(
+
+        return new DockerTemplate(
                 dockerTemplateBase,
                 labelString,
                 remoteFs,
                 remoteFsMapping,
                 instanceCapStr
         );
-
-        return dockerTemplate;
     }
 
     @Test

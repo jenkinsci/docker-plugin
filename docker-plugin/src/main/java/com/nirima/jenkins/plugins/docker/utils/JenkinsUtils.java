@@ -47,7 +47,7 @@ public class JenkinsUtils {
     }
 
     public static Optional<DockerCloud> getCloudThatWeBuiltOn(Run<?,?> build, Launcher launcher) {
-        Optional<DockerCloud> cloud = Optional.absent();
+        Optional<DockerCloud> cloud;
 
         // A bit unpleasant, but the getBuiltOn method is in AbstractBuild and
         // we may be a workflow run.
