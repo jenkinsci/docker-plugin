@@ -102,22 +102,22 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         Computer.threadPoolForRemoting.submit(new Runnable() {
             @Override
             public void run() {
-                final Jenkins jenkins = Jenkins.getInstance();
-                // TODO once the baseline is 1.592+ switch to Queue.withLock
-                Object queue = jenkins == null ? DockerOnceRetentionStrategy.this : jenkins.getQueue();
-                synchronized (queue) {
-                    try {
-                        AbstractCloudSlave node = c.getNode();
-                        if (node != null) {
-                            node.terminate();
-                        }
-                    } catch (InterruptedException | IOException e) {
-                        LOGGER.log(Level.WARNING, "Failed to terminate " + c.getName(), e);
-                        synchronized (DockerOnceRetentionStrategy.this) {
-                            terminating = false;
+                Queue.withLock( new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            AbstractCloudSlave node = c.getNode();
+                            if (node != null) {
+                                node.terminate();
+                            }
+                        } catch (InterruptedException | IOException e) {
+                            LOGGER.log(Level.WARNING, "Failed to terminate " + c.getName(), e);
+                            synchronized (DockerOnceRetentionStrategy.this) {
+                                terminating = false;
+                            }
                         }
                     }
-                }
+                });
             }
         });
     }
