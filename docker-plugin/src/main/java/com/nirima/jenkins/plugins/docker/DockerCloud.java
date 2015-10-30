@@ -590,7 +590,7 @@ public class DockerCloud extends Cloud {
 
                 return FormValidation.ok("Version = " + verResult.getVersion());
             } catch (Exception e) {
-                return FormValidation.error(e.getMessage());
+                return FormValidation.error(e, e.getMessage());
             }
         }
 
