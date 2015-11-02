@@ -35,9 +35,15 @@ public class ClientBuilderForPlugin {
     }
 
     public ClientBuilderForPlugin withDockerCmdExecConfig(DockerCmdExecConfig config) {
-        this.dockerCmdExecFactory = new DockerCmdExecFactoryImpl()
-                .withReadTimeout(config.getReadTimeoutMillis())
-                .withConnectTimeout(config.getConnectTimeout());
+        DockerCmdExecFactoryImpl impl = new DockerCmdExecFactoryImpl();
+        this.dockerCmdExecFactory = impl;
+
+        if( config.getReadTimeoutMillis() != null )
+            impl.withReadTimeout(config.getReadTimeoutMillis());
+
+        if( config.getConnectTimeoutMillis() != null )
+            impl.withConnectTimeout(config.getConnectTimeoutMillis());
+
         return this;
     }
 

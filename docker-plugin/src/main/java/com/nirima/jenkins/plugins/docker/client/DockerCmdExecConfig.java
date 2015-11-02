@@ -44,7 +44,7 @@ public class DockerCmdExecConfig implements Serializable {
 
     public Integer getConnectTimeoutMillis() {
         if (connectTimeout != null) {
-            return (int) SECONDS.toMillis(readTimeout);
+            return (int) SECONDS.toMillis(connectTimeout);
         } else {
             return null;
         }
