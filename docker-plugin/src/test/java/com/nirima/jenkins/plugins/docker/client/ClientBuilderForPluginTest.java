@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.RemoteApiVersion;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -58,7 +59,7 @@ public class ClientBuilderForPluginTest {
 
         DockerClientConfig config = builder.config().build();
         assertThat("server", config.getUri().toString(), equalTo(HTTP_SERVER_URL));
-        assertThat("version", config.getVersion(), equalTo(DOCKER_API_VER));
+        assertThat("version", config.getVersion(), equalTo(RemoteApiVersion.unknown()));
 //        assertThat("read TO", config.getReadTimeout(), equalTo((int) SECONDS.toMillis(READ_TIMEOUT)));
     }
 

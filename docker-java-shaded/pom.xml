@@ -20,7 +20,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <docker-java.version>2.1.1</docker-java.version>
+        <docker-java.version>2.1.2</docker-java.version>
     </properties>
 
     <repositories>
