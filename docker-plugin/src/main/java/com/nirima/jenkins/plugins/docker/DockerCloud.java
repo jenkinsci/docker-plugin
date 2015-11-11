@@ -225,7 +225,7 @@ public class DockerCloud extends Cloud {
                     }
                 } catch (Exception e) {
                     LOGGER.warn("Bad template '{}' in cloud '{}': '{}'. Trying next template...",
-                            t.getDockerTemplateBase().getImage(), getDisplayName(), e.getMessage());
+                            t.getDockerTemplateBase().getImage(), getDisplayName(), e.getMessage(), e);
                     templates.remove(t);
                     continue;
                 }
