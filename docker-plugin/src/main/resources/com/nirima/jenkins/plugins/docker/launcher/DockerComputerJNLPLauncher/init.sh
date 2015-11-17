@@ -38,9 +38,9 @@ if [ ! -z "$COMPUTER_SECRET" ]; then
  RUN_OPTS+=" -secret $COMPUTER_SECRET "
 fi
 
-RUN_CMD=""
+RUN_CMD="java -jar ${JENKINS_HOME}/slave.jar $RUN_OPTS"
 if [ ! -z "$JENKINS_USER" ] && [ x"$JENKINS_USER" != "xroot" ]; then
- RUN_CMD="su - $JENKINS_USER -c"
+ RUN_CMD="su - $JENKINS_USER -c '$RUN_CMD'"
 fi
 
-$RUN_CMD "java -jar slave.jar $RUN_OPTS"
+$RUN_CMD

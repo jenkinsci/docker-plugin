@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerJNLPLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy;
@@ -23,7 +22,7 @@ public class DockerFunctions {
         List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
 
         launchers.add(DockerComputerSSHLauncher.DESCRIPTOR);
-//        launchers.add(DockerComputerJNLPLauncher.DESCRIPTOR);
+        launchers.add(DockerComputerJNLPLauncher.DESCRIPTOR);
 
         return launchers;
     }
