@@ -7,7 +7,9 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.KeystoreSSLConfig;
+import com.github.dockerjava.core.LocalDirectorySSLConfig;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
 
@@ -86,6 +88,11 @@ public class ClientConfigBuilderForPlugin {
                         certificateCredentials.getKeyStore(),
                         certificateCredentials.getPassword().getPlainText()
                 ));
+            }
+            else if( credentials instanceof DockerDirectoryCredentials) {
+                DockerDirectoryCredentials ddc = (DockerDirectoryCredentials)credentials;
+                config.withSSLConfig( new LocalDirectorySSLConfig(ddc.getPath()));
+
             } else if (credentials instanceof StandardUsernamePasswordCredentials) {
                 StandardUsernamePasswordCredentials usernamePasswordCredentials =
                         ((StandardUsernamePasswordCredentials) credentials);

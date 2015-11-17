@@ -1,9 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
+import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
@@ -22,6 +24,7 @@ import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
+import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
@@ -597,16 +600,17 @@ public class DockerCloud extends Cloud {
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
 
             List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context);
+            List<DockerDirectoryCredentials> c2 = CredentialsProvider.lookupCredentials(DockerDirectoryCredentials.class, context);
 
             return new CredentialsListBoxModel().withEmptySelection()
-                    .withMatching(CredentialsMatchers.always(),
-                            credentials);
+                    .withMatching(CredentialsMatchers.always(), credentials)
+                    .withMatching(CredentialsMatchers.always(), c2);
         }
 
         public static class CredentialsListBoxModel
-                extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, StandardCertificateCredentials> {
+                extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, IdCredentials> {
             @NonNull
-            protected String describe(@NonNull StandardCertificateCredentials c) {
+            protected String describe(@NonNull IdCredentials c) {
                 return CredentialsNameProvider.name(c);
             }
         }
