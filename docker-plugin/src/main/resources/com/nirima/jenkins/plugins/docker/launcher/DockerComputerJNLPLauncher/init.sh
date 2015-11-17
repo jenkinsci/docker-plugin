@@ -25,11 +25,22 @@ if [ -z "$COMPUTER_URL" ]; then
  exit 1
 fi
 
+# Jenkins not at home - use tmp
+if [ ! -d "$JENKINS_HOME" ]; then
+  JENKINS_HOME=/tmp
+fi
+
 [ -z "$JENKINS_HOME" ] && cd "$JENKINS_HOME"
+
 
 # download slave jar
 # TODO some caching mechanism with checksums
-wget "${JENKINS_URL}/jnlpJars/slave.jar" -O "${JENKINS_HOME}/slave.jar"
+
+if [ -x "$(command -v curl)" ]; then
+  curl -o "${JENKINS_HOME}/slave.jar" "${JENKINS_URL}/jnlpJars/slave.jar"
+else
+  wget "${JENKINS_URL}/jnlpJars/slave.jar" -O "${JENKINS_HOME}/slave.jar"
+fi
 
 env
 
@@ -39,7 +50,7 @@ if [ ! -z "$COMPUTER_SECRET" ]; then
 fi
 
 RUN_CMD="java -jar ${JENKINS_HOME}/slave.jar $RUN_OPTS"
-if [ ! -z "$JENKINS_USER" ] && [ x"$JENKINS_USER" != "xroot" ]; then
+if [ ! -z "$JENKINS_USER" ] && [ x"$JENKINS_USER" != "xroot" ] && [ "$JENKINS_USER" != "null" ]; then
  RUN_CMD="su - $JENKINS_USER -c '$RUN_CMD'"
 fi
 
