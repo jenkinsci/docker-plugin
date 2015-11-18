@@ -5,6 +5,7 @@
 * Workflow support for build steps (publish, start/stop containers)
 * Enable the JNLP slave support (Experimental). 
 * Add a credential type to allow TLS connections.
+* Work-around for pull status failures
 
 ## [0.15.0](https://github.com/jenkinsci/docker-plugin/issues?utf8=%E2%9C%93&q=milestone%3A0.15.0)
 

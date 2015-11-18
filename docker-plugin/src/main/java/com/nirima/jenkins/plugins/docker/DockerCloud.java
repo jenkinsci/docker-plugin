@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -9,10 +8,7 @@ import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
@@ -340,8 +336,19 @@ public class DockerCloud extends Cloud {
                     imageExists ? "again" : "since one was not found");
 
             long startTime = System.currentTimeMillis();
-            //Identifier amiId = Identifier.fromCompoundString(ami);
-            getClient().pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitSuccess();
+
+            PullImageResultCallback cmd = getClient().pullImageCmd(imageName).exec(new PullImageResultCallback());
+
+            // Work-around for API issue in docker.
+            if( DockerPluginConfiguration.get().getPullFix()) {
+                try {
+                    cmd.awaitCompletion();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException("Interruption whilst pulling",e);
+                }
+            } else {
+                cmd.awaitSuccess();
+            }
             long pullTime = System.currentTimeMillis() - startTime;
             LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
         }

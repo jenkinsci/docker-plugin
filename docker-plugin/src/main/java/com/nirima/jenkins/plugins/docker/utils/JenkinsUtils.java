@@ -8,8 +8,15 @@ import hudson.model.Node;
 import hudson.model.Run;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
+import hudson.slaves.Cloud;
 import jenkins.model.Jenkins;
 import shaded.com.google.common.base.Optional;
+import shaded.com.google.common.base.Predicate;
+import shaded.com.google.common.collect.Collections2;
+import shaded.com.google.common.collect.Iterables;
+
+import javax.annotation.Nullable;
+import java.util.Collection;
 
 /**
  * Utilities to fetch things out of jenkins environment.
@@ -60,4 +67,31 @@ public class JenkinsUtils {
 
         return cloud;
     }
+
+    /**
+     * Get the list of Docker servers.
+     *
+     * @return the list as a LinkedList of DockerCloud
+     */
+    public static synchronized Collection<DockerCloud> getServers() {
+
+        Collection clouds = Collections2.filter(Jenkins.getInstance().clouds,
+                new Predicate<Cloud>() {
+                    public boolean apply(@Nullable Cloud input) {
+                        return input instanceof DockerCloud;
+                    }
+                });
+
+        return (Collection<DockerCloud>)clouds;
+    }
+
+    public static DockerCloud getServer(final String serverName) {
+
+        return Iterables.find(getServers(), new Predicate<DockerCloud>() {
+            public boolean apply(@Nullable DockerCloud input) {
+                return serverName.equals(input.getDisplayName());
+            }
+        });
+    }
+
 }

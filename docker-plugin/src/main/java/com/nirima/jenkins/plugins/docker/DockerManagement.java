@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import shaded.com.google.common.base.Function;
 import shaded.com.google.common.collect.Collections2;
 
@@ -87,7 +88,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
         }
 
         public Collection<String> getServerNames() {
-            return Collections2.transform(PluginImpl.getInstance().getServers(), new Function<DockerCloud, String>() {
+            return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, String>() {
                 public String apply(@Nullable DockerCloud input) {
                     return input.getDisplayName();
                 }
@@ -117,7 +118,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
         }
 
         public Collection<ServerDetail> getServers() {
-            return Collections2.transform(PluginImpl.getInstance().getServers(), new Function<DockerCloud, ServerDetail>() {
+            return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, ServerDetail>() {
                 public ServerDetail apply(@Nullable DockerCloud input) {
                     return new ServerDetail(input);
                 }

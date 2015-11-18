@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.nirima.jenkins.plugins.docker.utils.Consts;
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -31,7 +32,7 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
 
     public DockerManagementServer(String name) {
         this.name = name;
-        theCloud = PluginImpl.getInstance().getServer(name);
+        theCloud = JenkinsUtils.getServer(name);
     }
 
     public Collection getImages(){
