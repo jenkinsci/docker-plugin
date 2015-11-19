@@ -78,6 +78,11 @@ public class DockerCloud extends Cloud {
     private int containerCap = 100;
 
     /**
+     * Is this cloud actually a swarm?
+     */
+    private transient Boolean _isSwarm;
+
+    /**
      * Track the count per image name for images currently being
      * provisioned, but not necessarily reported yet by docker.
      */
@@ -389,7 +394,11 @@ public class DockerCloud extends Cloud {
 
         final ComputerLauncher launcher = dockerTemplate.getLauncher().getPreparedLauncher(getDisplayName(), dockerTemplate, ir);
 
-        return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+        if( isSwarm() ) {
+            return new DockerSwarmSlave(this, ir, slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+        } else {
+            return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+        }
     }
 
     @Override
@@ -564,6 +573,15 @@ public class DockerCloud extends Cloud {
             return false;
         return !(connection != null ? !connection.equals(that.connection) : that.connection != null);
 
+    }
+
+    /* package */ boolean isSwarm() {
+        Version remoteVersion = getClient().versionCmd().exec();
+        // Cache the return.
+        if( _isSwarm == null ) {
+            _isSwarm = remoteVersion.getVersion().startsWith("swarm");
+        }
+        return _isSwarm;
     }
 
     @Extension
