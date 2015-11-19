@@ -224,7 +224,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         private void cleanImages(String id) {
             getClient().removeImageCmd(id)
-                    .withForce()
+                    .withForce(true)
                     .exec();
         }
 

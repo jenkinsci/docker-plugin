@@ -254,7 +254,7 @@ public class DockerSlave extends AbstractCloudSlave {
         if (getJobProperty().cleanImages) {
 
             client.removeImageCmd(tag_image)
-                    .withForce()
+                    .withForce(true)
                     .exec();
         }
 

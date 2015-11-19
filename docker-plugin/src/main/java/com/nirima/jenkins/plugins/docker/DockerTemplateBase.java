@@ -358,7 +358,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
         if (memoryLimit != null && memoryLimit > 0) {
             Long memoryInByte = (long) memoryLimit * 1024 * 1024;
-            containerConfig.withMemoryLimit(memoryInByte);
+            containerConfig.withMemory(memoryInByte);
         }
         
         if (memorySwap != null) {
@@ -366,7 +366,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
       		  Long memorySwapInByte = (long) memorySwap * 1024 * 1024;
               containerConfig.withMemorySwap(memorySwapInByte);
       	  } else {
-      		  containerConfig.withMemorySwap(memorySwap);
+      		  containerConfig.withMemorySwap((long)memorySwap);
       	  }
         }
 

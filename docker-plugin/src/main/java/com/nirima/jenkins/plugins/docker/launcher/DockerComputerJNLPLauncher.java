@@ -109,10 +109,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 //            logger.println("Creating jnlp connection command '" + Arrays.toString(connectCmd) + "' for '" + containerId + "'");
 
             final ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
-                    .withTty()
-                    .withAttachStdin()
-                    .withAttachStderr()
-                    .withAttachStdout()
+                    .withTty(true)
+                    .withAttachStdin(true)
+                    .withAttachStderr(true)
+                    .withAttachStdout(true)
 //                    .withCmd(connectCmd)
                     .withCmd("/bin/bash", "-cxe", startCmd.replace("$", "\\$"))
                     .exec();
@@ -122,8 +122,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
             try (InputStream exec = connect
                     .execStartCmd(response.getId())
-                    .withDetach()
-                    .withTty()
+                    .withDetach(true)
+                    .withTty(true)
                     .exec()
             ) {
                 //nothing, just want to be closed
