@@ -159,11 +159,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         }
 
-        public Run(AbstractBuild build, Launcher launcher, BuildListener listener) {
-            //super(launcher, listener);
-            this(build, launcher, listener, new FilePath(build.getWorkspace(), dockerFileDirectory), expandTags(build, launcher, listener), JenkinsUtils.getCloudForBuild(build));
-        }
-
         public Run(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
             this(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), tags, JenkinsUtils.getCloudForChannel(launcher.getChannel()));
         }
@@ -298,17 +293,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
     }
 
-    /**
-     * Traditional build.
-     */
-    @Override
-    public boolean perform(final AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
-        return new Run(build, launcher, listener).run();
-    }
-
-    /**
-     * Workflow
-     */
     @Override
     public void perform(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
         new Run(run, workspace, launcher, listener).run();
