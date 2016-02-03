@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import java.util.Collections;
+
 import com.nirima.jenkins.plugins.docker.DockerImagePullStrategy;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
@@ -7,6 +9,7 @@ import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Node;
 import hudson.plugins.sshslaves.SSHConnector;
+import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import hudson.tasks.Builder;
 
@@ -65,8 +68,9 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
         );
 
         final DockerTemplate dockerTemplate = new DockerTemplate(dockerTemplateBase, labelString, remoteFs,
-                remoteFsMapping, instanceCapStr, Node.Mode.NORMAL, 1, dockerComputerSSHLauncher,
-                new DockerOnceRetentionStrategy(10), false, DockerImagePullStrategy.PULL_LATEST);
+                remoteFsMapping, instanceCapStr, Collections.<NodeProperty<?>>emptyList(), Node.Mode.NORMAL,
+                1, dockerComputerSSHLauncher, new DockerOnceRetentionStrategy(10), false, 
+                DockerImagePullStrategy.PULL_LATEST);
         setDockerTemplate(dockerTemplate);
     }
 

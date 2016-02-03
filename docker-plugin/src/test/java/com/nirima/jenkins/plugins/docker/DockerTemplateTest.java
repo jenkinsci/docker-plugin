@@ -1,8 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+
+import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 public class DockerTemplateTest {
@@ -47,7 +50,8 @@ public class DockerTemplateTest {
                 labelString,
                 remoteFs,
                 remoteFsMapping,
-                instanceCapStr
+                instanceCapStr,
+                null
         );
     }
 

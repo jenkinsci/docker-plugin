@@ -90,3 +90,6 @@ f.entry(title: _("Pull strategy"), field: "pullStrategy") {
         text(my.description)
     }
 }
+
+f.descriptorList(title: _("Node Properties"), descriptors: hudson.Functions.getNodePropertyDescriptors(descriptor.clazz), field: "nodeProperties") {
+}
