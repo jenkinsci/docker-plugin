@@ -9,7 +9,10 @@ import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
+import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
@@ -21,6 +24,10 @@ import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Strings;
 
 import javax.annotation.CheckForNull;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,6 +64,10 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     private transient /*almost final*/ Set<LabelAtom> labelSet;
 
     private @CheckForNull DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
+        
+    private DescribableList<NodeProperty<?>, NodePropertyDescriptor> nodeProperties = 
+        new DescribableList<NodeProperty<?>, NodePropertyDescriptor>(Jenkins.getInstance());
+
 
     /**
      * fully default
@@ -72,7 +83,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                           String labelString,
                           String remoteFs,
                           String remoteFsMapping,
-                          String instanceCapStr
+                          String instanceCapStr,
+                          List<? extends NodeProperty<?>> nodeProperties
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.labelString = Util.fixNull(labelString);
@@ -86,10 +98,16 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         }
 
         labelSet = Label.parse(labelString);
+        
+        this.nodeProperties.clear();
+        if (nodeProperties != null) {
+            this.nodeProperties.addAll(nodeProperties);
+        }
     }
 
     /**
      * Contains all available arguments
+     * @throws IOException 
      */
     @Restricted(value = NoExternalUse.class)
     public DockerTemplate(DockerTemplateBase dockerTemplateBase,
@@ -97,6 +115,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                           String remoteFs,
                           String remoteFsMapping,
                           String instanceCapStr,
+                          List<? extends NodeProperty<?>> nodeProperties,
                           Node.Mode mode,
                           int numExecutors,
                           DockerComputerLauncher launcher,
@@ -107,7 +126,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 labelString,
                 remoteFs,
                 remoteFsMapping,
-                instanceCapStr);
+                instanceCapStr,
+                nodeProperties);
         setMode(mode);
         setNumExecutors(numExecutors);
         setLauncher(launcher);
@@ -224,6 +244,34 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     public void setPullStrategy(DockerImagePullStrategy pullStrategy) {
         this.pullStrategy = pullStrategy;
     }
+    
+    public List<? extends NodeProperty<?>> getNodeProperties() {
+        return Collections.<NodeProperty<?>>unmodifiableList(nodeProperties);
+    }
+    
+    @DataBoundSetter
+    public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) throws IOException {
+        this.nodeProperties.replaceBy(nodeProperties);
+    }
+    
+    /**
+     * Xstream ignores default field values, so set them explicitly
+     */
+    private void configDefaults() {
+        if (mode == null) {
+            mode = Node.Mode.NORMAL;
+        }
+        if (retentionStrategy == null) {
+            retentionStrategy = new DockerOnceRetentionStrategy(10);
+        }
+        if (pullStrategy == null) {
+            pullStrategy = DockerImagePullStrategy.PULL_LATEST;
+        }
+        if (nodeProperties == null) {
+            nodeProperties = 
+                new DescribableList<NodeProperty<?>, NodePropertyDescriptor>(Jenkins.getInstance());
+        }
+    }
 
     /**
      * Initializes data structure that we don't persist.
@@ -245,16 +293,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 }
                 configVersion = 2;
             } else {
-                // Xstream ignores default field values, so set them explicitly
-                if (mode == null) {
-                    mode = Node.Mode.NORMAL;
-                }
-                if (retentionStrategy == null) {
-                    retentionStrategy = new DockerOnceRetentionStrategy(10);
-                }
-                if (pullStrategy == null) {
-                    pullStrategy = DockerImagePullStrategy.PULL_LATEST;
-                }
+               configDefaults();
             }
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Can't convert old values to new (double conversion?): ", t);
@@ -284,6 +323,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 ", dockerTemplateBase=" + dockerTemplateBase +
                 ", removeVolumes=" + removeVolumes +
                 ", pullStrategy=" + pullStrategy +
+                ", nodeProperties=" + nodeProperties +
                 '}';
     }
 
