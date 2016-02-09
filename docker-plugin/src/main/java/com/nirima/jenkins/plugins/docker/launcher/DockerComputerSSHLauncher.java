@@ -131,7 +131,10 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
             host = URI.create(DockerCloud.getCloudByName(cloudId).serverUrl).getHost();
-            if (host == null || host.equals("0.0.0.0")) {
+
+            /* Don't use IP from DOCKER_HOST because it is invalid or we are connecting
+             * to a system that supports a single host abstraction like Joyent's Triton. */
+            if (host == null || host.equals("0.0.0.0") || ir.getDriver().equals("sdc")) {
                 // Try to connect to the container directly (without going through the host)
                 host = networkSettings.getIpAddress();
                 port = sshConnector.port;
