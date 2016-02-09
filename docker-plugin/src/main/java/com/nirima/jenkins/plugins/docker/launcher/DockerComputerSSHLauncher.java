@@ -132,9 +132,10 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         if (host == null || host.equals("0.0.0.0")) {
             host = URI.create(DockerCloud.getCloudByName(cloudId).serverUrl).getHost();
 
-            /* Don't use IP from DOCKER_HOST because it is invalid or we are connecting
-             * to a system that supports a single host abstraction like Joyent's Triton. */
-            if (host == null || host.equals("0.0.0.0") || ir.getDriver().equals("sdc")) {
+            /* Don't use IP from DOCKER_HOST because it is invalid or we are
+             * connecting to a system that supports a single host abstraction
+             * like Joyent's Triton. */
+            if (host == null || host.equals("0.0.0.0") || usesSingleHostAbstraction(ir)) {
                 // Try to connect to the container directly (without going through the host)
                 host = networkSettings.getIpAddress();
                 port = sshConnector.port;
@@ -147,6 +148,30 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     @Override
     public Descriptor<ComputerLauncher> getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    /**
+     * <p>Checks a {@link InspectContainerResponse} object to see if the server
+     * uses a single host abstraction model. If it does, then we return
+     * true.</p>
+     *
+     * <p>A Docker single host abstraction is when an entire fleet of
+     * provisional resources are presented as if they reside on a single host,
+     * but in fact they do not. This allows a user to elastically provision as
+     * many resources as they want without having to worry about filling up a
+     * single host system.</p>
+     *
+     * @param inspect response from Docker API
+     * @return true if the server API supports a single host abstraction
+     */
+    protected static boolean usesSingleHostAbstraction(
+            InspectContainerResponse inspect) {
+        Preconditions.checkNotNull(inspect);
+
+        /* Fill this in with more robust logic when more servers supporting
+         * this model become available (e.g. VMWare's project Bonneville and
+         * Microsoft's offering). */
+        return inspect.getDriver().equals("sdc");
     }
 
     @Restricted(NoExternalUse.class)
