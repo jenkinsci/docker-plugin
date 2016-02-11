@@ -48,6 +48,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final Integer cpuShares;
     public final boolean bindAllPorts;
     public final String macAddress;
+    public final String devicesString;
 
     @DataBoundConstructor
     public DockerBuilderControlOptionRun(
@@ -67,7 +68,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             boolean bindAllPorts,
             boolean privileged,
             boolean tty,
-            String macAddress) {
+            String macAddress,
+            String devicesString) {
         super(cloudName);
         this.image = image;
 
@@ -86,6 +88,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.cpuShares = cpuShares;
         this.bindAllPorts = bindAllPorts;
         this.macAddress = macAddress;
+        this.devicesString = devicesString;
     }
 
     @Override
@@ -118,7 +121,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
                 dnsString, xCommand,
                 volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,
-                memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
+                memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress,
+                devicesString);
 
         LOG.info("Starting container for image {}", xImage);
         llog.println("Starting container for image " + xImage);

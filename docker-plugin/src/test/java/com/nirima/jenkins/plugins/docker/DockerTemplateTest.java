@@ -33,12 +33,14 @@ public class DockerTemplateTest {
     boolean privileged = false;
     boolean tty = false;
     String macAddress = "92:d0:c6:0a:29:33";
+    String devicesString = "/dev/nvidia0:/dev/nvidia0";
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString,
                 dockerCommand, volumesString, volumesString, environmentsString,
-                lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
+                lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty,
+                macAddress, devicesString);
 
         return new DockerTemplate(
                 dockerTemplateBase,

@@ -70,4 +70,8 @@ f.advanced(title: _("Container settings"), align: "left") {
     f.entry(title: _("Extra Hosts"), field: "extraHostsString") {
         f.expandableTextbox()
     }
+
+    f.entry(title: _("Devices"), field: "devicesString") {
+        f.expandableTextbox()
+    }
 }
