@@ -17,6 +17,7 @@
         <f:entry title="${%Clean local images}" field="cleanImages">
             <f:checkbox default="true"/>
         </f:entry>
-    </f:optionalBlock>
 
+        <f:optionalProperty title="${%Define a Docker template}" field="dockerJobTemplate"/>        
+    </f:optionalBlock>
 </j:jelly>
