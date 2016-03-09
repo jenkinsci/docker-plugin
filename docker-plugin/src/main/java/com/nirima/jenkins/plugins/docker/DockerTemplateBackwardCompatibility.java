@@ -90,6 +90,9 @@ public abstract class DockerTemplateBackwardCompatibility {
     @Deprecated
     private transient String[] dnsHosts;
 
+    @Deprecated
+    private transient String network;
+
     /**
      * Every String is volume specification
      */
@@ -134,6 +137,11 @@ public abstract class DockerTemplateBackwardCompatibility {
     @Deprecated
     private String getDnsString() {
         return Joiner.on(" ").join(dnsHosts);
+    }
+
+    @Deprecated
+    private String getNetwork() {
+        return network;
     }
 
     @Deprecated
@@ -202,6 +210,7 @@ public abstract class DockerTemplateBackwardCompatibility {
         // migrate dockerTemplate
         setDockerTemplateBase(new DockerTemplateBase(image,
                         getDnsString(),
+                        getNetwork(),
                         dockerCommand,
                         getVolumesString(),
                         volumesFrom != null ? volumesFrom : getVolumesFromString(),
