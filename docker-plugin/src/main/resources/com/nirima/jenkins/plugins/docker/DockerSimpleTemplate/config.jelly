@@ -12,6 +12,10 @@
             <f:textbox/>
         </f:entry>
 
+        <f:entry title="${%NETWORK}" field="network">
+            <f:textbox/>
+        </f:entry>
+
         <f:entry title="${%Port bindings}" field="bindPorts">
             <f:textbox/>
         </f:entry>

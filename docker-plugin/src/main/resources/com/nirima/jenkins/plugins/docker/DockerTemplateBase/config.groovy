@@ -22,6 +22,10 @@ f.advanced(title: _("Container settings"), align: "left") {
     f.entry(title: _("DNS"), field: "dnsString") {
         f.textbox()
     }
+    
+    f.entry(title: ("Network"), field: "network") {
+        f.textbox()
+    }
 
     f.entry(title: _("Volumes"), field: "volumesString") {
         f.expandableTextbox()

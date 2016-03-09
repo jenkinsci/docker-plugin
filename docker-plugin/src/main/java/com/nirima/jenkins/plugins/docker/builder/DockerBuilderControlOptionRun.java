@@ -34,6 +34,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
     public final String image;
     public final String dnsString;
+    public final String network;
     public final String dockerCommand;
     public final String volumesString;
     public final String volumesFrom;
@@ -55,6 +56,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String image,
             String lxcConfString,
             String dnsString,
+            String network,
             String dockerCommand,
             String volumesString,
             String volumesFrom,
@@ -73,6 +75,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         this.lxcConfString = lxcConfString;
         this.dnsString = dnsString;
+        this.network = network;
         this.dockerCommand = dockerCommand;
         this.volumesString = volumesString;
         this.volumesFrom = volumesFrom;
@@ -116,7 +119,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         client.pullImageCmd(xImage).exec(resultCallback).awaitSuccess();
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
-                dnsString, xCommand,
+                dnsString, network, xCommand,
                 volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,
                 memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
 
