@@ -9,8 +9,10 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import shaded.com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
 import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
@@ -22,13 +24,11 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
-import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import jenkins.MasterToSlaveFileCallable;
-import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.lang.Validate;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
@@ -53,6 +53,9 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
  * Builder extension to build / publish an image from a Dockerfile.
  */
 public class DockerBuilderPublisher extends Builder implements Serializable, SimpleBuildStep {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderPublisher.class);
+
     private static final Pattern VALID_REPO_PATTERN = Pattern.compile("^([a-z0-9-_.]+)$");
 
     public final String dockerFileDirectory;
@@ -70,8 +73,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public final boolean cleanImages;
     public final boolean cleanupWithJenkinsJobDelete;
 
+    public final String cloud;
+
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
+                                  String cloud,
                                   String tagsString,
                                   boolean pushOnSuccess,
                                   boolean cleanImages,
@@ -79,6 +85,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         this.dockerFileDirectory = dockerFileDirectory;
         setTagsString(tagsString);
         this.tag = null;
+        this.cloud = cloud;
         this.pushOnSuccess = pushOnSuccess;
         this.cleanImages = cleanImages;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
@@ -113,6 +120,37 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
     }
 
+    protected DockerCloud getCloud(Launcher launcher) {
+
+        DockerCloud theCloud;
+
+        if( !Strings.isNullOrEmpty(cloud) ) {
+            theCloud = JenkinsUtils.getServer(cloud);
+        } else {
+
+            Optional<DockerCloud> cloud = JenkinsUtils.getCloudForChannel(launcher.getChannel());
+            if (!cloud.isPresent())
+                throw new RuntimeException("Could not find the cloud this project was built on");
+
+            theCloud = cloud.get();
+        }
+
+        // Triton can't do docker build. Ensure we're not trying to do that.
+        if( theCloud.isTriton() ) {
+            LOGGER.warn("Selected cloud for build does not support this feature. Finding an alternative");
+
+            for(DockerCloud dc : JenkinsUtils.getServers()) {
+                if( !dc.isTriton() ) {
+                    LOGGER.warn("Picked {} cloud instead", dc.getDisplayName());
+                    return dc;
+                }
+            }
+
+        }
+
+        return theCloud;
+    }
+
     class Run implements Serializable {
 
         final transient Launcher launcher;
@@ -133,7 +171,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         final String url;
 
 
-        private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, Optional<DockerCloud> cloudThatBuildRanOn) {
+        private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerCloud dockerCloud) {
 
             this.run = run;
             this.launcher = launcher;
@@ -141,27 +179,20 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             this.fpChild = fpChild;
             this.tagsToUse = tagsToUse;
 
-            if (cloudThatBuildRanOn.isPresent()) {
 
-                // Don't build it yet. This may happen on a remote server.
-                clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
-                       .forCloud(cloudThatBuildRanOn.get()).build();
-                dockerCmdExecConfig = DockerCmdExecConfigBuilderForPlugin.builder()
-                        .forCloud(cloudThatBuildRanOn.get()).build();
+            // Don't build it yet. This may happen on a remote server.
+            clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
+                   .forCloud(dockerCloud).build();
+            dockerCmdExecConfig = DockerCmdExecConfigBuilderForPlugin.builder()
+                    .forCloud(dockerCloud).build();
 
-                url = cloudThatBuildRanOn.get().serverUrl;
-
-            } else {
-                clientConfig = null;
-                dockerCmdExecConfig = null;
-                url = null;
-            }
+            url = dockerCloud.serverUrl;
 
         }
 
-        public Run(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) {
-            this(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), tags, JenkinsUtils.getCloudForChannel(launcher.getChannel()));
-        }
+//        public Run(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener, DockerCloud cloud) {
+//            this(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), expandTags(run, launcher, listener), cloud);
+//        }
 
         private DockerClient getClient() {
             if (_client == null) {
@@ -295,10 +326,25 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     @Override
     public void perform(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
-        new Run(run, workspace, launcher, listener).run();
+
+        List<String> expandedTags;
+
+        if( run instanceof AbstractBuild) {
+            expandedTags = expandTags((AbstractBuild<?, ?>) run, launcher, listener);
+        } else {
+            expandedTags =  tags;
+        }
+        new Run(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), expandedTags, getCloud(launcher)).run();
+
     }
 
-    private List<String> expandTags(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
+    }
+
+
+    private List<String> expandTags(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) {
         List<String> eTags = new ArrayList<>(tags.size());
         for (String tag : tags) {
             try {
