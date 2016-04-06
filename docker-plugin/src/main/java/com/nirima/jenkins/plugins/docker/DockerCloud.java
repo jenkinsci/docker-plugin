@@ -12,6 +12,7 @@ import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
+import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -81,6 +82,11 @@ public class DockerCloud extends Cloud {
      * Is this cloud actually a swarm?
      */
     private transient Boolean _isSwarm;
+
+    /**
+     * Is this cloud running Joyent Triton?
+     */
+    private transient Boolean _isTriton;
 
     /**
      * Track the count per image name for images currently being
@@ -583,6 +589,16 @@ public class DockerCloud extends Cloud {
         }
         return _isSwarm;
     }
+
+    public boolean isTriton() {
+        Version remoteVersion = getClient().versionCmd().exec();
+
+        if( _isTriton == null ) {
+            _isTriton = remoteVersion.getOperatingSystem().equals("solaris");
+        }
+        return _isTriton;
+    }
+
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
