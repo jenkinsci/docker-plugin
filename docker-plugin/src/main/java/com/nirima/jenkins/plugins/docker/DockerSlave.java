@@ -43,6 +43,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
     private transient Run theRun;
 
+    @DataBoundConstructor
     public DockerSlave(DockerTemplate dockerTemplate, String containerId,
                        String name, String nodeDescription,
                        String remoteFS, int numExecutors, Mode mode,
@@ -58,6 +59,7 @@ public class DockerSlave extends AbstractCloudSlave {
         this.containerId = containerId;
     }
 
+    @DataBoundConstructor
     public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId,
                        DockerTemplate dockerTemplate, String cloudId)
             throws IOException, Descriptor.FormException {
