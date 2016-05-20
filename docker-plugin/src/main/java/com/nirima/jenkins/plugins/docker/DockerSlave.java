@@ -43,7 +43,6 @@ public class DockerSlave extends AbstractCloudSlave {
 
     private transient Run theRun;
 
-    @DataBoundConstructor
     public DockerSlave(DockerTemplate dockerTemplate, String containerId,
                        String name, String nodeDescription,
                        String remoteFS, int numExecutors, Mode mode,
