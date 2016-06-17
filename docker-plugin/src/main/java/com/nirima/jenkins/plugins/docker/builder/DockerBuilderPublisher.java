@@ -1,14 +1,24 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.common.CertificateCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerClientException;
+import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.KeystoreSSLConfig;
+import com.github.dockerjava.core.LocalDirectorySSLConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
+import com.nirima.jenkins.plugins.docker.DockerPluginConfiguration;
+import com.nirima.jenkins.plugins.docker.DockerRegistry;
+import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import shaded.com.google.common.base.Strings;
@@ -46,7 +56,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfigFor;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
+import static hudson.plugins.sshslaves.SSHLauncher.lookupSystemCredentials;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
@@ -300,7 +312,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         private void pushImages() {
             for (String tagToUse : tagsToUse) {
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
-
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {
                     public void onNext(PushResponseItem item) {
                         if( item == null ) {
@@ -313,7 +324,12 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     }
                 };
                 try {
-                    getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
+                    PushImageCmd cmd = getClient().pushImageCmd(identifier);
+                    AuthConfig authConfig = getAuthConfigFor(tagToUse);
+                    if( authConfig != null ) {
+                        cmd.withAuthConfig(authConfig);
+                    }
+                    cmd.exec(resultCallback).awaitSuccess();
                 } catch(DockerClientException ex) {
                     // Private Docker registries fall over regularly. Tell the user so they
                     // have some clue as to what to do as the exception gives no hint.
@@ -322,6 +338,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 }
             }
         }
+
+
+
     }
 
     @Override
