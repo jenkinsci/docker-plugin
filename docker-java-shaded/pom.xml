@@ -20,7 +20,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <docker-java.version>2.1.1</docker-java.version>
+
+        <!-- private fork. If you don't care about wildcard SSL certificates,
+        you can bump this down to 2.2.3 -->
+
+        <docker-java.version>2.2.4-jenkins</docker-java.version>
     </properties>
 
     <repositories>

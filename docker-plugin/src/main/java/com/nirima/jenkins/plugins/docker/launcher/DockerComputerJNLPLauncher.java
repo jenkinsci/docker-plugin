@@ -5,6 +5,7 @@ import com.github.dockerjava.api.NotFoundException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerComputer;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.model.Descriptor;
@@ -120,13 +121,12 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             LOGGER.info("Starting connection command for {}", containerId);
             logger.println("Starting connection command for " + containerId);
 
-            try (InputStream exec = connect
-                    .execStartCmd(response.getId())
-                    .withDetach()
-                    .withTty()
-                    .exec()
-            ) {
-                //nothing, just want to be closed
+
+            try {
+                connect.execStartCmd(response.getId())
+                        .withDetach()
+                        .withTty()
+                        .exec( new ExecStartResultCallback(null,null));
             } catch (NotFoundException ex) {
                 listener.error("Can't execute command: " + ex.getMessage());
                 LOGGER.error("Can't execute jnlp connection command: '{}'", ex.getMessage());
