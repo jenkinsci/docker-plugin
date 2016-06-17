@@ -3,9 +3,8 @@ package com.nirima.jenkins.plugins.docker;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
-import com.cloudbees.plugins.credentials.common.IdCredentials;
-import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import com.cloudbees.plugins.credentials.common.*;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.*;
@@ -25,6 +24,7 @@ import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
+import hudson.security.ACL;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner;
@@ -640,21 +640,16 @@ public class DockerCloud extends Cloud {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
 
-            List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context);
-            List<DockerDirectoryCredentials> c2 = CredentialsProvider.lookupCredentials(DockerDirectoryCredentials.class, context);
+            List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
+            List<DockerDirectoryCredentials> c2 = CredentialsProvider.lookupCredentials(DockerDirectoryCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
 
-            return new CredentialsListBoxModel().withEmptySelection()
+            return new StandardListBoxModel()
+                    .withEmptySelection()
                     .withMatching(CredentialsMatchers.always(), credentials)
                     .withMatching(CredentialsMatchers.always(), c2);
         }
 
-        public static class CredentialsListBoxModel
-                extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, IdCredentials> {
-            @NonNull
-            protected String describe(@NonNull IdCredentials c) {
-                return CredentialsNameProvider.name(c);
-            }
-        }
+
     }
 
 }
