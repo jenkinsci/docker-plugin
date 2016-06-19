@@ -9,6 +9,7 @@ import jenkins.model.Jenkins;
 public class DockerSimpleTemplate extends DockerTemplateBase {
     public DockerSimpleTemplate(String image,
                                 String dnsString,
+                                String network,
                                 String dockerCommand,
                                 String volumesString,
                                 String volumesFrom,
@@ -25,6 +26,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                                 String macAddress) {
         super(image,
                 dnsString,
+                network,
                 dockerCommand,
                 volumesString,
                 volumesFrom,
