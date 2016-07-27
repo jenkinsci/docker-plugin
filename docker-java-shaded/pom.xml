@@ -6,7 +6,7 @@
      transient jenkins dependencies. -->
     <groupId>com.nirima</groupId>
     <artifactId>docker-java-shaded</artifactId>
-    <version>0.16.1-SNAPSHOT</version>
+    <version>0.16.1</version>
     <packaging>jar</packaging>
 
     <name>Docker-java shaded jar for jenkins plugin</name>
