@@ -35,6 +35,7 @@ import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -540,15 +541,15 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Counts the number of instances in Docker currently running that are using the specified image.
-     *
-     * @param imageName If null, then all instances are counted.
-     *            <p/>
-     *            This includes those instances that may be started outside Hudson.
+     * Counts the number of containers (if applicable only for those which 
+     * use a given image) in a list of Containers.
+     * @param imageName If <code>null</code>, then all instances are counted.
+     * @param containers The list of containers, which should be counted
+     * @return the number of containers complying to the specification above
+     * @throws Exception
      */
-    public int countCurrentDockerSlaves(final String imageName) throws Exception {
+    private int countCurrentDockerSlavesByContainerList(final String imageName, List<Container> containers) throws Exception {
         int count = 0;
-        List<Container> containers = getClient().listContainersCmd().exec();
 
         if (imageName == null) {
             count = containers.size();
@@ -560,8 +561,52 @@ public class DockerCloud extends Cloud {
                 }
             }
         }
-
         return count;
+    }
+    
+    /**
+     * Counts the number of instances in Docker currently running that are using the specified image.
+     *
+     * @param imageName If null, then all instances are counted.
+     *            <p/>
+     *            This includes those instances that may be started outside Hudson.
+     */
+    public int countCurrentDockerSlaves(final String imageName) throws Exception {
+        List<Container> containers = getClient().listContainersCmd().exec();
+
+        return this.countCurrentDockerSlavesByContainerList(imageName, containers);
+    }
+    
+    /**
+     * Counts the number of instances in Docker currently running that are using the specified image.
+     * Those instances, which are not started by this Hudson instance, are <b>not</b> counted.
+     *
+     * @param imageName If null, all instances are counted. If specified, only those containers using the
+     * specified images are counted
+     */
+    private int countCurrentDockerSlavesByUs(final String imageName) throws Exception {
+        int count = 0;
+        
+        /* In Docker environments it needs to be ensured that we only 
+         * consider those containers which are currently running, which
+         * also the currently running Jenkins instance has started before.
+         * Scenario: One Docker server is being used by two Jenkins instances.
+         * Jenkins does not filter based on the origin (either by source IP or 
+         * by login credentials), but always shows all containers currently 
+         * running.
+         * NB: SDC/Triton behaves differently and only shows those containers
+         * of the same login credentials.
+         * 
+         * To achieve this, the list command will be filtered by the label,
+         * which is introduced automatically for all the containers the plugin
+         * has started.
+         */
+        String label = String.format("%s=%s", DockerTemplateBase.CONTAINER_LABEL_JENKINS_ID, JenkinsUtils.getInstanceId());
+        List<Container> containers = getClient().listContainersCmd()
+                .withLabelFilter(label)
+                .exec();
+        
+        return this.countCurrentDockerSlavesByContainerList(imageName, containers);
     }
 
     /**
@@ -571,9 +616,12 @@ public class DockerCloud extends Cloud {
         String ami = t.getDockerTemplateBase().getImage();
         int amiCap = t.instanceCap;
 
-        int estimatedTotalSlaves = countCurrentDockerSlaves(null);
-        int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
+        int estimatedTotalSlaves = countCurrentDockerSlavesByUs(null);
+        int estimatedAmiSlaves = countCurrentDockerSlavesByUs(ami);
 
+        LOGGER.info("There is/are {} container(s) running from us (Container Cap is set to {})", estimatedTotalSlaves, this.getContainerCap());
+        LOGGER.info("of those {} container(s) are running with image '{}' (Instance Limit is set to {})", estimatedAmiSlaves, ami, t.getInstanceCap());
+        
         synchronized (provisionedImages) {
             int currentProvisioning = 0;
             if (provisionedImages.containsKey(ami)) {
