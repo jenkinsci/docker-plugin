@@ -30,7 +30,7 @@ f.slave_mode(name: "mode", node: instance)
 
 f.advanced(title: _("Experimental Options"), align: "left") {
     f.dropdownList(name: "retentionStrategy", title: _("Availability"),
-            help: "/help/system-config/master-slave/availability.html") {
+            help: "/descriptor/com.nirima.jenkins.plugins.docker.DockerTemplate/help/retentionStrategy") {
         DockerFunctions.dockerRetentionStrategyDescriptors.each { sd ->
             if (sd != null) {
                 def prefix = sd.displayName.equals("Docker Once Retention Strategy") ? "" : "Experimental: "
