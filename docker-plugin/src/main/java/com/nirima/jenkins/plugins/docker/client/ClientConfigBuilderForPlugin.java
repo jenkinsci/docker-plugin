@@ -5,6 +5,7 @@ import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.dockerjava.core.LocalDirectorySSLConfig;
@@ -22,7 +23,7 @@ import java.util.logging.Logger;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-import static com.github.dockerjava.core.DockerClientConfig.createDefaultConfigBuilder;
+import static com.github.dockerjava.core.DefaultDockerClientConfig.createDefaultConfigBuilder;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
@@ -32,7 +33,7 @@ public class ClientConfigBuilderForPlugin {
 
     private static final Logger LOGGER = Logger.getLogger(ClientConfigBuilderForPlugin.class.getName());
 
-    private DockerClientConfig.DockerClientConfigBuilder config = createDefaultConfigBuilder();
+    private DefaultDockerClientConfig.Builder config = createDefaultConfigBuilder();
 
     private ClientConfigBuilderForPlugin() {
     }
@@ -66,8 +67,8 @@ public class ClientConfigBuilderForPlugin {
      * @return this builder
      */
     public ClientConfigBuilderForPlugin forServer(String uri, @Nullable String version) {
-        config.withUri(URI.create(uri).toString())
-                .withVersion(version);
+        config.withDockerHost(URI.create(uri).toString())
+                .withApiVersion(version);
         return this;
     }
 
@@ -84,21 +85,21 @@ public class ClientConfigBuilderForPlugin {
 
             if (credentials instanceof CertificateCredentials) {
                 CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
-                config.withSSLConfig(new KeystoreSSLConfig(
+                config.withCustomSslConfig(new KeystoreSSLConfig(
                         certificateCredentials.getKeyStore(),
                         certificateCredentials.getPassword().getPlainText()
                 ));
             }
             else if( credentials instanceof DockerDirectoryCredentials) {
                 DockerDirectoryCredentials ddc = (DockerDirectoryCredentials)credentials;
-                config.withSSLConfig( new LocalDirectorySSLConfig(ddc.getPath()));
+                config.withCustomSslConfig( new LocalDirectorySSLConfig(ddc.getPath()));
 
             } else if (credentials instanceof StandardUsernamePasswordCredentials) {
                 StandardUsernamePasswordCredentials usernamePasswordCredentials =
                         ((StandardUsernamePasswordCredentials) credentials);
 
-                config.withUsername(usernamePasswordCredentials.getUsername());
-                config.withPassword(usernamePasswordCredentials.getPassword().getPlainText());
+                config.withRegistryUsername(usernamePasswordCredentials.getUsername());
+                config.withRegistryPassword(usernamePasswordCredentials.getPassword().getPlainText());
             }
         }
         return this;
@@ -128,7 +129,7 @@ public class ClientConfigBuilderForPlugin {
      *
      * @return docker config builder
      */
-    /* package */ DockerClientConfig.DockerClientConfigBuilder config() {
+    /* package */ DefaultDockerClientConfig.Builder config() {
         return config;
     }
 

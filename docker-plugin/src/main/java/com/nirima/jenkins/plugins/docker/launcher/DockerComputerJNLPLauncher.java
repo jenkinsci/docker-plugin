@@ -1,7 +1,7 @@
 package com.nirima.jenkins.plugins.docker.launcher;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.NotFoundException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
@@ -110,10 +110,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 //            logger.println("Creating jnlp connection command '" + Arrays.toString(connectCmd) + "' for '" + containerId + "'");
 
             final ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
-                    .withTty()
-                    .withAttachStdin()
-                    .withAttachStderr()
-                    .withAttachStdout()
+                    .withTty(true)
+                    .withAttachStdin(true)
+                    .withAttachStderr(true)
+                    .withAttachStdout(true)
 //                    .withCmd(connectCmd)
                     .withCmd("/bin/bash", "-cxe", startCmd.replace("$", "\\$"))
                     .exec();
@@ -124,8 +124,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
             try {
                 connect.execStartCmd(response.getId())
-                        .withDetach()
-                        .withTty()
+                        .withDetach(true)
+                        .withTty(true)
                         .exec( new ExecStartResultCallback(null,null));
             } catch (NotFoundException ex) {
                 listener.error("Can't execute command: " + ex.getMessage());

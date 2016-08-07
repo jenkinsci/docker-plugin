@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker.launcher;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
@@ -115,7 +116,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         String host = null;
         Integer port = 22;
 
-        final InspectContainerResponse.NetworkSettings networkSettings = ir.getNetworkSettings();
+        final NetworkSettings networkSettings = ir.getNetworkSettings();
         final Ports ports = networkSettings.getPorts();
         final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
 
@@ -124,7 +125,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         // Find where it's mapped to
         for (Ports.Binding b : sshBindings) {
-            port = b.getHostPort();
+            port = Integer.valueOf(b.getHostPortSpec());
             host = b.getHostIp();
         }
 

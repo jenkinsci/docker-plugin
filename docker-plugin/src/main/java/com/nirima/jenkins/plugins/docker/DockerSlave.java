@@ -1,8 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.DockerClientException;
-import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.exception.DockerClientException;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Identifier;
@@ -264,7 +264,7 @@ public class DockerSlave extends AbstractCloudSlave {
         if (getJobProperty().cleanImages) {
 
             client.removeImageCmd(tag_image)
-                    .withForce()
+                    .withForce(true)
                     .exec();
         }
 

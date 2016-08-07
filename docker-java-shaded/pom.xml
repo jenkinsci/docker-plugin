@@ -24,7 +24,7 @@
         <!-- private fork. If you don't care about wildcard SSL certificates,
         you can bump this down to 2.2.3 -->
 
-        <docker-java.version>2.2.4-jenkins</docker-java.version>
+        <docker-java.version>3.0.1</docker-java.version>
     </properties>
 
     <repositories>

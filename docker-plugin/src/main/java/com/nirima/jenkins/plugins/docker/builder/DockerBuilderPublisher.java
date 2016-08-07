@@ -4,7 +4,7 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.DockerClientException;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.BuildResponseItem;
@@ -262,7 +262,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         private void cleanImages(String id) {
             getClient().removeImageCmd(id)
-                    .withForce()
+                    .withForce(true)
                     .exec();
         }
 

@@ -144,9 +144,9 @@ public class JenkinsUtils {
             StandardUsernamePasswordCredentials usernamePasswordCredentials =
                     ((StandardUsernamePasswordCredentials) credentials);
 
-            AuthConfig ac = new AuthConfig();
-            ac.setUsername( usernamePasswordCredentials.getUsername() );
-            ac.setPassword( usernamePasswordCredentials.getPassword().getPlainText() );
+            AuthConfig ac = new AuthConfig()
+            		.withUsername( usernamePasswordCredentials.getUsername() )
+            		.withPassword( usernamePasswordCredentials.getPassword().getPlainText() );
 
             return ac;
         }
