@@ -54,7 +54,7 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
                                     String jvmOptions, String javaPath,
                                     Integer memoryLimit, Integer cpuShares,
                                     String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                                    String instanceCapStr, String dnsString,
+                                    String instanceCapStr, String dnsString, String network,
                                     String dockerCommand,
                                     String volumesString, String volumesFrom,
                                     String environmentsString,
@@ -81,6 +81,7 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
         this.instanceCapStr = instanceCapStr;
         this.dnsString = dnsString;
+        this.network = network;
         this.dockerCommand = dockerCommand;
         this.volumesString = volumesString;
         this.volumesFrom = volumesFrom;

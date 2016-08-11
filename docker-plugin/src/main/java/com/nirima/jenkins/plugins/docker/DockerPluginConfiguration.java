@@ -6,13 +6,21 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.util.Collections;
+import java.util.List;
+
 @Extension
 public class DockerPluginConfiguration extends GlobalConfiguration {
 
     /**
      * Work around option.
      */
-    public Boolean pullFix;
+    private Boolean pullFix;
+
+    /**
+     * List of registries
+     */
+    private List<DockerRegistry> registryList = Collections.emptyList();
 
     /**
      * Returns this singleton instance.
@@ -29,7 +37,7 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
 
     @Override
     public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-        req.bindJSON(this, json);
+        req.bindJSON(this,json);
         return true;
     }
 
@@ -39,9 +47,27 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
         return pullFix;
     }
 
-    @DataBoundSetter
-    public final void setPullFix(boolean pullFix) {
-        this.pullFix = pullFix;
+    public DockerRegistry getRegistryByName(String registryName) {
+        for(DockerRegistry registry : registryList) {
+            if( registry.registry.equalsIgnoreCase(registryName))
+                return registry;
+        }
+        // Not found
+        return null;
     }
 
+
+    public final void setPullFix(boolean pullFix) {
+        this.pullFix = pullFix;
+        save();
+    }
+
+    public void setRegistryList(List<DockerRegistry> registryList) {
+        this.registryList = registryList;
+        save();
+    }
+
+    public List<DockerRegistry> getRegistryList() {
+        return registryList;
+    }
 }

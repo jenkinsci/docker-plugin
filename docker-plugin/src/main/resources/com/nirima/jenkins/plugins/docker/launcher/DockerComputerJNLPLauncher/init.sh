@@ -51,7 +51,7 @@ fi
 
 RUN_CMD="java -jar ${JENKINS_HOME}/slave.jar $RUN_OPTS"
 if [ ! -z "$JENKINS_USER" ] && [ x"$JENKINS_USER" != "xroot" ] && [ "$JENKINS_USER" != "null" ]; then
- RUN_CMD="su - $JENKINS_USER -c '$RUN_CMD'"
+  su - $JENKINS_USER -c "$RUN_CMD"
+else
+  $RUN_CMD
 fi
-
-$RUN_CMD

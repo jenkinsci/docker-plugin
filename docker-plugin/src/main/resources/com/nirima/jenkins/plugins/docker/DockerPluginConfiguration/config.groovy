@@ -8,4 +8,7 @@ f.section(title:"Docker Plugin") {
         f.checkbox()
     }
 
+    f.entry(title: _("Registry Credentials")) {
+        f.repeatableHeteroProperty( field: "registryList", addCaption:"Add Registry", deleteCaption:"Remove Registry");
+    }
 }

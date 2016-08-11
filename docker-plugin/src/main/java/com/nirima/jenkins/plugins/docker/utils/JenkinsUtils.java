@@ -1,6 +1,15 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.AuthConfig;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.core.NameParser;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.DockerPluginConfiguration;
+import com.nirima.jenkins.plugins.docker.DockerRegistry;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -16,7 +25,12 @@ import shaded.com.google.common.collect.Collections2;
 import shaded.com.google.common.collect.Iterables;
 
 import javax.annotation.Nullable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.Map;
+
+import static hudson.plugins.sshslaves.SSHLauncher.lookupSystemCredentials;
 
 /**
  * Utilities to fetch things out of jenkins environment.
@@ -94,4 +108,49 @@ public class JenkinsUtils {
         });
     }
 
+    public static String getHostnameFromBinding(InspectContainerResponse inspectContainerResponse) {
+        Map<ExposedPort, Ports.Binding[]> bindings = inspectContainerResponse.getHostConfig().getPortBindings().getBindings();
+        if (bindings != null && !bindings.isEmpty())  {
+            Ports.Binding[] binding = bindings.values().iterator().next();
+            if (binding != null && binding.length > 0) {
+                String hostIp = binding[0].getHostIp();
+                return getHostnameForIp(hostIp);
+            }
+        }
+
+        return null;
+    }
+
+    private static String getHostnameForIp(String hospIp) {
+        try {
+            return InetAddress.getByName(hospIp).getHostName();
+        } catch (UnknownHostException e) {
+            return hospIp;
+        }
+    }
+
+    public static AuthConfig getAuthConfigFor(String imageName) {
+        // Do we have an auth config for the registry defined in this tag?
+        NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(imageName);
+        NameParser.HostnameReposName hostnameReposName = NameParser.resolveRepositoryName(reposTag.repos);
+
+        DockerRegistry registry = DockerPluginConfiguration.get().getRegistryByName(hostnameReposName.hostname);
+        if( registry == null )
+            return null;
+
+        Credentials credentials = lookupSystemCredentials(registry.credentialsId);
+
+        if (credentials instanceof StandardUsernamePasswordCredentials) {
+            StandardUsernamePasswordCredentials usernamePasswordCredentials =
+                    ((StandardUsernamePasswordCredentials) credentials);
+
+            AuthConfig ac = new AuthConfig();
+            ac.setUsername( usernamePasswordCredentials.getUsername() );
+            ac.setPassword( usernamePasswordCredentials.getPassword().getPlainText() );
+
+            return ac;
+        }
+
+        return null;
+    }
 }

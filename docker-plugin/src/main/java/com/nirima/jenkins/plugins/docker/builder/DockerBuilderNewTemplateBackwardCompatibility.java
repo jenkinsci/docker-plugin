@@ -31,6 +31,7 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
             suffixStartSlaveCmd,
             instanceCapStr,
             dnsString,
+            network,
             dockerCommand,
             volumesString,
             volumesFrom,
@@ -53,7 +54,7 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
     public abstract void setDockerTemplate(DockerTemplate dockerTemplate);
 
     protected void convert1() {
-        final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString, dockerCommand,
+        final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString, network, dockerCommand,
                 volumesString, null, environmentsString, lxcConfString,
                 hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress
         );

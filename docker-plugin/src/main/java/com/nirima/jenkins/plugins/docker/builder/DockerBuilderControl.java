@@ -26,16 +26,6 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-            throws InterruptedException, IOException {
-        option.execute(build, launcher, listener);
-
-        // Save the actions
-        build.save();
-        return true;
-    }
-
-    @Override
     public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
         option.execute(run, launcher, listener);
         run.save();

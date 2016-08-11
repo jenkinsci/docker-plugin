@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class ClientBuilderForPluginTest {
 
     public static final String HTTP_SERVER_URL = "http://server.url/";
-    public static final String DOCKER_API_VER = "test-ver12";
+    public static final RemoteApiVersion DOCKER_API_VER = RemoteApiVersion.VERSION_1_19;
     public static final String CLOUD_NAME = "cloud-name";
     public static final int READ_TIMEOUT = 10;
     public static final String EMPTY_CREDS = "";
@@ -53,20 +53,20 @@ public class ClientBuilderForPluginTest {
                 Collections.<DockerTemplate>emptyList(),
                 HTTP_SERVER_URL,
                 EMPTY_CONTAINER_CAP,
-                CONNECT_TIMEOUT, READ_TIMEOUT, EMPTY_CREDS, DOCKER_API_VER);
+                CONNECT_TIMEOUT, READ_TIMEOUT, EMPTY_CREDS, "1.19");
         ClientConfigBuilderForPlugin builder = dockerClientConfig();
         builder.forCloud(cloud);
 
         DockerClientConfig config = builder.config().build();
         assertThat("server", config.getUri().toString(), equalTo(HTTP_SERVER_URL));
-        assertThat("version", config.getVersion(), equalTo(RemoteApiVersion.unknown()));
+        assertThat("version", config.getVersion(), equalTo(DOCKER_API_VER));
 //        assertThat("read TO", config.getReadTimeout(), equalTo((int) SECONDS.toMillis(READ_TIMEOUT)));
     }
 
     @Test
     public void shouldFindPasswordCredsFromJenkins() throws Exception {
         ClientConfigBuilderForPlugin builder = dockerClientConfig();
-        builder.forServer(HTTP_SERVER_URL, DOCKER_API_VER).withCredentials(ID_OF_CREDS);
+        builder.forServer(HTTP_SERVER_URL, "1.19").withCredentials(ID_OF_CREDS);
 
         DockerClientConfig config = builder.config().build();
         assertThat("login", config.getUsername(), equalTo(USERNAME));

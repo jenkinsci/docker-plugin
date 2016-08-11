@@ -21,6 +21,8 @@ public class DockerTemplateTest {
     String prefixStartSlaveCmd = "prefixStartSlaveCmd";
     String suffixStartSlaveCmd = " suffixStartSlaveCmd";
     String instanceCapStr = "";
+    String network = "";
+    
 
     String dockerCommand = "dockerCommand";
     String volumesString = "volumes";
@@ -36,7 +38,7 @@ public class DockerTemplateTest {
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString,
+        final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString, network,
                 dockerCommand, volumesString, volumesString, environmentsString,
                 lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
 

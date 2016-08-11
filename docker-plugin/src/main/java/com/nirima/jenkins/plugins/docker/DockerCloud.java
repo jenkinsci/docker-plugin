@@ -3,15 +3,15 @@ package com.nirima.jenkins.plugins.docker;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
-import com.cloudbees.plugins.credentials.common.IdCredentials;
-import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import com.cloudbees.plugins.credentials.common.*;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
+import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -24,6 +24,7 @@ import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
+import hudson.security.ACL;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner;
@@ -76,6 +77,16 @@ public class DockerCloud extends Cloud {
      * Total max allowed number of containers
      */
     private int containerCap = 100;
+
+    /**
+     * Is this cloud actually a swarm?
+     */
+    private transient Boolean _isSwarm;
+
+    /**
+     * Is this cloud running Joyent Triton?
+     */
+    private transient Boolean _isTriton;
 
     /**
      * Track the count per image name for images currently being
@@ -389,7 +400,11 @@ public class DockerCloud extends Cloud {
 
         final ComputerLauncher launcher = dockerTemplate.getLauncher().getPreparedLauncher(getDisplayName(), dockerTemplate, ir);
 
-        return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+        if( isSwarm() ) {
+            return new DockerSwarmSlave(this, ir, slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+        } else {
+            return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+        }
     }
 
     @Override
@@ -566,6 +581,25 @@ public class DockerCloud extends Cloud {
 
     }
 
+    /* package */ boolean isSwarm() {
+        Version remoteVersion = getClient().versionCmd().exec();
+        // Cache the return.
+        if( _isSwarm == null ) {
+            _isSwarm = remoteVersion.getVersion().startsWith("swarm");
+        }
+        return _isSwarm;
+    }
+
+    public boolean isTriton() {
+        Version remoteVersion = getClient().versionCmd().exec();
+
+        if( _isTriton == null ) {
+            _isTriton = remoteVersion.getOperatingSystem().equals("solaris");
+        }
+        return _isTriton;
+    }
+
+
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
         @Override
@@ -606,21 +640,16 @@ public class DockerCloud extends Cloud {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
 
-            List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context);
-            List<DockerDirectoryCredentials> c2 = CredentialsProvider.lookupCredentials(DockerDirectoryCredentials.class, context);
+            List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
+            List<DockerDirectoryCredentials> c2 = CredentialsProvider.lookupCredentials(DockerDirectoryCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
 
-            return new CredentialsListBoxModel().withEmptySelection()
+            return new StandardListBoxModel()
+                    .withEmptySelection()
                     .withMatching(CredentialsMatchers.always(), credentials)
                     .withMatching(CredentialsMatchers.always(), c2);
         }
 
-        public static class CredentialsListBoxModel
-                extends AbstractIdCredentialsListBoxModel<CredentialsListBoxModel, IdCredentials> {
-            @NonNull
-            protected String describe(@NonNull IdCredentials c) {
-                return CredentialsNameProvider.name(c);
-            }
-        }
+
     }
 
 }

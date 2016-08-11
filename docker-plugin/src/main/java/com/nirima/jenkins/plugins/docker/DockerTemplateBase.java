@@ -64,6 +64,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     public final String[] dnsHosts;
 
+    public final String network;
+
     /**
      * Every String is volume specification
      */
@@ -102,6 +104,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     @DataBoundConstructor
     public DockerTemplateBase(String image,
                               String dnsString,
+                              String network,
                               String dockerCommand,
                               String volumesString,
                               String volumesFromString,
@@ -132,6 +135,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         this.cpuShares = cpuShares;
 
         this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
+
+        this.network = network;
 
         setVolumes(splitAndFilterEmpty(volumesString, "\n"));
         setVolumesFromString(volumesFromString);
@@ -372,6 +377,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
         if (dnsHosts.length > 0) {
             containerConfig.withDns(dnsHosts);
+        }
+
+        if (network != null && network.length() > 0) {
+            containerConfig.withNetworkDisabled(false);
+            containerConfig.withNetworkMode(network);
         }
 
         // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196

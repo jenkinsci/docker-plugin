@@ -3,6 +3,8 @@ package com.nirima.jenkins.plugins.docker;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerClientException;
 import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
 import com.github.dockerjava.core.NameParser;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfigFor;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
@@ -239,7 +242,14 @@ public class DockerSlave extends AbstractCloudSlave {
                         }
                     };
                     try {
-                        getClient().pushImageCmd(identifier).exec(resultCallback).awaitSuccess();
+
+                        PushImageCmd cmd = getClient().pushImageCmd(identifier);
+                        AuthConfig authConfig = getAuthConfigFor(tagToken);
+                        if( authConfig != null ) {
+                            cmd.withAuthConfig(authConfig);
+                        }
+                        cmd.exec(resultCallback).awaitSuccess();
+
                     } catch(DockerClientException ex) {
 
                         LOGGER.log(Level.SEVERE, "Exception pushing docker image. Check that the destination registry is running.");
