@@ -58,8 +58,8 @@ public class ClientBuilderForPluginTest {
         builder.forCloud(cloud);
 
         DockerClientConfig config = builder.config().build();
-        assertThat("server", config.getUri().toString(), equalTo(HTTP_SERVER_URL));
-        assertThat("version", config.getVersion(), equalTo(DOCKER_API_VER));
+        assertThat("server", config.getDockerHost().toString(), equalTo(HTTP_SERVER_URL));
+        assertThat("version", config.getApiVersion(), equalTo(DOCKER_API_VER));
 //        assertThat("read TO", config.getReadTimeout(), equalTo((int) SECONDS.toMillis(READ_TIMEOUT)));
     }
 
@@ -69,8 +69,8 @@ public class ClientBuilderForPluginTest {
         builder.forServer(HTTP_SERVER_URL, "1.19").withCredentials(ID_OF_CREDS);
 
         DockerClientConfig config = builder.config().build();
-        assertThat("login", config.getUsername(), equalTo(USERNAME));
-        assertThat("pwd", config.getPassword(), equalTo(PASSWORD));
+        assertThat("login", config.getRegistryUsername(), equalTo(USERNAME));
+        assertThat("pwd", config.getRegistryPassword(), equalTo(PASSWORD));
     }
 
 

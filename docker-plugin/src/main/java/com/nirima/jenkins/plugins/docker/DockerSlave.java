@@ -1,9 +1,9 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.DockerClientException;
-import com.github.dockerjava.api.DockerException;
+
 import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
@@ -250,7 +250,7 @@ public class DockerSlave extends AbstractCloudSlave {
                         }
                         cmd.exec(resultCallback).awaitSuccess();
 
-                    } catch(DockerClientException ex) {
+                    } catch(DockerException ex) {
 
                         LOGGER.log(Level.SEVERE, "Exception pushing docker image. Check that the destination registry is running.");
                         throw ex;

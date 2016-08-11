@@ -4,8 +4,9 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.common.CertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.DockerClientException;
+
 import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
@@ -330,7 +331,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                         cmd.withAuthConfig(authConfig);
                     }
                     cmd.exec(resultCallback).awaitSuccess();
-                } catch(DockerClientException ex) {
+                } catch(DockerException ex) {
                     // Private Docker registries fall over regularly. Tell the user so they
                     // have some clue as to what to do as the exception gives no hint.
                     log("Exception pushing docker image. Check that the destination registry is running.");

@@ -1,10 +1,11 @@
 package com.nirima.jenkins.plugins.docker.launcher;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.NotFoundException;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerComputer;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
@@ -124,8 +125,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
             try {
                 connect.execStartCmd(response.getId())
-                        .withDetach()
-                        .withTty()
+                        .withDetach(true)
+                        .withTty(true)
                         .exec( new ExecStartResultCallback(null,null));
             } catch (NotFoundException ex) {
                 listener.error("Can't execute command: " + ex.getMessage());

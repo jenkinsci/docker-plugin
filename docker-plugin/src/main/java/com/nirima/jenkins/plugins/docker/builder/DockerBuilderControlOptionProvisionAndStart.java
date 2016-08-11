@@ -2,7 +2,7 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.DockerException;
+import com.github.dockerjava.api.exception.DockerException;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
