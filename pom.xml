@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.609.3</version>
+        <version>2.7</version>
     </parent>
 
     <groupId>com.nirima</groupId>
@@ -36,9 +36,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <maven-release-plugin.version>2.5.1</maven-release-plugin.version>
         <maven-findbugs-plugin.version>3.0.1</maven-findbugs-plugin.version>
-        <hpi.plugin.version>1.112</hpi.plugin.version>
+        <hpi.plugin.version>1.119</hpi.plugin.version>
         <stapler.version>1.207</stapler.version>
         <guava.version>18.0</guava.version>
         <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
