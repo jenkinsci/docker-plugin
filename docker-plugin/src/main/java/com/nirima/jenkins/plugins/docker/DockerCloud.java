@@ -45,7 +45,7 @@ import shaded.com.google.common.collect.Iterables;
 
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
-import javax.ws.rs.ProcessingException;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -375,7 +375,7 @@ public class DockerCloud extends Cloud {
         InspectContainerResponse ir;
         try {
             ir = getClient().inspectContainerCmd(containerId).exec();
-        } catch (ProcessingException ex) {
+        } catch (DockerException ex) {
             getClient().removeContainerCmd(containerId).withForce(true).exec();
             throw ex;
         }
