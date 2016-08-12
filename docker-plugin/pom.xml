@@ -86,6 +86,13 @@
                     <optimize>${jdk.optimize}</optimize>
                 </configuration>
             </plugin>
+            <plugin>      
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.1</version>
+                <configuration>
+                <failOnError>false</failOnError>
+                </configuration>
+            </plugin>        
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
