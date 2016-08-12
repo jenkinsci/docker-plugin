@@ -17,6 +17,7 @@ import com.github.dockerjava.core.LocalDirectorySSLConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
+import com.github.dockerjava.api.model.AuthConfigurations;
 import com.nirima.jenkins.plugins.docker.DockerPluginConfiguration;
 import com.nirima.jenkins.plugins.docker.DockerRegistry;
 import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
@@ -58,6 +59,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfigFor;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfigurations;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static hudson.plugins.sshslaves.SSHLauncher.lookupSystemCredentials;
 import static org.apache.commons.lang.StringUtils.isEmpty;
@@ -268,6 +270,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
 
         private String buildImage() throws IOException, InterruptedException {
+            final AuthConfigurations authConfigurations = getAuthConfigurations();
             return fpChild.act(new MasterToSlaveFileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
 
@@ -283,6 +286,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                         }
                     };
                     String imageId = getClient().buildImageCmd(f)
+                            .withBuildAuthConfigs(authConfigurations)
                             .exec(resultCallback)
                             .awaitImageId();
 
