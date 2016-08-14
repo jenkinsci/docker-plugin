@@ -39,7 +39,8 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
             lxcConfString,
             bindPorts,
             hostname,
-            macAddress;
+            macAddress,
+            devicesString;
 
     @Deprecated
     protected transient RetentionStrategy retentionStrategy;
@@ -56,7 +57,8 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
     protected void convert1() {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString, network, dockerCommand,
                 volumesString, null, environmentsString, lxcConfString,
-                hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress
+                hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress,
+                devicesString
         );
 
         final DockerComputerSSHLauncher dockerComputerSSHLauncher = new DockerComputerSSHLauncher(

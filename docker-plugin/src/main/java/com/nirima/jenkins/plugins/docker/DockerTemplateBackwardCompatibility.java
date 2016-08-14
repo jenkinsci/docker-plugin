@@ -135,6 +135,9 @@ public abstract class DockerTemplateBackwardCompatibility {
     private transient String macAddress;
 
     @Deprecated
+    private transient String[] devices;
+
+    @Deprecated
     private String getDnsString() {
         return Joiner.on(" ").join(dnsHosts);
     }
@@ -147,6 +150,11 @@ public abstract class DockerTemplateBackwardCompatibility {
     @Deprecated
     private String getVolumesString() {
         return Joiner.on("\n").join(volumes);
+    }
+
+    @Deprecated
+    private String getDevicesString() {
+        return devices != null? Joiner.on("\n").join(devices): "";
     }
 
     @Deprecated
@@ -224,7 +232,8 @@ public abstract class DockerTemplateBackwardCompatibility {
                         bindAllPorts,
                         privileged,
                         tty,
-                        macAddress)
+                        macAddress,
+                        getDevicesString())
         );
     }
 }

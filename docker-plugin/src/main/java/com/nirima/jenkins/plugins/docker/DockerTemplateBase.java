@@ -5,11 +5,7 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.LxcConf;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Volume;
-import com.github.dockerjava.api.model.VolumesFrom;
+import com.github.dockerjava.api.model.*;
 import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.model.Describable;
@@ -101,6 +97,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     @CheckForNull
     private List<String> extraHosts;
 
+    public String[] devices;
+
     @DataBoundConstructor
     public DockerTemplateBase(String image,
                               String dnsString,
@@ -118,7 +116,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                               boolean bindAllPorts,
                               boolean privileged,
                               boolean tty,
-                              String macAddress
+                              String macAddress,
+                              String devicesString
     ) {
         setImage(image);
         this.dockerCommand = dockerCommand;
@@ -144,6 +143,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         this.environment = splitAndFilterEmpty(environmentsString, "\n");
 
         setMacAddress(macAddress);
+
+        setDevices(splitAndFilterEmpty(devicesString, "\n"));
     }
 
     protected Object readResolve() {
@@ -336,6 +337,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         }
     }
 
+    @CheckForNull
+    public String[] getDevices() {
+        return filterStringArray(devices);
+    }
+
+    public void setDevices(String[] devices) {
+        this.devices = devices;
+    }
+
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         if (hostname != null && !hostname.isEmpty()) {
             containerConfig.withHostName(hostname);
@@ -417,6 +427,22 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
             containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
         }
 
+        if (getDevices().length > 0) {
+            List<Device> devices = new ArrayList<>();
+
+            for (String deviceStr : getDevices()) {
+                String[] group = deviceStr.split(":");
+                String pathOnHost = group[0];
+                String pathInContainer = pathOnHost;
+                if (group.length > 1) {
+                    pathInContainer = group[1];
+                }
+                devices.add(new Device("", pathOnHost, pathInContainer));
+            }
+
+            containerConfig.withDevices((Device[]) devices.toArray());
+        }
+
         containerConfig.withTty(tty);
 
         if (environment != null && environment.length > 0) {
@@ -450,7 +476,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerTemplateBase> {
 
-        public FormValidation doCheckVolumesString(@QueryParameter String volumesString) {
+        public FormValidation doCheckDEvicesString(@QueryParameter String volumesString) {
             try {
                 final String[] strings = splitAndFilterEmpty(volumesString, "\n");
                 for (String s : strings) {
@@ -470,6 +496,23 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                         new Volume(s);
                     } else {
                         return FormValidation.error("Wrong line: " + s);
+                    }
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+
+            return FormValidation.ok();
+
+        }
+
+        public FormValidation doCheckVolumesString(@QueryParameter String volumesString) {
+            try {
+                final String[] strings = splitAndFilterEmpty(volumesString, "\n");
+                for (String s : strings) {
+                    final String[] group = s.split(":");
+                    if (group.length > 3) {
+                        return FormValidation.error("Wrong syntax: " + s);
                     }
                 }
             } catch (Throwable t) {

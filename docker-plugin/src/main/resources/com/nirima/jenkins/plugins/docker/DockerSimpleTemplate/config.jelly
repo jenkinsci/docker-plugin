@@ -63,5 +63,9 @@
             <f:textbox/>
         </f:entry>
 
+        <f:entry title="${%Devices}" field="devicesString">
+            <f:textbox/>
+        </f:entry>
+
         </f:advanced>
 </j:jelly>

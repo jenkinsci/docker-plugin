@@ -64,7 +64,8 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
                                     boolean bindAllPorts,
                                     boolean privileged,
                                     boolean tty,
-                                    String macAddress) {
+                                    String macAddress,
+                                    String devicesString) {
         this.image = image;
         this.labelString = labelString;
         this.retentionStrategy = retentionStrategy;
@@ -93,6 +94,7 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
         this.tty = tty;
         this.hostname = hostname;
         this.macAddress = macAddress;
+        this.devicesString = devicesString;
         convert1();
         this.version = 1;
     }

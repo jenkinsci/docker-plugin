@@ -23,7 +23,8 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                                 boolean bindAllPorts,
                                 boolean privileged,
                                 boolean tty,
-                                String macAddress) {
+                                String macAddress,
+                                String devicesString) {
         super(image,
                 dnsString,
                 network,
@@ -40,7 +41,8 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                 bindAllPorts,
                 privileged,
                 tty,
-                macAddress);
+                macAddress,
+                devicesString);
     }
 
     @Override
