@@ -1,0 +1,28 @@
+<div>
+    <p>Specify the strategy when docker containers shall be started and stopped:</p>
+    <dl>
+	    <dt><b>Docker Once Retention Strategy</b> (default)</dt>
+	    <dd>For each job in the queue, an own docker container is started. Once the job has finished, 
+	    the container is shut down.</dd>
+
+	    <dt><b>Docker Cloud Retention Strategy</b> (experimental)</dt>
+	    <dd>Based on the workload provided by the queue (load average), new docker containers are started on demand.
+	    After the job(s) have finished, the container is not shut down immediately. If no new job was 
+	    executed on this slave/container during the period of the Idle delay, the container is shut down.</dd>
+
+	    <dt><b>Keep this slave on-line as much as possible</b> (experimental)</dt>
+	    <dd>Starts as many containers as specified in the Instance Capacity (obeying the Container Cap) 
+	    and tries to keep them always running (i.e. a new container is started in case another one belonging
+	    to this template was shut down).</dd>
+	    
+	    <dt><b>Take this slave on-line according to a schedule</b> (experimental)</dt>
+	    <dd>Based on a cron-schedule slaves are brought on-line and will keep running. 
+	    Once the specified period in the schedule is over, the slaves will be shut down.</dd>
+
+	    <dt><b>Take this slave on-line when in demand and off-line when idle</b> (experimental)</dt>
+	    <dd>Containers are started if there are jobs waiting for execution in the queue. They are only started,
+	    if the jobs are waiting a certain threshold of time there (In demand delay). After the jobs have finished,
+	    the container is not shut down immediately. If no new job was 
+	    executed on this slave/container during the period of the Idle delay, the container is shut down.</dd>
+    </dl>
+</div>
