@@ -31,7 +31,7 @@ import static org.hamcrest.Matchers.equalTo;
  */
 public class ClientBuilderForPluginTest {
 
-    public static final String HTTP_SERVER_URL = "http://server.url/";
+    public static final String HTTP_SERVER_URL = "tcp://server.url/";
     public static final RemoteApiVersion DOCKER_API_VER = RemoteApiVersion.VERSION_1_19;
     public static final String CLOUD_NAME = "cloud-name";
     public static final int READ_TIMEOUT = 10;
