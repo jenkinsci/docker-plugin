@@ -334,7 +334,11 @@ public class DockerCloud extends Cloud {
         boolean imageExists = Iterables.any(images, new Predicate<Image>() {
             @Override
             public boolean apply(Image image) {
-                return Arrays.asList(image.getRepoTags()).contains(fullImageName);
+                if (image == null || image.getRepoTags() == null) {
+                    return false;
+                } else {
+                    return Arrays.asList(image.getRepoTags()).contains(fullImageName);
+                }
             }
         });
 
