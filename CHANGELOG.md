@@ -1,6 +1,12 @@
 # Changelog
 
-## next [0.16.0]
+## 0.17
+
+* Move to docker-java 3.x
+* Re-instate setting API version
+* Allow setting of registry credentials (build, push, pull)
+
+## 0.16.0
 
 * Workflow support for build steps (publish, start/stop containers)
 * Enable the JNLP slave support (Experimental). 
