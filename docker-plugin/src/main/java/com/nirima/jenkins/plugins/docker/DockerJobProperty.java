@@ -1,14 +1,15 @@
 package com.nirima.jenkins.plugins.docker;
 
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.export.Exported;
+
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.export.Exported;
 
 
 public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
@@ -20,17 +21,20 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
     public final String additionalTag;
     public final boolean pushOnSuccess;
     public final boolean cleanImages;
+    public final DockerJobTemplateProperty dockerJobTemplate;
 
     @DataBoundConstructor
     public DockerJobProperty(
             boolean tagOnCompletion,
             String additionalTag,
-            boolean pushOnSuccess, boolean cleanImages)
-    {
+            boolean pushOnSuccess, 
+            boolean cleanImages,
+            DockerJobTemplateProperty dockerJobTemplate) {
         this.tagOnCompletion = tagOnCompletion;
         this.additionalTag = additionalTag;
         this.pushOnSuccess = pushOnSuccess;
         this.cleanImages = cleanImages;
+        this.dockerJobTemplate = dockerJobTemplate;
     }
 
     @Exported
@@ -51,6 +55,11 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
     @Exported
     public boolean isCleanImages() {
         return cleanImages;
+    }
+    
+    @Exported
+    public DockerJobTemplateProperty getDockerJobTemplate() {
+        return dockerJobTemplate;
     }
 
     @Extension

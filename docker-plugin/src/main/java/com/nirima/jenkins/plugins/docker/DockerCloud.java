@@ -61,6 +61,7 @@ public class DockerCloud extends Cloud {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerCloud.class);
 
     private List<DockerTemplate> templates;
+    private transient HashMap<Long, DockerTemplate> jobTemplates;
     public final String serverUrl;
     private int connectTimeout;
     public final int readTimeout;
@@ -442,8 +443,31 @@ public class DockerCloud extends Cloud {
         templates.add(t);
     }
 
+    /**
+     * Adds a template which is temporary provided and bound to a specific job.
+     * 
+     * @param jobId Unique id (per master) of the job to which the template is bound.
+     * @param template The template to bound to a specific job.
+     */
+    public synchronized void addJobTemplate(long jobId, DockerTemplate template) {
+    	jobTemplates.put(jobId, template);
+    }
+
+    /**
+     * Removes a template which is bound to a specific job.
+     * 
+     * @param jobId Id of the job.
+     */
+    public synchronized void removeJobTemplate(long jobId) {
+    	if (jobTemplates.remove(jobId) == null) {
+    		LOGGER.warn("Couldn't remove template for job with id: {}", jobId);
+    	}
+    }
+
     public List<DockerTemplate> getTemplates() {
-        return templates;
+    	List<DockerTemplate> t = new ArrayList<DockerTemplate>(templates);
+    	t.addAll(getJobTemplates().values());
+        return t;
     }
 
     /**
@@ -464,7 +488,27 @@ public class DockerCloud extends Cloud {
             }
         }
 
+        // add temporary templates matched to requested label
+        for (DockerTemplate template : getJobTemplates().values()) {
+            if (label != null && label.matches(template.getLabelSet())) {
+                    dockerTemplates.add(template);
+            }
+        }
+
         return dockerTemplates;
+    }
+    
+    /**
+     * Private method to ensure that the map of job specific templates is initialized.
+     * 
+     * @return The map of job specific templates.
+     */
+    private HashMap<Long, DockerTemplate> getJobTemplates() {
+        if (jobTemplates == null) {
+            jobTemplates = new HashMap<Long, DockerTemplate>();
+        }
+        
+        return jobTemplates;
     }
 
     /**

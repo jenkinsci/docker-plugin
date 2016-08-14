@@ -309,7 +309,7 @@ public class DockerSlave extends AbstractCloudSlave {
             // Don't care.
         }
         // Safe default
-        return new DockerJobProperty(false, null, false, true);
+        return new DockerJobProperty(false, null, false, true, null);
     }
 
     @Override
