@@ -64,12 +64,7 @@ public class DockerCloud extends Cloud {
     public final String serverUrl;
     private int connectTimeout;
     public final int readTimeout;
-    /**
-     * TODO remove
-     * @deprecated Confuses users and no real use cases.
-     */
-    @Deprecated
-    public String version;
+    public final String version;
     public final String credentialsId;
 
     private transient DockerClient connection;
@@ -136,7 +131,7 @@ public class DockerCloud extends Cloud {
                        String version) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
-        this.version = null;
+        this.version = version;
         this.credentialsId = credentialsId;
         this.serverUrl = serverUrl;
         this.connectTimeout = connectTimeout;
@@ -553,9 +548,7 @@ public class DockerCloud extends Cloud {
         for (DockerTemplate template : getTemplates()) {
             template.readResolve();
         }
-        if (version != null) {
-            version = null;
-        }
+
         return this;
     }
 
@@ -637,7 +630,7 @@ public class DockerCloud extends Cloud {
 
                 Version verResult = dc.versionCmd().exec();
 
-                return FormValidation.ok("Version = " + verResult.getVersion());
+                return FormValidation.ok("Version = " + verResult.getVersion() + ", API Version = " + verResult.getApiVersion());
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
             }
