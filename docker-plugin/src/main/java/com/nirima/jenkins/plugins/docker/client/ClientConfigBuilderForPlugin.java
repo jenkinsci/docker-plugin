@@ -23,7 +23,6 @@ import java.util.logging.Logger;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-
 import static com.github.dockerjava.core.DefaultDockerClientConfig.createDefaultConfigBuilder;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 

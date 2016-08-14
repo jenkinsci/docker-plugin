@@ -130,7 +130,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             // returning a range - surely an exposed port cannot be bound to a *range*?
             String hps = b.getHostPortSpec();
 
-            port = Integer.parseInt(hps);
+            port = Integer.valueOf(hps);
             host = b.getHostIp();
         }
 

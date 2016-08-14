@@ -42,7 +42,7 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
      * Wait until slave is up and ready for connection.
      */
     public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
-        if (!containerInspect.getState().getRunning() ) {
+        if (!containerInspect.getState().getRunning()) {
             throw new IllegalStateException("Container '" + containerInspect.getId() + "' is not running!");
         }
 

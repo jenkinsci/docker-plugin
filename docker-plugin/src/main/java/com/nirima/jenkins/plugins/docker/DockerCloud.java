@@ -338,8 +338,8 @@ public class DockerCloud extends Cloud {
                 if (image == null || image.getRepoTags() == null) {
                     return false;
                 } else {
-                    return Arrays.asList(image.getRepoTags()).contains(fullImageName);
-                }
+                return Arrays.asList(image.getRepoTags()).contains(fullImageName);
+            }
             }
         });
 

@@ -2,9 +2,7 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
-
 import com.github.dockerjava.api.exception.NotModifiedException;
-
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.Run;

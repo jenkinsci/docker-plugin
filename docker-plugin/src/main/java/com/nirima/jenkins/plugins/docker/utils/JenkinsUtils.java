@@ -164,11 +164,11 @@ public class JenkinsUtils {
     protected static AuthConfig makeAuthConfig(Credentials credentials) {
         if (credentials instanceof StandardUsernamePasswordCredentials) {
             StandardUsernamePasswordCredentials usernamePasswordCredentials =
-                ((StandardUsernamePasswordCredentials) credentials);
+                    ((StandardUsernamePasswordCredentials) credentials);
 
-            AuthConfig ac = new AuthConfig();
-            ac.withUsername( usernamePasswordCredentials.getUsername() );
-            ac.withPassword( usernamePasswordCredentials.getPassword().getPlainText() );
+            AuthConfig ac = new AuthConfig()
+            		.withUsername( usernamePasswordCredentials.getUsername() )
+            		.withPassword( usernamePasswordCredentials.getPassword().getPlainText() );
 
             return ac;
         }

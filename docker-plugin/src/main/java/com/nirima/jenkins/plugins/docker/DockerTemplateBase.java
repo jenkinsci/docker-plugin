@@ -371,7 +371,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
       		  Long memorySwapInByte = (long) memorySwap * 1024 * 1024;
               containerConfig.withMemorySwap(memorySwapInByte);
       	  } else {
-      		  containerConfig.withMemorySwap((long)memorySwap);
+      		  containerConfig.withMemorySwap(memorySwap.longValue());
       	  }
         }
 
