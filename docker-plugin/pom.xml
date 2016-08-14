@@ -70,6 +70,11 @@
             <version>1.10.19</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.modules</groupId>
+            <artifactId>instance-identity</artifactId>
+            <version>1.4</version>
+        </dependency>
 
     </dependencies>
 

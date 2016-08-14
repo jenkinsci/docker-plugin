@@ -12,7 +12,22 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerPluginConfiguration;
 import com.nirima.jenkins.plugins.docker.DockerRegistry;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
+
+import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Map;
+
+import javax.annotation.Nullable;
+
 import hudson.Launcher;
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.Run;
@@ -25,18 +40,15 @@ import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.collect.Collections2;
 import shaded.com.google.common.collect.Iterables;
 
-import javax.annotation.Nullable;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Map;
-
 import static hudson.plugins.sshslaves.SSHLauncher.lookupSystemCredentials;
 
 /**
  * Utilities to fetch things out of jenkins environment.
  */
 public class JenkinsUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(JenkinsUtils.class);
+    private static String _id;
+
     /**
      * If the build was on a cloud, get the ID of that cloud.
      */
@@ -174,5 +186,18 @@ public class JenkinsUtils {
         }
 
         return null;
+    }
+
+    public static String getInstanceId() {
+        try {
+            if( _id == null ) {
+                _id = Util.getDigestOf(
+                        new ByteArrayInputStream(InstanceIdentity.get().getPublic().getEncoded()));
+            }
+        } catch (IOException e) {
+            LOG.error("Could not get Jenkins instance ID.");
+            _id = "";
+        }
+        return _id;
     }
 }

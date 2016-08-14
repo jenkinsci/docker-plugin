@@ -10,6 +10,7 @@ import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.model.Describable;
@@ -351,6 +352,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         containerConfig.withPublishAllPorts(bindAllPorts);
 
         containerConfig.withPrivileged(privileged);
+
+        Map<String,String> map = new HashMap<>();
+        map.put("JenkinsId", JenkinsUtils.getInstanceId());
+
+
+        containerConfig.withLabels(map);
 
         List<LxcConf> lxcConfs = getLxcConf();
         if (!lxcConfs.isEmpty()) {
