@@ -38,7 +38,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <maven-release-plugin.version>2.5.1</maven-release-plugin.version>
-        <maven-findbugs-plugin.version>3.0.1</maven-findbugs-plugin.version>
+        <maven-findbugs-plugin.version>3.0.4</maven-findbugs-plugin.version>
         <hpi.plugin.version>1.119</hpi.plugin.version>
         <stapler.version>1.207</stapler.version>
         <guava.version>18.0</guava.version>
@@ -113,17 +113,18 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>findbugs-maven-plugin</artifactId>
                     <version>${maven-findbugs-plugin.version}</version>
-                    <configuration>
-                        <effort>Max</effort>
-                        <threshold>Low</threshold>
-                        <xmlOutput>true</xmlOutput>
-                        <failOnError>false</failOnError>
-                    </configuration>
                     <executions>
                         <execution>
+                            <id>findbugs</id>
+                            <phase>verify</phase>
                             <goals>
                                 <goal>check</goal>
                             </goals>
+                            <configuration>
+                                <xmlOutput>true</xmlOutput>
+                                <findbugsXmlOutput>false</findbugsXmlOutput>
+                                <failOnError>false</failOnError>
+                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
