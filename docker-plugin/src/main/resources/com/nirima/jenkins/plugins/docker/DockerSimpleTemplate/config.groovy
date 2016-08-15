@@ -1,4 +1,4 @@
-package com.nirima.jenkins.plugins.docker.DockerTemplateBase
+package com.nirima.jenkins.plugins.docker.DockerSimpleTemplate
 
 def f = namespace(lib.FormTagLib);
 
