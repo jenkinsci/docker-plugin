@@ -62,7 +62,7 @@ public class DockerCloud extends Cloud {
 
     private List<DockerTemplate> templates;
     private transient HashMap<Long, DockerTemplate> jobTemplates;
-    public final String serverUrl;
+    public String serverUrl;
     private int connectTimeout;
     public final int readTimeout;
     public final String version;
@@ -104,7 +104,7 @@ public class DockerCloud extends Cloud {
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
         this.credentialsId = credentialsId;
-        this.serverUrl = serverUrl;
+        this.serverUrl = sanitizeUrl(serverUrl);
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
 
@@ -134,7 +134,7 @@ public class DockerCloud extends Cloud {
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
         this.credentialsId = credentialsId;
-        this.serverUrl = serverUrl;
+        this.serverUrl = sanitizeUrl(serverUrl);
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
 
@@ -169,6 +169,13 @@ public class DockerCloud extends Cloud {
 
     public void setContainerCap(int containerCap) {
         this.containerCap = containerCap;
+    }
+
+    protected String sanitizeUrl(String url) {
+        if( url == null )
+            return null;
+        return url.replace("http:", "tcp:")
+                  .replace("https:","tcp:");
     }
 
     /**
@@ -592,6 +599,8 @@ public class DockerCloud extends Cloud {
         for (DockerTemplate template : getTemplates()) {
             template.readResolve();
         }
+        // This change will bite a lot of people otherwise.
+        serverUrl = sanitizeUrl(serverUrl);
 
         return this;
     }
