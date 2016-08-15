@@ -9,6 +9,7 @@ import com.github.dockerjava.api.DockerClient;
 
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
@@ -22,6 +23,8 @@ import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
@@ -49,6 +52,8 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+
+import static org.bouncycastle.crypto.tls.ConnectionEnd.client;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -360,7 +365,12 @@ public class DockerCloud extends Cloud {
 
             long startTime = System.currentTimeMillis();
 
-            PullImageResultCallback cmd = getClient().pullImageCmd(imageName).exec(new PullImageResultCallback());
+            PullImageCmd imgCmd =  getClient().pullImageCmd(imageName);
+            AuthConfig authConfig = JenkinsUtils.getAuthConfigFor(imageName);
+            if( authConfig != null ) {
+                imgCmd.withAuthConfig(authConfig);
+            }
+            PullImageResultCallback cmd = imgCmd.exec(new PullImageResultCallback());
 
             // Work-around for API issue in docker.
             if( DockerPluginConfiguration.get().getPullFix()) {

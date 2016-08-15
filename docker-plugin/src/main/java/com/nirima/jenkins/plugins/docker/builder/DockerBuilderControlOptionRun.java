@@ -1,12 +1,16 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSimpleTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
+
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -115,8 +119,13 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
                 super.onNext(item);
             }
         };
-        
-        client.pullImageCmd(xImage).exec(resultCallback).awaitSuccess();
+
+        PullImageCmd cmd = client.pullImageCmd(xImage);
+        AuthConfig authConfig = JenkinsUtils.getAuthConfigFor(image);
+        if( authConfig != null ) {
+            cmd.withAuthConfig(authConfig);
+        }
+        cmd.exec(resultCallback).awaitSuccess();
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage,
                 dnsString, network, xCommand,
