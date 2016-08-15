@@ -62,7 +62,7 @@ public class DockerCloud extends Cloud {
 
     private List<DockerTemplate> templates;
     private transient HashMap<Long, DockerTemplate> jobTemplates;
-    public String serverUrl;
+    private String serverUrl;
     private int connectTimeout;
     public final int readTimeout;
     public final String version;
@@ -149,6 +149,10 @@ public class DockerCloud extends Cloud {
 
     public int getConnectTimeout() {
         return connectTimeout;
+    }
+
+    public String getServerUrl() {
+        return serverUrl;
     }
 
     /**

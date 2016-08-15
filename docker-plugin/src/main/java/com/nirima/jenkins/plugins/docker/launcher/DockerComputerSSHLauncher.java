@@ -136,7 +136,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
-            host = URI.create(DockerCloud.getCloudByName(cloudId).serverUrl).getHost();
+            host = URI.create(DockerCloud.getCloudByName(cloudId).getServerUrl()).getHost();
 
             /* Don't use IP from DOCKER_HOST because it is invalid or we are
              * connecting to a system that supports a single host abstraction

@@ -31,7 +31,7 @@ public class DockerBuildVariableContributor extends BuildVariableContributor {
             variables.put("JENKINS_CLOUD_ID", dockerComputer.getCloudId());
             try {
                 //replace http:// and https:// from docker-java to tcp://
-                final URIBuilder uriBuilder = new URIBuilder(dockerComputer.getCloud().serverUrl);
+                final URIBuilder uriBuilder = new URIBuilder(dockerComputer.getCloud().getServerUrl());
                 if (!uriBuilder.getScheme().equals("unix")) {
                     uriBuilder.setScheme("tcp");
                 }
