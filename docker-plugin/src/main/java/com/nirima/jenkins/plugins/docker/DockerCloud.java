@@ -77,10 +77,18 @@ public class DockerCloud extends Cloud {
     private transient DockerClient connection;
 
     /**
-     * Total max allowed number of containers
+     * Total max allowed number of containers on the docker server
+     * a.k.a. "Global Container Cap"
      */
     private int containerCap = 100;
 
+    /**
+     * Total max allowed number of containers, which this Jenkins instance
+     * may run at a time
+     * a.k.a. "Local Container Cap"
+     */
+    private int localContainerCap = 100;
+    
     /**
      * Is this cloud actually a swarm?
      */
@@ -121,9 +129,9 @@ public class DockerCloud extends Cloud {
         }
 
         if (containerCapStr.equals("")) {
-            setContainerCap(Integer.MAX_VALUE);
+            setGlobalContainerCap(Integer.MAX_VALUE);
         } else {
-            setContainerCap(Integer.parseInt(containerCapStr));
+            setGlobalContainerCap(Integer.parseInt(containerCapStr));
         }
     }
 
@@ -132,6 +140,7 @@ public class DockerCloud extends Cloud {
                        List<? extends DockerTemplate> templates,
                        String serverUrl,
                        int containerCap,
+                       int localContainerCap,
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
@@ -150,7 +159,8 @@ public class DockerCloud extends Cloud {
             this.templates = Collections.emptyList();
         }
 
-        setContainerCap(containerCap);
+        setGlobalContainerCap(containerCap);
+        setLocalContainerCap(localContainerCap);
     }
 
     public int getConnectTimeout() {
@@ -162,7 +172,7 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * @deprecated use {@link #getContainerCap()}
+     * @deprecated use {@link #getGlobalContainerCap()}
      */
     @Deprecated
     public String getContainerCapStr() {
@@ -173,12 +183,20 @@ public class DockerCloud extends Cloud {
         }
     }
 
-    public int getContainerCap() {
+    public int getGlobalContainerCap() {
         return containerCap;
     }
 
-    public void setContainerCap(int containerCap) {
+    public void setGlobalContainerCap(int containerCap) {
         this.containerCap = containerCap;
+    }
+    
+    public int getLocalContainerCap() {
+        return localContainerCap;
+    }
+    
+    public void setLocalContainerCap(int containerCap) {
+        this.localContainerCap = containerCap;
     }
 
     protected String sanitizeUrl(String url) {
@@ -610,16 +628,18 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Check not too many already running.
+     * Check that not too many containers are already running.
      */
     private synchronized boolean addProvisionedSlave(DockerTemplate t) throws Exception {
         String ami = t.getDockerTemplateBase().getImage();
         int amiCap = t.instanceCap;
 
-        int estimatedTotalSlaves = countCurrentDockerSlavesByUs(null);
+        int estimatedTotalSlavesGlobal = countCurrentDockerSlaves(null);
+        int estimatedTotalSlavesLocal = countCurrentDockerSlavesByUs(null);
         int estimatedAmiSlaves = countCurrentDockerSlavesByUs(ami);
 
-        LOGGER.info("There is/are {} container(s) running from us (Container Cap is set to {})", estimatedTotalSlaves, this.getContainerCap());
+        LOGGER.info("There is/are {} container(s) running globally (Global Container Cap is set to {})", estimatedTotalSlavesGlobal, this.getGlobalContainerCap());
+        LOGGER.info("There is/are {} container(s) running created by us (Local Container Cap is set to {})", estimatedTotalSlavesLocal, this.getLocalContainerCap());
         LOGGER.info("of those {} container(s) are running with image '{}' (Instance Limit is set to {})", estimatedAmiSlaves, ami, t.getInstanceCap());
         
         synchronized (provisionedImages) {
@@ -629,13 +649,19 @@ public class DockerCloud extends Cloud {
             }
 
             for (int amiCount : provisionedImages.values()) {
-                estimatedTotalSlaves += amiCount;
+                estimatedTotalSlavesGlobal += amiCount;
+                estimatedTotalSlavesLocal += amiCount;
             }
 
             estimatedAmiSlaves += currentProvisioning;
 
-            if (getContainerCap() != 0 && estimatedTotalSlaves >= getContainerCap()) {
-                LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s)", ami, name, getContainerCap());
+            if (getGlobalContainerCap() != 0 && estimatedTotalSlavesGlobal >= getGlobalContainerCap()) {
+                LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s); limitting due to Global Container Cap", estimatedTotalSlavesGlobal, name, getGlobalContainerCap());
+                return false;      // maxed out
+            }
+
+            if (getLocalContainerCap() != 0 && estimatedTotalSlavesLocal >= getLocalContainerCap()) {
+                LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s); limitting due to Local Container Cap", estimatedTotalSlavesLocal, name, getLocalContainerCap());
                 return false;      // maxed out
             }
 
@@ -644,8 +670,8 @@ public class DockerCloud extends Cloud {
                 return false;      // maxed out
             }
 
-            LOGGER.info("Provisioning '{}' number '{}' on '{}'; Total containers: '{}'",
-                    ami, estimatedAmiSlaves, name, estimatedTotalSlaves);
+            LOGGER.info("Provisioning '{}' number '{}' on '{}'; Total containers on docker: '{}'; containers created by this instance: '{}'",
+                    ami, estimatedAmiSlaves, name, estimatedTotalSlavesGlobal, estimatedTotalSlavesLocal);
 
             provisionedImages.put(ami, currentProvisioning + 1);
             return true;
