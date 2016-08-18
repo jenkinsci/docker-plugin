@@ -634,7 +634,7 @@ public class DockerCloud extends Cloud {
 
             estimatedAmiSlaves += currentProvisioning;
 
-            if (estimatedTotalSlaves >= getContainerCap()) {
+            if (getContainerCap() != 0 && estimatedTotalSlaves >= getContainerCap()) {
                 LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s)", ami, name, getContainerCap());
                 return false;      // maxed out
             }
