@@ -702,7 +702,14 @@ public class DockerCloud extends Cloud {
 	public void setWatchdogTtlRunning(int watchdogTtlRunning) {
 		this.watchdogTtlRunning = watchdogTtlRunning;
 	}
+	
+	public boolean isWatchdogTtlExitedEnabled() {
+		return this.watchdogTtlExited != 0;
+	}
 
+	public boolean isWatchdogTtlRunningEnabled() {
+		return this.watchdogTtlRunning != 0;
+	}
 
 	@Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
