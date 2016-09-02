@@ -17,6 +17,9 @@ public class DockerCloudTest {
                 10, // connectTimeout,
                 10, // readTimeout,
                 null, // credentialsId,
-                null); //version
+                null, //version
+                300, // watchdogTtlExited
+                300  // watchdogTtlRunning
+                ); 
     }
 }

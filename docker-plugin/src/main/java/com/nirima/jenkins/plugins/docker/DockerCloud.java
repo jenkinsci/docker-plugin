@@ -69,6 +69,19 @@ public class DockerCloud extends Cloud {
     private transient HashMap<Long, DockerTemplate> jobTemplates;
     private String serverUrl;
     private int connectTimeout;
+    
+    /**
+     * Time to to live for exited containers before the DockerContainerWatchdog will clean them up
+     * Used by DockerContainerWatchdog
+     */
+    private int watchdogTtlExited;
+    
+    /**
+     * Time to to live for running containers before the DockerContainerWatchdog will terminate them up
+     * Used by DockerContainerWatchdog
+     */
+    private int watchdogTtlRunning;
+    
     public final int readTimeout;
     public final String version;
     public final String credentialsId;
@@ -104,7 +117,9 @@ public class DockerCloud extends Cloud {
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
-                       String version) {
+                       String version,
+                       int watchdogTtlExited,
+                       int watchdogTtlRunning) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -112,6 +127,8 @@ public class DockerCloud extends Cloud {
         this.serverUrl = sanitizeUrl(serverUrl);
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
+        this.setWatchdogTtlExited(watchdogTtlExited);
+        this.setWatchdogTtlRunning(watchdogTtlRunning);
 
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
@@ -134,7 +151,9 @@ public class DockerCloud extends Cloud {
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
-                       String version) {
+                       String version, 
+                       int watchdogTtlExited,
+                       int watchdogTtlRunning) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -142,6 +161,8 @@ public class DockerCloud extends Cloud {
         this.serverUrl = sanitizeUrl(serverUrl);
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
+        this.setWatchdogTtlExited(watchdogTtlExited);
+        this.setWatchdogTtlRunning(watchdogTtlRunning);
 
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
@@ -665,7 +686,25 @@ public class DockerCloud extends Cloud {
     }
 
 
-    @Extension
+    public int getWatchdogTtlExited() {
+		return watchdogTtlExited;
+	}
+
+	public void setWatchdogTtlExited(int watchdogTtlExited) {
+		this.watchdogTtlExited = watchdogTtlExited;
+	}
+
+
+	public int getWatchdogTtlRunning() {
+		return watchdogTtlRunning;
+	}
+
+	public void setWatchdogTtlRunning(int watchdogTtlRunning) {
+		this.watchdogTtlRunning = watchdogTtlRunning;
+	}
+
+
+	@Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
         @Override
         public String getDisplayName() {

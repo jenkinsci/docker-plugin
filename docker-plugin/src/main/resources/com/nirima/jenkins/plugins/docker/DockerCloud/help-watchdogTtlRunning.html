@@ -1,0 +1,13 @@
+<div>
+	<p>The container watchdog periodically scans the status of the containers on Docker Host 
+	created by this Jenkins instance. It verifies if the status on the Docker Host is in sync
+	with the status assumed by the Jenkins Server.</p>
+	<p>It may happen that Jenkins has already released the slave, but the Docker Host was not
+	informed about stopping and terminating the container.</p>
+	<p>Therefore, the container watchdog may also serve as garbage collector: It will clean up still running 
+	containers, in case that no slave is reported to be running on it anymore. Containers which are still used
+	productively and are registered as slave will not be affected.</p>
+	<p>The parameter here <b>defines how long such a running container shall have existed before 
+	begin removed from Docker Host by the watchdog</b>.</p>
+	<p>The value is measured <b>in minutes</b>.</p>
+</div>
