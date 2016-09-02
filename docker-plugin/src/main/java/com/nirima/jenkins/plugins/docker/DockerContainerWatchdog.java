@@ -11,6 +11,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +53,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerContainerWatchdog.class);
 
     private transient long currentUnixTimestamp;
-    private transient DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+    private transient static final DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+    private transient static final Pattern removeNanoSeconds = Pattern.compile("(.*)\\.[0-9]{9}Z$");
     private HashSet<String> allComputers;
     
     @Override
@@ -114,17 +117,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
 				if (dc.isWatchdogTtlExitedEnabled()) { 
 	                // check if the TTL has already expired
-	                Date finishedAt = null;
-	                try {
-	                	finishedAt = this.dfISO8601.parse(icr.getState().getFinishedAt());
-	                } catch (ParseException pe) {
-	                	/* the date is not parsable. Therefore, we do not have any chance
-	                	 * to determine if the TTL has passed or not. Thus, let's log this
-	                	 * event and skip the entry
-	                	 */
-	                	LOGGER.warn("Finished timestamp is in the ISO-8601, which should be the case; ignoring this container", pe);
+	                Date finishedAt = parseFinishedDate(icr.getState().getFinishedAt());
+	                if (finishedAt == null) {
+	                	LOGGER.warn("Unable to retrieve finished timestamp of java-docker API; skipping this container");
 	                	continue;
 	                }
+	                
 	                long finishedAtUnixTimestamp = finishedAt.getTime() / 1000;
 	                
 	                if (finishedAtUnixTimestamp + dc.getWatchdogTtlExited() * 60 < this.currentUnixTimestamp) { 
@@ -180,6 +178,34 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             }
 
         }
+    }
+    
+    private static Date parseFinishedDate(String finishedAtString) {
+    	/* Docker provides nanoseconds in the string
+    	 * Unfortunately, DateFormat can only deal with microseconds (at best) 
+    	 * and the better approach (using DateTimeFormatter) is only available with JDK 8.
+    	 * As we don't need that high precision, we just remove it
+    	 * from the string by using a regular expression.
+    	 */
+    	String dateTimeString = finishedAtString;
+    	Matcher m = removeNanoSeconds.matcher(dateTimeString);
+    	if (m.matches()) {
+    		dateTimeString = m.group(1)+"Z";
+    	} 
+    	// if it does not match, still try to parse it - perhaps we are lucky...
+    	
+    	Date finishedAt = null;
+        try {
+        	finishedAt = dfISO8601.parse(dateTimeString);
+        } catch (ParseException pe) {
+        	/* the date is not parsable. Therefore, we do not have any chance
+        	 * to determine if the TTL has passed or not. Thus, let's log this
+        	 * event and skip the entry
+        	 */
+        	LOGGER.warn("Finished timestamp is not in the ISO-8601 format, which should be the case", pe);
+        }
+        return finishedAt;
+
     }
 
     private void loadComputers() {
