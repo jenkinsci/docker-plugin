@@ -1,7 +1,13 @@
 package com.nirima.jenkins.plugins.docker;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.TimeZone;
@@ -44,7 +50,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerContainerWatchdog.class);
 
-    private long currentUnixTimestamp;
+    private transient long currentUnixTimestamp;
+    private transient DateFormat dfISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
     private HashSet<String> allComputers;
     
     @Override
@@ -104,9 +111,29 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             if (status.startsWith("Exited")) {
                 InspectContainerResponse icr = client.inspectContainerCmd(containerId).exec();
                 LOGGER.info("Container {} has already exited with status '{}', but was not removed; it finished at {}", containerId, status, icr.getState().getFinishedAt());
+
+                // check if the TTL has already expired
+                Date finishedAt = null;
+                try {
+                	finishedAt = this.dfISO8601.parse(icr.getState().getFinishedAt());
+                } catch (ParseException pe) {
+                	/* the date is not parsable. Therefore, we do not have any chance
+                	 * to determine if the TTL has passed or not. Thus, let's log this
+                	 * event and skip the entry
+                	 */
+                	LOGGER.warn("Finished timestamp is in the ISO-8601, which should be the case; ignoring this container", pe);
+                	continue;
+                }
+                long finishedAtUnixTimestamp = finishedAt.getTime() / 1000;
                 
-                // TODO: Should we remove the container now, if that container is too old?
-                // client.removeContainerCmd(containerId).exec();
+                if (finishedAtUnixTimestamp + dc.getWatchdogTtlExited() * 60 < this.currentUnixTimestamp) { 
+                	LOGGER.info("TTL for exited container {} has passed; now removing it", containerId);
+                	try {
+                		client.removeContainerCmd(containerId).exec();
+                	} catch (Exception e) {
+                		LOGGER.warn("Removing the container failed due to an exception of the docker-java API", e);
+                	}
+                }
                 
                 continue; // no further checks to perform on this container
             }
@@ -135,7 +162,19 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 LOGGER.info("Our container {} is still running for {} seconds on docker, but there is no computer associated in Jenkins to it anymore", 
                         containerId, new Long(lifetimeContainer).toString());
                 
-                // TODO: should we stop and remove it?
+                if (lifetimeContainer > dc.getWatchdogTtlRunning() * 60) {
+                	LOGGER.info("The container {} has passed the Running TTL; requesting to stop and remove it", containerId);
+                	try {
+                		client.stopContainerCmd(containerId).exec();
+                		LOGGER.info("Container {} is stopped; trying to remove it", containerId);
+                        client.removeContainerCmd(containerId).exec();
+                        LOGGER.info("Container {} is removed", containerId);
+                	} catch (Exception e) {
+                		LOGGER.warn("Stopping and removing the container failed due to an exception by the docker-java API", e);
+                		// besides reporting, ignore this error
+                		continue;
+                	}
+                }
             }
 
         }
