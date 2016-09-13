@@ -169,6 +169,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 LOGGER.log(Level.INFO, "Stopped container {0}", getContainerId());
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to stop instance " + getContainerId() + " for slave " + name + " due to exception", ex.getMessage());
+                LOGGER.log(Level.SEVERE, "Causing exception for failure on stopping the instance was", ex);
             }
 
             // If the run was OK, then do any tagging here
@@ -178,6 +179,7 @@ public class DockerSlave extends AbstractCloudSlave {
                     LOGGER.log(Level.INFO, "Shutdowned slave for {0}", getContainerId());
                 } catch (Exception e) {
                     LOGGER.log(Level.SEVERE, "Failure to slaveShutdown instance " + getContainerId() + " for slave " + name, e);
+                    LOGGER.log(Level.SEVERE, "Causing exception for failure on slaveShutdown was", e);
                 }
             }
 
@@ -190,6 +192,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 LOGGER.log(Level.INFO, "Removed container {0}", getContainerId());
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception: " + ex.getMessage());
+                LOGGER.log(Level.SEVERE, "Causing exception for failre on removing instance was", ex);
             }
         } else {
             LOGGER.log(Level.SEVERE, "ContainerId is absent, no way to remove/stop container");
@@ -252,13 +255,13 @@ public class DockerSlave extends AbstractCloudSlave {
 
                     } catch(DockerException ex) {
 
-                        LOGGER.log(Level.SEVERE, "Exception pushing docker image. Check that the destination registry is running.");
+                        LOGGER.log(Level.SEVERE, "Exception pushing docker image. Check that the destination registry is running.", ex);
                         throw ex;
                     }
                 }
             }
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Could not add additional tags");
+            LOGGER.log(Level.SEVERE, "Could not add additional tags", ex);
         }
 
         if (getJobProperty().cleanImages) {
