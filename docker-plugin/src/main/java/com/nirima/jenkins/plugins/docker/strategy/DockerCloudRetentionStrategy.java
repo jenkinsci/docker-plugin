@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker.strategy;
 
+import hudson.Extension;
 import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.RetentionStrategy;
 
@@ -30,6 +31,8 @@ public class DockerCloudRetentionStrategy extends CloudRetentionStrategy {
 
     @Restricted(NoExternalUse.class)
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+
+    @Extension
     public static final class DescriptorImpl extends hudson.model.Descriptor<RetentionStrategy<?>> {
         @Override
         public String getDisplayName() {
