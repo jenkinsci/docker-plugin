@@ -10,7 +10,7 @@
 
     <groupId>com.nirima</groupId>
     <artifactId>docker-plugin-parent</artifactId>
-    <version>0.16.2-SNAPSHOT</version>
+    <version>0.16.2</version>
     <packaging>pom</packaging>
 
     <name>Docker plugin parent pom</name>
@@ -25,7 +25,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/docker-plugin</url>
-        <tag>HEAD</tag>
+        <tag>docker-plugin-parent-0.16.2</tag>
     </scm>
     <distributionManagement>
         <repository>
