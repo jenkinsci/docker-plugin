@@ -27,12 +27,6 @@
         <url>https://github.com/jenkinsci/docker-plugin</url>
         <tag>docker-plugin-parent-0.16.2</tag>
     </scm>
-    <distributionManagement>
-        <repository>
-            <id>maven.jenkins-ci.org</id>
-            <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
-        </repository>
-    </distributionManagement>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
