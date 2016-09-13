@@ -5,3 +5,5 @@ work
 /target
 .*
 *~
+
+dependency-reduced-pom.xml
