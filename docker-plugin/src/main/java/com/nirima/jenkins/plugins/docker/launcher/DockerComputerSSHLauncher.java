@@ -79,7 +79,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         super.waitUp(cloudId, dockerTemplate, containerInspect);
 
         final PortUtils.ConnectionCheck connectionCheck =
-                PortUtils.connectionCheck(getAddressForSSHD(cloudId, containerInspect))
+                PortUtils.connectionCheck(
+                        getAddressForSSHD(cloudId, containerInspect, dockerTemplate.getDockerTemplateBase().network))
                          .withRetries(60)
                          .withEveryRetryWaitFor(2, TimeUnit.SECONDS);
 
@@ -91,7 +92,9 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         Preconditions.checkNotNull(inspect);
 
         try {
-            final InetSocketAddress address = getAddressForSSHD(cloudId, inspect);
+            final InetSocketAddress address = getAddressForSSHD(
+                    cloudId, inspect, template.getDockerTemplateBase().network
+            );
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + address);
             return new SSHLauncher(address.getHostString(), address.getPort(), sshConnector.getCredentials(),
                     sshConnector.jvmOptions,
@@ -112,7 +115,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
      * a direct connection.
      *
      */
-    protected InetSocketAddress getAddressForSSHD(String cloudId, InspectContainerResponse ir) {
+    protected InetSocketAddress getAddressForSSHD(String cloudId, InspectContainerResponse ir, String network) {
         // get exposed port
         ExposedPort sshPort = new ExposedPort(sshConnector.port);
         String host = null;
@@ -150,7 +153,11 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
              * like Joyent's Triton. */
                 if (host == null || host.equals("0.0.0.0") || usesSingleHostAbstraction(ir)) {
                     // Try to connect to the container directly (without going through the host)
-                    host = networkSettings.getIpAddress();
+                    if (network != null && network.length() > 0) {
+                        host = networkSettings.getNetworks().get(network).getIpAddress();
+                    } else {
+                        host = networkSettings.getIpAddress();
+                    }
                     port = sshConnector.port;
                 }
             }
