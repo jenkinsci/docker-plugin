@@ -70,6 +70,9 @@ public class PortUtils {
         }
 
         public boolean execute() {
+
+            LOGGER.trace("Testing connectivity to {} port {}", host, port );
+
             for (int i = 1; i <= retries; i++) {
                 if (executeOnce()) {
                     return true;
@@ -80,6 +83,9 @@ public class PortUtils {
                     return false; // quit if interrupted
                 }
             }
+
+            LOGGER.warn("Could not connect to {} port {}. Are you sure this location is contactable from Jenkins?", host, port);
+
             return false;
         }
     }
