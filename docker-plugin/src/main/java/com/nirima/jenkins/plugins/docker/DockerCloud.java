@@ -72,6 +72,7 @@ public class DockerCloud extends Cloud {
     public final int readTimeout;
     public final String version;
     public final String credentialsId;
+    public final String dockerHostname;
 
     private transient DockerClient connection;
 
@@ -104,7 +105,8 @@ public class DockerCloud extends Cloud {
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
-                       String version) {
+                       String version,
+                       String dockerHostname) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -112,6 +114,7 @@ public class DockerCloud extends Cloud {
         this.serverUrl = sanitizeUrl(serverUrl);
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
+        this.dockerHostname = dockerHostname;
 
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
@@ -134,7 +137,8 @@ public class DockerCloud extends Cloud {
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
-                       String version) {
+                       String version,
+                       String dockerHostname) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -142,6 +146,7 @@ public class DockerCloud extends Cloud {
         this.serverUrl = sanitizeUrl(serverUrl);
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
+        this.dockerHostname = dockerHostname;
 
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
@@ -158,6 +163,10 @@ public class DockerCloud extends Cloud {
 
     public String getServerUrl() {
         return serverUrl;
+    }
+
+    public String getDockerHostname() {
+        return dockerHostname;
     }
 
     /**

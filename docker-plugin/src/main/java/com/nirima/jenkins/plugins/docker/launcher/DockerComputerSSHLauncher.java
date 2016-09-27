@@ -143,7 +143,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
                 // Communicating with local sockets.
                 host = "0.0.0.0";
             } else {
-                host = URI.create(url).getHost();
+                host = getDockerHostFromCloud(cloudId);
 
             /* Don't use IP from DOCKER_HOST because it is invalid or we are
              * connecting to a system that supports a single host abstraction
@@ -157,6 +157,18 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
 
         return new InetSocketAddress(host, port);
+    }
+
+    private String getDockerHostFromCloud(String cloudId) {
+        String url;
+        String host;DockerCloud cloud = DockerCloud.getCloudByName(cloudId);
+        url = cloud.getServerUrl();
+        String dockerHostname = cloud.getDockerHostname();
+        if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
+            return dockerHostname;
+        } else {
+            return URI.create(url).getHost();
+        }
     }
 
     @Override
