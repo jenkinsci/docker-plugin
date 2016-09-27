@@ -31,6 +31,18 @@
     <f:entry title="${%Container Cap}" field="containerCap">
         <f:number default="100"/>
     </f:entry>
+    
+    <f:section title="Advanced Container Watchdog Options">
+    	<f:advanced>
+    		<f:entry title="${%TTL for exited containers}" field="watchdogTtlExited">
+    			<f:number default="5" />
+    		</f:entry>
+    		
+    		<f:entry title="${%TTL for running containers}" field="watchdogTtlRunning">
+    			<f:number default="5" />
+    		</f:entry>
+    	</f:advanced>
+    </f:section>
 
     <f:entry title="${%Images}" description="${%List of Images to be launched as slaves}">
         <f:repeatableHeteroProperty field="templates" hasHeader="true" addCaption="Add Docker Template"

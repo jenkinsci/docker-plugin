@@ -53,7 +53,7 @@ public class ClientBuilderForPluginTest {
                 Collections.<DockerTemplate>emptyList(),
                 HTTP_SERVER_URL,
                 EMPTY_CONTAINER_CAP,
-                CONNECT_TIMEOUT, READ_TIMEOUT, EMPTY_CREDS, "1.19");
+                CONNECT_TIMEOUT, READ_TIMEOUT, EMPTY_CREDS, "1.19", 300, 300);
         ClientConfigBuilderForPlugin builder = dockerClientConfig();
         builder.forCloud(cloud);
 

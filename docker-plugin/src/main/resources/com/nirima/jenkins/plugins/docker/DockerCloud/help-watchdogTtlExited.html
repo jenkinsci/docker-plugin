@@ -1,0 +1,16 @@
+<div>
+	<p>The container watchdog periodically scans the status of the containers on Docker Host 
+	created by this Jenkins instance. It verifies if the status on the Docker Host is in sync
+	with the status assumed by the Jenkins Server.</p>
+	<p>If Jenkins does not need a slave anymore, the Docker container may be terminated.
+	This process mainly looks like this: The slave process running in the container
+	is stopped. Once completed, also the container itself is being stopped. It is then called to be "exited".
+	Afterwards, a cleanup of the container should take place. This is done by removing it from the Docker Host.</p>
+	<p>If the removing failed or (in error) was not requested, the Docker Host may have "exited" containers in the
+	container's overview. Usually, they are of little use, but may drain capacity from the Docker Host.</p>
+	<p>Therefore, the container watchdog may also serve as garbage collector: It will clean up "exited" 
+	containers. The parameter here <b>defines how long exited containers shall be allowed to remain on the
+	Docker Host before being removed by the watchdog</b>.</p>
+	<p>The value is measured <b>in minutes</b>.</p>
+	<p>Specifying a zero value (0) here, disables the cleanup procedure (reporting still will take place)</p>
+</div>
