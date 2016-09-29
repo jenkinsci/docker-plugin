@@ -161,7 +161,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
     private String getDockerHostFromCloud(String cloudId) {
         String url;
-        String host;DockerCloud cloud = DockerCloud.getCloudByName(cloudId);
+        String host;
+        DockerCloud cloud = DockerCloud.getCloudByName(cloudId);
         url = cloud.getServerUrl();
         String dockerHostname = cloud.getDockerHostname();
         if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
