@@ -9,6 +9,10 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="${%Docker Hostname}" field="dockerHostname">
+        <f:textbox/>
+    </f:entry>
+
     <f:entry title="${%Docker API Version}" field="version">
         <f:textbox/>
     </f:entry>
