@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker.ws;
 
+import java.io.File;
+
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.FilePath;
 import hudson.model.Job;
@@ -24,7 +26,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class MappedFsWorkspaceBrowserTest {
 
-    public static final String FS_MAPPING = "/mapping";
+    public static final String FS_MAPPING = File.pathSeparator + "mapping";
     public static final String JOB_NAME = "job-name";
 
     @Mock
