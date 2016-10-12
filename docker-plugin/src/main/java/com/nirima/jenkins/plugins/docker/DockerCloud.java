@@ -1,7 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.*;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
@@ -13,7 +12,6 @@ import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
-import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -25,7 +23,6 @@ import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.security.ACL;
@@ -53,8 +50,6 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
-
-import static org.bouncycastle.crypto.tls.ConnectionEnd.client;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -350,14 +345,22 @@ public class DockerCloud extends Cloud {
         return containerId;
     }
 
-    private void pullImage(DockerTemplate dockerTemplate)  throws IOException {
-        final String imageName = dockerTemplate.getDockerTemplateBase().getImage();
-
-        List<Image> images = getClient().listImagesCmd().exec();
+    protected boolean shouldPullImage(String imageName, DockerImagePullStrategy pullStrategy) {
 
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(imageName);
         // if image was specified without tag, then treat as latest
         final String fullImageName = repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+
+        // simply check without asking docker
+        if (pullStrategy.pullIfExists(fullImageName) && pullStrategy.pullIfNotExists(fullImageName)) {
+            return true;
+        }
+
+        if (!pullStrategy.pullIfExists(fullImageName) && !pullStrategy.pullIfNotExists(fullImageName)) {
+            return false;
+        }
+
+        List<Image> images = getClient().listImagesCmd().exec();
 
         boolean imageExists = Iterables.any(images, new Predicate<Image>() {
             @Override
@@ -365,18 +368,22 @@ public class DockerCloud extends Cloud {
                 if (image == null || image.getRepoTags() == null) {
                     return false;
                 } else {
-                return Arrays.asList(image.getRepoTags()).contains(fullImageName);
-            }
+                    return Arrays.asList(image.getRepoTags()).contains(fullImageName);
+                }
             }
         });
 
-        boolean pull = imageExists ?
-                dockerTemplate.getPullStrategy().pullIfExists(imageName) :
-                dockerTemplate.getPullStrategy().pullIfNotExists(imageName);
+        return imageExists ?
+                pullStrategy.pullIfExists(fullImageName) :
+                pullStrategy.pullIfNotExists(fullImageName);
+    }
 
-        if (pull) {
-            LOGGER.info("Pulling image '{}' {}. This may take awhile...", imageName,
-                    imageExists ? "again" : "since one was not found");
+    private void pullImage(DockerTemplate dockerTemplate)  throws IOException {
+
+        final String imageName = dockerTemplate.getDockerTemplateBase().getImage();
+
+        if (shouldPullImage(imageName, dockerTemplate.getPullStrategy())) {
+            LOGGER.info("Pulling image '{}'. This may take awhile...", imageName);
 
             long startTime = System.currentTimeMillis();
 
