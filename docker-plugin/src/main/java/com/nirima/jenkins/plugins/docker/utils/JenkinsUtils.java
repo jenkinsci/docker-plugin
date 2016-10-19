@@ -169,8 +169,10 @@ public class JenkinsUtils {
             return null;
 
         Credentials credentials = lookupSystemCredentials(registry.credentialsId);
-
-        return makeAuthConfig(credentials).withRegistryAddress(registry.registry);
+        final AuthConfig authConfig = makeAuthConfig(credentials);
+        if( authConfig == null )
+            return null;
+        return authConfig.withRegistryAddress(registry.registry);
     }
 
     protected static AuthConfig makeAuthConfig(Credentials credentials) {
