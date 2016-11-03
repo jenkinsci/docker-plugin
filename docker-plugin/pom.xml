@@ -28,11 +28,34 @@
         </developer>
     </developers>
 
+    <properties>
+        <jenkins.version>1.648</jenkins.version>
+    </properties>
+
     <dependencies>
-         <dependency>
+        <dependency>
+            <!-- TODO remove this once we upgrade baseline Jenkins to 2.16 and bouncycastle-api to 2.16 -->
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.54</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>bouncycastle-api</artifactId>
+            <!-- TODO update this to 2.16 once we upgrade baseline Jenkins to 2.16 -->
+            <version>1.648.3</version>
+        </dependency>
+        <dependency>
             <groupId>com.nirima</groupId>
             <artifactId>docker-java-shaded</artifactId>
-            <version>${project.version}</version>            
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcpkix-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
      <!--   <dependency>
             <groupId>com.google.guava</groupId>
