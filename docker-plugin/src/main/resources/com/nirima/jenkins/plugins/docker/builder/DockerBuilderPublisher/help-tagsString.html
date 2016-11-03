@@ -1,4 +1,6 @@
 <div>
     Repository name (and optionally a tag) to be applied to the resulting image in case of success. <br/>
-    New line separated values.
+    Multiple entries are permitted if separated by newlines. <br/>
+    Environment variable substitution is performed on the strings so you can use e.g. ${BUILD_NUMBER} as part of each entry. <br/>
+    Each entry must be of the form IMAGE[:TAG] as per the <a href="https://docs.docker.com/engine/reference/commandline/tag/">docker tag</a> command.
 </div>

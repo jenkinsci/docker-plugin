@@ -71,7 +71,41 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderPublisher.class);
 
-    private static final Pattern VALID_REPO_PATTERN = Pattern.compile("^([a-z0-9-_.]+)$");
+    /**
+     * The docker spec says "<i>A tag name may contain lowercase and uppercase
+     * characters, digits, underscores, periods and dashes. A tag name may not
+     * start with a period or a dash and may contain a maximum of 128
+     * characters</i>". This is a simplified version of that specification.
+     */
+    private static final String TAG_REGEX = "[a-zA-Z0-9-_.]+";
+    /**
+     * The docker spec says "<i>Name components may contain lowercase
+     * characters, digits and separators. A separator is defined as a period,
+     * one or two underscores, or one or more dashes. A name component may not
+     * start or end with a separator</i>". This is a simplified version of that
+     * specification.
+     */
+    private static final String NAME_COMPONENT_REGEX = "[a-z0-9-_.]+";
+    /**
+     * The docker spec says "<i>The (registry) hostname must comply with
+     * standard DNS rules, but may not contain underscores. If a hostname is
+     * present, it may optionally be followed by a port number in the format
+     * :8080</i>". This is a simplified version of that specification.
+     */
+    private static final String REGISTRY_HOSTNAME_REGEX = "[a-zA-Z0-9-.]+(:[0-9]+)?";
+    /**
+     * The docker spec says "<i>An image name is made up of slash-separated name
+     * components, optionally prefixed by a registry hostname</i>".
+     */
+    private static final String IMAGE_NAME_REGEX = "(" + REGISTRY_HOSTNAME_REGEX + "/)?" + NAME_COMPONENT_REGEX + "(/"
+            + NAME_COMPONENT_REGEX + ")*";
+    /**
+     * A regex matching IMAGE[:TAG] (from the "docker tag" command) where IMAGE
+     * matches {@link #IMAGE_NAME_REGEX} and TAG matches {@link #TAG_REGEX}.
+     */
+    private static final String VALID_REPO_REGEX = "^" + IMAGE_NAME_REGEX + "(:" + TAG_REGEX + ")?$";
+    /** Compiled version of {@link #VALID_REPO_REGEX}. */
+    private static final Pattern VALID_REPO_PATTERN = Pattern.compile(VALID_REPO_REGEX);
 
     public final String dockerFileDirectory;
 
@@ -129,8 +163,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public static void verifyTags(String tagsString) {
         final List<String> verifyTags = filterStringToList(tagsString);
         for (String verifyTag : verifyTags) {
-            if (!VALID_REPO_PATTERN.matcher(verifyTag).matches()) {
-                throw new IllegalArgumentException("Tag " + verifyTag + " doesn't match ^([a-z0-9-_.]+)$");
+            // Our strings are subjected to variable substitution before they are used, so ${foo} might be valid.
+            // So we do some fake substitution to help prevent incorrect complaints.
+            final String expandedTag = verifyTag.replaceAll("\\$\\{[^}]*NUMBER\\}", "1234").replaceAll("\\$\\{[^}]*\\}", "xyz");
+            if (!VALID_REPO_PATTERN.matcher(expandedTag).matches()) {
+                throw new IllegalArgumentException("Tag " + verifyTag + " doesn't match "+ VALID_REPO_REGEX);
             }
         }
     }
@@ -212,7 +249,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         private DockerClient getClient() {
             if (_client == null) {
                 Validate.notNull(clientConfig, "Could not get client because we could not find the cloud that the " +
-                        "project was built on. What this build run on Docker?");
+                        "project was built on. Was this build run on Docker?");
 
                 _client = ClientBuilderForPlugin.builder()
                         .withDockerCmdExecConfig(dockerCmdExecConfig)
@@ -273,7 +310,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             final AuthConfigurations authConfigurations = getAuthConfigurations();
             return fpChild.act(new MasterToSlaveFileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
-
 
                     log("Docker Build: building image at path " + f.getAbsolutePath());
                     BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
@@ -400,7 +436,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         @Override
         public String getDisplayName() {
-            return "Build / Publish Docker Containers";
+            return "Build / Publish Docker Image";
         }
     }
 }
