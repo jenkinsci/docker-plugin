@@ -19,7 +19,7 @@ public class DockerBuilderPublisherTest {
     private static final String INVALID1 = "MyImagei1";
     private static final String INVALID2 = "myimage%";
     private static final String INVALID3 = "1.2.3.4:abc/myimage:invalid3";
-    private static final String INVALID4 = "funnyhost£name:5000/myimage4";
+    private static final String INVALID4 = "funnyhostÂ£name:5000/myimage4";
 
     @Test
     public void verifyTagsGivenValidTagsThenPasses() {
