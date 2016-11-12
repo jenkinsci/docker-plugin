@@ -37,6 +37,7 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +97,11 @@ public class DockerCloud extends Cloud {
      * provisioned, but not necessarily reported yet by docker.
      */
     private static final HashMap<String, Integer> provisionedImages = new HashMap<>();
+
+    /**
+     * Indicate if docker host used to run container is exposed inside container as DOCKER_HOST environment variable
+     */
+    private Boolean exposeDockerHost;
 
     @Deprecated
     public DockerCloud(String name,
@@ -671,6 +677,16 @@ public class DockerCloud extends Cloud {
             _isTriton = remoteVersion.getOperatingSystem().equals("solaris");
         }
         return _isTriton;
+    }
+
+    public boolean isExposeDockerHost() {
+        // if null (i.e migration from previous installation) consider true for backward compatibility
+        return exposeDockerHost != null ? exposeDockerHost : true;
+    }
+
+    @DataBoundSetter
+    public void setExposeDockerHost(boolean exposeDockerHost) {
+        this.exposeDockerHost = exposeDockerHost;
     }
 
 
