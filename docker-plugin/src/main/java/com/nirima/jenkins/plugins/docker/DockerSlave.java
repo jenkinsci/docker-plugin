@@ -61,6 +61,7 @@ public class DockerSlave extends AbstractCloudSlave {
         this.containerId = containerId;
     }
 
+    @DataBoundConstructor
     public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId,
                        DockerTemplate dockerTemplate, String cloudId)
             throws IOException, Descriptor.FormException {
