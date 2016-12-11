@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker.launcher;
 
 
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
@@ -36,7 +37,7 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
      * i.e. port for exposing, command to run, etc.
      */
     public abstract void appendContainerConfig(DockerTemplate dockerTemplate,
-                                               CreateContainerCmd createContainerCmd) throws IOException;
+                                               CreateContainerCmd createContainerCmd, DockerClient dockerClient) throws IOException;
 
     /**
      * Wait until slave is up and ready for connection.

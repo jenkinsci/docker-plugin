@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker.launcher;
 
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -60,7 +61,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public void appendContainerConfig(DockerTemplate dockerTemplate, CreateContainerCmd createCmd) {
+    public void appendContainerConfig(DockerTemplate dockerTemplate, CreateContainerCmd createCmd, DockerClient client) {
         final int sshPort = getSshConnector().port;
 
         createCmd.withExposedPorts(new ExposedPort(sshConnector.port));

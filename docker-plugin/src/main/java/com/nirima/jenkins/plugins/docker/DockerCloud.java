@@ -13,6 +13,7 @@ import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
+import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
@@ -310,7 +311,7 @@ public class DockerCloud extends Cloud {
 
         // contribute launcher specific options
         if (launcher != null) {
-            launcher.appendContainerConfig(dockerTemplate, containerConfig);
+            launcher.appendContainerConfig(dockerTemplate, containerConfig, dockerClient);
         }
 
         // create
@@ -721,8 +722,9 @@ public class DockerCloud extends Cloud {
                         .build();
 
                 Version verResult = dc.versionCmd().exec();
+                Info infoResult = dc.infoCmd().exec();
 
-                return FormValidation.ok("Version = " + verResult.getVersion() + ", API Version = " + verResult.getApiVersion());
+                return FormValidation.ok("Version = " + verResult.getVersion() + ", API Version = " + verResult.getApiVersion() + ", OS type = " + infoResult.getOsType());
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
             }
