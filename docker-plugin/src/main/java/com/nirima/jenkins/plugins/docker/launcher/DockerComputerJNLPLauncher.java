@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
@@ -88,6 +89,11 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         final String osType = connect.infoCmd().exec().getOsType();
         String shell = null;
         String startCmd = null;
+        ExecCreateCmd exec = connect.execCreateCmd(containerId).withTty(true)
+                .withAttachStdin(true)
+                .withAttachStderr(true)
+                .withAttachStdout(true);
+        ExecCreateCmdResponse response;
 
         try {
             if(osType.equals("windows")) {
@@ -100,6 +106,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "`$COMPUTER_SECRET='" + dockerComputer.getJnlpMac() + "'\n" +
                                 "\"@ | Out-File -FilePath c:\\config.ps1";
                 shell = "powershell.exe";
+                exec.withCmd(shell, startCmd);
             } else {
                 // Default is Linux
                 startCmd =
@@ -111,15 +118,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + "\"\n" +
                                 "EOF" + "\n";
                 shell = "/bin/bash";
+                exec.withCmd(shell, "-cxe", startCmd);
             }
 
-            ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
-                    .withTty(true)
-                    .withAttachStdin(true)
-                    .withAttachStderr(true)
-                    .withAttachStdout(true)
-                    .withCmd(shell, startCmd)
-                    .exec();
+            response = exec.exec();
 
             LOGGER.info("Starting connection command for {}", containerId);
             logger.println("Starting connection command for " + containerId);
