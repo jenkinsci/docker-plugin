@@ -90,18 +90,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         String startCmd = null;
 
         try {
-            if(osType.equals("linux")){
-                startCmd =
-                        "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
-                                "JENKINS_URL=\"" + rootUrl + "\"\n" +
-                                "JENKINS_USER=\"" + getUser() + "\"\n" +
-                                "JENKINS_HOME=\"" + dockerTemplate.getRemoteFs() + "\"\n" +
-                                "COMPUTER_URL=\"" + dockerComputer.getUrl() + "\"\n" +
-                                "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + "\"\n" +
-                                "EOF" + "\n";
-                shell = "/bin/bash";
-            }
-            else if(osType.equals("windows")) {
+            if(osType.equals("windows")) {
                 startCmd =
                         "@\"\n" +
                                 "`$JENKINS_URL='"     + rootUrl + "'\n" +
@@ -111,6 +100,17 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 "`$COMPUTER_SECRET='" + dockerComputer.getJnlpMac() + "'\n" +
                                 "\"@ | Out-File -FilePath c:\\config.ps1";
                 shell = "powershell.exe";
+            } else {
+                // Default is Linux
+                startCmd =
+                        "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
+                                "JENKINS_URL=\"" + rootUrl + "\"\n" +
+                                "JENKINS_USER=\"" + getUser() + "\"\n" +
+                                "JENKINS_HOME=\"" + dockerTemplate.getRemoteFs() + "\"\n" +
+                                "COMPUTER_URL=\"" + dockerComputer.getUrl() + "\"\n" +
+                                "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + "\"\n" +
+                                "EOF" + "\n";
+                shell = "/bin/bash";
             }
 
             ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
@@ -173,7 +173,19 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     public void appendContainerConfig(DockerTemplate dockerTemplate, CreateContainerCmd createContainerCmd, DockerClient dockerClient) throws IOException {
         final String osType = dockerClient.infoCmd().exec().getOsType();
 
-        if(osType.equals("linux")) {
+
+        if(osType.equals("windows")){
+            try (InputStream istream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.ps1")) {
+                final String initCmd = IOUtils.toString(istream, Charsets.UTF_8);
+                if (initCmd == null) {
+                    throw new IllegalStateException("Resource file 'init.ps1' not found");
+                }
+                createContainerCmd.withCmd("powershell.exe", "(@\"\n" +
+                        initCmd.replace("$", "`$") +
+                        "\n\"@ | Out-File -FilePath c:\\init.ps1) -and (c:\\init.ps1)");
+            }
+        } else {
+            // default is Linux
             try (InputStream istream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
                 final String initCmd = IOUtils.toString(istream, Charsets.UTF_8);
                 if (initCmd == null) {
@@ -185,16 +197,6 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                                 initCmd.replace("$", "\\$") + "\n" +
                                 "EOF" + "\n"
                 );
-            }
-        } else if(osType.equals("windows")){
-            try (InputStream istream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.ps1")) {
-                final String initCmd = IOUtils.toString(istream, Charsets.UTF_8);
-                if (initCmd == null) {
-                    throw new IllegalStateException("Resource file 'init.ps1' not found");
-                }
-                createContainerCmd.withCmd("powershell.exe", "(@\"\n" +
-                        initCmd.replace("$", "`$") +
-                        "\n\"@ | Out-File -FilePath c:\\init.ps1) -and (c:\\init.ps1)");
             }
         }
         createContainerCmd.withTty(true);
