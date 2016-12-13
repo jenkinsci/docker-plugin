@@ -48,5 +48,5 @@ cd "$JENKINS_HOME"
 $slaveName=$COMPUTER_URL -replace "computer/", "" -replace "/", ""
 $RUN_OPTS="hudson.remoting.jnlp.Main -headless -url $JENKINS_URL $COMPUTER_SECRET $slaveName "
 
-$RUN_CMD="java $CMD_OPTS -cp ${JENKINS_HOME}/slave.jar $RUN_OPTS"
+$RUN_CMD="java $env:CMD_OPTS -cp ${JENKINS_HOME}/slave.jar $RUN_OPTS"
 Invoke-Expression $RUN_CMD
