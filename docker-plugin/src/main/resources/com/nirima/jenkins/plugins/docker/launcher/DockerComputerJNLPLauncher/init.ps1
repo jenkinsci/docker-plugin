@@ -36,6 +36,7 @@ Write-Output "JENKINS_USER = $JENKINS_USER       "
 Write-Output "JENKINS_HOME = $JENKINS_HOME       "
 Write-Output "COMPUTER_URL = $COMPUTER_URL       "
 Write-Output "COMPUTER_SECRET = $COMPUTER_SECRET "
+Write-Output "env:CMD_OPTS = $env:CMD_OPTS       "
 Write-Output "###################################"
 
 Get-Item Env:
@@ -48,5 +49,6 @@ cd "$JENKINS_HOME"
 $slaveName=$COMPUTER_URL -replace "computer/", "" -replace "/", ""
 $RUN_OPTS="hudson.remoting.jnlp.Main -headless -url $JENKINS_URL $COMPUTER_SECRET $slaveName "
 
-$RUN_CMD="java $env:CMD_OPTS -cp ${JENKINS_HOME}/slave.jar $RUN_OPTS"
+$RUN_CMD="java $env:CMD_OPTS -cp ${JENKINS_HOME}\\slave.jar $RUN_OPTS"
+Write-Output "RUN_OPTS = $RUN_CMD"
 Invoke-Expression $RUN_CMD

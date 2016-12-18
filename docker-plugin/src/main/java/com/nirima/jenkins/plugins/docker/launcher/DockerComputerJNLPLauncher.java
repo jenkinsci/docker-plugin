@@ -19,6 +19,7 @@ import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import hudson.util.TimeUnit2;
 import jenkins.model.Jenkins;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.kohsuke.accmod.Restricted;
@@ -182,9 +183,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
                 if (initCmd == null) {
                     throw new IllegalStateException("Resource file 'init.ps1' not found");
                 }
-                createContainerCmd.withCmd("powershell.exe", "(@\"\n" +
+                createContainerCmd.withEntrypoint("powershell.exe")
+                        .withCmd("powershell.exe", "-NoLogo", "-ExecutionPolicy", "bypass", "-Command", "{@\"\n" +
                         initCmd.replace("$", "`$") +
-                        "\n\"@ | Out-File -FilePath c:\\init.ps1) -and (c:\\init.ps1)");
+                        "\n\"@ | Out-File -FilePath c:\\init.ps1 ; if($?) {c:\\init.ps1}}");
             }
         } else {
             // default is Linux
