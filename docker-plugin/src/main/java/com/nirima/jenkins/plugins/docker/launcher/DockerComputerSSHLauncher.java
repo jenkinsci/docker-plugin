@@ -71,8 +71,16 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             createCmd.withCmd("bash", "-c", "/usr/sbin/sshd -D -p " + sshPort);
         }
 
-        createCmd.getPortBindings().add(PortBinding.parse( "" + sshPort));
+        boolean bindSshPortLocalhost = dockerTemplate.getDockerTemplateBase().bindSshPortLocalhost;
+        
+        if (bindSshPortLocalhost) {
+            createCmd.getPortBindings().add(PortBinding.parse("127.0.0.1::" + sshPort));
+        }
+        else {
+            createCmd.getPortBindings().add(PortBinding.parse( "" + sshPort));
+        }
     }
+
 
     @Override
     public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {

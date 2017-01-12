@@ -47,6 +47,10 @@ f.advanced(title: _("Container settings"), align: "left") {
         f.checkbox()
     }
 
+    f.entry(title: _("Bind ssh port to localhost only"), field: "bindSshPortLocalhost") {
+        f.checkbox()
+    }
+
     f.entry(title: _("Memory Limit in MB"), field: "memoryLimit") {
         f.number(name: "memoryLimit", clazz: "positive-number", min: "4", step: "1")
     }

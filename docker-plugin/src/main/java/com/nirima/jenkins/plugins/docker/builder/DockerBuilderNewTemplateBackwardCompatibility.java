@@ -48,7 +48,7 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
     protected transient Integer memoryLimit, memorySwap, cpuShares;
 
     @Deprecated
-    protected transient boolean bindAllPorts, privileged, tty;
+    protected transient boolean bindAllPorts, bindSshPortLocalhost, privileged, tty;
 
 
     public abstract void setDockerTemplate(DockerTemplate dockerTemplate);
@@ -56,7 +56,7 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
     protected void convert1() {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString, network, dockerCommand,
                 volumesString, null, environmentsString, lxcConfString,
-                hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress
+                hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, bindSshPortLocalhost, privileged, tty, macAddress
         );
 
         final DockerComputerSSHLauncher dockerComputerSSHLauncher = new DockerComputerSSHLauncher(

@@ -32,6 +32,7 @@ public class DockerTemplateTest {
     String hostname = "hostname";
     String bindPorts = "0.0.0.0:22";
     boolean bindAllPorts = true;
+    boolean bindSshPortLocalhost = true;
     boolean privileged = false;
     boolean tty = false;
     String macAddress = "92:d0:c6:0a:29:33";
@@ -40,7 +41,7 @@ public class DockerTemplateTest {
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString, network,
                 dockerCommand, volumesString, volumesString, environmentsString,
-                lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
+                lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, bindSshPortLocalhost, privileged, tty, macAddress);
 
         return new DockerTemplate(
                 dockerTemplateBase,

@@ -29,6 +29,7 @@
           <environment/>
           <bindPorts></bindPorts>
           <bindAllPorts>false</bindAllPorts>
+           <bindSshPortLocalhost>true</bindSshPortLocalhost>
           <privileged>false</privileged>
           <tty>false</tty>
           <labelString>rhel65-sandbox</labelString>

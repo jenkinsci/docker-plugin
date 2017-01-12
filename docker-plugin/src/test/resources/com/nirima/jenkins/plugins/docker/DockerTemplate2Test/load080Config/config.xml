@@ -18,6 +18,7 @@
                     <volumesFrom></volumesFrom>
                     <bindPorts></bindPorts>
                     <bindAllPorts>false</bindAllPorts>
+                    <bindSshPortLocalhost>true</bindSshPortLocalhost>
                     <privileged>true</privileged>
                     <labelString>dockerbuild-local</labelString>
                     <credentialsId>com.nirima.jenkins.plugins.docker.DockerCloud.dockerbuild</credentialsId>
@@ -44,6 +45,7 @@
                     <volumesFrom></volumesFrom>
                     <bindPorts></bindPorts>
                     <bindAllPorts>false</bindAllPorts>
+                    <bindSshPortLocalhost>true</bindSshPortLocalhost>
                     <privileged>true</privileged>
                     <labelString>dockerbuild-vpn-local</labelString>
                     <credentialsId>com.nirima.jenkins.plugins.docker.DockerCloud.dockerbuild-vpn</credentialsId>
@@ -70,6 +72,7 @@
                     <volumesFrom></volumesFrom>
                     <bindPorts></bindPorts>
                     <bindAllPorts>false</bindAllPorts>
+                    <privileged>true</privileged>
                     <privileged>true</privileged>
                     <labelString>dockerbuild-vpn-local-fix</labelString>
                     <credentialsId>com.nirima.jenkins.plugins.docker.DockerCloud.dockerbuild-vpn</credentialsId>
@@ -98,6 +101,7 @@
                     <volumesFrom></volumesFrom>
                     <bindPorts></bindPorts>
                     <bindAllPorts>false</bindAllPorts>
+                    <bindSshPortLocalhost>true</bindSshPortLocalhost>
                     <privileged>true</privileged>
                     <labelString>dockerbuild-wlp</labelString>
                     <credentialsId>com.nirima.jenkins.plugins.docker.DockerCloud.dockerbuild</credentialsId>
@@ -124,6 +128,7 @@
                     <volumesFrom></volumesFrom>
                     <bindPorts></bindPorts>
                     <bindAllPorts>false</bindAllPorts>
+                     <bindSshPortLocalhost>true</bindSshPortLocalhost>
                     <privileged>true</privileged>
                     <labelString>dockerbuild-golang</labelString>
                     <credentialsId>com.nirima.jenkins.plugins.docker.DockerCloud.dockerbuild</credentialsId>
@@ -150,6 +155,7 @@
                     <volumesFrom></volumesFrom>
                     <bindPorts></bindPorts>
                     <bindAllPorts>false</bindAllPorts>
+                    <bindSshPortLocalhost>true</bindSshPortLocalhost>
                     <privileged>true</privileged>
                     <labelString>dockerbuild-goruby</labelString>
                     <credentialsId>com.nirima.jenkins.plugins.docker.DockerCloud.dockerbuild</credentialsId>

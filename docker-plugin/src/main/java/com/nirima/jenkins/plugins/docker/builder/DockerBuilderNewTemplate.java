@@ -62,6 +62,7 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
                                     String hostname,
                                     String bindPorts,
                                     boolean bindAllPorts,
+                                    boolean bindSshPortLocalhost,
                                     boolean privileged,
                                     boolean tty,
                                     String macAddress) {
@@ -89,6 +90,7 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
         this.lxcConfString = lxcConfString;
         this.bindPorts = bindPorts;
         this.bindAllPorts = bindAllPorts;
+        this.bindSshPortLocalhost = bindSshPortLocalhost;
         this.privileged = privileged;
         this.tty = tty;
         this.hostname = hostname;

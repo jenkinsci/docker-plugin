@@ -21,6 +21,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                                 Integer cpuShares,
                                 String bindPorts,
                                 boolean bindAllPorts,
+                                boolean bindSshPortLocalhost,
                                 boolean privileged,
                                 boolean tty,
                                 String macAddress) {
@@ -38,6 +39,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                 cpuShares,
                 bindPorts,
                 bindAllPorts,
+                bindSshPortLocalhost,
                 privileged,
                 tty,
                 macAddress);

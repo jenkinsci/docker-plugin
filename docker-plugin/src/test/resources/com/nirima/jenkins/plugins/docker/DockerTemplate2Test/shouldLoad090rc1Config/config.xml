@@ -33,6 +33,7 @@
           <environment/>
           <bindPorts></bindPorts>
           <bindAllPorts>false</bindAllPorts>
+           <bindSshPortLocalhost>true</bindSshPortLocalhost>
           <privileged>false</privileged>
           <tty>false</tty>
           <labelString>label2 label-all</labelString>

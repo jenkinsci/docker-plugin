@@ -90,6 +90,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     public final String bindPorts;
     public final boolean bindAllPorts;
+    public final boolean bindSshPortLocalhost;
 
     public final Integer memoryLimit;
     public final Integer memorySwap;
@@ -119,6 +120,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                               Integer cpuShares,
                               String bindPorts,
                               boolean bindAllPorts,
+                              boolean bindSshPortLocalhost,
                               boolean privileged,
                               boolean tty,
                               String macAddress
@@ -132,6 +134,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
         this.bindPorts = bindPorts;
         this.bindAllPorts = bindAllPorts;
+        this.bindSshPortLocalhost = bindSshPortLocalhost;
 
         this.memoryLimit = memoryLimit;
         this.memorySwap = memorySwap;

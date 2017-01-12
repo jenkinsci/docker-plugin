@@ -54,6 +54,7 @@ public class DockerTemplate2Test {
         assertThat(tBase.getVolumes()[0], equalTo("/dev/log:/dev/log"));
 
         assertFalse(tBase.bindAllPorts);
+        assertTrue(tBase.bindSshPortLocalhost);
         assertTrue(tBase.privileged);
     }
 

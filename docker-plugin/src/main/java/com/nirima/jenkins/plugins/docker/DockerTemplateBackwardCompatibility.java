@@ -120,6 +120,9 @@ public abstract class DockerTemplateBackwardCompatibility {
     private transient boolean bindAllPorts;
 
     @Deprecated
+    private transient boolean bindSshPortLocalhost;
+
+    @Deprecated
     private transient Integer memoryLimit;
     @Deprecated
     private transient Integer memorySwap;
@@ -128,6 +131,7 @@ public abstract class DockerTemplateBackwardCompatibility {
 
     @Deprecated
     private transient boolean privileged;
+
     @Deprecated
     private transient boolean tty;
 
@@ -222,6 +226,7 @@ public abstract class DockerTemplateBackwardCompatibility {
                         cpuShares,
                         bindPorts,
                         bindAllPorts,
+                        bindSshPortLocalhost,
                         privileged,
                         tty,
                         macAddress)
