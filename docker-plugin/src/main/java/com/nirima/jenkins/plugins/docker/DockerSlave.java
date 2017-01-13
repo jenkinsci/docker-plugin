@@ -12,6 +12,7 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.model.*;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.slaves.*;
@@ -45,6 +46,9 @@ public class DockerSlave extends AbstractCloudSlave {
     @CheckForNull private String cloudId;
 
     private transient Run theRun;
+
+    // remember the slave workspace
+    @CheckForNull private String slaveWorkspace;
 
     public DockerSlave(DockerTemplate dockerTemplate, String containerId,
                        String name, String nodeDescription,
@@ -124,6 +128,19 @@ public class DockerSlave extends AbstractCloudSlave {
 
     public void setRun(Run run) {
         this.theRun = run;
+        rememberWorkspace(run);
+    }
+
+    private void rememberWorkspace(Run run) {
+        String ws = null;
+        if (run instanceof AbstractBuild) {
+            AbstractBuild<?,?> build = (AbstractBuild<?, ?>) run;
+            FilePath workspace = build.getWorkspace();
+            if (workspace != null) {
+                ws = workspace.getRemote();
+            }
+        }
+        slaveWorkspace = ws;
     }
 
     @Override
@@ -293,8 +310,15 @@ public class DockerSlave extends AbstractCloudSlave {
      * Add a built on docker action.
      */
     private void addJenkinsAction(String tag_image) throws IOException {
-        theRun.addAction(new DockerBuildAction(getCloud().getServerUrl(), containerId, tag_image, dockerTemplate.remoteFsMapping));
+        theRun.addAction(new DockerBuildAction(getCloud().getServerUrl(), containerId, tag_image, dockerTemplate.remoteFsMapping, dockerTemplate.remoteFs, getSlaveWorkspace()));
         theRun.save();
+    }
+
+    /**
+     * Returns the workspace directory on the slave, or <code>null</code> if it cannot be determined
+     */
+    private String getSlaveWorkspace() {
+        return slaveWorkspace;
     }
 
     public DockerClient getClient() {

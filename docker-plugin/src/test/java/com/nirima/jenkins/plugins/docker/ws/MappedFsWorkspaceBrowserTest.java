@@ -26,8 +26,10 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class MappedFsWorkspaceBrowserTest {
 
-    public static final String FS_MAPPING = File.pathSeparator + "mapping";
+    public static final String FS_MAPPING = File.separatorChar + "masterRoot" + File.separatorChar;
+    public static final String FS_SLAVE_ROOT = File.separatorChar + "slaveRoot";
     public static final String JOB_NAME = "job-name";
+    public static final String FS_SLAVE_WS_DIR = FS_SLAVE_ROOT + File.separatorChar + "workspace" + File.separatorChar + JOB_NAME;
 
     @Mock
     private Job job;
@@ -45,7 +47,7 @@ public class MappedFsWorkspaceBrowserTest {
                 .thenReturn(new DockerBuildAction(
                         randomAlphabetic(10),
                         randomAlphabetic(10),
-                        randomAlphabetic(10), FS_MAPPING));
+                        randomAlphabetic(10), FS_MAPPING, FS_SLAVE_ROOT, FS_SLAVE_WS_DIR));
 
         FilePath workspace = mappedFsWorkspaceBrowser.getWorkspace(job);
 
@@ -77,7 +79,7 @@ public class MappedFsWorkspaceBrowserTest {
                 .thenReturn(new DockerBuildAction(
                         randomAlphabetic(10),
                         randomAlphabetic(10),
-                        randomAlphabetic(10), ""));
+                        randomAlphabetic(10), "", "", ""));
 
         assertThat(mappedFsWorkspaceBrowser.getWorkspace(job), nullValue());
     }
