@@ -6,6 +6,8 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.Ports.Binding;
+
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
@@ -119,7 +121,13 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         Integer port = 22;
 
         final NetworkSettings networkSettings = ir.getNetworkSettings();
-        final Ports ports = networkSettings.getPorts();
+        //YD - dont use NetworkSettings in Docker, Bluemix provides floating IPs instead
+        //final Ports ports = networkSettings.getPorts();
+        final Ports ports = new Ports();
+        //YD specify Bluemix floating ip address provided by env var
+        String bluemixIP = System.getProperty("bluemix.ip");
+        ports.bind(new ExposedPort(22), new Binding(bluemixIP,"22"));
+
         final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
 
         // Get the binding that goes to the port that we're interested in (e.g: 22)
@@ -149,7 +157,9 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             /* Don't use IP from DOCKER_HOST because it is invalid or we are
              * connecting to a system that supports a single host abstraction
              * like Joyent's Triton. */
-                if (host == null || host.equals("0.0.0.0") || usesSingleHostAbstraction(ir)) {
+                
+                //YD - workaround runtime errors
+                if (host == null || host.equals("0.0.0.0") /*|| usesSingleHostAbstraction(ir)*/) {
                     // Try to connect to the container directly (without going through the host)
                     host = networkSettings.getIpAddress();
                     port = sshConnector.port;
