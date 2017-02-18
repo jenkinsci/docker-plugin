@@ -48,7 +48,7 @@
         </dependency>
         <dependency>
             <groupId>com.nirima</groupId>
-            <artifactId>docker-java-shaded</artifactId>
+            <artifactId>docker-java</artifactId>
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>

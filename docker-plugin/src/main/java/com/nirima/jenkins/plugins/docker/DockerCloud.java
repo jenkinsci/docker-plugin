@@ -9,10 +9,16 @@ import com.github.dockerjava.api.DockerClient;
 
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotModifiedException;
+
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Version;
+import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports.Binding;
+
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
@@ -305,6 +311,12 @@ public class DockerCloud extends Cloud {
             throws DockerException, IOException {
         final DockerTemplateBase dockerTemplateBase = dockerTemplate.getDockerTemplateBase();
         CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplateBase.getImage());
+        //YD - specify ip address provided by env var
+        String bluemixIP = System.getProperty("bluemix.ip");
+        Ports p = new Ports();
+        p.bind(new ExposedPort(22), new Binding(bluemixIP,"22"));
+
+        containerConfig = containerConfig.withPortBindings(p);
 
         dockerTemplateBase.fillContainerConfig(containerConfig);
 
@@ -319,7 +331,12 @@ public class DockerCloud extends Cloud {
 
         // start
         StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
-        startCommand.exec();
+        //YD -  ignore NotModifiedException - Container already started
+        try {
+            startCommand.exec();
+        } catch (NotModifiedException ex) {
+            //YD - do nothing
+        }
 
         return containerId;
     }
@@ -408,6 +425,13 @@ public class DockerCloud extends Cloud {
         LOGGER.info("Trying to run container for {}", dockerTemplate.getDockerTemplateBase().getImage());
         final String containerId = runContainer(dockerTemplate, getClient(), dockerTemplate.getLauncher());
 
+        //YD - wait a bit
+        LOGGER.info("waiting 30 sec to let container finish startup..");
+        try {
+            java.util.concurrent.TimeUnit.SECONDS.sleep(30);
+        } catch (InterruptedException e) {
+        }
+ 
         InspectContainerResponse ir;
         try {
             ir = getClient().inspectContainerCmd(containerId).exec();
