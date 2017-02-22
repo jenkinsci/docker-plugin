@@ -21,7 +21,7 @@ public class RequestFloatingIpCmd {
 
 		try {
 			HttpClient c = new HttpClient();
-			String url = ApiEndpoint.URL + "containers/floating-ips/request";
+			String url = ApiEndpoint.getEndpoint() + "containers/floating-ips/request";
 			c.sendPost(url, null);
 			
 			int responseCode = c.getResponseCode();

@@ -51,11 +51,17 @@ public class Credentials {
             JSONObject jsonObject = (JSONObject) obj;
  
             this.access_token = (String) jsonObject.get("AccessToken");
+            if (this.access_token == null) {
+            	LOGGER.log(Level.SEVERE, "Can't find AccessToken in " + cf_config);
+            	return;
+            }
             JSONObject spaceFields = (JSONObject) jsonObject.get("SpaceFields");
             this.space_guid = (String) spaceFields.get("Guid");
+            if ( this.space_guid == null)
+            	this.space_guid = (String) spaceFields.get("GUID");	 //on Windows its all caps, on Mac mixed case
             String space_name = (String) spaceFields.get("Name");
 
-            LOGGER.log(Level.INFO, "Found cf credentials for space " + space_name); 
+            LOGGER.log(Level.INFO, "Found cf credentials for space " + space_name + " " + space_guid); 
   
         } catch (Exception e) {
             e.printStackTrace();

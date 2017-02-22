@@ -27,7 +27,7 @@ public class ReleaseFloatingIpCmd {
 
 		try {
 			HttpClient c = new HttpClient();
-			String url = ApiEndpoint.URL + "containers/floating-ips/" + ip + "/release";
+			String url =  ApiEndpoint.getEndpoint()  + "containers/floating-ips/" + ip + "/release";
 			c.sendPost(url, null);
 			
 			int responseCode = c.getResponseCode();
