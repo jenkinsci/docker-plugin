@@ -35,6 +35,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.bluemix.containers.yaro.FloatingIpManager;
+
 /**
  * Configurable SSH launcher that expected ssh port to be exposed from docker container.
  */
@@ -124,8 +126,11 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         //YD - dont use NetworkSettings in Docker, Bluemix provides floating IPs instead
         //final Ports ports = networkSettings.getPorts();
         final Ports ports = new Ports();
-        //YD specify Bluemix floating ip address provided by env var
-        String bluemixIP = System.getProperty("bluemix.ip");
+        
+        //YD lookup Bluemix floating ip address
+        String hostName = ir.getConfig().getHostName();
+        String bluemixIP = FloatingIpManager.getIpByHostName(hostName);
+        
         ports.bind(new ExposedPort(22), new Binding(bluemixIP,"22"));
 
         final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();

@@ -62,6 +62,11 @@ import java.util.concurrent.Callable;
 
 import static org.bouncycastle.crypto.tls.ConnectionEnd.client;
 
+
+import net.bluemix.containers.yaro.RequestFloatingIpCmd;
+import net.bluemix.containers.yaro.BluemixException;
+import net.bluemix.containers.yaro.FloatingIpManager;
+
 /**
  * Docker Cloud configuration. Contains connection configuration,
  * {@link DockerTemplate} contains configuration for running docker image.
@@ -311,8 +316,22 @@ public class DockerCloud extends Cloud {
             throws DockerException, IOException {
         final DockerTemplateBase dockerTemplateBase = dockerTemplate.getDockerTemplateBase();
         CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplateBase.getImage());
-        //YD - specify ip address provided by env var
-        String bluemixIP = System.getProperty("bluemix.ip");
+        
+        //YD - allocate floating IP in Bluemix
+        RequestFloatingIpCmd cmd = new RequestFloatingIpCmd();
+        try {
+            cmd.exec();
+        } catch (BluemixException e) {
+            throw new DockerException ("Bluemix API exception", e.getStatusCode());
+        }
+        String bluemixIP = cmd.getFloatingIp();
+        
+        //YD - a workarond to pass HostIp to Ports.Binding.Serializer.. 
+        //make "current" container bluemixIP available via env var to allow com.github.dockerjava.api.model.Ports.Binding.Serializer to correctly set host name
+        //this will be used in a very short time, then next container create will override previoulsy set value
+        System.setProperty("bluemix.ip",bluemixIP);
+
+
         Ports p = new Ports();
         p.bind(new ExposedPort(22), new Binding(bluemixIP,"22"));
 
@@ -328,6 +347,9 @@ public class DockerCloud extends Cloud {
         // create
         CreateContainerResponse response = containerConfig.exec();
         String containerId = response.getId();
+
+        //YD - record Bluemix IP for new containerID
+        FloatingIpManager.mapContainerIdtoIp(containerId, bluemixIP);
 
         // start
         StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
@@ -431,6 +453,7 @@ public class DockerCloud extends Cloud {
             java.util.concurrent.TimeUnit.SECONDS.sleep(30);
         } catch (InterruptedException e) {
         }
+
  
         InspectContainerResponse ir;
         try {
@@ -439,6 +462,15 @@ public class DockerCloud extends Cloud {
             getClient().removeContainerCmd(containerId).withForce(true).exec();
             throw ex;
         }
+
+        //YD -  additional mapping of hostName-->IP 
+        //  because existing framework does not expose container Id to SSH Launcher
+        //  this need more thought for a cleaner solution      
+
+        String hostName = ir.getConfig().getHostName();
+        FloatingIpManager.mapHostNameToContainerId(hostName, containerId);
+        
+   
 
         // Build a description up:
         String nodeDescription = "Docker Node [" + dockerTemplate.getDockerTemplateBase().getImage() + " on ";
