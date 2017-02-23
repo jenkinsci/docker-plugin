@@ -9,6 +9,8 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerComputer;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
+
+import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
@@ -214,6 +216,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     @Restricted(NoExternalUse.class)
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
+    @Extension
     public static class DescriptorImpl extends Descriptor<ComputerLauncher> {
 
         public Class getJNLPLauncher() {
@@ -225,4 +228,6 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
             return "(Experimental) Docker JNLP launcher";
         }
     }
+
+
 }

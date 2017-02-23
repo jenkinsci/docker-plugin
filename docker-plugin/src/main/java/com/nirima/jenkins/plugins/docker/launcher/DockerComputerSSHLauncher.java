@@ -10,6 +10,8 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
+
+import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
@@ -136,15 +138,21 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
-            host = URI.create(DockerCloud.getCloudByName(cloudId).getServerUrl()).getHost();
+            String url = DockerCloud.getCloudByName(cloudId).getServerUrl();
+            if( url.startsWith("unix") ) {
+                // Communicating with local sockets.
+                host = "0.0.0.0";
+            } else {
+                host = URI.create(url).getHost();
 
             /* Don't use IP from DOCKER_HOST because it is invalid or we are
              * connecting to a system that supports a single host abstraction
              * like Joyent's Triton. */
-            if (host == null || host.equals("0.0.0.0") || usesSingleHostAbstraction(ir)) {
-                // Try to connect to the container directly (without going through the host)
-                host = networkSettings.getIpAddress();
-                port = sshConnector.port;
+                if (host == null || host.equals("0.0.0.0") || usesSingleHostAbstraction(ir)) {
+                    // Try to connect to the container directly (without going through the host)
+                    host = networkSettings.getIpAddress();
+                    port = sshConnector.port;
+                }
             }
         }
 
@@ -183,6 +191,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     @Restricted(NoExternalUse.class)
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
+    @Extension
     public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {

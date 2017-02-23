@@ -36,9 +36,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
 
     private DockerComputerLauncher launcher;
 
-    /**
-     * Field remoteFSMapping.
-     */
     public final String remoteFsMapping;
 
     public String remoteFs = "/home/jenkins";
@@ -64,7 +61,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
      */
     public DockerTemplate() {
         this.labelString = "";
-        this.remoteFsMapping = "";
+        this.remoteFsMapping = Jenkins.getInstance().getRootDir().getAbsolutePath();
         this.instanceCap = 1;
     }
 
