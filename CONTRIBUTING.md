@@ -17,5 +17,5 @@
 
 # Links
 
-- https://wiki.jenkins-ci.org/display/JENKINS/contributing
-- https://wiki.jenkins-ci.org/display/JENKINS/Extend+Jenkins 
+- https://wiki.jenkins-ci.org/display/JENKINS/Beginners+Guide+to+Contributing
+- https://wiki.jenkins-ci.org/display/JENKINS/Extend+Jenkins

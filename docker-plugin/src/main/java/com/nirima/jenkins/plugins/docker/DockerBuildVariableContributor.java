@@ -29,16 +29,20 @@ public class DockerBuildVariableContributor extends BuildVariableContributor {
             final DockerComputer dockerComputer = (DockerComputer) executor.getOwner();
             variables.put("DOCKER_CONTAINER_ID", dockerComputer.getContainerId());
             variables.put("JENKINS_CLOUD_ID", dockerComputer.getCloudId());
-            try {
-                //replace http:// and https:// from docker-java to tcp://
-                final URIBuilder uriBuilder = new URIBuilder(dockerComputer.getCloud().getServerUrl());
-                if (!uriBuilder.getScheme().equals("unix")) {
-                    uriBuilder.setScheme("tcp");
+
+            final DockerCloud cloud = dockerComputer.getCloud();
+            if (cloud.isExposeDockerHost()) {
+                try {
+                    //replace http:// and https:// from docker-java to tcp://
+                    final URIBuilder uriBuilder = new URIBuilder(cloud.getServerUrl());
+                    if (!uriBuilder.getScheme().equals("unix")) {
+                        uriBuilder.setScheme("tcp");
+                    }
+                    final String dockerHost = uriBuilder.toString();
+                    variables.put("DOCKER_HOST", dockerHost);
+                } catch (URISyntaxException e) {
+                    LOG.error("Can't build 'DOCKER_HOST' var: {}", e.getMessage());
                 }
-                final String dockerHost = uriBuilder.toString();
-                variables.put("DOCKER_HOST", dockerHost);
-            } catch (URISyntaxException e) {
-                LOG.error("Can't build 'DOCKER_HOST' var: {}", e.getMessage());
             }
         }
     }
