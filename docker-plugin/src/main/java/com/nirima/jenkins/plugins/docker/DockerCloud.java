@@ -38,6 +38,7 @@ import jenkins.model.Jenkins;
 
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +74,7 @@ public class DockerCloud extends Cloud {
     public final int readTimeout;
     public final String version;
     public final String credentialsId;
+    public final String dockerHostname;
 
     private transient DockerClient connection;
 
@@ -105,6 +107,11 @@ public class DockerCloud extends Cloud {
      */
     private static final HashMap<String, Integer> provisionedImages = new HashMap<>();
 
+    /**
+     * Indicate if docker host used to run container is exposed inside container as DOCKER_HOST environment variable
+     */
+    private Boolean exposeDockerHost;
+
     @Deprecated
     public DockerCloud(String name,
                        List<? extends DockerTemplate> templates,
@@ -113,7 +120,8 @@ public class DockerCloud extends Cloud {
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
-                       String version) {
+                       String version,
+                       String dockerHostname) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -121,6 +129,7 @@ public class DockerCloud extends Cloud {
         this.serverUrl = sanitizeUrl(serverUrl);
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
+        this.dockerHostname = dockerHostname;
 
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
@@ -144,7 +153,8 @@ public class DockerCloud extends Cloud {
                        int connectTimeout,
                        int readTimeout,
                        String credentialsId,
-                       String version) {
+                       String version,
+                       String dockerHostname) {
         super(name);
         Preconditions.checkNotNull(serverUrl);
         this.version = version;
@@ -152,6 +162,7 @@ public class DockerCloud extends Cloud {
         this.serverUrl = sanitizeUrl(serverUrl);
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
+        this.dockerHostname = dockerHostname;
 
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
@@ -169,6 +180,10 @@ public class DockerCloud extends Cloud {
 
     public String getServerUrl() {
         return serverUrl;
+    }
+
+    public String getDockerHostname() {
+        return dockerHostname;
     }
 
     /**
@@ -736,6 +751,16 @@ public class DockerCloud extends Cloud {
             _isTriton = remoteVersion.getOperatingSystem().equals("solaris");
         }
         return _isTriton;
+    }
+
+    public boolean isExposeDockerHost() {
+        // if null (i.e migration from previous installation) consider true for backward compatibility
+        return exposeDockerHost != null ? exposeDockerHost : true;
+    }
+
+    @DataBoundSetter
+    public void setExposeDockerHost(boolean exposeDockerHost) {
+        this.exposeDockerHost = exposeDockerHost;
     }
 
 

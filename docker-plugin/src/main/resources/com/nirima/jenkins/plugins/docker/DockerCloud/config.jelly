@@ -9,6 +9,10 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="${%Docker Hostname}" field="dockerHostname">
+        <f:textbox/>
+    </f:entry>
+
     <f:entry title="${%Docker API Version}" field="version">
         <f:textbox/>
     </f:entry>
@@ -28,6 +32,9 @@
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
                       with="serverUrl,credentialsId,version"/>
 
+    <f:entry title="${%Expose DOCKER_HOST}" field="exposeDockerHost">
+        <f:checkbox/>
+    </f:entry>
     <f:entry title="${%Global Container Cap}" field="containerCap">
         <f:number default="100"/>
     </f:entry>

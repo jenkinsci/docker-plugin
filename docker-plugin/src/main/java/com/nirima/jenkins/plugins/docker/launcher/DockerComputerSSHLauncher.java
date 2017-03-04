@@ -71,7 +71,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
             createCmd.withCmd("bash", "-c", "/usr/sbin/sshd -D -p " + sshPort);
         }
 
-        createCmd.getPortBindings().add(PortBinding.parse("0.0.0.0::" + sshPort));
+        createCmd.getPortBindings().add(PortBinding.parse( "" + sshPort));
     }
 
     @Override
@@ -139,11 +139,12 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
             String url = DockerCloud.getCloudByName(cloudId).getServerUrl();
-            if( url.startsWith("unix") ) {
+            host = getDockerHostFromCloud(cloudId);
+
+            if( url.startsWith("unix") && (host == null || host.trim().isEmpty()) ) {
                 // Communicating with local sockets.
                 host = "0.0.0.0";
             } else {
-                host = URI.create(url).getHost();
 
             /* Don't use IP from DOCKER_HOST because it is invalid or we are
              * connecting to a system that supports a single host abstraction
@@ -157,6 +158,19 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
 
         return new InetSocketAddress(host, port);
+    }
+
+    private String getDockerHostFromCloud(String cloudId) {
+        String url;
+        String host;
+        DockerCloud cloud = DockerCloud.getCloudByName(cloudId);
+        url = cloud.getServerUrl();
+        String dockerHostname = cloud.getDockerHostname();
+        if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
+            return dockerHostname;
+        } else {
+            return URI.create(url).getHost();
+        }
     }
 
     @Override

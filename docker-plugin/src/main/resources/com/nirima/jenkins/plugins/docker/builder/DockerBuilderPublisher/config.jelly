@@ -11,8 +11,7 @@
         <f:textbox />
     </f:entry>
 
-    <f:entry title="Image" field="tagsString"
-             description="Repository name (and optionally a tag)">
+    <f:entry title="Image" field="tagsString">
         <f:expandableTextbox/>
     </f:entry>
 
