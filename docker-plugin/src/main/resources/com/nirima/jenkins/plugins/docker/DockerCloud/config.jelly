@@ -40,7 +40,7 @@
     </f:entry>
 
     <f:entry title="${%Local Container Cap}" field="localContainerCap">
-        <f:number default="0"/>
+        <f:number default="2147483647"/>
     </f:entry>
 
     <f:entry title="${%Images}" description="${%List of Images to be launched as slaves}">

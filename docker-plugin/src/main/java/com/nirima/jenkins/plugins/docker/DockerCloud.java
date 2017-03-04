@@ -89,7 +89,7 @@ public class DockerCloud extends Cloud {
      * may run at a time
      * a.k.a. "Local Container Cap"
      */
-    private int localContainerCap = 100;
+    private int localContainerCap = Integer.MAX_VALUE;
     
     /**
      * Is this cloud actually a swarm?
@@ -670,12 +670,12 @@ public class DockerCloud extends Cloud {
 
             estimatedAmiSlaves += currentProvisioning;
 
-            if (getGlobalContainerCap() != 0 && estimatedTotalSlavesGlobal >= getGlobalContainerCap()) {
+            if (estimatedTotalSlavesGlobal >= getGlobalContainerCap()) {
                 LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s); limitting due to Global Container Cap", estimatedTotalSlavesGlobal, name, getGlobalContainerCap());
                 return false;      // maxed out
             }
 
-            if (getLocalContainerCap() != 0 && estimatedTotalSlavesLocal >= getLocalContainerCap()) {
+            if (estimatedTotalSlavesLocal >= getLocalContainerCap()) {
                 LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s); limitting due to Local Container Cap", estimatedTotalSlavesLocal, name, getLocalContainerCap());
                 return false;      // maxed out
             }
