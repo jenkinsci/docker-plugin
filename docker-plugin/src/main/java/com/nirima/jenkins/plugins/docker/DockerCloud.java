@@ -198,10 +198,22 @@ public class DockerCloud extends Cloud {
         }
     }
 
+    // necessary for compatibility with Configuration UI
+    @Deprecated
+    public void setContainerCap(int containerCap) {
+    	this.setGlobalContainerCap(containerCap);
+    }
+    
+    // necessary for compatibility with Configuration UI
+    @Deprecated
+    public int getContainerCap() {
+    	return this.getGlobalContainerCap();
+    }
+    
     public int getGlobalContainerCap() {
         return containerCap;
     }
-
+    
     public void setGlobalContainerCap(int containerCap) {
         this.containerCap = containerCap;
     }
