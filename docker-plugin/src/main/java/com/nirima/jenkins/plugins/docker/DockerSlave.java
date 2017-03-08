@@ -32,6 +32,12 @@ import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfig
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
+import net.bluemix.containers.yaro.ReleaseFloatingIpCmd;
+import net.bluemix.containers.yaro.BluemixException;
+import net.bluemix.containers.yaro.FloatingIpManager;
+
+
+
 
 public class DockerSlave extends AbstractCloudSlave {
     private static final Logger LOGGER = Logger.getLogger(DockerSlave.class.getName());
@@ -190,6 +196,18 @@ public class DockerSlave extends AbstractCloudSlave {
                         .exec();
 
                 LOGGER.log(Level.INFO, "Removed container {0}", getContainerId());
+
+                //YD - cleanup 
+                String bluemixIP = FloatingIpManager.getIpByContainerId(getContainerId());
+                ReleaseFloatingIpCmd cmd = new ReleaseFloatingIpCmd(bluemixIP);
+                try {
+                    cmd.exec();
+                } catch (BluemixException e) {
+                    LOGGER.log(Level.SEVERE, "Failed to release Bluemix floating IP " +  e.getStatusCode());
+                }
+           
+                FloatingIpManager.cleanupByContainerId(getContainerId());
+
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception: " + ex.getMessage());
                 LOGGER.log(Level.SEVERE, "Causing exception for failre on removing instance was", ex);
