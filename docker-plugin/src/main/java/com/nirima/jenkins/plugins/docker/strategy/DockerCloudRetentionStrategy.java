@@ -12,7 +12,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * {@link CloudRetentionStrategy} that has Descriptor and UI with description
  */
 public class DockerCloudRetentionStrategy extends CloudRetentionStrategy {
-    private int idleMinutes = 0;
+    private int idleMinutes;
 
     @DataBoundConstructor
     public DockerCloudRetentionStrategy(int idleMinutes) {
