@@ -441,6 +441,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
             containerConfig.withExtraHosts(extraHosts.toArray(new String[extraHosts.size()]));
         }
 
+
+        final Long shmSizeInByte = (long) 1024 * 1024 * 1024;
+        containerConfig.getHostConfig().withShmSize(shmSizeInByte);
+
         return containerConfig;
     }
 
