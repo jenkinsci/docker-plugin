@@ -59,6 +59,10 @@ f.advanced(title: _("Container settings"), align: "left") {
         f.number(name: "cpuShares", clazz: "positive-number", min: "0", step: "1")
     }
 
+    f.entry(title: _("Shared Memory Size in MB"), field: "shmSize") {
+        f.number(name: "shmSize", clazz: "positive-number", min: "0", step: "1")
+    }
+
     f.entry(title: _("Run container privileged"), field: "privileged") {
         f.checkbox()
     }

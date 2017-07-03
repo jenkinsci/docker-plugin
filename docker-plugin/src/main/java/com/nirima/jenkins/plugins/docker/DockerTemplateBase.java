@@ -94,6 +94,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     public final Integer memoryLimit;
     public final Integer memorySwap;
     public final Integer cpuShares;
+    public final Integer shmSize;
 
     public final boolean privileged;
     public final boolean tty;
@@ -117,6 +118,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                               Integer memoryLimit,
                               Integer memorySwap,
                               Integer cpuShares,
+                              Integer shmSize,
                               String bindPorts,
                               boolean bindAllPorts,
                               boolean privileged,
@@ -136,6 +138,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         this.memoryLimit = memoryLimit;
         this.memorySwap = memorySwap;
         this.cpuShares = cpuShares;
+        this.shmSize = shmSize;
 
         this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
 
@@ -264,6 +267,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     public Integer getCpuShares() {
         return cpuShares;
+    }
+
+    public Integer getShmSize() {
+        return shmSize;
     }
 
     public String[] getDockerCommandArray() {
@@ -442,8 +449,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         }
 
 
-        final Long shmSizeInByte = (long) 1024 * 1024 * 1024;
-        containerConfig.getHostConfig().withShmSize(shmSizeInByte);
+        if (shmSize != null && shmSize > 0) {
+            final Long shmSizeInByte = (long) shmSize * 1024 * 1024;
+            containerConfig.getHostConfig().withShmSize(shmSizeInByte);
+        }
 
         return containerConfig;
     }
