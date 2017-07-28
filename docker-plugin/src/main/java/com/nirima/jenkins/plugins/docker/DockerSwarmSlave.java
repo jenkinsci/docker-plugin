@@ -13,6 +13,7 @@ import hudson.slaves.RetentionStrategy;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,8 @@ public class DockerSwarmSlave extends DockerSlave {
                 launcher,
                 containerId,
                 dockerTemplate,
-                cloudId);
+                cloudId,
+                Collections.<NodeProperty<?>>emptyList());
     }
 
     private static String makeSlaveName(String slaveName, String hostName) {

@@ -1,6 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
+import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.Util;
@@ -9,8 +11,16 @@ import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Collections;
+import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -54,7 +64,11 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     private transient /*almost final*/ Set<LabelAtom> labelSet;
 
     private @CheckForNull DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
-
+    
+    private String environmentVariablesNode;
+    
+    private transient List<EnvironmentVariablesNodeProperty> nodeProperties;
+    
     /**
      * fully default
      */
@@ -99,7 +113,8 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                           DockerComputerLauncher launcher,
                           RetentionStrategy retentionStrategy,
                           boolean removeVolumes,
-                          DockerImagePullStrategy pullStrategy) {
+                          DockerImagePullStrategy pullStrategy,
+                          String environmentVariablesNode) {
         this(dockerTemplateBase,
                 labelString,
                 remoteFs,
@@ -111,6 +126,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         setRetentionStrategy(retentionStrategy);
         setRemoveVolumes(removeVolumes);
         setPullStrategy(pullStrategy);
+        setEnvironmentVariablesNode(environmentVariablesNode);
     }
 
     public DockerTemplateBase getDockerTemplateBase() {
@@ -119,6 +135,46 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
 
     public void setDockerTemplateBase(DockerTemplateBase dockerTemplateBase) {
         this.dockerTemplateBase = dockerTemplateBase;
+    }
+    
+    public String getEnvironmentVariablesNode() {
+        return environmentVariablesNode;
+    }
+
+    @DataBoundSetter
+    public void setEnvironmentVariablesNode(String environmentVariablesNode) {
+        this.environmentVariablesNode = environmentVariablesNode;
+    }
+    
+    public List<EnvironmentVariablesNodeProperty> environmentVariablesNodeToList (String env) {
+        List<EnvironmentVariablesNodeProperty> listEnv = new ArrayList<>();
+        EnvironmentVariablesNodeProperty.Entry entry;
+        EnvironmentVariablesNodeProperty evnp;
+        if (!env.isEmpty()) {
+        String[] st = env.split("\n");
+            for (String s : st) {
+                String[] t = s.split("=");
+                entry = new EnvironmentVariablesNodeProperty.Entry(t[0],t[1]);
+                evnp = new EnvironmentVariablesNodeProperty(entry);
+                listEnv.add(evnp);
+            }
+        }
+        else {
+            return Collections.emptyList();
+        }
+        
+        return listEnv;
+    }
+                
+    public void setNodeProperties(List<EnvironmentVariablesNodeProperty> nodeProperties){
+        this.nodeProperties = nodeProperties;
+    }
+
+    public List<EnvironmentVariablesNodeProperty> getNodeProperties(){
+        if (nodeProperties == null) {
+            return Collections.emptyList();
+        }
+        return nodeProperties;
     }
 
     public boolean isRemoveVolumes() {
@@ -281,6 +337,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 ", dockerTemplateBase=" + dockerTemplateBase +
                 ", removeVolumes=" + removeVolumes +
                 ", pullStrategy=" + pullStrategy +
+                ", environmentVariablesNode=" + environmentVariablesNode +
                 '}';
     }
 

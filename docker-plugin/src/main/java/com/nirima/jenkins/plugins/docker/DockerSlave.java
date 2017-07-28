@@ -15,7 +15,7 @@ import hudson.Extension;
 import hudson.model.*;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.slaves.*;
-import jenkins.model.Jenkins;
+import jenkins.model.*;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Preconditions;
@@ -32,8 +32,8 @@ import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfig
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
-
 public class DockerSlave extends AbstractCloudSlave {
+
     private static final Logger LOGGER = Logger.getLogger(DockerSlave.class.getName());
 
     public DockerTemplate dockerTemplate;
@@ -62,7 +62,8 @@ public class DockerSlave extends AbstractCloudSlave {
     }
 
     public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId,
-                       DockerTemplate dockerTemplate, String cloudId)
+                       DockerTemplate dockerTemplate, String cloudId, 
+                       List<? extends NodeProperty<?>> nodeProperties)
             throws IOException, Descriptor.FormException {
         super(slaveName,
                 nodeDescription, //description
@@ -72,7 +73,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 dockerTemplate.getLabelString(),
                 launcher,
                 dockerTemplate.getRetentionStrategyCopy(),
-                Collections.<NodeProperty<?>>emptyList()
+                nodeProperties
         );
         setContainerId(containerId);
         setDockerTemplate(dockerTemplate);
@@ -202,7 +203,7 @@ public class DockerSlave extends AbstractCloudSlave {
     private void slaveShutdown(final TaskListener listener) throws DockerException, IOException {
 
         // The slave has stopped. Should we commit / tag / push ?
-
+        
         if (!getJobProperty().tagOnCompletion) {
             addJenkinsAction(null);
             return;
@@ -210,7 +211,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
         DockerClient client = getClient();
 
-
+        
         // Commit
         String tag_image = client.commitCmd(containerId)
                 .withRepository(theRun.getParent().getDisplayName())
@@ -227,7 +228,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
             if (!Strings.isNullOrEmpty(tagToken)) {
 
-
+                
                 final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tagToken);
                 final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
 
