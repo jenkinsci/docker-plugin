@@ -253,6 +253,9 @@
                             <include>org.apache.httpcomponents*:*</include>
                             <include>com.github.docker-java:*</include>
                             <include>com.google.guava:*</include>
+                            <include>com.fasterxml.jackson.jaxrs:*</include>
+                            <include>com.fasterxml.jackson.core:*</include>
+                            <include>com.fasterxml.jackson.module:*</include>
                         </includes>
                     </artifactSet>
                     <filters>
@@ -272,6 +275,10 @@
                         <relocation>
                             <pattern>com.google.common</pattern>
                             <shadedPattern>shaded.com.google.common</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.fasterxml</pattern>
+                            <shadedPattern>shaded.com.fasterxml</shadedPattern>
                         </relocation>
                     </relocations>
                     <transformers>
