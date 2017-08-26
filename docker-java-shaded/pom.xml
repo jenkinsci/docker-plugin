@@ -90,6 +90,7 @@
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-json-provider</artifactId>
             <version>${jackson-jaxrs.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
