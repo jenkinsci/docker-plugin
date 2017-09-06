@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
+import com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.Util;
@@ -251,6 +252,16 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 }
                 if (pullStrategy == null) {
                     pullStrategy = DockerImagePullStrategy.PULL_LATEST;
+                }
+                
+                if (retentionStrategy instanceof DockerCloudRetentionStrategy) {
+                	// see also https://github.com/jenkinsci/docker-plugin/issues/478
+                	DockerCloudRetentionStrategy dcrs = (DockerCloudRetentionStrategy) retentionStrategy;
+                	int idleMinutes = dcrs.getIdleMinutes();
+                	retentionStrategy = new DockerCloudRetentionStrategy(idleMinutes);
+                	// recreate strategy by calling constructor again to ensure that also
+                	// super class of DockerCloudRetentionStrategy got properly instantiated
+                	// XStream is not capable of doing so (yet?), 2017-02-23
                 }
             }
         } catch (Throwable t) {
