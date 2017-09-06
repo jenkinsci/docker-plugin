@@ -98,6 +98,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     public final boolean privileged;
     public final boolean tty;
 
+    public static final String CONTAINER_LABEL_JENKINS_ID = "JenkinsId";
+
     @CheckForNull
     private String macAddress;
 
@@ -356,7 +358,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         containerConfig.withPrivileged(privileged);
 
         Map<String,String> map = new HashMap<>();
-        map.put("JenkinsId", JenkinsUtils.getInstanceId());
+        map.put(CONTAINER_LABEL_JENKINS_ID, JenkinsUtils.getInstanceId());
 
 
         containerConfig.withLabels(map);

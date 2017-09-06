@@ -1,0 +1,23 @@
+<div>
+    <p>The maximum number of <b>containers</b> that <i>this Jenkins instance</i> is allowed to run on the docker (value is independent of the template/image).</p>
+    <p>Note that containers, which have <b>not</b> been created by Jenkins, are <b>not</b> counted by this limit.</p>
+    <p>Default value is 2147483647 (the maximal number of containers this plugin may run at a time) 
+    which practically disables it by default (compatibility to earlier versions of this plugin).</p> 
+    <p>If set to zero, no containers will be provisioned at all.</p>
+    
+    <h3>Guidance on which Container Cap to use</h3>
+    <p>If you are unsure which of the two types of Container Caps you should use, consider the following aspects:
+    <ul>
+    	<li>If your docker host is used exclusively by this Jenkins instance only, then it does not matter which
+    	type of Container Cap you use. For the sake of compatibility, it is recommended that you set the Global Container
+    	Cap to the maximal number of containers the docker host can handle. The Local Container Cap shall be set to 2147483647.</li>
+    	<li>If you are using DC/Triton, two or more Jenkins instances are sharing the same Triton host, and you are not
+    	sharing the same credentials to logon to Triton, then Global Container Cap and Local Container Cap do not differ
+    	in the result, too. For the sake of compatibility, it is recommended that you set the Global Container
+    	Cap to the maximal number of containers the docker host can handle. The Local Container Cap shall be set to 2147483647.</li>
+    	<li>If your docker host is not used exclusively by this Jenkins instance only, or you are using DC/Triton with two 
+    	or more Jenkins instances attached which share the same credentials, then you need to closely consider the
+    	difference between Global Container Cap and Local Container Cap.</li>
+    </ul>
+    </p>
+</div>

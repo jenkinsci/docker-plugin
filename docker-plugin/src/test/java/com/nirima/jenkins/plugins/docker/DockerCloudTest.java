@@ -13,7 +13,8 @@ public class DockerCloudTest {
         new DockerCloud("name",
                 Collections.<DockerTemplate>emptyList(), //templates
                 "http://localhost:4243", //serverUrl
-                100, //containerCap,
+                100, //globalContainerCap,
+                0, //localContainerCap,
                 10, // connectTimeout,
                 10, // readTimeout,
                 null, // credentialsId,
