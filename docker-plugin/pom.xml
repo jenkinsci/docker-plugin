@@ -142,6 +142,13 @@
                     <failOnError>false</failOnError>     <!-- FIXME need to review findbugs errors -->
                 </configuration>                 
             </plugin>
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <failOnError>false</failOnError>
+                </configuration>                 
+            </plugin>
+
         </plugins>
     </build>
 
