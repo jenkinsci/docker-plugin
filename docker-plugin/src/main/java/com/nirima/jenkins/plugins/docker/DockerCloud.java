@@ -385,18 +385,7 @@ public class DockerCloud extends Cloud {
             if( authConfig != null ) {
                 imgCmd.withAuthConfig(authConfig);
             }
-            PullImageResultCallback cmd = imgCmd.exec(new PullImageResultCallback());
-
-            // Work-around for API issue in docker.
-            if( DockerPluginConfiguration.get().getPullFix()) {
-                try {
-                    cmd.awaitCompletion();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException("Interruption whilst pulling",e);
-                }
-            } else {
-                cmd.awaitSuccess();
-            }
+            imgCmd.exec(new PullImageResultCallback()).awaitSuccess();
             long pullTime = System.currentTimeMillis() - startTime;
             LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
         }

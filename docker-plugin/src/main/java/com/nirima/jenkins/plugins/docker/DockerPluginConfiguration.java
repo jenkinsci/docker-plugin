@@ -13,11 +13,6 @@ import java.util.List;
 public class DockerPluginConfiguration extends GlobalConfiguration {
 
     /**
-     * Work around option.
-     */
-    private Boolean pullFix;
-
-    /**
      * List of registries
      */
     private List<DockerRegistry> registryList = Collections.emptyList();
@@ -41,12 +36,6 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
         return true;
     }
 
-    public final boolean getPullFix() {
-        if( pullFix == null )
-            pullFix = true;
-        return pullFix;
-    }
-
     public DockerRegistry getRegistryByName(String registryName) {
         for(DockerRegistry registry : registryList) {
             if( registry.registry.equalsIgnoreCase(registryName))
@@ -57,10 +46,6 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
     }
 
 
-    public final void setPullFix(boolean pullFix) {
-        this.pullFix = pullFix;
-        save();
-    }
 
     public void setRegistryList(List<DockerRegistry> registryList) {
         this.registryList = registryList;
@@ -70,4 +55,16 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
     public List<DockerRegistry> getRegistryList() {
         return registryList;
     }
+
+
+
+    // --- obsolete code goes here. kept for backward compatibility
+
+    public final boolean getPullFix() {
+        return false;
+    }
+
+    public final void setPullFix(boolean pullFix) {
+    }
+
 }
