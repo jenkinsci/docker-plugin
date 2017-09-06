@@ -9,6 +9,7 @@ import hudson.model.Node;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.slaves.RetentionStrategy;
 import hudson.tasks.Builder;
+import java.util.Collections;
 
 /**
  * @author Kanstantsin Shautsou
@@ -66,7 +67,7 @@ public abstract class DockerBuilderNewTemplateBackwardCompatibility extends Buil
 
         final DockerTemplate dockerTemplate = new DockerTemplate(dockerTemplateBase, labelString, remoteFs,
                 remoteFsMapping, instanceCapStr, Node.Mode.NORMAL, 1, dockerComputerSSHLauncher,
-                new DockerOnceRetentionStrategy(10), false, DockerImagePullStrategy.PULL_LATEST);
+                new DockerOnceRetentionStrategy(10), false, DockerImagePullStrategy.PULL_LATEST, null);
         setDockerTemplate(dockerTemplate);
     }
 

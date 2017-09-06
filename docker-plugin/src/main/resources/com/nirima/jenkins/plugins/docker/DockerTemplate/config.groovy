@@ -85,6 +85,10 @@ f.entry(title: _("Remove volumes"), field: "removeVolumes") {
     f.checkbox()
 }
 
+f.entry(title: _("Environment Variables Node"), field: "environmentVariablesNode") {
+    f.expandableTextbox()
+}
+
 f.entry(title: _("Pull strategy"), field: "pullStrategy") {
     f.enum() {
         text(my.description)

@@ -259,15 +259,6 @@
                             <include>com.fasterxml.jackson.module:*</include>
                         </includes>
                     </artifactSet>
-                    <filters>
-                      <filter>
-                          <!-- JENKINS-39689: never embed tiger_types to not conflict with the one pulled by Stapler -->
-                          <artifact>*:*</artifact>
-                          <excludes>
-                            <exclude>org/jvnet/tiger_types/*</exclude>
-                          </excludes>
-                      </filter>
-                    </filters>
                     <relocations>
                         <relocation>
                             <pattern>org.apache.http</pattern>

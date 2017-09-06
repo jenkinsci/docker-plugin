@@ -28,6 +28,7 @@ import hudson.model.*;
 import hudson.security.ACL;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -50,6 +51,7 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -428,6 +430,8 @@ public class DockerCloud extends Cloud {
         } catch (Exception ex) {
             LOGGER.warn("Error fetching cloud name");
         }
+        
+        List<EnvironmentVariablesNodeProperty> nodeProperties = dockerTemplate.environmentVariablesNodeToList(dockerTemplate.getEnvironmentVariablesNode());
 
         dockerTemplate.getLauncher().waitUp(getDisplayName(), dockerTemplate, ir);
 
@@ -436,7 +440,7 @@ public class DockerCloud extends Cloud {
         if( isSwarm() ) {
             return new DockerSwarmSlave(this, ir, slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
         } else {
-            return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+            return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName(), nodeProperties);
         }
     }
 
