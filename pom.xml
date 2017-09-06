@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>2.14</version>
+        <version>2.33</version>
     </parent>
 
     <groupId>com.nirima</groupId>
@@ -27,22 +27,7 @@
         <url>https://github.com/jenkinsci/docker-plugin</url>
         <tag>HEAD</tag>
     </scm>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
-        <maven-release-plugin.version>2.5.1</maven-release-plugin.version>
-        <maven-findbugs-plugin.version>3.0.4</maven-findbugs-plugin.version>
-        <hpi.plugin.version>1.119</hpi.plugin.version>
-        <stapler.version>1.207</stapler.version>
-        <guava.version>18.0</guava.version>
-        <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
-        <jdk.debug>true</jdk.debug>
-        <jdk.optimize>false</jdk.optimize>
-        <jdk.source>1.7</jdk.source>
-        <jdk.target>1.7</jdk.target>
-    </properties>
-
+    
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
@@ -56,75 +41,4 @@
         </pluginRepository>
     </pluginRepositories>
 
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <configuration>
-                        <autoVersionSubmodules>true</autoVersionSubmodules>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                    <configuration>
-                        <source>${jdk.source}</source>
-                        <target>${jdk.target}</target>
-                        <debug>${jdk.debug}</debug>
-                        <optimize>${jdk.optimize}</optimize>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.jenkins-ci.tools</groupId>
-                    <artifactId>maven-hpi-plugin</artifactId>
-                    <version>${hpi.plugin.version}</version>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                            <version>${guava.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.kohsuke.stapler</groupId>
-                            <artifactId>stapler</artifactId>
-                            <version>${stapler.version}</version>
-                        </dependency>
-                    </dependencies>
-                    <configuration>
-                        <dependentWarExcludes>com.github.dockerjava*,com.google.guava*</dependentWarExcludes>
-                        <archive>
-                            <manifestEntries>
-                                <Mask-Classes>com.google.common</Mask-Classes>
-                            </manifestEntries>
-                        </archive>
-                        <maskClasses>com.google.common.</maskClasses>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>findbugs-maven-plugin</artifactId>
-                    <version>${maven-findbugs-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>findbugs</id>
-                            <phase>verify</phase>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <configuration>
-                                <xmlOutput>true</xmlOutput>
-                                <findbugsXmlOutput>false</findbugsXmlOutput>
-                                <failOnError>false</failOnError>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-        <plugins>
-        </plugins>
-    </build>
 </project>
