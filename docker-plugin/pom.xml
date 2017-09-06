@@ -30,6 +30,7 @@
 
     <properties>
         <jenkins.version>1.648</jenkins.version>
+        <docker-java.version>3.0.13</docker-java.version>
     </properties>
 
     <dependencies>
@@ -49,7 +50,7 @@
         <dependency>
             <groupId>com.nirima</groupId>
             <artifactId>docker-java-shaded</artifactId>
-            <version>${project.version}</version>
+            <version>${docker-java.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.bouncycastle</groupId>
