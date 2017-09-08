@@ -123,14 +123,6 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         });
     }
 
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return DESCRIPTOR;
-    }
-
-    @Restricted(NoExternalUse.class)
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
     @Extension
     public static final class DescriptorImpl extends Descriptor<RetentionStrategy<?>> {
         @Override
