@@ -7,6 +7,7 @@ import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Descriptor;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
+import jenkins.model.Jenkins;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +22,8 @@ public class DockerFunctions {
     public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
         List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
 
-        launchers.add(DockerComputerSSHLauncher.DESCRIPTOR);
-        launchers.add(DockerComputerJNLPLauncher.DESCRIPTOR);
+        launchers.add(Jenkins.getActiveInstance().getDescriptor(DockerComputerSSHLauncher.class));
+        launchers.add(Jenkins.getActiveInstance().getDescriptor(DockerComputerJNLPLauncher.class));
 
         return launchers;
     }
@@ -30,8 +31,8 @@ public class DockerFunctions {
     public static List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategyDescriptors() {
         List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
 
-        strategies.add(DockerOnceRetentionStrategy.DESCRIPTOR);
-        strategies.add(DockerCloudRetentionStrategy.DESCRIPTOR);
+        strategies.add(Jenkins.getActiveInstance().getDescriptor(DockerOnceRetentionStrategy.class));
+        strategies.add(Jenkins.getActiveInstance().getDescriptor(DockerCloudRetentionStrategy.class));
         strategies.addAll(RetentionStrategy.all());
 
         return strategies;

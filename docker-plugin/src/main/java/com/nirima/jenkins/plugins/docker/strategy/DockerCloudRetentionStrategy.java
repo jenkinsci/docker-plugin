@@ -24,14 +24,6 @@ public class DockerCloudRetentionStrategy extends CloudRetentionStrategy {
         return idleMinutes;
     }
 
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return DESCRIPTOR;
-    }
-
-    @Restricted(NoExternalUse.class)
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
     @Extension
     public static final class DescriptorImpl extends hudson.model.Descriptor<RetentionStrategy<?>> {
         @Override

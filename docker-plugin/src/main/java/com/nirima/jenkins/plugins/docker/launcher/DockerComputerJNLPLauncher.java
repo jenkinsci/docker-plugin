@@ -208,14 +208,6 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         return super.waitUp(cloudId, dockerTemplate, ir);
     }
 
-    @Override
-    public Descriptor<ComputerLauncher> getDescriptor() {
-        return DESCRIPTOR;
-    }
-
-    @Restricted(NoExternalUse.class)
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
     @Extension
     public static class DescriptorImpl extends Descriptor<ComputerLauncher> {
 

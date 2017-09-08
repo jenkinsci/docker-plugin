@@ -173,11 +173,6 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
     }
 
-    @Override
-    public Descriptor<ComputerLauncher> getDescriptor() {
-        return DESCRIPTOR;
-    }
-
     /**
      * <p>Checks a {@link InspectContainerResponse} object to see if the server
      * uses a single host abstraction model. If it does, then we return
@@ -201,9 +196,6 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
          * Microsoft's offering). */
         return inspect.getDriver().equals("sdc");
     }
-
-    @Restricted(NoExternalUse.class)
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
