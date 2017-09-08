@@ -1,51 +1,56 @@
 package io.jenkins.docker;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
+import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.Frame;
-import com.github.dockerjava.core.command.AttachContainerResultCallback;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.PortBinding;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.launcher.DockerComputerJNLPLauncher;
+import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
+import com.trilead.ssh2.signature.RSAPublicKey;
 import hudson.model.Descriptor;
-import hudson.model.TaskListener;
-import hudson.remoting.Channel;
-import hudson.remoting.Which;
-import hudson.slaves.SlaveComputer;
+import hudson.plugins.sshslaves.SSHConnector;
+import hudson.plugins.sshslaves.SSHLauncher;
+import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.security.NoSuchAlgorithmException;
+
+import static com.trilead.ssh2.signature.RSASHA1Verify.encodeSSHRSAPublicKey;
+import static hudson.remoting.Base64.encode;
 
 /**
+ * Launch Jenkins agent and connect using ssh.
+ * Instance identity is used as SSH key pair and  <code>sshd</code> in container is configured to accept it. This
+ * enforce security as only master can connect to this container.
+ *
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class JNLPDockerSlaveProvisioner extends DockerSlaveProvisioner {
+public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JNLPDockerSlaveProvisioner.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SSHDockerSlaveProvisioner.class);
 
 
-    private final DockerComputerJNLPLauncher launcher;
-    private File remoting;
+    private final DockerComputerSSHLauncher launcher;
     private DockerSlave slave;
 
-    public JNLPDockerSlaveProvisioner(DockerCloud cloud, DockerTemplate template, DockerClient client, DockerComputerJNLPLauncher launcher) {
+    public SSHDockerSlaveProvisioner(DockerCloud cloud, DockerTemplate template, DockerClient client, DockerComputerSSHLauncher launcher) {
         super(cloud, template, client);
         this.launcher = launcher;
 
@@ -54,76 +59,98 @@ public class JNLPDockerSlaveProvisioner extends DockerSlaveProvisioner {
     @Override
     public DockerSlave provision() throws IOException, Descriptor.FormException {
 
-        this.slave = new DockerSlave(cloud, template, launcher.getJnlpLauncher());
-        // register the slave so it get an active computer and we can inject jnlp connexion parameters as ENV
-        Jenkins.getActiveInstance().addNode(slave);
-
-        this.remoting = Which.jarFile(Channel.class);
         String id = runContainer();
-        this.slave.setContainerId(id);
 
         final InspectContainerResponse inspect = client.inspectContainerCmd(container).exec();
         if ("exited".equals(inspect.getState().getStatus())) {
             // Something went wrong
 
             // FIXME report error "somewhere" visible to end user.
-            LOGGER.error("Failed to launch docker JNLP agent :" + inspect.getState().getExitCode());
+            LOGGER.error("Failed to launch docker SSH agent :" + inspect.getState().getExitCode());
         }
+
+        BasicSSHUserPrivateKey pk = getPrivateKeyAsCredentials();
+
+        final InetSocketAddress address = launcher.getAddressForSSHD(cloud, inspect);
+        final SSHConnector sshConnector = launcher.getSshConnector();
+
+        SSHLauncher ssh = new SSHLauncher(address.getHostString(), address.getPort(), pk,
+                sshConnector.jvmOptions,
+                sshConnector.javaPath, sshConnector.prefixStartSlaveCmd,
+                sshConnector.suffixStartSlaveCmd, sshConnector.launchTimeoutSeconds);
+
+        this.slave = new DockerSlave(cloud, template, ssh);
+        Jenkins.getActiveInstance().addNode(slave);
+        this.slave.getComputer().setContainerId(id);
 
         return slave;
     }
 
-    @Override
-    protected void prepareCreateContainerCommand(CreateContainerCmd cmd) throws DockerException, IOException {
-        final SlaveComputer computer = slave.getComputer();
-        if (computer == null) {
-            throw new IllegalStateException("DockerSlave hasn't been registered as an active Node");
-        }
+    /**
+     * expose InstanceIdentity as a SSH key pair for credentials API
+     */
+    private BasicSSHUserPrivateKey getPrivateKeyAsCredentials() throws IOException {
 
-        List<String> args = new ArrayList<>();
-        args.add("java");
+        InstanceIdentity id = InstanceIdentity.get();
+        String pem = PEMEncodable.create(id.getPrivate()).encode();
 
-        String vmargs = launcher.getJnlpLauncher().vmargs;
-        if (StringUtils.isNotBlank(vmargs)) {
-            args.addAll(Arrays.asList(vmargs.split(" ")));
-        }
-
-        args.addAll(Arrays.asList(
-                "-jar", template.remoteFs + "/" + remoting.getName(),
-                "-jnlpUrl", Jenkins.getInstance().getRootUrl() + '/' + computer.getUrl() + "/slave-agent.jnlp"));
-
-        cmd.withCmd(args);
+        // TODO find how to inject authorized_key owned by a (configurable) user "jenkins"
+        return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "InstanceIdentity", "root",
+                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(pem), null,
+                "private key for docker ssh agent");
     }
 
     @Override
-    protected void setupContainer() throws DockerException,  IOException {
+    protected void prepareCreateContainerCommand(CreateContainerCmd cmd) throws DockerException, IOException {
 
-        // Copy slave.jar into container
-        client.copyArchiveToContainerCmd(container)
-            .withHostResource(remoting.getAbsolutePath())
-            .withRemotePath(template.remoteFs)
-            .exec();
+        final int sshPort = launcher.getSshConnector().port;
 
 
-        // POST 2.9 we will be able to pipe container stdout/stderr to agent's log
-        final TaskListener listener = TaskListener.NULL; // slave.getComputer().getListener();
+        // AuthorizedKeysCommand
 
-        client.attachContainerCmd(container)
-                .withStdErr(true)
-                .withStdOut(true)
-                .withLogs(true)
-                .withFollowStream(true)
-                .exec(new AttachContainerResultCallback() {
-                    @Override
-                    public void onNext(Frame item) {
-                        switch (item.getStreamType()) {
-                            case STDOUT:
-                            case STDERR:
-                                final String log = new String(item.getPayload(), StandardCharsets.UTF_8);
-                                listener.getLogger().append(log);
-                                System.out.printf(log);
-                        }
-                    }
-                });
+        if (cmd.getCmd() == null || cmd.getCmd().length == 0) {
+            cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(sshPort),
+                    // override sshd_config to force retrieval of InstanceIdentity public for as authentication
+                    "-o", "AuthorizedKeysCommand "+ "/root/authorized_key",
+                    "-o", "AuthorizedKeysCommandUser root"
+            );
+
+        }
+
+        cmd.withPortSpecs(sshPort+"/tcp");
+        cmd.withPortBindings(PortBinding.parse(":"+sshPort));
+        cmd.withExposedPorts(ExposedPort.parse(sshPort+"/tcp"));
+    }
+
+    /**
+     * Inject InstanceIdentity public key as authorized_key in sshd container.
+     * @throws IOException
+     */
+    @Override
+    protected void setupContainer() throws IOException {
+
+        InstanceIdentity id = InstanceIdentity.get();
+        final java.security.interfaces.RSAPublicKey rsa = id.getPublic();
+        String AuthorizedKeysCommand = "#!/bin/sh\n"
+        + "echo 'ssh-rsa " + encode(encodeSSHRSAPublicKey(new RSAPublicKey(rsa.getPublicExponent(), rsa.getModulus()))) + "'";
+
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
+            TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
+            entry.setSize(AuthorizedKeysCommand.getBytes().length);
+            entry.setMode(0700);
+            tar.putArchiveEntry(entry);
+            tar.write(AuthorizedKeysCommand.getBytes());
+            tar.closeArchiveEntry();
+            tar.close();
+
+            try (InputStream is = new ByteArrayInputStream(bos.toByteArray())) {
+
+                client.copyArchiveToContainerCmd(container)
+                        .withTarInputStream(is)
+                        .withRemotePath("/root")
+                        .exec();
+            }
+        }
     }
 }

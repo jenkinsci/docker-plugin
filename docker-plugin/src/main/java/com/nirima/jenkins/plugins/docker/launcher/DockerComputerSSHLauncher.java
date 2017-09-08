@@ -18,6 +18,7 @@ import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -75,7 +76,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         super.waitUp(cloudId, dockerTemplate, containerInspect);
 
         final PortUtils.ConnectionCheck connectionCheck =
-                PortUtils.connectionCheck(getAddressForSSHD(cloudId, containerInspect))
+                PortUtils.connectionCheck(getAddressForSSHD((DockerCloud) Jenkins.getInstance().getCloud(cloudId), containerInspect))
                          .withRetries(60)
                          .withEveryRetryWaitFor(2, TimeUnit.SECONDS);
 
@@ -87,7 +88,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         Preconditions.checkNotNull(inspect);
 
         try {
-            final InetSocketAddress address = getAddressForSSHD(cloudId, inspect);
+            final InetSocketAddress address = getAddressForSSHD((DockerCloud) Jenkins.getInstance().getCloud(cloudId), inspect);
             LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + address);
             return new SSHLauncher(address.getHostString(), address.getPort(), sshConnector.getCredentials(),
                     sshConnector.jvmOptions,
@@ -108,7 +109,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
      * a direct connection.
      *
      */
-    protected InetSocketAddress getAddressForSSHD(String cloudId, InspectContainerResponse ir) {
+    public InetSocketAddress getAddressForSSHD(DockerCloud cloud, InspectContainerResponse ir) {
         // get exposed port
         ExposedPort sshPort = new ExposedPort(sshConnector.port);
         String host = null;
@@ -134,8 +135,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
-            String url = DockerCloud.getCloudByName(cloudId).getServerUrl();
-            host = getDockerHostFromCloud(cloudId);
+            String url = cloud.getServerUrl();
+            host = getDockerHostFromCloud(cloud);
 
             if( url.startsWith("unix") && (host == null || host.trim().isEmpty()) ) {
                 // Communicating with local sockets.
@@ -156,10 +157,9 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return new InetSocketAddress(host, port);
     }
 
-    private String getDockerHostFromCloud(String cloudId) {
+    private String getDockerHostFromCloud(DockerCloud cloud) {
         String url;
         String host;
-        DockerCloud cloud = DockerCloud.getCloudByName(cloudId);
         url = cloud.getServerUrl();
         String dockerHostname = cloud.getDockerHostname();
         if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {

@@ -54,7 +54,7 @@ public class JNLPDockerSlaveProvisioner extends DockerSlaveProvisioner {
 
         this.remoting = Which.jarFile(Channel.class);
         String id = runContainer();
-        this.slave.setContainerId(id);
+        this.slave.getComputer().setContainerId(id);
 
         final InspectContainerResponse inspect = client.inspectContainerCmd(container).exec();
         if ("exited".equals(inspect.getState().getStatus())) {
