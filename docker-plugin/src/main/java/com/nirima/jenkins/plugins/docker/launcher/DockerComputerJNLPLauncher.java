@@ -72,12 +72,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         return user;
     }
 
-    @Override
-    public boolean isLaunchSupported() {
-        return true;
-    }
 
-    @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
         final PrintStream logger = listener.getLogger();
         final DockerComputer dockerComputer = (DockerComputer) computer;
@@ -163,11 +158,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Override
-    public ComputerLauncher getPreparedLauncher(String cloudId, DockerTemplate template, InspectContainerResponse containerInspectResponse) {
-        DockerComputerJNLPLauncher dockerComputerJNLPLauncher = new DockerComputerJNLPLauncher(getJnlpLauncher());
-        DockerComputerJNLPLauncher launcher = (DockerComputerJNLPLauncher) template.getLauncher();
-        dockerComputerJNLPLauncher.setUser(launcher.getUser());
-        return dockerComputerJNLPLauncher;
+    public JNLPLauncher getPreparedLauncher(String cloudId, DockerTemplate template, InspectContainerResponse containerInspectResponse) {
+        return jnlpLauncher;
     }
 
     @Override
@@ -209,7 +201,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<ComputerLauncher> {
+    public static class DescriptorImpl extends Descriptor<DockerComputerLauncher> {
 
         public Class getJNLPLauncher() {
             return JNLPLauncher.class;
@@ -217,7 +209,7 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
         @Override
         public String getDisplayName() {
-            return "(Experimental) Docker JNLP launcher";
+            return "Docker JNLP launcher";
         }
     }
 

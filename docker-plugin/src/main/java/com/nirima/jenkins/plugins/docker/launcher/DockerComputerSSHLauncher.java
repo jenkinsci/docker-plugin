@@ -52,11 +52,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     }
 
     public ComputerLauncher getPreparedLauncher(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse inspect) {
-        final DockerComputerSSHLauncher prepLauncher = new DockerComputerSSHLauncher(null); // don't care, we need only launcher
-
-        prepLauncher.setLauncher(getSSHLauncher(cloudId, dockerTemplate, inspect));
-
-        return prepLauncher;
+        return getSSHLauncher(cloudId, dockerTemplate, inspect);
     }
 
     @Override
@@ -86,7 +82,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return (connectionCheck.execute() && connectionCheck.useSSH().execute());
     }
 
-    private SSHLauncher getSSHLauncher(String cloudId, DockerTemplate template, InspectContainerResponse inspect) {
+    public SSHLauncher getSSHLauncher(String cloudId, DockerTemplate template, InspectContainerResponse inspect) {
         Preconditions.checkNotNull(template);
         Preconditions.checkNotNull(inspect);
 
@@ -198,7 +194,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     }
 
     @Extension
-    public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
+    public static final class DescriptorImpl extends Descriptor<DockerComputerLauncher> {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             return DockerTemplateBase.DescriptorImpl.doFillCredentialsIdItems(context);

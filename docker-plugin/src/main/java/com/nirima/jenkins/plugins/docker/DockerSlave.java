@@ -78,6 +78,22 @@ public class DockerSlave extends AbstractCloudSlave {
         setCloudId(cloudId);
     }
 
+    public DockerSlave(DockerCloud cloud, DockerTemplate template, ComputerLauncher launcher) throws IOException, Descriptor.FormException {
+        super(
+                cloud.getDisplayName() + '-' + Long.toHexString(System.nanoTime()),
+                "Docker Node [" + template.getDockerTemplateBase().getImage() + " on "+ cloud.getDisplayName() + "]",
+                template.getRemoteFs(),
+                template.getNumExecutors(),
+                template.getMode(),
+                template.getLabelString(),
+                launcher,
+                template.getRetentionStrategyCopy(),
+                Collections.<NodeProperty<?>>emptyList()
+        );
+        this.cloudId = cloud.getDisplayName();
+        this.dockerTemplate = template;
+    }
+
     public String getContainerId() {
         return containerId;
     }
