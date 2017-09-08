@@ -16,6 +16,8 @@ import hudson.model.*;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.slaves.*;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Preconditions;
@@ -24,6 +26,7 @@ import shaded.com.google.common.base.Strings;
 import javax.annotation.CheckForNull;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -130,6 +133,11 @@ public class DockerSlave extends AbstractCloudSlave {
         }
 
         return (DockerCloud) cloud;
+    }
+
+    @Override
+    public DockerComputer getComputer() {
+        return (DockerComputer) super.getComputer();
     }
 
     @Override
