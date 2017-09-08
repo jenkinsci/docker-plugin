@@ -31,6 +31,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.jenkins.docker.DockerSlaveProvisioner;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -398,11 +399,18 @@ public class DockerCloud extends Cloud {
         }
     }
 
-    private DockerSlave provisionWithWait(DockerTemplate dockerTemplate) throws IOException, Descriptor.FormException {
-        pullImage(dockerTemplate);
+    private DockerSlave provisionWithWait(DockerTemplate template) throws IOException, Descriptor.FormException {
 
-        LOGGER.info("Trying to run container for {}", dockerTemplate.getDockerTemplateBase().getImage());
-        final String containerId = runContainer(dockerTemplate, getClient(), dockerTemplate.getLauncher());
+        final DockerSlaveProvisioner provisioner = template.getProvisioner(this);
+        return provisioner.provision();
+
+        /*
+        pullImage(template);
+
+
+
+        LOGGER.info("Trying to run container for {}", template.getDockerTemplateBase().getImage());
+        final String containerId = runContainer(template, getClient(), template.getLauncher());
 
         InspectContainerResponse ir;
         try {
@@ -413,7 +421,7 @@ public class DockerCloud extends Cloud {
         }
 
         // Build a description up:
-        String nodeDescription = "Docker Node [" + dockerTemplate.getDockerTemplateBase().getImage() + " on ";
+        String nodeDescription = "Docker Node [" + template.getDockerTemplateBase().getImage() + " on ";
         try {
             nodeDescription += getDisplayName();
         } catch (Exception ex) {
@@ -429,15 +437,15 @@ public class DockerCloud extends Cloud {
             LOGGER.warn("Error fetching cloud name");
         }
 
-        dockerTemplate.getLauncher().waitUp(getDisplayName(), dockerTemplate, ir);
+        template.getLauncher().waitUp(getDisplayName(), template, ir);
 
-        final ComputerLauncher launcher = dockerTemplate.getLauncher().getPreparedLauncher(getDisplayName(), dockerTemplate, ir);
+        final ComputerLauncher launcher = template.getLauncher().getPreparedLauncher(getDisplayName(), template, ir);
 
         if( isSwarm() ) {
-            return new DockerSwarmSlave(this, ir, slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
+            return new DockerSwarmSlave(this, ir, slaveName, nodeDescription, launcher, containerId, template, getDisplayName());
         } else {
-            return new DockerSlave(slaveName, nodeDescription, launcher, containerId, dockerTemplate, getDisplayName());
-        }
+            return new DockerSlave(slaveName, nodeDescription, launcher, containerId, template, getDisplayName());
+        }           */
     }
 
     @Override

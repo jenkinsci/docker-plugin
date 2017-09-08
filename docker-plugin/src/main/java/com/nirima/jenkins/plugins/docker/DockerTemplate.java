@@ -1,6 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.core.NameParser;
+import com.nirima.jenkins.plugins.docker.launcher.DockerComputerJNLPLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
+import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.Util;
@@ -14,6 +19,9 @@ import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
+import io.jenkins.docker.DockerSlaveProvisioner;
+import io.jenkins.docker.JNLPDockerSlaveProvisioner;
+import io.jenkins.docker.SSHDockerSlaveProvisioner;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -24,7 +32,6 @@ import shaded.com.google.common.base.MoreObjects;
 import shaded.com.google.common.base.Strings;
 
 import javax.annotation.CheckForNull;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -132,6 +139,106 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         setRemoveVolumes(removeVolumes);
         setPullStrategy(pullStrategy);
     }
+
+    public DockerSlaveProvisioner getProvisioner(DockerCloud cloud) {
+        if (launcher instanceof DockerComputerJNLPLauncher) {
+            return new JNLPDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerJNLPLauncher) launcher);
+        } else {
+            return new SSHDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerSSHLauncher) launcher);
+        }
+    }
+
+    // -- DockerTemplateBase mixin
+
+    public static String[] filterStringArray(String[] arr) {
+        return DockerTemplateBase.filterStringArray(arr);
+    }
+
+    public String getImage() {
+        return dockerTemplateBase.getImage();
+    }
+
+    public String getDnsString() {
+        return dockerTemplateBase.getDnsString();
+    }
+
+    @CheckForNull
+    public String[] getVolumes() {
+        return dockerTemplateBase.getVolumes();
+    }
+
+    public String getVolumesString() {
+        return dockerTemplateBase.getVolumesString();
+    }
+
+    @Deprecated
+    public String getVolumesFrom() {
+        return dockerTemplateBase.getVolumesFrom();
+    }
+
+    public String[] getVolumesFrom2() {
+        return dockerTemplateBase.getVolumesFrom2();
+    }
+
+    public String getVolumesFromString() {
+        return dockerTemplateBase.getVolumesFromString();
+    }
+
+    @CheckForNull
+    public String getMacAddress() {
+        return dockerTemplateBase.getMacAddress();
+    }
+
+    public String getDisplayName() {
+        return dockerTemplateBase.getDisplayName();
+    }
+
+    public Integer getMemoryLimit() {
+        return dockerTemplateBase.getMemoryLimit();
+    }
+
+    public Integer getMemorySwap() {
+        return dockerTemplateBase.getMemorySwap();
+    }
+
+    public Integer getCpuShares() {
+        return dockerTemplateBase.getCpuShares();
+    }
+
+    public String[] getDockerCommandArray() {
+        return dockerTemplateBase.getDockerCommandArray();
+    }
+
+    public Iterable<PortBinding> getPortMappings() {
+        return dockerTemplateBase.getPortMappings();
+    }
+
+    public String getEnvironmentsString() {
+        return dockerTemplateBase.getEnvironmentsString();
+    }
+
+    @CheckForNull
+    public List<String> getExtraHosts() {
+        return dockerTemplateBase.getExtraHosts();
+    }
+
+    public String getExtraHostsString() {
+        return dockerTemplateBase.getExtraHostsString();
+    }
+
+    public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
+        return dockerTemplateBase.fillContainerConfig(containerConfig);
+    }
+
+    // --
+
+    public String getFullImageId() {
+        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(dockerTemplateBase.getImage());
+        // if image was specified without tag, then treat as latest
+        return repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+    }
+
+
 
     public DockerTemplateBase getDockerTemplateBase() {
         return dockerTemplateBase;
@@ -330,6 +437,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
                 .toString();
     }
 
+    @Override
     public Descriptor<DockerTemplate> getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }

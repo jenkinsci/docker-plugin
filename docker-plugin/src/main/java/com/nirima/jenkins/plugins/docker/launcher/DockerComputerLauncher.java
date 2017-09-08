@@ -5,6 +5,7 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import hudson.model.AbstractDescribableImpl;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
@@ -21,7 +22,7 @@ import java.io.IOException;
  * like {@link DelegatingComputerLauncher}
  */
 @Beta
-public abstract class DockerComputerLauncher extends ComputerLauncher {
+public abstract class DockerComputerLauncher extends AbstractDescribableImpl<DockerComputerLauncher> {
     protected ComputerLauncher launcher;
 
     /**
@@ -61,18 +62,4 @@ public abstract class DockerComputerLauncher extends ComputerLauncher {
         this.launcher = launcher;
     }
 
-    @Override
-    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        getLauncher().launch(computer, listener);
-    }
-
-    @Override
-    public void afterDisconnect(SlaveComputer computer, TaskListener listener) {
-        getLauncher().afterDisconnect(computer, listener);
-    }
-
-    @Override
-    public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
-        getLauncher().beforeDisconnect(computer, listener);
-    }
 }

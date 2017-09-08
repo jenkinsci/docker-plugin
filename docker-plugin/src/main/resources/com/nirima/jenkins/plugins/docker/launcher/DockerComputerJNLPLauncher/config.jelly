@@ -5,5 +5,5 @@
         <f:textbox/>
     </f:entry>
 
-    <st:include page="config.jelly" class="${descriptor.getJNLPLauncher()}"/>
+    <f:property field="jnlpLauncher"/>
 </j:jelly>
