@@ -50,8 +50,6 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
      */
     protected JNLPLauncher jnlpLauncher;
 
-    protected long launchTimeout = 120; //seconds
-
     protected String user;
 
     @DataBoundConstructor
@@ -72,140 +70,8 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
         return user;
     }
 
-
-    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        final PrintStream logger = listener.getLogger();
-        final DockerComputer dockerComputer = (DockerComputer) computer;
-        final String containerId = dockerComputer.getContainerId();
-        final String rootUrl = Jenkins.getInstance().getRootUrl();
-        final DockerClient connect = dockerComputer.getCloud().getClient();
-        final DockerTemplate dockerTemplate = dockerComputer.getNode().getDockerTemplate();
-
-        // exec jnlp connection in running container
-        // TODO implement PID 1 replacement
-
-//        String cdCmd = "cd " + dockerTemplate.getRemoteFs();
-//        String wgetSlaveCmd = "wget " + rootUrl + "jnlpJars/slave.jar -O slave.jar";
-//        String jnlpConnectCmd = "java -jar slave.jar "
-//                + "-jnlpUrl " + rootUrl + dockerComputer.getUrl() + "slave-agent.jnlp ";
-////                + "-secret " + dockerComputer.getJnlpMac();
-//
-//        String[] connectCmd = {
-//                "bash", "-c", cdCmd + " && " + wgetSlaveCmd + " && " + jnlpConnectCmd
-//        };
-
-        String startCmd =
-                "cat << EOF > /tmp/config.sh.tmp && cd /tmp && mv config.sh.tmp config.sh\n" +
-                        "JENKINS_URL=\"" + rootUrl + "\"\n" +
-                        "JENKINS_USER=\"" + getUser() + "\"\n" +
-                        "JENKINS_HOME=\"" + dockerTemplate.getRemoteFs() + "\"\n" +
-                        "COMPUTER_URL=\"" + dockerComputer.getUrl() + "\"\n" +
-                        "COMPUTER_SECRET=\"" + dockerComputer.getJnlpMac() + "\"\n" +
-                        "EOF" + "\n";
-
-        try {
-//            LOGGER.info("Creating jnlp connection command '{}' for '{}'", Arrays.toString(connectCmd), containerId);
-//            logger.println("Creating jnlp connection command '" + Arrays.toString(connectCmd) + "' for '" + containerId + "'");
-
-            final ExecCreateCmdResponse response = connect.execCreateCmd(containerId)
-                    .withTty(true)
-                    .withAttachStdin(true)
-                    .withAttachStderr(true)
-                    .withAttachStdout(true)
-//                    .withCmd(connectCmd)
-                    .withCmd("/bin/bash", "-cxe", startCmd.replace("$", "\\$"))
-                    .exec();
-
-            LOGGER.info("Starting connection command for {}", containerId);
-            logger.println("Starting connection command for " + containerId);
-
-
-            try {
-                connect.execStartCmd(response.getId())
-                        .withDetach(true)
-                        .withTty(true)
-                        .exec( new ExecStartResultCallback(null,null));
-            } catch (NotFoundException ex) {
-                listener.error("Can't execute command: " + ex.getMessage());
-                LOGGER.error("Can't execute jnlp connection command: '{}'", ex.getMessage());
-            }
-
-        } catch (Exception ex) {
-            listener.error("Can't execute command: " + ex.getMessage());
-            LOGGER.error("Can't execute jnlp connection command: '{}'", ex.getMessage());
-            throw ex;
-        }
-
-        LOGGER.info("Successfully executed jnlp connection for '{}'", containerId);
-        logger.println("Successfully executed jnlp connection for " + containerId);
-
-        final long launchTime = System.currentTimeMillis();
-        while (!dockerComputer.isOnline() &&
-                TimeUnit2.SECONDS.toMillis(launchTimeout) > System.currentTimeMillis() - launchTime) {
-            logger.println("Waiting slave connection...");
-            Thread.sleep(1000);
-        }
-
-        if (!dockerComputer.isOnline()) {
-            LOGGER.info("Launch timeout, termintaing slave based on '{}'", containerId);
-            logger.println("Launch timeout, termintaing slave.");
-            dockerComputer.getNode().terminate();
-            throw new IOException("Can't connect slave to jenkins");
-        }
-
-        LOGGER.info("Launched slave '{}' based on '{}'", dockerComputer.getName(), containerId);
-        logger.println("Launched slave for " + containerId);
-    }
-
-    @Override
-    public JNLPLauncher getPreparedLauncher(String cloudId, DockerTemplate template, InspectContainerResponse containerInspectResponse) {
-        return jnlpLauncher;
-    }
-
-    @Override
-    public void appendContainerConfig(DockerTemplate dockerTemplate, CreateContainerCmd createContainerCmd) throws IOException {
-
-        try (InputStream istream = DockerComputerJNLPLauncher.class.getResourceAsStream("DockerComputerJNLPLauncher/init.sh")) {
-            final String initCmd = IOUtils.toString(istream, Charsets.UTF_8);
-            if (initCmd == null) {
-                throw new IllegalStateException("Resource file 'init.sh' not found");
-            }
-//            createContainerCmd.withCmd("/bin/sh"); // nop
-            // wait for params
-            createContainerCmd.withCmd("/bin/bash",
-                    "-cxe",
-                    "cat << EOF >> /tmp/init.sh && chmod +x /tmp/init.sh && exec /tmp/init.sh\n" +
-                            initCmd.replace("$", "\\$") + "\n" +
-                            "EOF" + "\n"
-            );
-        }
-
-//        final String homeDir = dockerTemplate.getRemoteFs();
-//        if (isNotBlank(homeDir)) {
-//            createContainerCmd.withWorkingDir(homeDir);
-//        }
-//
-//        final String user = dockerTemplate.getUser();
-//        if (isNotBlank(user)) {
-//            createContainerCmd.withUser(user);
-//        }
-
-        createContainerCmd.withTty(true);
-        createContainerCmd.withStdinOpen(true);
-
-    }
-
-    @Override
-    public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse ir) {
-        return super.waitUp(cloudId, dockerTemplate, ir);
-    }
-
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerComputerLauncher> {
-
-        public Class getJNLPLauncher() {
-            return JNLPLauncher.class;
-        }
 
         @Override
         public String getDisplayName() {

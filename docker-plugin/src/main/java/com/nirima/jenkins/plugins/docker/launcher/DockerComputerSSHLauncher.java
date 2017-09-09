@@ -52,53 +52,6 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return sshConnector;
     }
 
-    public ComputerLauncher getPreparedLauncher(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse inspect) {
-        return getSSHLauncher(cloudId, dockerTemplate, inspect);
-    }
-
-    @Override
-    public void appendContainerConfig(DockerTemplate dockerTemplate, CreateContainerCmd createCmd) {
-        final int sshPort = getSshConnector().port;
-
-        createCmd.withExposedPorts(new ExposedPort(sshConnector.port));
-
-        String[] cmd = dockerTemplate.getDockerTemplateBase().getDockerCommandArray();
-        if (cmd.length == 0) {
-            //default value to preserve compatibility
-            createCmd.withCmd("bash", "-c", "/usr/sbin/sshd -D -p " + sshPort);
-        }
-
-        createCmd.getPortBindings().add(PortBinding.parse( "" + sshPort));
-    }
-
-    @Override
-    public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
-        super.waitUp(cloudId, dockerTemplate, containerInspect);
-
-        final PortUtils.ConnectionCheck connectionCheck =
-                PortUtils.connectionCheck(getAddressForSSHD((DockerCloud) Jenkins.getInstance().getCloud(cloudId), containerInspect))
-                         .withRetries(60)
-                         .withEveryRetryWaitFor(2, TimeUnit.SECONDS);
-
-        return (connectionCheck.execute() && connectionCheck.useSSH().execute());
-    }
-
-    public SSHLauncher getSSHLauncher(String cloudId, DockerTemplate template, InspectContainerResponse inspect) {
-        Preconditions.checkNotNull(template);
-        Preconditions.checkNotNull(inspect);
-
-        try {
-            final InetSocketAddress address = getAddressForSSHD((DockerCloud) Jenkins.getInstance().getCloud(cloudId), inspect);
-            LOGGER.log(Level.INFO, "Creating slave SSH launcher for " + address);
-            return new SSHLauncher(address.getHostString(), address.getPort(), sshConnector.getCredentials(),
-                    sshConnector.jvmOptions,
-                    sshConnector.javaPath, sshConnector.prefixStartSlaveCmd,
-                    sshConnector.suffixStartSlaveCmd, sshConnector.launchTimeoutSeconds);
-        } catch (NullPointerException ex) {
-            throw new RuntimeException("No mapped port 22 in host for SSL. Config=" + inspect, ex);
-        }
-    }
-
     /**
      * Given an inspected container, work out where we talk to the SSH daemon.
      *
@@ -198,10 +151,6 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             return DockerTemplateBase.DescriptorImpl.doFillCredentialsIdItems(context);
-        }
-
-        public Class getSshConnectorClass() {
-            return SSHConnector.class;
         }
 
         @Override

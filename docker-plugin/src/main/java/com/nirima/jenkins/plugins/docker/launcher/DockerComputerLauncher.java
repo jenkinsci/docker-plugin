@@ -26,20 +26,6 @@ public abstract class DockerComputerLauncher extends AbstractDescribableImpl<Doc
     protected ComputerLauncher launcher;
 
     /**
-     * Return valid configured launcher that will be used for launching slave
-     */
-    public abstract ComputerLauncher getPreparedLauncher(String cloudId,
-                                                         DockerTemplate dockerTemplate,
-                                                         InspectContainerResponse ir);
-
-    /**
-     * Contribute container parameters needed for launcher.
-     * i.e. port for exposing, command to run, etc.
-     */
-    public abstract void appendContainerConfig(DockerTemplate dockerTemplate,
-                                               CreateContainerCmd createContainerCmd) throws IOException;
-
-    /**
      * Wait until slave is up and ready for connection.
      */
     public boolean waitUp(String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse containerInspect) {
