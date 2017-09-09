@@ -367,7 +367,7 @@ public class DockerCloud extends Cloud {
         }
     }
 
-    private DockerSlave provisionWithWait(DockerTemplate template) throws IOException, Descriptor.FormException {
+    private DockerSlave provisionWithWait(DockerTemplate template) throws IOException, Descriptor.FormException, InterruptedException {
 
         final DockerSlaveProvisioner provisioner = template.getProvisioner(this);
         return provisioner.provision();

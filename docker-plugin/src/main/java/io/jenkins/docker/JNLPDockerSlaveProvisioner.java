@@ -46,7 +46,7 @@ public class JNLPDockerSlaveProvisioner extends DockerSlaveProvisioner {
     }
 
     @Override
-    public DockerSlave provision() throws IOException, Descriptor.FormException {
+    public DockerSlave provision() throws IOException, Descriptor.FormException, InterruptedException {
 
         this.slave = new DockerSlave(cloud, template, launcher.getJnlpLauncher());
         // register the slave so it get an active computer and we can inject jnlp connexion parameters as ENV
