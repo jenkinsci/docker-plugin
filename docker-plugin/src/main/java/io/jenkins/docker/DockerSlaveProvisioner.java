@@ -1,15 +1,10 @@
 package io.jenkins.docker;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
-import com.github.dockerjava.api.model.Frame;
-import com.github.dockerjava.core.command.AttachContainerResultCallback;
-import com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerImagePullStrategy;
@@ -17,14 +12,11 @@ import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.model.Descriptor;
-import hudson.model.TaskListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
-import java.io.Closeable;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Responsible to create the adequate (set of) container(s) to run a Jenkins Agent on Docker.
@@ -52,10 +44,10 @@ public abstract class DockerSlaveProvisioner {
     /**
      * Provision and setup container(s) to create an active {@link DockerSlave}.
      */
-    public abstract DockerSlave provision() throws IOException, Descriptor.FormException;
+    public abstract DockerSlave provision() throws IOException, Descriptor.FormException, InterruptedException;
 
 
-    protected String runContainer() throws IOException {
+    protected String runContainer() throws IOException, InterruptedException {
         pullImage();
 
         LOGGER.info("Trying to run container for {}", template.getImage());
@@ -114,7 +106,7 @@ public abstract class DockerSlaveProvisioner {
      * Implementation can override this method to customize the container before it get started.
      * Typically : copy <code>slave.jar</code> into container, etc
      */
-    protected void setupContainer() throws IOException {
+    protected void setupContainer() throws IOException, InterruptedException {
         // nop
     }
 

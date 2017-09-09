@@ -19,6 +19,7 @@ import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
+import io.jenkins.docker.AttachedDockerSlaveProvisioner;
 import io.jenkins.docker.DockerSlaveProvisioner;
 import io.jenkins.docker.JNLPDockerSlaveProvisioner;
 import io.jenkins.docker.SSHDockerSlaveProvisioner;
@@ -143,8 +144,10 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     public DockerSlaveProvisioner getProvisioner(DockerCloud cloud) {
         if (launcher instanceof DockerComputerJNLPLauncher) {
             return new JNLPDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerJNLPLauncher) launcher);
-        } else {
+        } else if (launcher instanceof DockerComputerSSHLauncher) {
             return new SSHDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerSSHLauncher) launcher);
+        } else {
+            return new AttachedDockerSlaveProvisioner(cloud, this, cloud.getClient());
         }
     }
 

@@ -57,7 +57,7 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
     }
 
     @Override
-    public DockerSlave provision() throws IOException, Descriptor.FormException {
+    public DockerSlave provision() throws IOException, Descriptor.FormException, InterruptedException {
 
         String id = runContainer();
 
