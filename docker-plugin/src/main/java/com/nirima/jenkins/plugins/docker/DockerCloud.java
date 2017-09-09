@@ -292,33 +292,6 @@ public class DockerCloud extends Cloud {
         }
     }
 
-    /**
-     * Run docker container
-     */
-    public static String runContainer(DockerTemplate dockerTemplate,
-                                      DockerClient dockerClient,
-                                      DockerComputerLauncher launcher)
-            throws DockerException, IOException {
-        final DockerTemplateBase dockerTemplateBase = dockerTemplate.getDockerTemplateBase();
-        CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplateBase.getImage());
-
-        dockerTemplateBase.fillContainerConfig(containerConfig);
-
-        // contribute launcher specific options
-        if (launcher != null) {
-            launcher.appendContainerConfig(dockerTemplate, containerConfig);
-        }
-
-        // create
-        CreateContainerResponse response = containerConfig.exec();
-        String containerId = response.getId();
-
-        // start
-        StartContainerCmd startCommand = dockerClient.startContainerCmd(containerId);
-        startCommand.exec();
-
-        return containerId;
-    }
 
     /**
      * for publishers/builders. Simply runs container in docker cloud
@@ -329,11 +302,6 @@ public class DockerCloud extends Cloud {
         CreateContainerCmd containerConfig = dockerClient.createContainerCmd(dockerTemplateBase.getImage());
 
         dockerTemplateBase.fillContainerConfig(containerConfig);
-
-//        // contribute launcher specific options
-//        if (launcher != null) {
-//            launcher.appendContainerConfig(dockerTemplateBase, containerConfig);
-//        }
 
         // create
         CreateContainerResponse response = containerConfig.exec();
