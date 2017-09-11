@@ -3,6 +3,8 @@ package com.nirima.jenkins.plugins.docker;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.core.NameParser;
+import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerJNLPLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
@@ -14,6 +16,7 @@ import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
+import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
@@ -29,8 +32,6 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import shaded.com.google.common.base.MoreObjects;
-import shaded.com.google.common.base.Strings;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
@@ -435,7 +436,7 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
     }
 
     public String getShortDescription() {
-        return MoreObjects.toStringHelper(this)
+        return Objects.toStringHelper(this)
                 .add("image", dockerTemplateBase.getImage())
                 .toString();
     }

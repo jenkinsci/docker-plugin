@@ -1,32 +1,35 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
-
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
 import com.github.dockerjava.core.NameParser;
-import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.Descriptor;
+import hudson.model.Queue;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.model.queue.CauseOfBlockage;
-import hudson.slaves.*;
+import hudson.slaves.AbstractCloudSlave;
+import hudson.slaves.Cloud;
+import hudson.slaves.ComputerLauncher;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.RetentionStrategy;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
-import shaded.com.google.common.base.MoreObjects;
-import shaded.com.google.common.base.Preconditions;
-import shaded.com.google.common.base.Strings;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -340,7 +343,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
+        return Objects.toStringHelper(this)
                 .add("name", name)
                 .add("containerId", containerId)
                 .add("template", dockerTemplate)

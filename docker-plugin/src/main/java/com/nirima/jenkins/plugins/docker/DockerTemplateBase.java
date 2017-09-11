@@ -10,6 +10,12 @@ import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import com.trilead.ssh2.Connection;
 import hudson.Extension;
@@ -27,12 +33,6 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import shaded.com.google.common.base.Function;
-import shaded.com.google.common.base.Joiner;
-import shaded.com.google.common.base.MoreObjects;
-import shaded.com.google.common.base.Splitter;
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.Iterables;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
@@ -446,7 +446,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
+        return Objects.toStringHelper(this)
                 .add("image", getImage())
                 .toString();
     }

@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static shaded.com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkState;
 
 public class PortUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(PortUtils.class);

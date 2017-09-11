@@ -1,10 +1,10 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.google.common.base.Objects;
 import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.slaves.AbstractCloudComputer;
-import shaded.com.google.common.base.MoreObjects;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -88,7 +88,7 @@ public class DockerComputer extends AbstractCloudComputer<DockerSlave> {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
+        return Objects.toStringHelper(this)
                 .add("name", super.getName())
                 .add("slave", getNode())
                 .toString();

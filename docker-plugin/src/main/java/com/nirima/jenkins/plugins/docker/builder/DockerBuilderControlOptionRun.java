@@ -22,7 +22,7 @@ import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import shaded.com.google.common.base.Strings;
+import com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.io.InputStream;

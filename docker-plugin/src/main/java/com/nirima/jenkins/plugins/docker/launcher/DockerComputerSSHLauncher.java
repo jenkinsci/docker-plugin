@@ -24,7 +24,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import shaded.com.google.common.annotations.Beta;
-import shaded.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
