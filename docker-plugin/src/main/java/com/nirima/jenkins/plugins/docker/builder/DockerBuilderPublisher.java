@@ -29,6 +29,7 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
@@ -152,7 +153,13 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     }
 
     public static List<String> filterStringToList(String str) {
-        return str == null ? Collections.<String>emptyList() : Splitter.on("\n").omitEmptyStrings().trimResults().splitToList(str);
+        if (str == null) return Collections.<String>emptyList();
+
+        List<String> result = new ArrayList<String>();
+        for (String o : Splitter.on("\n").omitEmptyStrings().trimResults().split(str)) {
+            result.add(o);
+        }
+        return result;
     }
 
     public static void verifyTags(String tagsString) {
