@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker.utils;
 
 import com.nirima.jenkins.plugins.docker.launcher.AttachedDockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerJNLPLauncher;
+import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
@@ -20,14 +21,8 @@ import java.util.List;
  */
 public class DockerFunctions {
 
-    public static List<Descriptor<ComputerLauncher>> getDockerComputerLauncherDescriptors() {
-        List<Descriptor<ComputerLauncher>> launchers = new ArrayList<>();
-
-        launchers.add(Jenkins.getActiveInstance().getDescriptor(AttachedDockerComputerLauncher.class));
-        launchers.add(Jenkins.getActiveInstance().getDescriptor(DockerComputerSSHLauncher.class));
-        launchers.add(Jenkins.getActiveInstance().getDescriptor(DockerComputerJNLPLauncher.class));
-
-        return launchers;
+    public static List<Descriptor<DockerComputerLauncher>> getDockerComputerLauncherDescriptors() {
+        return Jenkins.getActiveInstance().getDescriptorList(DockerComputerLauncher.class);
     }
 
     public static List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategyDescriptors() {
