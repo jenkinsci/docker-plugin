@@ -12,23 +12,25 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * {@link CloudRetentionStrategy} that has Descriptor and UI with description
  */
 public class DockerCloudRetentionStrategy extends CloudRetentionStrategy {
-    private int idleMinutes = 0;
+
+    private final int timeout;
 
     @DataBoundConstructor
-    public DockerCloudRetentionStrategy(int idleMinutes) {
-        super(idleMinutes);
-        this.idleMinutes = idleMinutes;
+    public DockerCloudRetentionStrategy(int timeout) {
+        super(timeout);
+        this.timeout = timeout;
     }
 
-    public int getIdleMinutes() {
-        return idleMinutes;
+    // for UI binding
+    public int getTimeout() {
+        return timeout;
     }
 
     @Extension
     public static final class DescriptorImpl extends hudson.model.Descriptor<RetentionStrategy<?>> {
         @Override
         public String getDisplayName() {
-            return "Docker Cloud Retention Strategy";
+            return "Cloud Retention Strategy";
         }
     }
 }
