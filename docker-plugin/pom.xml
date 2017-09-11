@@ -32,7 +32,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>7</java.level>
-        <jenkins.version>2.19</jenkins.version>
+        <jenkins.version>2.19.3</jenkins.version>
     </properties>
 
     <dependencies>

@@ -18,7 +18,7 @@ public class AttachedDockerComputerLauncher extends DockerComputerLauncher {
 
         @Override
         public String getDisplayName() {
-            return "Attach Docker container";
+            return "(Experimental) Attach Docker container";
         }
     }
 }
