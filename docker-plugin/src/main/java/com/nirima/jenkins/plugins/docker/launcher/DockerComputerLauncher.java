@@ -1,18 +1,12 @@
 package com.nirima.jenkins.plugins.docker.launcher;
 
 
-import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.model.AbstractDescribableImpl;
-import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
-import hudson.slaves.SlaveComputer;
-import shaded.com.google.common.annotations.Beta;
-
-import java.io.IOException;
+import com.google.common.annotations.Beta;
 
 
 /**
