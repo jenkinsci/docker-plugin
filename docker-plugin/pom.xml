@@ -31,11 +31,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <stapler.version>1.207</stapler.version>
-        <guava.version>18.0</guava.version>
         <java.level>7</java.level>
         <jenkins.version>1.648</jenkins.version>
-        <docker-java.version>3.0.13</docker-java.version>
     </properties>
 
     <dependencies>
@@ -52,23 +49,12 @@
             <!-- TODO update this to 2.16 once we upgrade baseline Jenkins to 2.16 -->
             <version>1.648.3</version>
         </dependency>
+
         <dependency>
-            <groupId>com.nirima</groupId>
-            <artifactId>docker-java-shaded</artifactId>
-            <version>${docker-java.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.bouncycastle</groupId>
-                    <artifactId>bcpkix-jdk15on</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>docker-java-api</artifactId>
+            <version>3.0.13-SNAPSHOT</version>
         </dependency>
-     <!--   <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-        </dependency>
-          -->
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>ssh-slaves</artifactId>
@@ -109,32 +95,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.google.guava</groupId>
-                        <artifactId>guava</artifactId>
-                        <version>${guava.version}</version>
-                    </dependency>  
-                     <dependency>
-                            <groupId>org.kohsuke.stapler</groupId>
-                            <artifactId>stapler</artifactId>
-                            <version>${stapler.version}</version>
-                        </dependency>               
-                </dependencies>
-                <configuration>
-                    <dependentWarExcludes>org.apache.httpcomponents:*,com.github.docker-java*,com.google.guava*</dependentWarExcludes>
-                    <archive>
-                        <manifestEntries>
-                            <Mask-Classes>com.google.common</Mask-Classes>
-                        </manifestEntries>
-                    </archive>
-                    <maskClasses>com.google.common.</maskClasses>
-                </configuration>
-            </plugin>
-
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
