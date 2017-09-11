@@ -6,9 +6,6 @@ import hudson.model.BuildVariableContributor;
 import hudson.model.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import shaded.org.apache.http.client.utils.URIBuilder;
-
-import java.net.URISyntaxException;
 import java.util.Map;
 
 /**
@@ -32,17 +29,12 @@ public class DockerBuildVariableContributor extends BuildVariableContributor {
 
             final DockerCloud cloud = dockerComputer.getCloud();
             if (cloud.isExposeDockerHost()) {
-                try {
-                    //replace http:// and https:// from docker-java to tcp://
-                    final URIBuilder uriBuilder = new URIBuilder(cloud.getServerUrl());
-                    if (!uriBuilder.getScheme().equals("unix")) {
-                        uriBuilder.setScheme("tcp");
-                    }
-                    final String dockerHost = uriBuilder.toString();
-                    variables.put("DOCKER_HOST", dockerHost);
-                } catch (URISyntaxException e) {
-                    LOG.error("Can't build 'DOCKER_HOST' var: {}", e.getMessage());
+                //replace http:// and https:// from docker-java to tcp://
+                String dockerHost = cloud.getServerUrl();
+                if (dockerHost.startsWith("unix:")) {
+                    dockerHost = "tcp:" + dockerHost.substring(5);
                 }
+                variables.put("DOCKER_HOST", dockerHost);
             }
         }
     }
