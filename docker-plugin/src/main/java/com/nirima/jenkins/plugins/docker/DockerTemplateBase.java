@@ -165,13 +165,19 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         if (s == null) {
             return new String[0];
         }
-
-        List<String> list = Splitter.on(separator).omitEmptyStrings().splitToList(s);
-        return list.toArray(new String[list.size()]);
+        List<String> result = new ArrayList<String>();
+        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
+            result.add(o);
+        }
+        return result.toArray(new String[result.size()]);
     }
 
     public static List<String> splitAndFilterEmptyList(String s, String separator) {
-        return Splitter.on(separator).omitEmptyStrings().splitToList(s);
+        List<String> result = new ArrayList<String>();
+        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
+            result.add(o);
+        }
+        return result;
     }
 
     //TODO move/replace
