@@ -35,10 +35,10 @@ import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.slaves.Cloud;
 import jenkins.model.Jenkins;
-import shaded.com.google.common.base.Optional;
-import shaded.com.google.common.base.Predicate;
-import shaded.com.google.common.collect.Collections2;
-import shaded.com.google.common.collect.Iterables;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 
 import static hudson.plugins.sshslaves.SSHLauncher.lookupSystemCredentials;
 

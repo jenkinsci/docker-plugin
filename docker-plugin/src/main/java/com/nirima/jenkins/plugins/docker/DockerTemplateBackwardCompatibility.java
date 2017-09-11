@@ -1,11 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.google.common.base.Joiner;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import hudson.plugins.sshslaves.SSHConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import shaded.com.google.common.base.Joiner;
 
 /**
  * Deprecated variables

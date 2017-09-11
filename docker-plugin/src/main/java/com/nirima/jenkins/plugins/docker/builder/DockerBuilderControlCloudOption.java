@@ -4,7 +4,7 @@ import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Launcher;
 import hudson.model.Build;
 import hudson.model.Run;
-import shaded.com.google.common.base.Strings;
+import com.google.common.base.Strings;
 
 import com.github.dockerjava.api.DockerClient;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
@@ -13,7 +13,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import jenkins.model.Jenkins;
 
-import shaded.com.google.common.base.Optional;
+import com.google.common.base.Optional;
 
 import javax.annotation.Nonnull;
 

@@ -2,11 +2,14 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.*;
+import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
-
-import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Container;
@@ -15,6 +18,11 @@ import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
@@ -22,12 +30,14 @@ import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlu
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
-
 import hudson.Extension;
-import hudson.model.*;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.ItemGroup;
+import hudson.model.Label;
+import hudson.model.Node;
 import hudson.security.ACL;
 import hudson.slaves.Cloud;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -39,17 +49,16 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import shaded.com.google.common.base.MoreObjects;
-import shaded.com.google.common.base.Preconditions;
-import shaded.com.google.common.base.Predicate;
-import shaded.com.google.common.base.Throwables;
-import shaded.com.google.common.collect.Iterables;
 
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -608,7 +617,7 @@ public class DockerCloud extends Cloud {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
+        return Objects.toStringHelper(this)
                 .add("name", name)
                 .add("serverUrl", serverUrl)
                 .toString();

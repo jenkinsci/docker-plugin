@@ -1,27 +1,23 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
-import shaded.com.google.common.base.Function;
-import shaded.com.google.common.collect.Collections2;
-
 import com.github.dockerjava.api.model.Container;
-
-import org.kohsuke.stapler.StaplerProxy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-
-import javax.annotation.Nullable;
-
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import jenkins.model.Jenkins;
+import org.kohsuke.stapler.StaplerProxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 
 
