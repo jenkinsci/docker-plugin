@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.17.0
+
+* Move to docker-java 3.0.13
+* Refactored computer launcher for more flexibility
+* SSH launcher now inject dedicated ssh key pair
+* introduce experimental interactive launcher
+
 ## 0.16.1,2
 
 * Move to docker-java 3.x (3.0.6 + fixes for SDC/Triton)
