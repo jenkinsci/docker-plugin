@@ -22,12 +22,16 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
     public final String taggedId;
 
     public final String remoteFsMapping;
+    public final String remoteFs;
+	public final String slaveWorkspace;
 
-    public DockerBuildAction(String containerHost, String containerId, String taggedId, String remoteFsMapping) {
+    public DockerBuildAction(String containerHost, String containerId, String taggedId, String remoteFsMapping, String remoteFs, String slaveWorkspace) {
         this.containerHost = containerHost;
         this.containerId = containerId;
         this.taggedId = taggedId;
         this.remoteFsMapping = remoteFsMapping;
+        this.remoteFs = remoteFs;
+        this.slaveWorkspace = slaveWorkspace;
     }
 
     public String getIconFileName() {
