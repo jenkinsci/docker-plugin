@@ -48,6 +48,7 @@ import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 
 import java.io.IOException;
+import java.security.Timestamp;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -97,6 +98,11 @@ public class DockerCloud extends Cloud {
      * Indicate if docker host used to run container is exposed inside container as DOCKER_HOST environment variable
      */
     private Boolean exposeDockerHost;
+
+    /*
+     * Use this as a rotten indicator to resync container and provisionnedImages
+     */
+    private static final HashMap<String, Long> provisionedImagesTime = new HashMap<>();
 
     @Deprecated
     public DockerCloud(String name,
@@ -587,7 +593,23 @@ public class DockerCloud extends Cloud {
 
         synchronized (provisionedImages) {
             int currentProvisioning = 0;
+
+            long now = new Date().getTime();
+            if (!provisionedImagesTime.containsKey(ami+"-"+name)){
+                provisionedImagesTime.put(ami+"-"+name, now);
+            }
             if (provisionedImages.containsKey(ami)) {
+                /**
+                 * I don't think we need to bother with a timer to sync container and RAM
+                 * so I'll use some randomness to trigger the realignment
+                 */
+                int timediff = (int)(now - provisionedImagesTime.get(ami+"-"+name));
+                LOGGER.info("Should we sync number of provisionned images ? '{}'>30000 => '{}' ", timediff, (timediff>30000)?"true":"false");
+                if (timediff>30000){
+                    LOGGER.info("Updated number of containers ? '{}' => '{}' ", provisionedImages.get(ami), estimatedAmiSlaves);
+                    provisionedImages.put(ami, estimatedAmiSlaves);
+                    provisionedImagesTime.put(ami+"-"+name, now);
+                }
                 currentProvisioning = provisionedImages.get(ami);
             }
 
