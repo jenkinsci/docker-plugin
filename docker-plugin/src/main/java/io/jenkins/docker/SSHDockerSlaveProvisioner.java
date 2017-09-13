@@ -10,6 +10,7 @@ import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.DockerComputer;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
@@ -81,7 +82,10 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
 
         this.slave = new DockerSlave(cloud, template, ssh);
         Jenkins.getActiveInstance().addNode(slave);
-        this.slave.getComputer().setContainerId(id);
+        final DockerComputer computer = this.slave.getComputer();
+        if (computer != null) { 
+            computer.setContainerId(id);
+        }
 
         return slave;
     }
