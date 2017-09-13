@@ -15,6 +15,7 @@ import hudson.model.BuildListener;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.slaves.Cloud;
 import hudson.slaves.RetentionStrategy;
 import hudson.tasks.BuildStepDescriptor;
@@ -163,6 +164,11 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
+                return new ListBoxModel();
+            }
 
             return new SSHUserListBoxModel().withMatching(SSHAuthenticator.matcher(Connection.class),
                     CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,

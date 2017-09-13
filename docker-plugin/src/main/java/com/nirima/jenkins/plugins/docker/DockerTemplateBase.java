@@ -18,6 +18,7 @@ import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
@@ -515,6 +516,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
 
         public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
+                return new ListBoxModel();
+            }
+
             return new SSHUserListBoxModel().withMatching(
                     SSHAuthenticator.matcher(Connection.class),
                     CredentialsProvider.lookupCredentials(

@@ -26,6 +26,7 @@ import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProvisioner;
@@ -725,6 +726,11 @@ public class DockerCloud extends Cloud {
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
+                return new ListBoxModel();
+            }
 
             List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
             List<DockerDirectoryCredentials> c2 = CredentialsProvider.lookupCredentials(DockerDirectoryCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());

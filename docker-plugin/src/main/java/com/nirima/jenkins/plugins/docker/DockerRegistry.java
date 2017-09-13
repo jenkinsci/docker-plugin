@@ -13,6 +13,7 @@ import hudson.model.Descriptor;
 
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
@@ -63,6 +64,11 @@ public class DockerRegistry  implements Describable<DockerRegistry> {
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
+            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
+                return new ListBoxModel();
+            }
+
 
             List<StandardUsernamePasswordCredentials> credentials = CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, context, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
 
