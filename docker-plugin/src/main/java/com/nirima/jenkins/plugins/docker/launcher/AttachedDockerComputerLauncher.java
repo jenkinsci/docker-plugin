@@ -13,7 +13,7 @@ public class AttachedDockerComputerLauncher extends DockerComputerLauncher {
     public AttachedDockerComputerLauncher() {
     }
 
-    @Extension()
+    @Extension(ordinal = -1)
     public static class DescriptorImpl extends Descriptor<DockerComputerLauncher> {
 
         @Override
