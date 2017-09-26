@@ -18,7 +18,9 @@
 
     <modules>
         <module>docker-plugin</module>
+        <!--
         <module>docker-java-shaded</module>
+        -->
     </modules>
 
     <scm>
