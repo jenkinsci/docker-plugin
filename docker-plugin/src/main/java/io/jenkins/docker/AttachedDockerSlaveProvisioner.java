@@ -8,6 +8,7 @@ import com.github.dockerjava.api.model.LogConfig;
 import com.github.dockerjava.core.command.AttachContainerResultCallback;
 import com.google.common.annotations.Beta;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.DockerComputer;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.model.Descriptor;
@@ -51,12 +52,14 @@ public class AttachedDockerSlaveProvisioner extends DockerSlaveProvisioner {
         Jenkins.getInstance().addNode(slave);
         runContainer();
 
-        slave.getComputer().setChannel(in, out, TaskListener.NULL, new Channel.Listener() {
+        final DockerComputer computer = slave.getComputer();
+        computer.setChannel(in, out, TaskListener.NULL, new Channel.Listener() {
             @Override
             public void onClosed(Channel channel, IOException cause) {
-                System.out.println("Closed");
+                // nop;
             }
         });
+        computer.setContainerId(container);
 
         return slave;
     }
