@@ -220,6 +220,7 @@ public abstract class DockerTemplateBackwardCompatibility {
                         memoryLimit,
                         memorySwap,
                         cpuShares,
+                        null,
                         bindPorts,
                         bindAllPorts,
                         privileged,
