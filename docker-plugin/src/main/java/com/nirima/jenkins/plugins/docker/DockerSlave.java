@@ -14,6 +14,7 @@ import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildAction;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Queue;
 import hudson.model.Run;
