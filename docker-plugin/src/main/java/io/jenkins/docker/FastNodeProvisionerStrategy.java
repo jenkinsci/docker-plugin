@@ -4,6 +4,8 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.Extension;
 import hudson.model.Label;
 import hudson.model.LoadStatistics;
+import hudson.model.Queue;
+import hudson.model.queue.QueueListener;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import jenkins.model.Jenkins;
@@ -81,4 +83,24 @@ public class FastNodeProvisionerStrategy extends Strategy {
         }
     }
 
+    /**
+     * Ping the nodeProvisioner as a new task enters the queue, so it can provision a DockerSlave without delay.
+     */
+    @Extension
+    public static class FastProvisionning extends QueueListener {
+
+        @Override
+        public void onEnterBuildable(Queue.BuildableItem item) {
+            final Jenkins jenkins = Jenkins.getInstance();
+            final Label label = item.getAssignedLabel();
+            for (Cloud cloud : Jenkins.getInstance().clouds) {
+                if (cloud instanceof DockerCloud && cloud.canProvision(label)) {
+                    final NodeProvisioner provisioner = (label == null
+                            ? jenkins.unlabeledNodeProvisioner
+                            : label.nodeProvisioner);
+                    provisioner.suggestReviewNow();
+                }
+            }
+        }
+    }
 }
