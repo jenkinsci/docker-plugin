@@ -86,6 +86,7 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
         if (computer != null) { 
             computer.setContainerId(id);
         }
+        slave.setNodeName(getDisplayName(id, inspect));
 
         return slave;
     }

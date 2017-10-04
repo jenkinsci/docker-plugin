@@ -2,10 +2,12 @@ package io.jenkins.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerImagePullStrategy;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
@@ -46,6 +48,21 @@ public abstract class DockerSlaveProvisioner {
      */
     public abstract DockerSlave provision() throws IOException, Descriptor.FormException, InterruptedException;
 
+    public String getDisplayName(String containerId, InspectContainerResponse inspect) {
+        String slaveName = containerId.substring(0, 12);
+        try {
+            slaveName = cloud.getDisplayName() + "-" + slaveName;
+        } catch (Exception ex) {
+            LOGGER.warn("Error fetching cloud name");
+        }
+        if (cloud.isSwarm()) {
+            String hostName = JenkinsUtils.getHostnameFromBinding(inspect);
+            if (!Strings.isNullOrEmpty(hostName)) {
+                slaveName = slaveName + "-" + hostName;
+            }
+        }
+        return slaveName;
+    }
 
     protected String runContainer() throws IOException, InterruptedException {
         pullImage();

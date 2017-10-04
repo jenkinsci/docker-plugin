@@ -643,7 +643,7 @@ public class DockerCloud extends Cloud {
 
     }
 
-    /* package */ boolean isSwarm() {
+    public boolean isSwarm() {
         Version remoteVersion = getClient().versionCmd().exec();
         // Cache the return.
         if( _isSwarm == null ) {
