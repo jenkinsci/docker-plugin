@@ -19,13 +19,8 @@
 
     <developers>
         <developer>
-            <id>KostyaSha</id>
-            <name>Kanstantsin Shautsou</name>
-            <timezone>UTC+3</timezone>
-        </developer>
-        <developer>
-            <id>magnayn</id>
-            <name>Nigel Magnay</name>
+            <id>ndeloof</id>
+            <name>Nicolas De Loof</name>
         </developer>
     </developers>
 
