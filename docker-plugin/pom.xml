@@ -5,13 +5,12 @@
     <parent>
         <groupId>com.nirima</groupId>
         <artifactId>docker-plugin-parent</artifactId>
-        <version>0.16.3-SNAPSHOT</version>
+        <version>0.17-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
     <groupId>com.nirima</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -112,7 +111,7 @@
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <configuration>
-                    <compatibleSinceVersion>1.0.0</compatibleSinceVersion>
+                    <compatibleSinceVersion>0.17</compatibleSinceVersion>
                 </configuration>
             </plugin>
 
