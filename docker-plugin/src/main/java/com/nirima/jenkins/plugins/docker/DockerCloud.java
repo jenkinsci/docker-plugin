@@ -448,7 +448,7 @@ public class DockerCloud extends Cloud {
     @CheckForNull
     public DockerTemplate getTemplate(String template) {
         for (DockerTemplate t : templates) {
-            if (t.getDockerTemplateBase().getImage().equals(template)) {
+            if (t.getImage().equals(template)) {
                 return t;
             }
         }

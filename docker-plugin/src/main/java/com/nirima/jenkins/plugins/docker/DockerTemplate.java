@@ -35,6 +35,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -86,7 +87,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @DataBoundConstructor
-    public DockerTemplate(DockerTemplateBase dockerTemplateBase,
+    public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
                           String labelString,
                           String remoteFs,
                           String remoteFsMapping,
@@ -117,7 +118,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * @throws IOException 
      */
     @Restricted(value = NoExternalUse.class)
-    public DockerTemplate(DockerTemplateBase dockerTemplateBase,
+    public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
                           String labelString,
                           String remoteFs,
                           String remoteFsMapping,
