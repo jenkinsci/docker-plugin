@@ -16,6 +16,7 @@ import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
+import hudson.security.Permission;
 import hudson.slaves.Cloud;
 import hudson.slaves.RetentionStrategy;
 import hudson.tasks.BuildStepDescriptor;
@@ -37,66 +38,11 @@ import java.io.Serializable;
  *
  * @author Jocelyn De La Rosa
  */
-public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCompatibility implements Serializable {
+public class DockerBuilderNewTemplate extends Builder implements Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderNewTemplate.class);
 
     private DockerTemplate dockerTemplate;
     private int version = 1;
-
-    /**
-     * @deprecated Don't use. All values migrated.
-     */
-    @Deprecated
-    public DockerBuilderNewTemplate(String image, String labelString,
-                                    RetentionStrategy retentionStrategy,
-                                    String remoteFs, String remoteFsMapping,
-                                    String credentialsId, String idleTerminationMinutes,
-                                    String sshLaunchTimeoutMinutes,
-                                    String jvmOptions, String javaPath,
-                                    Integer memoryLimit, Integer cpuShares,
-                                    String prefixStartSlaveCmd, String suffixStartSlaveCmd,
-                                    String instanceCapStr, String dnsString, String network,
-                                    String dockerCommand,
-                                    String volumesString, String volumesFrom,
-                                    String environmentsString,
-                                    String lxcConfString,
-                                    String hostname,
-                                    String bindPorts,
-                                    boolean bindAllPorts,
-                                    boolean privileged,
-                                    boolean tty,
-                                    String macAddress) {
-        this.image = image;
-        this.labelString = labelString;
-        this.retentionStrategy = retentionStrategy;
-        this.remoteFs = remoteFs;
-        this.remoteFsMapping = remoteFsMapping;
-        this.credentialsId = credentialsId;
-        this.idleTerminationMinutes = idleTerminationMinutes;
-        this.sshLaunchTimeoutMinutes = sshLaunchTimeoutMinutes;
-        this.jvmOptions = jvmOptions;
-        this.javaPath = javaPath;
-        this.memoryLimit = memoryLimit;
-        this.cpuShares = cpuShares;
-        this.prefixStartSlaveCmd = prefixStartSlaveCmd;
-        this.suffixStartSlaveCmd = suffixStartSlaveCmd;
-        this.instanceCapStr = instanceCapStr;
-        this.dnsString = dnsString;
-        this.network = network;
-        this.dockerCommand = dockerCommand;
-        this.volumesString = volumesString;
-        this.volumesFrom = volumesFrom;
-        this.environmentsString = environmentsString;
-        this.lxcConfString = lxcConfString;
-        this.bindPorts = bindPorts;
-        this.bindAllPorts = bindAllPorts;
-        this.privileged = privileged;
-        this.tty = tty;
-        this.hostname = hostname;
-        this.macAddress = macAddress;
-        convert1();
-        this.version = 1;
-    }
 
     @DataBoundConstructor
     public DockerBuilderNewTemplate(DockerTemplate dockerTemplate) {
@@ -117,6 +63,9 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
         final PrintStream llogger = listener.getLogger();
         final String dockerImage = dockerTemplate.getDockerTemplateBase().getImage();
 
+        // Job must run as Admin as we are changing global cloud configuration here.
+        build.getACL().checkPermission(Jenkins.ADMINISTER);
+
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && dockerImage != null) {
                 DockerCloud dockerCloud = (DockerCloud) c;
@@ -130,20 +79,6 @@ public class DockerBuilderNewTemplate extends DockerBuilderNewTemplateBackwardCo
 
         return true;
     }
-
-    public Object readResolve() {
-        try {
-            if (version < 1) {
-                convert1();
-                version = 1;
-            }
-        } catch (Throwable t) {
-            LOGGER.error("Can't migrate configuration to version 1", t);
-        }
-
-        return this;
-    }
-
 
     @Override
     public DescriptorImpl getDescriptor() {
