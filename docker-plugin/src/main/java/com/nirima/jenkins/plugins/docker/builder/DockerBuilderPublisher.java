@@ -61,6 +61,7 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
  * Builder extension to build / publish an image from a Dockerfile.
+ * TODO automatic migration to https://wiki.jenkins.io/display/JENKINS/CloudBees+Docker+Build+and+Publish+plugin
  */
 public class DockerBuilderPublisher extends Builder implements Serializable, SimpleBuildStep {
 
@@ -162,6 +163,10 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public void setTagsString(String tagsString) {
         setTags(filterStringToList(tagsString));
+    }
+
+    public DockerRegistryEndpoint getFromRegistry() {
+        return fromRegistry;
     }
 
     public static List<String> filterStringToList(String str) {

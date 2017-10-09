@@ -41,7 +41,7 @@ public class DockerTemplateTest {
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, dnsString, network,
+        final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, null, dnsString, network,
                 dockerCommand, volumesString, volumesString, environmentsString,
                 lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
 
