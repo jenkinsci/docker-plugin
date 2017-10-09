@@ -25,6 +25,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                                 boolean tty,
                                 String macAddress) {
         super(image,
+                null,
                 dnsString,
                 network,
                 dockerCommand,

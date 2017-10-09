@@ -18,6 +18,8 @@ import hudson.model.BuildListener;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.apache.commons.io.IOUtils;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
@@ -37,6 +39,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuilderControlOptionRun.class);
 
     public final String image;
+    public final DockerRegistryEndpoint registry;
     public final String dnsString;
     public final String network;
     public final String dockerCommand;
@@ -58,6 +61,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public DockerBuilderControlOptionRun(
             String cloudName,
             String image,
+            DockerRegistryEndpoint registry,
             String lxcConfString,
             String dnsString,
             String network,
@@ -76,7 +80,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String macAddress) {
         super(cloudName);
         this.image = image;
-
+        this.registry = registry;
         this.lxcConfString = lxcConfString;
         this.dnsString = dnsString;
         this.network = network;
@@ -121,9 +125,13 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         };
 
         PullImageCmd cmd = client.pullImageCmd(xImage);
-        AuthConfig authConfig = JenkinsUtils.getAuthConfigFor(image);
-        if( authConfig != null ) {
-            cmd.withAuthConfig(authConfig);
+        if (registry == null) {
+            DockerRegistryToken token = registry.getToken(null);
+            AuthConfig auth = new AuthConfig()
+                    .withRegistryAddress(registry.getUrl())
+                    .withEmail(token.getEmail())
+                    .withRegistrytoken(token.getToken());
+            cmd.withAuthConfig(auth);
         }
         cmd.exec(resultCallback).awaitSuccess();
 

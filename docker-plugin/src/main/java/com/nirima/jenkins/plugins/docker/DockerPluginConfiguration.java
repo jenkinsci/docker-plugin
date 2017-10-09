@@ -9,7 +9,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.util.Collections;
 import java.util.List;
 
-@Extension
+@Deprecated
 public class DockerPluginConfiguration extends GlobalConfiguration {
 
     /**

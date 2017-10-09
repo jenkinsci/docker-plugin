@@ -29,7 +29,6 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
@@ -38,6 +37,8 @@ import hudson.util.FormValidation;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.lang.Validate;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -55,8 +56,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfigFor;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfigurations;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
@@ -105,6 +104,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public final String dockerFileDirectory;
 
+    private final DockerRegistryEndpoint fromRegistry;
+
     /**
      * @deprecated use {@link #tags}
      */
@@ -115,6 +116,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     private List<String> tags;
 
     public final boolean pushOnSuccess;
+
+    private final DockerRegistryEndpoint registry;
+
     public final boolean cleanImages;
     public final boolean cleanupWithJenkinsJobDelete;
 
@@ -122,18 +126,26 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
+                                  DockerRegistryEndpoint fromRegistry,
                                   String cloud,
                                   String tagsString,
                                   boolean pushOnSuccess,
+                                  DockerRegistryEndpoint registry,
                                   boolean cleanImages,
                                   boolean cleanupWithJenkinsJobDelete) {
         this.dockerFileDirectory = dockerFileDirectory;
+        this.fromRegistry = fromRegistry;
         setTagsString(tagsString);
         this.tag = null;
         this.cloud = cloud;
         this.pushOnSuccess = pushOnSuccess;
+        this.registry = registry;
         this.cleanImages = cleanImages;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
+    }
+
+    public DockerRegistryEndpoint getRegistry() {
+        return registry;
     }
 
     public List<String> getTags() {
@@ -309,7 +321,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
 
         private String buildImage() throws IOException, InterruptedException {
-            final AuthConfigurations authConfigurations = getAuthConfigurations();
+            final AuthConfigurations auths = new AuthConfigurations();
+            if (fromRegistry == null) {
+                DockerRegistryToken token = fromRegistry.getToken(null);
+                AuthConfig auth = new AuthConfig()
+                        .withRegistryAddress(fromRegistry.getUrl())
+                        .withEmail(token.getEmail())
+                        .withRegistrytoken(token.getToken());
+                auths.addConfig(auth);
+            }
+
             return fpChild.act(new MasterToSlaveFileCallable<String>() {
                 public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
 
@@ -324,7 +345,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                         }
                     };
                     String imageId = getClient().buildImageCmd(f)
-                            .withBuildAuthConfigs(authConfigurations)
+                            .withBuildAuthConfigs(auths)
                             .exec(resultCallback)
                             .awaitImageId();
 
@@ -368,9 +389,13 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 };
                 try {
                     PushImageCmd cmd = getClient().pushImageCmd(identifier);
-                    AuthConfig authConfig = getAuthConfigFor(tagToUse);
-                    if( authConfig != null ) {
-                        cmd.withAuthConfig(authConfig);
+                    if (registry == null) {
+                        DockerRegistryToken token = registry.getToken(null);
+                        AuthConfig auth = new AuthConfig()
+                                .withRegistryAddress(registry.getUrl())
+                                .withEmail(token.getEmail())
+                                .withRegistrytoken(token.getToken());
+                        cmd.withAuthConfig(auth);
                     }
                     cmd.exec(resultCallback).awaitSuccess();
                 } catch(DockerException ex) {

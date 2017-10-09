@@ -1,9 +1,8 @@
 package com.nirima.jenkins.plugins.docker.client;
 
-import com.nirima.jenkins.plugins.docker.DockerCloud;
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import java.io.Serializable;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Serializable object that store options for {@see com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl}

@@ -142,54 +142,6 @@ public class JenkinsUtils {
         }
     }
 
-    public static AuthConfigurations getAuthConfigurations() {
-        AuthConfigurations authConfigurations = new AuthConfigurations();
-
-        for(DockerRegistry registry : DockerPluginConfiguration.get().getRegistryList())
-        {
-            AuthConfig ac = makeAuthConfig(registry);
-            if( ac != null ) {
-                authConfigurations.addConfig(ac);
-            }
-        }
-
-        return authConfigurations;
-    }
-
-    public static AuthConfig getAuthConfigFor(String imageName) {
-        // Do we have an auth config for the registry defined in this tag?
-        NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(imageName);
-        NameParser.HostnameReposName hostnameReposName = NameParser.resolveRepositoryName(reposTag.repos);
-
-        DockerRegistry registry = DockerPluginConfiguration.get().getRegistryByName(hostnameReposName.hostname);
-        return makeAuthConfig(registry);
-    }
-    protected static AuthConfig makeAuthConfig(DockerRegistry registry) {
-        if( registry == null )
-            return null;
-
-        Credentials credentials = lookupSystemCredentials(registry.credentialsId);
-        final AuthConfig authConfig = makeAuthConfig(credentials);
-        if( authConfig == null )
-            return null;
-        return authConfig.withRegistryAddress(registry.registry);
-    }
-
-    protected static AuthConfig makeAuthConfig(Credentials credentials) {
-        if (credentials instanceof StandardUsernamePasswordCredentials) {
-            StandardUsernamePasswordCredentials usernamePasswordCredentials =
-                    ((StandardUsernamePasswordCredentials) credentials);
-
-            AuthConfig ac = new AuthConfig()
-            		.withUsername( usernamePasswordCredentials.getUsername() )
-            		.withPassword( usernamePasswordCredentials.getPassword().getPlainText() );
-
-            return ac;
-        }
-
-        return null;
-    }
-
     public static String getInstanceId() {
         try {
             if( _id == null ) {

@@ -26,6 +26,8 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 
 import javax.annotation.CheckForNull;
@@ -35,7 +37,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.getAuthConfigFor;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
@@ -285,9 +286,14 @@ public class DockerSlave extends AbstractCloudSlave {
                     try {
 
                         PushImageCmd cmd = getClient().pushImageCmd(identifier);
-                        AuthConfig authConfig = getAuthConfigFor(tagToken);
-                        if( authConfig != null ) {
-                            cmd.withAuthConfig(authConfig);
+                        final DockerRegistryEndpoint registry = dockerTemplate.getRegistry();
+                        if (registry == null) {
+                            DockerRegistryToken token = registry.getToken(null);
+                            AuthConfig auth = new AuthConfig()
+                                    .withRegistryAddress(registry.getUrl())
+                                    .withEmail(token.getEmail())
+                                    .withRegistrytoken(token.getToken());
+                            cmd.withAuthConfig(auth);
                         }
                         cmd.exec(resultCallback).awaitSuccess();
 

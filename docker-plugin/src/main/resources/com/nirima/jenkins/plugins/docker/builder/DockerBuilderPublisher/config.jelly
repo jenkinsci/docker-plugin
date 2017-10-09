@@ -7,6 +7,10 @@
         <f:textbox />
     </f:entry>
 
+    <f:advanced>
+        <f:property field="fromRegistry"/>
+    </f:advanced>
+
     <f:entry title="Cloud" field="cloud" description="Cloud to use to build image">
         <f:textbox />
     </f:entry>
@@ -14,6 +18,8 @@
     <f:entry title="Image" field="tagsString">
         <f:expandableTextbox/>
     </f:entry>
+
+    <f:property field="registry"/>
 
     <f:entry title="${%Push image}" field="pushOnSuccess">
         <f:checkbox/>

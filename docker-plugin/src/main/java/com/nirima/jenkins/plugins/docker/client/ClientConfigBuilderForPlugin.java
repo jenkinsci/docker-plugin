@@ -53,9 +53,9 @@ public class ClientConfigBuilderForPlugin {
         LOGGER.log(Level.FINE, "Building connection to docker host \"{0}\" at: {1}",
                 new Object[]{cloud.getDisplayName(), cloud.getServerUrl()});
 
-        forServer(cloud.getServerUrl(), cloud.version);
+        forServer(cloud.getDockerHost().getUri(), cloud.version);
 
-        return withCredentials(cloud.credentialsId);
+        return withCredentials(cloud.getDockerHost().getCredentialsId());
     }
 
     /**

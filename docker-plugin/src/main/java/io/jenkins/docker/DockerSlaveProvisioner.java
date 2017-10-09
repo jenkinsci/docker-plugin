@@ -12,6 +12,8 @@ import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.model.Descriptor;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,9 +85,14 @@ public abstract class DockerSlaveProvisioner {
             long startTime = System.currentTimeMillis();
 
             PullImageCmd imgCmd =  client.pullImageCmd(image);
-            AuthConfig authConfig = JenkinsUtils.getAuthConfigFor(image);
-            if( authConfig != null ) {
-                imgCmd.withAuthConfig(authConfig);
+            final DockerRegistryEndpoint registry = template.getRegistry();
+            if (registry == null) {
+                DockerRegistryToken token = registry.getToken(null);
+                AuthConfig auth = new AuthConfig()
+                        .withRegistryAddress(registry.getUrl())
+                        .withEmail(token.getEmail())
+                        .withRegistrytoken(token.getToken());
+                imgCmd.withAuthConfig(auth);
             }
             imgCmd.exec(new PullImageResultCallback()).awaitSuccess();
             long pullTime = System.currentTimeMillis() - startTime;

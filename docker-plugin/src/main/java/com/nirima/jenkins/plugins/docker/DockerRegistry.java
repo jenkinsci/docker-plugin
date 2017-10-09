@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-@Extension
+@Deprecated
 public class DockerRegistry  implements Describable<DockerRegistry> {
     public String registry;
     public String credentialsId;
@@ -54,8 +54,14 @@ public class DockerRegistry  implements Describable<DockerRegistry> {
     }
 
 
+    private Object readResolve() {
+        // TODO migrate to docker-commons' DockerRegistryEndpoint
+        // inspect all DockerTemplates
+        return this;
+    }
 
-    @Extension
+
+    @Deprecated
     public static final class DescriptorImpl extends Descriptor<DockerRegistry> {
 
         @Override
