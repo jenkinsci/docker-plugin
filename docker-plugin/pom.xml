@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.nirima</groupId>
         <artifactId>docker-plugin-parent</artifactId>
-        <version>0.17</version>
+        <version>0.18-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
