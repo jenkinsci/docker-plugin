@@ -2,7 +2,6 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
@@ -28,8 +27,6 @@ import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
 import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
-import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
-import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -44,6 +41,10 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.DockerSlaveProvisioner;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -74,11 +75,17 @@ public class DockerCloud extends Cloud {
 
     private List<DockerTemplate> templates;
     private transient HashMap<Long, DockerTemplate> jobTemplates;
-    private String serverUrl;
+
+    private DockerServerEndpoint dockerHost;
+
+    @Deprecated
+    private transient String serverUrl;
+    @Deprecated
+    public  transient String credentialsId;
+
     private int connectTimeout;
     public final int readTimeout;
     public final String version;
-    public final String credentialsId;
     public final String dockerHostname;
 
     private transient DockerClient connection;
@@ -109,53 +116,19 @@ public class DockerCloud extends Cloud {
      */
     private Boolean exposeDockerHost;
 
-    @Deprecated
-    public DockerCloud(String name,
-                       List<? extends DockerTemplate> templates,
-                       String serverUrl,
-                       String containerCapStr,
-                       int connectTimeout,
-                       int readTimeout,
-                       String credentialsId,
-                       String version,
-                       String dockerHostname) {
-        super(name);
-        Preconditions.checkNotNull(serverUrl);
-        this.version = version;
-        this.credentialsId = credentialsId;
-        this.serverUrl = sanitizeUrl(serverUrl);
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
-        this.dockerHostname = dockerHostname;
-
-        if (templates != null) {
-            this.templates = new ArrayList<>(templates);
-        } else {
-            this.templates = Collections.emptyList();
-        }
-
-        if (containerCapStr.equals("")) {
-            setContainerCap(Integer.MAX_VALUE);
-        } else {
-            setContainerCap(Integer.parseInt(containerCapStr));
-        }
-    }
 
     @DataBoundConstructor
     public DockerCloud(String name,
                        List<? extends DockerTemplate> templates,
-                       String serverUrl,
+                       DockerServerEndpoint dockerHost,
                        int containerCap,
                        int connectTimeout,
                        int readTimeout,
-                       String credentialsId,
                        String version,
                        String dockerHostname) {
         super(name);
-        Preconditions.checkNotNull(serverUrl);
         this.version = version;
-        this.credentialsId = credentialsId;
-        this.serverUrl = sanitizeUrl(serverUrl);
+        this.dockerHost = dockerHost;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
         this.dockerHostname = dockerHostname;
@@ -169,10 +142,45 @@ public class DockerCloud extends Cloud {
         setContainerCap(containerCap);
     }
 
+    @Deprecated
+    public DockerCloud(String name,
+                       List<? extends DockerTemplate> templates,
+                       String serverUrl,
+                       int containerCap,
+                       int connectTimeout,
+                       int readTimeout,
+                       String credentialsId,
+                       String version,
+                       String dockerHostname) {
+        this(name, templates, new DockerServerEndpoint(serverUrl, credentialsId), containerCap, connectTimeout, readTimeout, version, dockerHostname);
+    }
+
+    @Deprecated
+    public DockerCloud(String name,
+                       List<? extends DockerTemplate> templates,
+                       String serverUrl,
+                       String containerCapStr,
+                       int connectTimeout,
+                       int readTimeout,
+                       String credentialsId,
+                       String version,
+                       String dockerHostname) {
+        this(name, templates, serverUrl,
+                containerCapStr.equals("") ? Integer.MAX_VALUE : Integer.parseInt(containerCapStr),
+                connectTimeout, readTimeout, credentialsId, version, dockerHostname);
+    }
+
+
     public int getConnectTimeout() {
         return connectTimeout;
     }
 
+
+    public DockerServerEndpoint getDockerHost() {
+        return dockerHost;
+    }
+
+    @Deprecated
     public String getServerUrl() {
         return serverUrl;
     }
@@ -367,10 +375,16 @@ public class DockerCloud extends Cloud {
             long startTime = System.currentTimeMillis();
 
             PullImageCmd imgCmd =  getClient().pullImageCmd(imageName);
-            AuthConfig authConfig = JenkinsUtils.getAuthConfigFor(imageName);
-            if( authConfig != null ) {
-                imgCmd.withAuthConfig(authConfig);
+            final DockerRegistryEndpoint registry = dockerTemplate.getRegistry();
+            if (registry == null) {
+                DockerRegistryToken token = registry.getToken(null);
+                AuthConfig auth = new AuthConfig()
+                        .withRegistryAddress(registry.getUrl())
+                        .withEmail(token.getEmail())
+                        .withRegistrytoken(token.getToken());
+                imgCmd.withAuthConfig(auth);
             }
+
             imgCmd.exec(new PullImageResultCallback()).awaitSuccess();
             long pullTime = System.currentTimeMillis() - startTime;
             LOGGER.info("Finished pulling image '{}', took {} ms", imageName, pullTime);
@@ -610,8 +624,12 @@ public class DockerCloud extends Cloud {
         for (DockerTemplate template : getTemplates()) {
             template.readResolve();
         }
-        // This change will bite a lot of people otherwise.
-        serverUrl = sanitizeUrl(serverUrl);
+
+        if (dockerHost == null) {
+            serverUrl = sanitizeUrl(serverUrl);
+            // migration to docker-commons
+            dockerHost = new DockerServerEndpoint(serverUrl, credentialsId);
+        }
 
         return this;
     }
@@ -635,12 +653,9 @@ public class DockerCloud extends Cloud {
         if (connectTimeout != that.connectTimeout) return false;
         if (readTimeout != that.readTimeout) return false;
         if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
-        if (serverUrl != null ? !serverUrl.equals(that.serverUrl) : that.serverUrl != null) return false;
+        if (!dockerHost.equals(that.dockerHost))return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
-        if (credentialsId != null ? !credentialsId.equals(that.credentialsId) : that.credentialsId != null)
-            return false;
-        return !(connection != null ? !connection.equals(that.connection) : that.connection != null);
-
+        return true;
     }
 
     /* package */ boolean isSwarm() {
@@ -680,7 +695,7 @@ public class DockerCloud extends Cloud {
         }
 
         public FormValidation doTestConnection(
-                @QueryParameter String serverUrl,
+                @QueryParameter String uri,
                 @QueryParameter String credentialsId,
                 @QueryParameter String version,
                 @QueryParameter Integer readTimeout,
@@ -688,7 +703,7 @@ public class DockerCloud extends Cloud {
         ) throws IOException, ServletException, DockerException {
             try {
                 final DockerClientConfig clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
-                        .forServer(serverUrl, version)
+                        .forServer(uri, version)
                         .withCredentials(credentialsId)
                         .build();
 
@@ -717,13 +732,11 @@ public class DockerCloud extends Cloud {
                 return new ListBoxModel();
             }
 
-            List<StandardCertificateCredentials> credentials = CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
-            List<DockerDirectoryCredentials> c2 = CredentialsProvider.lookupCredentials(DockerDirectoryCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
+            List<DockerServerCredentials> credentials = CredentialsProvider.lookupCredentials(DockerServerCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
 
             return new StandardListBoxModel()
                     .withEmptySelection()
-                    .withMatching(CredentialsMatchers.always(), credentials)
-                    .withMatching(CredentialsMatchers.always(), c2);
+                    .withMatching(CredentialsMatchers.always(), credentials);
         }
 
 

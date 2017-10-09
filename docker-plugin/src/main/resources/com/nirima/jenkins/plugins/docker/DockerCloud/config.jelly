@@ -1,24 +1,19 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" >
 
     <f:entry title="${%Name}" field="name">
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="${%Docker URL}" field="serverUrl">
-        <f:textbox/>
-    </f:entry>
+    <f:property field="dockerHost"/>
 
+    <f:advanced>
     <f:entry title="${%Docker Hostname}" field="dockerHostname">
         <f:textbox/>
     </f:entry>
 
     <f:entry title="${%Docker API Version}" field="version">
         <f:textbox/>
-    </f:entry>
-
-    <f:entry title="${%Credentials}" field="credentialsId">
-        <c:select/>
     </f:entry>
 
     <f:entry title="${%Connection Timeout (seconds)}" field="connectTimeout">
@@ -28,9 +23,11 @@
     <f:entry title="${%Read Timeout (seconds)}" field="readTimeout">
         <f:textbox default="0"/>
     </f:entry>
+    </f:advanced>
 
+    <!-- we can't pass dockerhost here, need to "flatmap" it's attributes -->
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
-                      with="serverUrl,credentialsId,version"/>
+                      with="uri,credentialsId,version"/>
 
     <f:entry title="${%Expose DOCKER_HOST}" field="exposeDockerHost">
         <f:checkbox/>

@@ -1,9 +1,14 @@
 package com.nirima.jenkins.plugins.docker.DockerTemplateBase
 
 def f = namespace(lib.FormTagLib);
+def c = namespace(lib.CredentialsTagLib);
 
 f.entry(title: _("Docker Image"), field: "image") {
     f.textbox()
+}
+
+f.entry(title: _("Registry"), field: "registry") {
+    f.property()
 }
 
 f.advanced(title: _("Container settings"), align: "left") {

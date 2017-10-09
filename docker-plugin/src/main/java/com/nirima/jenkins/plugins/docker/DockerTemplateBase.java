@@ -30,6 +30,7 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -53,6 +54,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplateBase.class.getName());
 
     private String image;
+
+    private DockerRegistryEndpoint registry;
 
     /**
      * Field dockerCommand
@@ -107,6 +110,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     @DataBoundConstructor
     public DockerTemplateBase(String image,
+                              DockerRegistryEndpoint registry,
                               String dnsString,
                               String network,
                               String dockerCommand,
@@ -125,6 +129,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                               String macAddress
     ) {
         setImage(image);
+        this.registry = registry;
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
@@ -205,6 +210,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     public String getImage() {
         return image.trim();
+    }
+
+    public DockerRegistryEndpoint getRegistry() {
+        return registry;
     }
 
     public String getDnsString() {

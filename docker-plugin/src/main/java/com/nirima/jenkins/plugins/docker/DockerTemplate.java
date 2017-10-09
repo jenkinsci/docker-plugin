@@ -27,6 +27,7 @@ import io.jenkins.docker.DockerSlaveProvisioner;
 import io.jenkins.docker.JNLPDockerSlaveProvisioner;
 import io.jenkins.docker.SSHDockerSlaveProvisioner;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -42,7 +43,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-public class DockerTemplate extends DockerTemplateBackwardCompatibility implements Describable<DockerTemplate> {
+public class DockerTemplate implements Describable<DockerTemplate> {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
 
     private int configVersion = 2;
@@ -230,6 +231,10 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
         return dockerTemplateBase.getExtraHostsString();
     }
 
+    public DockerRegistryEndpoint getRegistry() {
+        return dockerTemplateBase.getRegistry();
+    }
+
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         return dockerTemplateBase.fillContainerConfig(containerConfig);
     }
@@ -386,11 +391,6 @@ public class DockerTemplate extends DockerTemplateBackwardCompatibility implemen
      */
     public Object readResolve() {
         try {
-            if (configVersion < 1) {
-                convert1();
-                configVersion = 1;
-            }
-
             // https://github.com/jenkinsci/docker-plugin/issues/270
             if (configVersion < 2) {
                 if (retentionStrategy instanceof DockerOnceRetentionStrategy) {
