@@ -2,7 +2,8 @@
 
 ## 0.17.0
 
-* Move to docker-java 3.0.13
+* Move to [docker-java](http://wiki.jenkins-ci.org/display/JENKINS/Docker+Java+API+Plugin) 3.0.13
+* Adopted [docker-commons](https://wiki.jenkins.io/display/JENKINS/Docker+Commons+Plugin) for docker API and registry credentials
 * Refactored computer launcher for more flexibility
 * SSH launcher now inject dedicated ssh key pair
 * introduce experimental interactive launcher
