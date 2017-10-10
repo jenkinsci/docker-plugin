@@ -121,17 +121,23 @@ public class JenkinsUtils {
         });
     }
 
-    public static String getHostnameFromBinding(InspectContainerResponse inspectContainerResponse) {
-        Map<ExposedPort, Ports.Binding[]> bindings = inspectContainerResponse.getHostConfig().getPortBindings().getBindings();
+    private static String getHostnameFromBinding(Map<ExposedPort, Ports.Binding[]> bindings) {
         if (bindings != null && !bindings.isEmpty())  {
             Ports.Binding[] binding = bindings.values().iterator().next();
             if (binding != null && binding.length > 0) {
                 String hostIp = binding[0].getHostIp();
-                return getHostnameForIp(hostIp);
+                if (!"0.0.0.0".equals(hostIp))
+                    return getHostnameForIp(hostIp);
             }
         }
-
         return null;
+    }
+
+    public static String getHostnameFromBinding(InspectContainerResponse inspectContainerResponse) {
+        String hostname = getHostnameFromBinding(inspectContainerResponse.getHostConfig().getPortBindings().getBindings());
+        if (hostname != null)
+            return hostname;
+        return getHostnameFromBinding(inspectContainerResponse.getNetworkSettings().getPorts().getBindings());
     }
 
     private static String getHostnameForIp(String hospIp) {
