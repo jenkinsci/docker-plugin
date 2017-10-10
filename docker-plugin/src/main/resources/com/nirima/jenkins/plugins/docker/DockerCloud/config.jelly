@@ -37,9 +37,16 @@
         <f:number default="100"/>
     </f:entry>
 
-    <f:entry title="${%Images}" description="${%List of Images to be launched as slaves}">
-        <f:repeatableHeteroProperty field="templates" hasHeader="true" addCaption="Add Docker Template"
-                                    deleteCaption="Delete Docker Template"/>
-    </f:entry>
+    <f:advanced title="${%Docker Agent templates}" align="left">
+        <f:entry title="${%Docker Agent templates}" description="${%List of Images to be launched as slaves}">
+            <f:repeatableProperty field="templates" header="Docker Agent templates" add="Add Docker Template">
+                <f:block>
+                    <div align="right">
+                        <f:repeatableDeleteButton value="Delete Docker Template" />
+                    </div>
+                </f:block>
+            </f:repeatableProperty>
+        </f:entry>
+    </f:advanced>
 
 </j:jelly>

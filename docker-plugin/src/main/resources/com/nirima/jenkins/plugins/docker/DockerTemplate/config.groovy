@@ -11,6 +11,11 @@ if (instance == null) {
     instance = new DockerTemplate();
 }
 
+f.entry(title: _("Labels"), field: "labelString",
+        help: "/descriptor/com.nirima.jenkins.plugins.docker.DockerSlave/help/labelString") {
+    f.textbox()
+}
+
 f.property(field: "dockerTemplateBase")
 
 f.entry(title: _("Instance Capacity"), field: "instanceCapStr") {
@@ -18,11 +23,6 @@ f.entry(title: _("Instance Capacity"), field: "instanceCapStr") {
 }
 
 f.entry(title: _("Remote Filing System Root"), field: "remoteFs") {
-    f.textbox()
-}
-
-f.entry(title: _("Labels"), field: "labelString",
-        help: "/descriptor/com.nirima.jenkins.plugins.docker.DockerSlave/help/labelString") {
     f.textbox()
 }
 
