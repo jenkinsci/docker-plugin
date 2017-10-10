@@ -75,7 +75,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
-            String url = cloud.getServerUrl();
+            String url = cloud.getDockerHost().getUri();
             host = getDockerHostFromCloud(cloud);
 
             if( url.startsWith("unix") && (host == null || host.trim().isEmpty()) ) {
@@ -100,7 +100,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     private String getDockerHostFromCloud(DockerCloud cloud) {
         String url;
         String host;
-        url = cloud.getServerUrl();
+        url = cloud.getDockerHost().getUri();
         String dockerHostname = cloud.getDockerHostname();
         if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
             return dockerHostname;
