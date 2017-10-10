@@ -37,7 +37,7 @@ fi
 # TODO some caching mechanism with checksums
 
 if [ -x "$(command -v curl)" ]; then
-  curl -o "${JENKINS_HOME}/slave.jar" "${JENKINS_URL}/jnlpJars/slave.jar"
+  curl --fail -S -o "${JENKINS_HOME}/slave.jar" "${JENKINS_URL}/jnlpJars/slave.jar"
 else
   wget "${JENKINS_URL}/jnlpJars/slave.jar" -O "${JENKINS_HOME}/slave.jar"
 fi
