@@ -17,11 +17,11 @@
     </f:entry>
 
     <f:entry title="${%Connection Timeout (seconds)}" field="connectTimeout">
-        <f:textbox default="0"/>
+        <f:textbox default="60"/>
     </f:entry>
 
     <f:entry title="${%Read Timeout (seconds)}" field="readTimeout">
-        <f:textbox default="0"/>
+        <f:textbox default="60"/>
     </f:entry>
     </f:advanced>
 
