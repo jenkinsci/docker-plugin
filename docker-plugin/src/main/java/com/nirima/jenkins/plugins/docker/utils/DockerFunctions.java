@@ -7,6 +7,7 @@ import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerCloudRetentionStrategy;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Descriptor;
+import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
 import jenkins.model.Jenkins;
@@ -30,7 +31,6 @@ public class DockerFunctions {
 
         strategies.add(Jenkins.getActiveInstance().getDescriptor(DockerOnceRetentionStrategy.class));
         strategies.add(Jenkins.getActiveInstance().getDescriptor(DockerCloudRetentionStrategy.class));
-        strategies.addAll(RetentionStrategy.all());
 
         return strategies;
     }
