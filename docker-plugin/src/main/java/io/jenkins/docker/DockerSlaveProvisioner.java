@@ -3,14 +3,15 @@ package io.jenkins.docker;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerImagePullStrategy;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.model.Descriptor;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
@@ -94,7 +95,16 @@ public abstract class DockerSlaveProvisioner {
                         .withRegistrytoken(token.getToken());
                 imgCmd.withAuthConfig(auth);
             }
-            imgCmd.exec(new PullImageResultCallback()).awaitSuccess();
+            try {
+                imgCmd.exec(new PullImageResultCallback()).awaitCompletion();
+            } catch (InterruptedException e) {
+                throw new DockerClientException("Could not pull image: " + image, e);
+            }
+            try {
+                client.inspectImageCmd(image).exec();
+            } catch (NotFoundException e) {
+                throw new DockerClientException("Could not pull image: " + image, e);
+            }
             long pullTime = System.currentTimeMillis() - startTime;
             LOGGER.info("Finished pulling image '{}', took {} ms", image, pullTime);
         }
