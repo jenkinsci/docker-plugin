@@ -1,16 +1,9 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import com.cloudbees.plugins.credentials.Credentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.model.AuthConfig;
-import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
-import com.github.dockerjava.core.NameParser;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerPluginConfiguration;
-import com.nirima.jenkins.plugins.docker.DockerRegistry;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
@@ -119,27 +112,6 @@ public class JenkinsUtils {
                 return serverName.equals(input.getDisplayName());
             }
         });
-    }
-
-    public static String getHostnameFromBinding(InspectContainerResponse inspectContainerResponse) {
-        Map<ExposedPort, Ports.Binding[]> bindings = inspectContainerResponse.getHostConfig().getPortBindings().getBindings();
-        if (bindings != null && !bindings.isEmpty())  {
-            Ports.Binding[] binding = bindings.values().iterator().next();
-            if (binding != null && binding.length > 0) {
-                String hostIp = binding[0].getHostIp();
-                return getHostnameForIp(hostIp);
-            }
-        }
-
-        return null;
-    }
-
-    private static String getHostnameForIp(String hospIp) {
-        try {
-            return InetAddress.getByName(hospIp).getHostName();
-        } catch (UnknownHostException e) {
-            return hospIp;
-        }
     }
 
     public static String getInstanceId() {
