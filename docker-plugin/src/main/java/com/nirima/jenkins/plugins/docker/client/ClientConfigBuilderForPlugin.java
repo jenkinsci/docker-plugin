@@ -9,14 +9,31 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.KeystoreSSLConfig;
 import com.github.dockerjava.core.LocalDirectorySSLConfig;
+import com.github.dockerjava.core.SSLConfig;
+import com.github.dockerjava.core.util.CertificateUtils;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 
 import javax.annotation.Nullable;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.IOException;
 import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -83,7 +100,11 @@ public class ClientConfigBuilderForPlugin {
         if (isNotBlank(credentialsId)) {
             Credentials credentials = lookupSystemCredentials(credentialsId);
 
-            if (credentials instanceof CertificateCredentials) {
+            if (credentials instanceof DockerServerCredentials) {
+                final DockerServerCredentials c = (DockerServerCredentials) credentials;
+                config.withCustomSslConfig(new DockerServerCredentialsSSLConfig(c));
+            }
+            else if (credentials instanceof CertificateCredentials) {
                 CertificateCredentials certificateCredentials = (CertificateCredentials) credentials;
                 config.withCustomSslConfig(new KeystoreSSLConfig(
                         certificateCredentials.getKeyStore(),
@@ -154,4 +175,31 @@ public class ClientConfigBuilderForPlugin {
         );
     }
 
+    private static class DockerServerCredentialsSSLConfig implements SSLConfig {
+        private final DockerServerCredentials c;
+
+        public DockerServerCredentialsSSLConfig(DockerServerCredentials c) {
+            this.c = c;
+        }
+
+        @Override
+        public SSLContext getSSLContext() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+
+            try {
+                final KeyStore keyStore = CertificateUtils.createKeyStore(c.getClientKey(), c.getClientCertificate());
+                final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                keyManagerFactory.init(keyStore, "docker".toCharArray());
+                final KeyStore trustStore = CertificateUtils.createTrustStore(c.getServerCaCertificate());
+                final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                trustManagerFactory.init(trustStore);
+
+                final SSLContext context = SSLContext.getInstance("TLS");
+                context.init(keyManagerFactory.getKeyManagers(),
+                        trustManagerFactory.getTrustManagers(), null);
+                return context;
+            } catch (CertificateException | InvalidKeySpecException | IOException e) {
+                throw new KeyStoreException("Can't build keystore from provided client key/certificate", e);
+            }
+        }
+    }
 }
