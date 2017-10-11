@@ -30,7 +30,7 @@ public class DockerBuildVariableContributor extends BuildVariableContributor {
             final DockerCloud cloud = dockerComputer.getCloud();
             if (cloud.isExposeDockerHost()) {
                 //replace http:// and https:// from docker-java to tcp://
-                String dockerHost = cloud.getServerUrl();
+                String dockerHost = cloud.getDockerHost().getUri();
                 if (dockerHost.startsWith("unix:")) {
                     dockerHost = "tcp:" + dockerHost.substring(5);
                 }

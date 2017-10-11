@@ -182,7 +182,7 @@ public class DockerCloud extends Cloud {
 
     @Deprecated
     public String getServerUrl() {
-        return serverUrl;
+        return getDockerHost().getUri();
     }
 
     public String getDockerHostname() {

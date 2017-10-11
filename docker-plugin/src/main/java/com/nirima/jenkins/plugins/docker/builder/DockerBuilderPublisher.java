@@ -257,7 +257,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             dockerCmdExecConfig = DockerCmdExecConfigBuilderForPlugin.builder()
                     .forCloud(dockerCloud).build();
 
-            url = dockerCloud.getServerUrl();
+            url = dockerCloud.getDockerHost().getUri();
 
         }
 
