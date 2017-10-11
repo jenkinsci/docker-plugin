@@ -374,8 +374,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
 
         protected void log(String s) {
-            final PrintStream llog = listener.getLogger();
-            log(s);
+            listener.getLogger().println(s);
         }
 
 
