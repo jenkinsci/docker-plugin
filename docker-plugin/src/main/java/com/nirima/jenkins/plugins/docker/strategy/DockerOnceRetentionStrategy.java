@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static hudson.util.TimeUnit2.MINUTES;
+
 /**
  * Mix of {@link org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy} (1.3) and {@link CloudRetentionStrategy}
  * that allows configure it parameters and has Descriptor.
@@ -25,7 +27,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
 
     private static final Logger LOGGER = Logger.getLogger(DockerOnceRetentionStrategy.class.getName());
 
-    private int idleMinutes = 10;
+    private int timeout = 10;
     private transient boolean terminating;
 
     /**
@@ -36,11 +38,11 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
     @DataBoundConstructor
     public DockerOnceRetentionStrategy(int idleMinutes) {
         super(idleMinutes);
-        this.idleMinutes = idleMinutes;
+        this.timeout = idleMinutes;
     }
 
     public int getIdleMinutes() {
-        return idleMinutes;
+        return timeout;
     }
 
     @Override
@@ -49,7 +51,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
         // terminate. If it's not already trying to terminate then lets terminate manually.
         if (c.isIdle() && !disabled) {
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
-            if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(idleMinutes)) {
+            if (idleMilliseconds > MINUTES.toMillis(timeout)) {
                 LOGGER.log(Level.FINE, "Disconnecting {0}", c.getName());
                 done(c);
             }
