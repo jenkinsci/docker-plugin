@@ -8,6 +8,7 @@ import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
+import com.github.dockerjava.core.dockerfile.Dockerfile;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
@@ -30,6 +31,7 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.TaskListener;
+import hudson.remoting.RemoteInputStream;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
@@ -49,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -186,7 +189,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             // So we do some fake substitution to help prevent incorrect complaints.
             final String expandedTag = verifyTag.replaceAll("\\$\\{[^}]*NUMBER\\}", "1234").replaceAll("\\$\\{[^}]*\\}", "xyz");
             if (!VALID_REPO_PATTERN.matcher(expandedTag).matches()) {
-                throw new IllegalArgumentException("Tag " + verifyTag + " doesn't match "+ VALID_REPO_REGEX);
+                throw new IllegalArgumentException("Tag " + verifyTag + " doesn't match " + VALID_REPO_REGEX);
             }
         }
     }
@@ -195,7 +198,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         DockerCloud theCloud;
 
-        if( !Strings.isNullOrEmpty(cloud) ) {
+        if (!Strings.isNullOrEmpty(cloud)) {
             theCloud = JenkinsUtils.getServer(cloud);
         } else {
 
@@ -207,11 +210,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
 
         // Triton can't do docker build. Ensure we're not trying to do that.
-        if( theCloud.isTriton() ) {
+        if (theCloud.isTriton()) {
             LOGGER.warn("Selected cloud for build does not support this feature. Finding an alternative");
 
-            for(DockerCloud dc : JenkinsUtils.getServers()) {
-                if( !dc.isTriton() ) {
+            for (DockerCloud dc : JenkinsUtils.getServers()) {
+                if (!dc.isTriton()) {
                     LOGGER.warn("Picked {} cloud instead", dc.getDisplayName());
                     return dc;
                 }
@@ -237,7 +240,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         final DockerClientConfig clientConfig;
         final DockerCmdExecConfig dockerCmdExecConfig;
 
-        final transient hudson.model.Run<?,?> run;
+        final transient hudson.model.Run<?, ?> run;
 
         final String url;
 
@@ -253,7 +256,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
             // Don't build it yet. This may happen on a remote server.
             clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
-                   .forCloud(dockerCloud).build();
+                    .forCloud(dockerCloud).build();
             dockerCmdExecConfig = DockerCmdExecConfigBuilderForPlugin.builder()
                     .forCloud(dockerCloud).build();
 
@@ -280,8 +283,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
 
         boolean run() throws IOException, InterruptedException {
-            final PrintStream llog = listener.getLogger();
-            llog.println("Docker Build");
+            log("Docker Build");
 
             String imageId = buildImage();
 
@@ -290,14 +292,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 return false;
             }
 
-            llog.println("Docker Build Response : " + imageId);
+            log("Docker Build Response : " + imageId);
 
             // Add an action to the build
             run.addAction(new DockerBuildImageAction(url, imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
             run.save();
 
             if (pushOnSuccess) {
-                llog.println("Pushing " + tagsToUse);
+                log("Pushing " + tagsToUse);
                 pushImages();
             }
 
@@ -305,16 +307,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 // For some reason, docker delete doesn't delete all tagged
                 // versions, despite force = true.
                 // So, do it multiple times (protect against infinite looping).
-                llog.println("Cleaning local images [" + imageId + "]");
+                log("Cleaning local images [" + imageId + "]");
 
                 try {
                     cleanImages(imageId);
                 } catch (Exception ex) {
-                    llog.println("Error attempting to clean images");
+                    log("Error attempting to clean images");
                 }
             }
 
-            llog.println("Docker Build Done");
+            log("Docker Build Done");
 
             return true;
         }
@@ -337,13 +339,43 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             }
 
             final DockerClient client = getClient();
-            return fpChild.act(new DockerBuildCallable(client, auths, tagsToUse, listener));
+
+            log("Docker Build: building image at path " + fpChild.getRemote());
+            final InputStream tar = fpChild.act(new DockerBuildCallable());
+
+
+            BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
+                public void onNext(BuildResponseItem item) {
+                    String text = item.getStream();
+                    if (text != null) {
+                        listener.getLogger().println(text);
+                    }
+                    super.onNext(item);
+                }
+            };
+            String imageId = client.buildImageCmd(tar)
+                    .withBuildAuthConfigs(auths)
+                    .exec(resultCallback)
+                    .awaitImageId();
+
+            if (imageId == null) {
+                throw new AbortException("Built image id is null. Some error accured");
+            }
+
+            // tag built image with tags
+            for (String tag : tags) {
+                final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
+                final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
+                log("Tagging built image with " + reposTag.repos + ":" + commitTag);
+                client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
+            }
+
+            return imageId;
         }
 
-        protected void log(String s)
-        {
+        protected void log(String s) {
             final PrintStream llog = listener.getLogger();
-            llog.println(s);
+            log(s);
         }
 
 
@@ -352,7 +384,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {
                     public void onNext(PushResponseItem item) {
-                        if( item == null ) {
+                        if (item == null) {
                             // docker-java not happy if you pass it nulls.
                             log("Received NULL Push Response. Ignoring");
                             return;
@@ -372,7 +404,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                         cmd.withAuthConfig(auth);
                     }
                     cmd.exec(resultCallback).awaitSuccess();
-                } catch(DockerException ex) {
+                } catch (DockerException ex) {
                     // Private Docker registries fall over regularly. Tell the user so they
                     // have some clue as to what to do as the exception gives no hint.
                     log("Exception pushing docker image. Check that the destination registry is running.");
@@ -382,52 +414,12 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
     }
 
-    private static class DockerBuildCallable extends MasterToSlaveFileCallable<String> {
-        private final DockerClient client;
-        private final AuthConfigurations auths;
-        private final List<String> tags;
-        private final TaskListener listener;
+    private static class DockerBuildCallable extends MasterToSlaveFileCallable<InputStream> {
 
-
-        public DockerBuildCallable(DockerClient client, AuthConfigurations auths, List<String> tagsToUse, TaskListener listener) {
-            this.client = client;
-            this.auths = auths;
-            this.tags = tagsToUse;
-
-            this.listener = listener;
+        public InputStream invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+            return new RemoteInputStream(new Dockerfile(new File(f, "Dockerfile"), f).parse().buildDockerFolderTar(), RemoteInputStream.Flag.GREEDY);
         }
 
-        public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
-
-            listener.getLogger().println("Docker Build: building image at path " + f.getAbsolutePath());
-            BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
-                public void onNext(BuildResponseItem item) {
-                    String text = item.getStream();
-                    if (text != null) {
-                        listener.getLogger().println(text);
-                    }
-                    super.onNext(item);
-                }
-            };
-            String imageId = client.buildImageCmd(f)
-                    .withBuildAuthConfigs(auths)
-                    .exec(resultCallback)
-                    .awaitImageId();
-
-            if (imageId == null) {
-                throw new AbortException("Built image id is null. Some error accured");
-            }
-
-            // tag built image with tags
-            for (String tag : tags) {
-                final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
-                final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
-                listener.getLogger().println("Tagging built image with " + reposTag.repos + ":" + commitTag);
-                client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
-            }
-
-            return imageId;
-        }
     }
 
     @Override
@@ -435,12 +427,12 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         List<String> expandedTags;
 
-        if( run instanceof AbstractBuild) {
+        if (run instanceof AbstractBuild) {
             expandedTags = expandTags((AbstractBuild<?, ?>) run, launcher, listener);
         } else {
-            expandedTags =  tags;
+            expandedTags = tags;
         }
-        new Run(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), expandedTags, getCloud(launcher)).run();
+        new Run(run, launcher, listener, new FilePath(workspace, dockerFileDirectory), expandedTags, getCloud(launcher)).run();
 
     }
 
@@ -485,4 +477,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             return "Build / Publish Docker Image";
         }
     }
+
+
 }
+
+
