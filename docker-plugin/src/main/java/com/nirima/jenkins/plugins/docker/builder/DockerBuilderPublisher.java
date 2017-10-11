@@ -336,39 +336,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 auths.addConfig(auth);
             }
 
-            return fpChild.act(new MasterToSlaveFileCallable<String>() {
-                public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
-
-                    log("Docker Build: building image at path " + f.getAbsolutePath());
-                    BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
-                        public void onNext(BuildResponseItem item) {
-                            String text = item.getStream();
-                            if (text != null) {
-                                log(text);
-                            }
-                            super.onNext(item);
-                        }
-                    };
-                    String imageId = getClient().buildImageCmd(f)
-                            .withBuildAuthConfigs(auths)
-                            .exec(resultCallback)
-                            .awaitImageId();
-
-                    if (imageId == null) {
-                        throw new AbortException("Built image id is null. Some error accured");
-                    }
-
-                    // tag built image with tags
-                    for (String tag : tagsToUse) {
-                        final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
-                        final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
-                        log("Tagging built image with " + reposTag.repos + ":" + commitTag);
-                        getClient().tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
-                    }
-
-                    return imageId;
-                }
-            });
+            final DockerClient client = getClient();
+            return fpChild.act(new DockerBuildCallable(client, auths, tagsToUse, listener));
         }
 
         protected void log(String s)
@@ -411,9 +380,54 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 }
             }
         }
+    }
+
+    private static class DockerBuildCallable extends MasterToSlaveFileCallable<String> {
+        private final DockerClient client;
+        private final AuthConfigurations auths;
+        private final List<String> tags;
+        private final TaskListener listener;
 
 
+        public DockerBuildCallable(DockerClient client, AuthConfigurations auths, List<String> tagsToUse, TaskListener listener) {
+            this.client = client;
+            this.auths = auths;
+            this.tags = tagsToUse;
 
+            this.listener = listener;
+        }
+
+        public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+
+            listener.getLogger().println("Docker Build: building image at path " + f.getAbsolutePath());
+            BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
+                public void onNext(BuildResponseItem item) {
+                    String text = item.getStream();
+                    if (text != null) {
+                        listener.getLogger().println(text);
+                    }
+                    super.onNext(item);
+                }
+            };
+            String imageId = client.buildImageCmd(f)
+                    .withBuildAuthConfigs(auths)
+                    .exec(resultCallback)
+                    .awaitImageId();
+
+            if (imageId == null) {
+                throw new AbortException("Built image id is null. Some error accured");
+            }
+
+            // tag built image with tags
+            for (String tag : tags) {
+                final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
+                final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
+                listener.getLogger().println("Tagging built image with " + reposTag.repos + ":" + commitTag);
+                client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
+            }
+
+            return imageId;
+        }
     }
 
     @Override
