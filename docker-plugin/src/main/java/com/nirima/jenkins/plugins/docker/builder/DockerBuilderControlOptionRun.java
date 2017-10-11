@@ -2,7 +2,9 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -133,7 +135,17 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
                     .withRegistrytoken(token.getToken());
             cmd.withAuthConfig(auth);
         }
-        cmd.exec(resultCallback).awaitSuccess();
+        try {
+            cmd.exec(resultCallback).awaitCompletion();
+        } catch (InterruptedException e) {
+            throw new DockerClientException("Interrupted while pulling image", e);
+        }
+        try {
+            client.inspectImageCmd(xImage).exec();
+        } catch (NotFoundException e) {
+            throw new DockerClientException("Failed to pull image: " + image, e);
+        }
+
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage, registry,
                 dnsString, network, xCommand,
