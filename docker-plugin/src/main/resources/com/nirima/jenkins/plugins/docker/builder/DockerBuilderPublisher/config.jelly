@@ -21,9 +21,11 @@
         <f:expandableTextbox/>
     </f:entry>
 
-    <f:optionalBlock title="${%Push image}" field="pushOnSuccess">
-        <f:property field="registry"/>
-    </f:optionalBlock>
+    <f:entry title="${%Push image}" field="pushOnSuccess">
+        <f:checkbox/>
+    </f:entry>
+    
+    <f:property field="registry"/>
 
     <f:entry title="${%Clean local images}" field="cleanImages">
         <f:checkbox default="false"/>
