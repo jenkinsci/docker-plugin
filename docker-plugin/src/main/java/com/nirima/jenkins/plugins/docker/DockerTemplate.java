@@ -16,7 +16,6 @@ import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
-import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
@@ -456,6 +455,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 return FormValidation.error("Must be > 0");
             }
             return FormValidation.ok();
+        }
+
+
+        public List<NodePropertyDescriptor> getNodePropertyDescriptors() {
+            DockerSlave.DescriptorImpl descriptor = (DockerSlave.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(DockerSlave.class);
+            return descriptor.nodePropertyDescriptors(null);
         }
 
         @Override

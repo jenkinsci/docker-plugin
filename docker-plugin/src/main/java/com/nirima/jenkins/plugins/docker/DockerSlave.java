@@ -32,7 +32,6 @@ import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -97,7 +96,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 template.getLabelString(),
                 launcher,
                 template.getRetentionStrategyCopy(),
-                Collections.<NodeProperty<?>>emptyList()
+                template.getNodeProperties()
         );
         this.cloudId = cloud.getDisplayName();
         this.dockerTemplate = template;
