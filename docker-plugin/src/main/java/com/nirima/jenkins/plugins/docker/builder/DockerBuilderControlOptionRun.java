@@ -135,7 +135,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         }
         cmd.exec(resultCallback).awaitSuccess();
 
-        DockerTemplateBase template = new DockerSimpleTemplate(xImage,
+        DockerTemplateBase template = new DockerSimpleTemplate(xImage, registry,
                 dnsString, network, xCommand,
                 volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,
                 memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);

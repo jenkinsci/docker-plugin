@@ -5,6 +5,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 
@@ -15,6 +16,7 @@ import java.io.IOException;
  */
 public class DockerSimpleTemplate extends DockerTemplateBase {
     public DockerSimpleTemplate(String image,
+                                DockerRegistryEndpoint registry,
                                 String dnsString,
                                 String network,
                                 String dockerCommand,
@@ -32,7 +34,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                                 boolean tty,
                                 String macAddress) {
         super(image,
-                null,
+                registry,
                 dnsString,
                 network,
                 dockerCommand,
