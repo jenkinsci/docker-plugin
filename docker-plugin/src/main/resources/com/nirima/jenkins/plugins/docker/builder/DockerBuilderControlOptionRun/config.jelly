@@ -4,8 +4,8 @@
          xmlns:f="/lib/form"
         >
 
-    <f:entry title="${%Docker Cloud name}" field="cloudName">
-        <f:textbox />
+    <f:entry title="${%Docker Cloud}" field="cloudName">
+      <f:select/>
     </f:entry>
 
     <st:include page="config.jelly" class="com.nirima.jenkins.plugins.docker.DockerSimpleTemplate" />

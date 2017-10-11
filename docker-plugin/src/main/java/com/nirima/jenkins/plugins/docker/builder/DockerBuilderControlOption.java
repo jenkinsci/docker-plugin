@@ -7,6 +7,8 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.slaves.Cloud;
+import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 import java.io.Serializable;
@@ -40,5 +42,18 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Descriptor<DockerBuilderControlOption> getDescriptor() {
         return Jenkins.getInstance().getDescriptorOrDie(getClass());
+    }
+
+    public static abstract class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption> {
+
+        public ListBoxModel doFillCloudNameItems() {
+            ListBoxModel model = new ListBoxModel();
+            model.add("Cloud this build is running on", "");
+            for (Cloud cloud : Jenkins.getInstance().clouds) {
+                model.add(cloud.name);
+            }
+            return model;
+        }
+
     }
 }
