@@ -136,7 +136,7 @@ public class DockerCloud extends Cloud {
         if (templates != null) {
             this.templates = new ArrayList<>(templates);
         } else {
-            this.templates = Collections.emptyList();
+            this.templates = new ArrayList<>();
         }
 
         setContainerCap(containerCap);
