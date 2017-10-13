@@ -286,14 +286,7 @@ public class DockerSlave extends AbstractCloudSlave {
 
                         PushImageCmd cmd = getClient().pushImageCmd(identifier);
                         final DockerRegistryEndpoint registry = dockerTemplate.getRegistry();
-                        if (registry == null) {
-                            DockerRegistryToken token = registry.getToken(null);
-                            AuthConfig auth = new AuthConfig()
-                                    .withRegistryAddress(registry.getUrl())
-                                    .withEmail(token.getEmail())
-                                    .withRegistrytoken(token.getToken());
-                            cmd.withAuthConfig(auth);
-                        }
+                        DockerCloud.setRegistryAuthentication(cmd, registry);
                         cmd.exec(resultCallback).awaitSuccess();
 
                     } catch(DockerException ex) {

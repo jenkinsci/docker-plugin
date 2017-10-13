@@ -8,6 +8,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
@@ -41,10 +42,14 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.DockerSlaveProvisioner;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
+import org.kohsuke.accmod.AccessRestriction;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -376,14 +381,7 @@ public class DockerCloud extends Cloud {
 
             PullImageCmd imgCmd =  getClient().pullImageCmd(imageName);
             final DockerRegistryEndpoint registry = dockerTemplate.getRegistry();
-            if (registry == null) {
-                DockerRegistryToken token = registry.getToken(null);
-                AuthConfig auth = new AuthConfig()
-                        .withRegistryAddress(registry.getUrl())
-                        .withEmail(token.getEmail())
-                        .withRegistrytoken(token.getToken());
-                imgCmd.withAuthConfig(auth);
-            }
+            setRegistryAuthentication(imgCmd, registry);
 
             imgCmd.exec(new PullImageResultCallback()).awaitSuccess();
             long pullTime = System.currentTimeMillis() - startTime;
@@ -738,8 +736,36 @@ public class DockerCloud extends Cloud {
                     .withEmptySelection()
                     .withMatching(CredentialsMatchers.always(), credentials);
         }
-
-
     }
 
+
+    // unfortunately there's no common interface for Registry related Docker-java commands
+
+    @Restricted(NoExternalUse.class)
+    public static void setRegistryAuthentication(PullImageCmd cmd, DockerRegistryEndpoint registry) {
+        if (registry != null && registry.getCredentialsId() != null) {
+            DockerRegistryToken token = registry.getToken(null);
+            AuthConfig auth = new AuthConfig();
+            if (StringUtils.isNotBlank(registry.getUrl())) {
+                    auth.withRegistryAddress(registry.getUrl());
+            }
+            auth.withEmail(token.getEmail())
+                .withRegistrytoken(token.getToken());
+            cmd.withAuthConfig(auth);
+        }
+    }
+
+    @Restricted(NoExternalUse.class)
+    public static void setRegistryAuthentication(PushImageCmd cmd, DockerRegistryEndpoint registry) {
+        if (registry != null && registry.getCredentialsId() != null) {
+            DockerRegistryToken token = registry.getToken(null);
+            AuthConfig auth = new AuthConfig();
+            if (StringUtils.isNotBlank(registry.getUrl())) {
+                auth.withRegistryAddress(registry.getUrl());
+            }
+            auth.withEmail(token.getEmail())
+                    .withRegistrytoken(token.getToken());
+            cmd.withAuthConfig(auth);
+        }
+    }
 }

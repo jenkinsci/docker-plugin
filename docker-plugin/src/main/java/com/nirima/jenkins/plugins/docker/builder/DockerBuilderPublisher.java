@@ -38,6 +38,7 @@ import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.tasks.SimpleBuildStep;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
@@ -329,12 +330,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         private String buildImage() throws IOException, InterruptedException {
             final AuthConfigurations auths = new AuthConfigurations();
-            if (fromRegistry == null) {
+            if (fromRegistry != null && fromRegistry.getCredentialsId() != null) {
                 DockerRegistryToken token = fromRegistry.getToken(null);
-                AuthConfig auth = new AuthConfig()
-                        .withRegistryAddress(fromRegistry.getUrl())
-                        .withEmail(token.getEmail())
-                        .withRegistrytoken(token.getToken());
+                AuthConfig auth = new AuthConfig();
+                if (StringUtils.isNotBlank(fromRegistry.getUrl())) {
+                    auth.withRegistryAddress(fromRegistry.getUrl());
+                }
+                auth.withEmail(token.getEmail())
+                    .withRegistrytoken(token.getToken());
                 auths.addConfig(auth);
             }
 
@@ -394,15 +397,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 };
                 try {
                     PushImageCmd cmd = getClient().pushImageCmd(identifier);
-                    if (registry == null) {
-                        DockerRegistryToken token = registry.getToken(null);
-                        AuthConfig auth = new AuthConfig()
-                                .withRegistryAddress(registry.getUrl())
-                                .withEmail(token.getEmail())
-                                .withRegistrytoken(token.getToken());
-                        cmd.withAuthConfig(auth);
-                    }
-                    cmd.exec(resultCallback).awaitSuccess();
+                     DockerCloud.setRegistryAuthentication(cmd, registry);
+                    cmd.exec(resultCallback);
                 } catch (DockerException ex) {
                     // Private Docker registries fall over regularly. Tell the user so they
                     // have some clue as to what to do as the exception gives no hint.
