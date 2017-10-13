@@ -87,7 +87,7 @@ public abstract class DockerSlaveProvisioner {
 
             PullImageCmd imgCmd =  client.pullImageCmd(image);
             final DockerRegistryEndpoint registry = template.getRegistry();
-            if (registry == null) {
+            if (registry != null) {
                 DockerRegistryToken token = registry.getToken(null);
                 AuthConfig auth = new AuthConfig()
                         .withRegistryAddress(registry.getUrl())
