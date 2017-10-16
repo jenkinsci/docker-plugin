@@ -327,7 +327,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         private String buildImage() throws IOException, InterruptedException {
             final AuthConfigurations auths = new AuthConfigurations();
             if (fromRegistry != null && fromRegistry.getCredentialsId() != null) {
-                auths.addConfig(DockerCloud.getAuthConfig(fromRegistry));
+                auths.addConfig(DockerCloud.getAuthConfig(fromRegistry, run.getParent().getParent()));
             }
 
             final DockerClient client = getClient();
@@ -386,7 +386,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 };
                 try {
                     PushImageCmd cmd = getClient().pushImageCmd(identifier);
-                    DockerCloud.setRegistryAuthentication(cmd, registry);
+                    DockerCloud.setRegistryAuthentication(cmd, registry, run.getParent().getParent());
                     cmd.exec(resultCallback).awaitSuccess();
                 } catch (DockerException ex) {
                     // Private Docker registries fall over regularly. Tell the user so they

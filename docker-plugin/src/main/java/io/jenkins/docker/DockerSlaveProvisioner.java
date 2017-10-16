@@ -13,6 +13,7 @@ import com.nirima.jenkins.plugins.docker.DockerImagePullStrategy;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.model.Descriptor;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.slf4j.Logger;
@@ -74,7 +75,7 @@ public abstract class DockerSlaveProvisioner {
         return container;
     }
 
-    protected void pullImage() {
+    protected void pullImage() throws IOException {
 
         String image = template.getFullImageId();
         DockerImagePullStrategy strategy = template.getPullStrategy();
@@ -87,7 +88,7 @@ public abstract class DockerSlaveProvisioner {
 
             PullImageCmd cmd =  client.pullImageCmd(image);
             final DockerRegistryEndpoint registry = template.getRegistry();
-            DockerCloud.setRegistryAuthentication(cmd, registry);
+            DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
             try {
                 cmd.exec(new PullImageResultCallback()).awaitCompletion();
             } catch (InterruptedException e) {

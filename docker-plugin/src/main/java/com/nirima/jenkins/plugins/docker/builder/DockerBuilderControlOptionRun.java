@@ -120,7 +120,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         };
 
         PullImageCmd cmd = client.pullImageCmd(xImage);
-        DockerCloud.setRegistryAuthentication(cmd, registry);
+        DockerCloud.setRegistryAuthentication(cmd, registry, build.getParent().getParent());
         try {
             cmd.exec(resultCallback).awaitCompletion();
         } catch (InterruptedException e) {

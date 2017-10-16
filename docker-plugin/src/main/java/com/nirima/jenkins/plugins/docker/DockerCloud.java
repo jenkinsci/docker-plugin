@@ -31,6 +31,7 @@ import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Label;
 import hudson.model.Node;
@@ -382,7 +383,7 @@ public class DockerCloud extends Cloud {
             long startTime = System.currentTimeMillis();
 
             PullImageCmd imgCmd =  getClient().pullImageCmd(imageName);
-            setRegistryAuthentication(imgCmd, dockerTemplate.getRegistry());
+            setRegistryAuthentication(imgCmd, dockerTemplate.getRegistry(), Jenkins.getInstance());
 
             imgCmd.exec(new PullImageResultCallback()).awaitSuccess();
             long pullTime = System.currentTimeMillis() - startTime;
@@ -743,27 +744,28 @@ public class DockerCloud extends Cloud {
     // unfortunately there's no common interface for Registry related Docker-java commands
 
     @Restricted(NoExternalUse.class)
-    public static void setRegistryAuthentication(PullImageCmd cmd, DockerRegistryEndpoint registry) throws IOException {
+    public static void setRegistryAuthentication(PullImageCmd cmd, DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
         if (registry != null && registry.getCredentialsId() != null) {
-            AuthConfig auth = getAuthConfig(registry);
+            AuthConfig auth = getAuthConfig(registry, context);
             cmd.withAuthConfig(auth);
         }
     }
 
     @Restricted(NoExternalUse.class)
-    public static void setRegistryAuthentication(PushImageCmd cmd, DockerRegistryEndpoint registry) throws IOException {
+    public static void setRegistryAuthentication(PushImageCmd cmd, DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
         if (registry != null && registry.getCredentialsId() != null) {
-            AuthConfig auth = getAuthConfig(registry);
+            AuthConfig auth = getAuthConfig(registry, context);
             cmd.withAuthConfig(auth);
         }
     }
 
     @Restricted(NoExternalUse.class)
-    public static AuthConfig getAuthConfig(DockerRegistryEndpoint registry) throws IOException {
+    public static AuthConfig getAuthConfig(DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
         AuthConfig auth = new AuthConfig();
 
+        // https://docs.docker.com/engine/api/v1.32/#section/Authentication
         UsernamePasswordCredentials up = (UsernamePasswordCredentials) firstOrNull(CredentialsProvider.lookupCredentials(
-                UsernamePasswordCredentials.class, Jenkins.getInstance(), Jenkins.getAuthentication(), Collections.EMPTY_LIST),
+                UsernamePasswordCredentials.class, context, Jenkins.getAuthentication(), Collections.EMPTY_LIST),
                 allOf(AuthenticationTokens.matcher(DockerRegistryToken.class), withId(registry.getCredentialsId())));
 
 
