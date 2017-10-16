@@ -397,8 +397,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 };
                 try {
                     PushImageCmd cmd = getClient().pushImageCmd(identifier);
-                     DockerCloud.setRegistryAuthentication(cmd, registry);
-                    cmd.exec(resultCallback);
+                    DockerCloud.setRegistryAuthentication(cmd, registry);
+                    cmd.exec(resultCallback).awaitSuccess();
                 } catch (DockerException ex) {
                     // Private Docker registries fall over regularly. Tell the user so they
                     // have some clue as to what to do as the exception gives no hint.

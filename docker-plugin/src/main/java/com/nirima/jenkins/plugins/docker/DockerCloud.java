@@ -749,7 +749,7 @@ public class DockerCloud extends Cloud {
             if (StringUtils.isNotBlank(registry.getUrl())) {
                     auth.withRegistryAddress(registry.getUrl());
             }
-            auth.withEmail(token.getEmail())
+            auth.withUsername(token.getEmail())
                 .withRegistrytoken(token.getToken());
             cmd.withAuthConfig(auth);
         }
@@ -763,8 +763,8 @@ public class DockerCloud extends Cloud {
             if (StringUtils.isNotBlank(registry.getUrl())) {
                 auth.withRegistryAddress(registry.getUrl());
             }
-            auth.withEmail(token.getEmail())
-                    .withRegistrytoken(token.getToken());
+            auth.withUsername(token.getEmail())
+                .withRegistrytoken(token.getToken());
             cmd.withAuthConfig(auth);
         }
     }
