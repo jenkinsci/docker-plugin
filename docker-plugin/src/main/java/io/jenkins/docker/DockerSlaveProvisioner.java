@@ -85,18 +85,11 @@ public abstract class DockerSlaveProvisioner {
 
             long startTime = System.currentTimeMillis();
 
-            PullImageCmd imgCmd =  client.pullImageCmd(image);
+            PullImageCmd cmd =  client.pullImageCmd(image);
             final DockerRegistryEndpoint registry = template.getRegistry();
-            if (registry == null) {
-                DockerRegistryToken token = registry.getToken(null);
-                AuthConfig auth = new AuthConfig()
-                        .withRegistryAddress(registry.getUrl())
-                        .withEmail(token.getEmail())
-                        .withRegistrytoken(token.getToken());
-                imgCmd.withAuthConfig(auth);
-            }
+            DockerCloud.setRegistryAuthentication(cmd, registry);
             try {
-                imgCmd.exec(new PullImageResultCallback()).awaitCompletion();
+                cmd.exec(new PullImageResultCallback()).awaitCompletion();
             } catch (InterruptedException e) {
                 throw new DockerClientException("Could not pull image: " + image, e);
             }

@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -19,7 +20,6 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -40,14 +40,14 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import io.jenkins.docker.DockerSlaveProvisioner;
+import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
-import org.kohsuke.accmod.AccessRestriction;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
@@ -67,6 +67,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
+
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -380,8 +382,7 @@ public class DockerCloud extends Cloud {
             long startTime = System.currentTimeMillis();
 
             PullImageCmd imgCmd =  getClient().pullImageCmd(imageName);
-            final DockerRegistryEndpoint registry = dockerTemplate.getRegistry();
-            setRegistryAuthentication(imgCmd, registry);
+            setRegistryAuthentication(imgCmd, dockerTemplate.getRegistry());
 
             imgCmd.exec(new PullImageResultCallback()).awaitSuccess();
             long pullTime = System.currentTimeMillis() - startTime;
@@ -742,30 +743,38 @@ public class DockerCloud extends Cloud {
     // unfortunately there's no common interface for Registry related Docker-java commands
 
     @Restricted(NoExternalUse.class)
-    public static void setRegistryAuthentication(PullImageCmd cmd, DockerRegistryEndpoint registry) {
+    public static void setRegistryAuthentication(PullImageCmd cmd, DockerRegistryEndpoint registry) throws IOException {
         if (registry != null && registry.getCredentialsId() != null) {
-            DockerRegistryToken token = registry.getToken(null);
-            AuthConfig auth = new AuthConfig();
-            if (StringUtils.isNotBlank(registry.getUrl())) {
-                    auth.withRegistryAddress(registry.getUrl());
-            }
-            auth.withUsername(token.getEmail())
-                .withRegistrytoken(token.getToken());
+            AuthConfig auth = getAuthConfig(registry);
             cmd.withAuthConfig(auth);
         }
     }
 
     @Restricted(NoExternalUse.class)
-    public static void setRegistryAuthentication(PushImageCmd cmd, DockerRegistryEndpoint registry) {
+    public static void setRegistryAuthentication(PushImageCmd cmd, DockerRegistryEndpoint registry) throws IOException {
         if (registry != null && registry.getCredentialsId() != null) {
-            DockerRegistryToken token = registry.getToken(null);
-            AuthConfig auth = new AuthConfig();
-            if (StringUtils.isNotBlank(registry.getUrl())) {
-                auth.withRegistryAddress(registry.getUrl());
-            }
-            auth.withUsername(token.getEmail())
-                .withRegistrytoken(token.getToken());
+            AuthConfig auth = getAuthConfig(registry);
             cmd.withAuthConfig(auth);
         }
+    }
+
+    @Restricted(NoExternalUse.class)
+    public static AuthConfig getAuthConfig(DockerRegistryEndpoint registry) throws IOException {
+        AuthConfig auth = new AuthConfig();
+
+        UsernamePasswordCredentials up = (UsernamePasswordCredentials) firstOrNull(CredentialsProvider.lookupCredentials(
+                UsernamePasswordCredentials.class, Jenkins.getInstance(), Jenkins.getAuthentication(), Collections.EMPTY_LIST),
+                allOf(AuthenticationTokens.matcher(DockerRegistryToken.class), withId(registry.getCredentialsId())));
+
+
+        if( up != null) {
+            auth.withRegistryAddress(registry.getEffectiveUrl().getHost())
+                .withUsername(up.getUsername())
+                .withPassword(Secret.toString(up.getPassword()));
+        } else {
+            DockerRegistryToken token = registry.getToken(null);
+            auth.withRegistrytoken(token.getToken());
+        }
+        return auth;
     }
 }

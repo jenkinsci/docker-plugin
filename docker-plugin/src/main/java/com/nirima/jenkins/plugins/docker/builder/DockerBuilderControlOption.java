@@ -11,6 +11,7 @@ import hudson.slaves.Cloud;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 
@@ -22,7 +23,7 @@ import java.util.List;
 public abstract class DockerBuilderControlOption implements Describable<DockerBuilderControlOption>, Serializable {
 
     public abstract void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
-            throws DockerException;
+            throws DockerException, IOException;
 
     /**
      * @return first DockerLaunchAction attached to build

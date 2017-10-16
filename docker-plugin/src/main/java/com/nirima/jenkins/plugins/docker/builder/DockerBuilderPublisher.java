@@ -3,16 +3,15 @@ package com.nirima.jenkins.plugins.docker.builder;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
-import com.github.dockerjava.core.dockerfile.Dockerfile;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
+import com.github.dockerjava.core.dockerfile.Dockerfile;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
@@ -38,10 +37,8 @@ import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.tasks.SimpleBuildStep;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -53,7 +50,6 @@ import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -331,14 +327,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         private String buildImage() throws IOException, InterruptedException {
             final AuthConfigurations auths = new AuthConfigurations();
             if (fromRegistry != null && fromRegistry.getCredentialsId() != null) {
-                DockerRegistryToken token = fromRegistry.getToken(null);
-                AuthConfig auth = new AuthConfig();
-                if (StringUtils.isNotBlank(fromRegistry.getUrl())) {
-                    auth.withRegistryAddress(fromRegistry.getUrl());
-                }
-                auth.withEmail(token.getEmail())
-                    .withRegistrytoken(token.getToken());
-                auths.addConfig(auth);
+                auths.addConfig(DockerCloud.getAuthConfig(fromRegistry));
             }
 
             final DockerClient client = getClient();
@@ -381,7 +370,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
 
 
-        private void pushImages() {
+        private void pushImages() throws IOException {
             for (String tagToUse : tagsToUse) {
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {

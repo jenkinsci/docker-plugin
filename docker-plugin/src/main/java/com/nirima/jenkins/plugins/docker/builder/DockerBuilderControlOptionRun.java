@@ -5,31 +5,24 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSimpleTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
-import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
-
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.common.base.Strings;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 
 /**
@@ -103,7 +96,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
     @Override
     public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
-            throws DockerException {
+            throws DockerException, IOException {
         final PrintStream llog = listener.getLogger();
 
         DockerClient client = getCloud(build,launcher).getClient();
