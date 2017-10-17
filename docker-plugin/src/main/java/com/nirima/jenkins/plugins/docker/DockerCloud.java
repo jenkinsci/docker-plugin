@@ -3,7 +3,6 @@ package com.nirima.jenkins.plugins.docker;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -41,12 +40,10 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import hudson.util.Secret;
 import io.jenkins.docker.DockerSlaveProvisioner;
-import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
+import org.apache.commons.codec.binary.Base64;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.accmod.Restricted;
@@ -68,8 +65,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
-
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -763,19 +758,18 @@ public class DockerCloud extends Cloud {
     public static AuthConfig getAuthConfig(DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
         AuthConfig auth = new AuthConfig();
 
-        // https://docs.docker.com/engine/api/v1.32/#section/Authentication
-        UsernamePasswordCredentials up = (UsernamePasswordCredentials) firstOrNull(CredentialsProvider.lookupCredentials(
-                UsernamePasswordCredentials.class, context, Jenkins.getAuthentication(), Collections.EMPTY_LIST),
-                allOf(AuthenticationTokens.matcher(DockerRegistryToken.class), withId(registry.getCredentialsId())));
-
-
-        if( up != null) {
-            auth.withUsername(up.getUsername())
-                .withPassword(Secret.toString(up.getPassword()));
-        } else {
-            DockerRegistryToken token = registry.getToken(null);
-            auth.withRegistrytoken(token.getToken());
+        final String token = registry.getToken(context instanceof Item ? (Item) context : null).getToken();
+        // What docker-commons claim to be a "token" is actually configuration storage
+        // see https://github.com/docker/docker-ce/blob/v17.09.0-ce/components/cli/cli/config/configfile/file.go#L214
+        // i.e base64 encoded username : password
+        final String decode = new String(Base64.decodeBase64(token));
+        int i = decode.indexOf(':');
+        if (i > 0) {
+            String username = decode.substring(0, i);
+            auth.withUsername(username);
         }
+        auth.withAuth(decode);
+
         return auth;
     }
 }
