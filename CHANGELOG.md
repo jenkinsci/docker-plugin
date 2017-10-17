@@ -3,6 +3,9 @@
 ## 1.0.1
 
 * upgrade docker-java API client to 3.0.14
+* fix credential management to access a private docker registry
+* fix JNLP launcher for master with required authentication
+* option to disable SSH key injection (backward compatibility)
 
 ## 1.0.0
 
