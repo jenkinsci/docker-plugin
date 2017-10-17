@@ -14,6 +14,7 @@ import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.Which;
+import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
@@ -77,15 +78,23 @@ public class JNLPDockerSlaveProvisioner extends DockerSlaveProvisioner {
         List<String> args = new ArrayList<>();
         args.add("java");
 
-        String vmargs = launcher.getJnlpLauncher().vmargs;
+        final JNLPLauncher jnlpLauncher = launcher.getJnlpLauncher();
+        String vmargs = jnlpLauncher.vmargs;
         if (StringUtils.isNotBlank(vmargs)) {
             args.addAll(Arrays.asList(vmargs.split(" ")));
         }
 
         args.addAll(Arrays.asList(
-                "-jar", template.remoteFs + "/" + remoting.getName(),
-                "-jnlpUrl", Jenkins.getInstance().getRootUrl() + '/' + computer.getUrl() + "/slave-agent.jnlp"));
+                "-cp", template.remoteFs + "/" + remoting.getName(),
+                "hudson.remoting.jnlp.Main", "-headless"));
+        if (StringUtils.isNotBlank(jnlpLauncher.tunnel)) {
+            args.addAll(Arrays.asList("--tunnel", jnlpLauncher.tunnel));
+        }
 
+        args.addAll(Arrays.asList(
+                "-url", Jenkins.getInstance().getRootUrl(),
+                computer.getJnlpMac(),
+                computer.getName()));
         cmd.withCmd(args);
     }
 
