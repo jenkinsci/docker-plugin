@@ -3,6 +3,7 @@ package io.jenkins.docker;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
@@ -70,7 +71,7 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
             LOGGER.error("Failed to launch docker SSH agent :" + inspect.getState().getExitCode());
         }
 
-        BasicSSHUserPrivateKey pk = getPrivateKeyAsCredentials();
+        StandardUsernameCredentials pk = getPrivateKeyAsCredentials();
 
         final InetSocketAddress address = launcher.getAddressForSSHD(cloud, inspect);
         final SSHConnector sshConnector = launcher.getSshConnector();
@@ -93,7 +94,11 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
     /**
      * expose InstanceIdentity as a SSH key pair for credentials API
      */
-    private BasicSSHUserPrivateKey getPrivateKeyAsCredentials() throws IOException {
+    private StandardUsernameCredentials getPrivateKeyAsCredentials() throws IOException {
+
+        if (!launcher.isUseSSHkey()) {
+            return launcher.getSshConnector().getCredentials();
+        }
 
         InstanceIdentity id = InstanceIdentity.get();
         String pem = PEMEncodable.create(id.getPrivate()).encode();
@@ -113,12 +118,16 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
         // AuthorizedKeysCommand
 
         if (cmd.getCmd() == null || cmd.getCmd().length == 0) {
-            cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(sshPort),
-                    // override sshd_config to force retrieval of InstanceIdentity public for as authentication
-                    "-o", "AuthorizedKeysCommand "+ "/root/authorized_key",
-                    "-o", "AuthorizedKeysCommandUser root"
-            );
 
+            if (launcher.isUseSSHkey()) {
+                cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(sshPort),
+                            // override sshd_config to force retrieval of InstanceIdentity public for as authentication
+                            "-o", "AuthorizedKeysCommand "+ "/root/authorized_key",
+                            "-o", "AuthorizedKeysCommandUser root"
+                );
+            } else {
+                cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(sshPort));
+            }
         }
 
         cmd.withPortSpecs(sshPort+"/tcp");
@@ -133,27 +142,29 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
     @Override
     protected void setupContainer() throws IOException {
 
-        InstanceIdentity id = InstanceIdentity.get();
-        final java.security.interfaces.RSAPublicKey rsa = id.getPublic();
-        String AuthorizedKeysCommand = "#!/bin/sh\n"
-        + "echo 'ssh-rsa " + encode(encodeSSHRSAPublicKey(new RSAPublicKey(rsa.getPublicExponent(), rsa.getModulus()))) + "'";
+        if (launcher.isUseSSHkey()) {
+            InstanceIdentity id = InstanceIdentity.get();
+            final java.security.interfaces.RSAPublicKey rsa = id.getPublic();
+            String AuthorizedKeysCommand = "#!/bin/sh\n"
+                    + "echo 'ssh-rsa " + encode(encodeSSHRSAPublicKey(new RSAPublicKey(rsa.getPublicExponent(), rsa.getModulus()))) + "'";
 
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
-            TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
-            entry.setSize(AuthorizedKeysCommand.getBytes().length);
-            entry.setMode(0700);
-            tar.putArchiveEntry(entry);
-            tar.write(AuthorizedKeysCommand.getBytes());
-            tar.closeArchiveEntry();
-            tar.close();
+            try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                 TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
+                TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
+                entry.setSize(AuthorizedKeysCommand.getBytes().length);
+                entry.setMode(0700);
+                tar.putArchiveEntry(entry);
+                tar.write(AuthorizedKeysCommand.getBytes());
+                tar.closeArchiveEntry();
+                tar.close();
 
-            try (InputStream is = new ByteArrayInputStream(bos.toByteArray())) {
+                try (InputStream is = new ByteArrayInputStream(bos.toByteArray())) {
 
-                client.copyArchiveToContainerCmd(container)
-                        .withTarInputStream(is)
-                        .withRemotePath("/root")
-                        .exec();
+                    client.copyArchiveToContainerCmd(container)
+                            .withTarInputStream(is)
+                            .withRemotePath("/root")
+                            .exec();
+                }
             }
         }
     }
