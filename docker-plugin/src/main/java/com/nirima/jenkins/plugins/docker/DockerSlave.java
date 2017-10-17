@@ -201,6 +201,8 @@ public class DockerSlave extends AbstractCloudSlave {
                             .withTimeout(10)
                             .exec();
                     LOGGER.log(Level.INFO, "Stopped container {0}", getContainerId());
+                } catch(NotFoundException e) {
+                    LOGGER.log(Level.INFO, "Container already removed {0}", getContainerId());
                 } catch (Exception ex) {
                     LOGGER.log(Level.SEVERE, "Failed to stop instance " + getContainerId() + " for slave " + name + " due to exception", ex.getMessage());
                     LOGGER.log(Level.SEVERE, "Causing exception for failure on stopping the instance was", ex);
