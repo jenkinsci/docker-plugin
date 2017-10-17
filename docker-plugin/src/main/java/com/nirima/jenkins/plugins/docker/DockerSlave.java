@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
 import com.github.dockerjava.core.NameParser;
@@ -223,7 +224,9 @@ public class DockerSlave extends AbstractCloudSlave {
                             .exec();
 
                     LOGGER.log(Level.INFO, "Removed container {0}", getContainerId());
-                } catch (Exception ex) {
+                } catch (NotFoundException e) {
+                    LOGGER.log(Level.INFO, "Container already gone.");
+                }catch (Exception ex) {
                     LOGGER.log(Level.SEVERE, "Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception: " + ex.getMessage());
                     LOGGER.log(Level.SEVERE, "Causing exception for failre on removing instance was", ex);
                 }

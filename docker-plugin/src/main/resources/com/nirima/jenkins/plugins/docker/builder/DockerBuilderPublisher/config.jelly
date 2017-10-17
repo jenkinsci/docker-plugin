@@ -16,7 +16,7 @@
     </f:advanced>
 
     <f:entry title="Cloud" field="cloud" description="Cloud to use to build image">
-        <f:textbox />
+        <f:select/>
     </f:entry>
 
     <f:entry title="Image" field="tagsString">

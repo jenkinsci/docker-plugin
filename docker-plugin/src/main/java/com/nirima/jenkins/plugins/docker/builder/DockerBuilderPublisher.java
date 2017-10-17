@@ -33,6 +33,7 @@ import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.remoting.RemoteInputStream;
 import hudson.remoting.VirtualChannel;
+import hudson.slaves.Cloud;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -486,6 +487,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     Jenkins.getInstance().getDescriptorOrDie(DockerRegistryEndpoint.class);
             return descriptor.doFillCredentialsIdItems(item);
         }
+
+        public ListBoxModel doFillCloudItems() {
+            ListBoxModel model = new ListBoxModel();
+            model.add("Cloud this build is running on", "");
+            for (Cloud cloud : Jenkins.getInstance().clouds) {
+                model.add(cloud.name);
+            }
+            return model;
+        }
+
 
 
         @Override
