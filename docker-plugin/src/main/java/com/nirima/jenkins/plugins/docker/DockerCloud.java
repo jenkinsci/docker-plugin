@@ -768,6 +768,7 @@ public class DockerCloud extends Cloud {
             String username = decode.substring(0, i);
             auth.withUsername(username);
         }
+        auth.withPassword(decode.substring(i+1));
         return auth;
     }
 }
