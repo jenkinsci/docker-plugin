@@ -34,7 +34,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuilderControlOptionRun.class);
 
     public final String image;
-    public final DockerRegistryEndpoint registry;
+    private String pullCredentialsId;
+    private transient DockerRegistryEndpoint registry;
     public final String dnsString;
     public final String network;
     public final String dockerCommand;
@@ -56,7 +57,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public DockerBuilderControlOptionRun(
             String cloudName,
             String image,
-            DockerRegistryEndpoint registry,
+            String pullCredentialsId,
             String lxcConfString,
             String dnsString,
             String network,
@@ -75,7 +76,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String macAddress) {
         super(cloudName);
         this.image = image;
-        this.registry = registry;
+        this.pullCredentialsId = pullCredentialsId;
         this.lxcConfString = lxcConfString;
         this.dnsString = dnsString;
         this.network = network;
@@ -92,6 +93,13 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.cpuShares = cpuShares;
         this.bindAllPorts = bindAllPorts;
         this.macAddress = macAddress;
+    }
+
+    public DockerRegistryEndpoint getRegistry() {
+        if (registry == null) {
+            registry = new DockerRegistryEndpoint(null, pullCredentialsId);
+        }
+        return registry;
     }
 
     @Override
@@ -120,7 +128,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         };
 
         PullImageCmd cmd = client.pullImageCmd(xImage);
-        DockerCloud.setRegistryAuthentication(cmd, registry, build.getParent().getParent());
+        DockerCloud.setRegistryAuthentication(cmd, getRegistry(), build.getParent().getParent());
         try {
             cmd.exec(resultCallback).awaitCompletion();
         } catch (InterruptedException e) {
@@ -133,7 +141,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         }
 
 
-        DockerTemplateBase template = new DockerSimpleTemplate(xImage, registry,
+        DockerTemplateBase template = new DockerSimpleTemplate(xImage, pullCredentialsId,
                 dnsString, network, xCommand,
                 volumesString, volumesFrom, environmentsString, lxcConfString, xHostname,
                 memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);

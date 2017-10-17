@@ -21,6 +21,7 @@ import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
@@ -55,7 +56,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     private String image;
 
-    private DockerRegistryEndpoint registry;
+    private String pullCredentialsId;
+    private transient DockerRegistryEndpoint registry;
 
     /**
      * Field dockerCommand
@@ -110,7 +112,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
 
     @DataBoundConstructor
     public DockerTemplateBase(String image,
-                              DockerRegistryEndpoint registry,
+                              String pullCredentialsId,
                               String dnsString,
                               String network,
                               String dockerCommand,
@@ -129,7 +131,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                               String macAddress
     ) {
         setImage(image);
-        this.registry = registry;
+        this.pullCredentialsId = pullCredentialsId;
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
         this.privileged = privileged;
@@ -161,6 +163,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                 setVolumesFrom2(new String[]{volumesFrom});
             }
             volumesFrom = null;
+        }
+        if (pullCredentialsId == null && registry != null) {
+            pullCredentialsId = registry.getCredentialsId();
         }
 
         return this;
@@ -212,7 +217,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
         return image.trim();
     }
 
+    public String getPullCredentialsId() {
+        return pullCredentialsId;
+    }
+
     public DockerRegistryEndpoint getRegistry() {
+        if (registry == null) {
+            registry = new DockerRegistryEndpoint(null, pullCredentialsId);
+        }
+
         return registry;
     }
 
@@ -527,6 +540,14 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
             }
 
             return FormValidation.ok();
+        }
+
+
+        public ListBoxModel doFillPullCredentialsIdItems(@AncestorInPath Item item) {
+            final DockerRegistryEndpoint.DescriptorImpl descriptor =
+                    (DockerRegistryEndpoint.DescriptorImpl)
+                            Jenkins.getInstance().getDescriptorOrDie(DockerRegistryEndpoint.class);
+            return descriptor.doFillCredentialsIdItems(item);
         }
 
 

@@ -1,5 +1,5 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
 
     <f:entry title="Directory for Dockerfile" field="dockerFileDirectory"
              description="Location to look for the Dockerfile in, which is used to build the image.">
@@ -10,7 +10,9 @@
         <f:block>
         Credentials to pull image from upstream registry
         </f:block>
-        <f:property field="fromRegistry"/>
+        <f:entry title="${%Registry Credentials}" field="pullCredentialsId">
+            <c:select/>
+        </f:entry>
     </f:advanced>
 
     <f:entry title="Cloud" field="cloud" description="Cloud to use to build image">
@@ -25,7 +27,9 @@
         <f:checkbox/>
     </f:entry>
     
-    <f:property field="registry"/>
+    <f:entry title="${%Registry Credentials}" field="pushCredentialsId">
+        <c:select/>
+    </f:entry>
 
     <f:entry title="${%Clean local images}" field="cleanImages">
         <f:checkbox default="false"/>

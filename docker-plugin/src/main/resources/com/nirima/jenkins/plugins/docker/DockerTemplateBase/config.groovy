@@ -7,9 +7,9 @@ f.entry(title: _("Docker Image"), field: "image") {
     f.textbox()
 }
 
-f.advanced(title: _("Registry")) {
-    f.entry(title: _("Registry"), field: "registry") {
-        f.property()
+f.advanced(title: _("Registry Credentials")) {
+    f.entry(title: _("Credentials"), field: "pullCredentialsId") {
+        c.select()
     }
 }
 

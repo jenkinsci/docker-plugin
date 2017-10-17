@@ -770,8 +770,7 @@ public class DockerCloud extends Cloud {
 
 
         if( up != null) {
-            auth.withRegistryAddress(registry.getEffectiveUrl().getHost())
-                .withUsername(up.getUsername())
+            auth.withUsername(up.getUsername())
                 .withPassword(Secret.toString(up.getPassword()));
         } else {
             DockerRegistryToken token = registry.getToken(null);

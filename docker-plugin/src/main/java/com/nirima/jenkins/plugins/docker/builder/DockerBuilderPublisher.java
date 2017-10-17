@@ -29,18 +29,22 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.remoting.RemoteInputStream;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.MasterToSlaveFileCallable;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.lang.Validate;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
@@ -105,7 +109,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public final String dockerFileDirectory;
 
-    private final DockerRegistryEndpoint fromRegistry;
+    private String pullCredentialsId;
+    private transient DockerRegistryEndpoint fromRegistry;
 
     /**
      * @deprecated use {@link #tags}
@@ -118,7 +123,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public final boolean pushOnSuccess;
 
-    private final DockerRegistryEndpoint registry;
+    private String pushCredentialsId;
+    private transient DockerRegistryEndpoint registry;
 
     public final boolean cleanImages;
     public final boolean cleanupWithJenkinsJobDelete;
@@ -127,26 +133,37 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
-                                  DockerRegistryEndpoint fromRegistry,
+                                  String pullCredentialsId,
                                   String cloud,
                                   String tagsString,
                                   boolean pushOnSuccess,
-                                  DockerRegistryEndpoint registry,
+                                  String pushCredentialsId,
                                   boolean cleanImages,
                                   boolean cleanupWithJenkinsJobDelete) {
         this.dockerFileDirectory = dockerFileDirectory;
-        this.fromRegistry = fromRegistry;
+        this.pullCredentialsId = pullCredentialsId;
         setTagsString(tagsString);
         this.tag = null;
         this.cloud = cloud;
         this.pushOnSuccess = pushOnSuccess;
-        this.registry = registry;
+        this.pushCredentialsId = pushCredentialsId;
         this.cleanImages = cleanImages;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
     }
 
     public DockerRegistryEndpoint getRegistry() {
+        if (registry == null) {
+            registry = new DockerRegistryEndpoint(null, pushCredentialsId);
+        }
         return registry;
+    }
+
+    public String getPullCredentialsId() {
+        return pullCredentialsId;
+    }
+
+    public String getPushCredentialsId() {
+        return pushCredentialsId;
     }
 
     public List<String> getTags() {
@@ -166,6 +183,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     }
 
     public DockerRegistryEndpoint getFromRegistry() {
+        if (fromRegistry == null) {
+            fromRegistry = new DockerRegistryEndpoint(null, pullCredentialsId);
+        }
         return fromRegistry;
     }
 
@@ -326,8 +346,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         private String buildImage() throws IOException, InterruptedException {
             final AuthConfigurations auths = new AuthConfigurations();
-            if (fromRegistry != null && fromRegistry.getCredentialsId() != null) {
-                auths.addConfig(DockerCloud.getAuthConfig(fromRegistry, run.getParent().getParent()));
+            final DockerRegistryEndpoint pullRegistry = getFromRegistry();
+            if (pullRegistry != null && pullRegistry.getCredentialsId() != null) {
+                auths.addConfig(DockerCloud.getAuthConfig(pullRegistry, run.getParent().getParent()));
             }
 
             final DockerClient client = getClient();
@@ -386,7 +407,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 };
                 try {
                     PushImageCmd cmd = getClient().pushImageCmd(identifier);
-                    DockerCloud.setRegistryAuthentication(cmd, registry, run.getParent().getParent());
+                    DockerCloud.setRegistryAuthentication(cmd, getRegistry(), run.getParent().getParent());
                     cmd.exec(resultCallback).awaitSuccess();
                 } catch (DockerException ex) {
                     // Private Docker registries fall over regularly. Tell the user so they
@@ -451,6 +472,22 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             return FormValidation.ok();
         }
 
+        public ListBoxModel doFillPullCredentialsIdItems(@AncestorInPath Item item) {
+            return doFillRegistryCredentialsIdItems(item);
+        }
+
+        public ListBoxModel doFillPushCredentialsIdItems(@AncestorInPath Item item) {
+            return doFillRegistryCredentialsIdItems(item);
+        }
+
+        private ListBoxModel doFillRegistryCredentialsIdItems(@AncestorInPath Item item) {
+            final DockerRegistryEndpoint.DescriptorImpl descriptor =
+                    (DockerRegistryEndpoint.DescriptorImpl)
+                    Jenkins.getInstance().getDescriptorOrDie(DockerRegistryEndpoint.class);
+            return descriptor.doFillCredentialsIdItems(item);
+        }
+
+
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
@@ -462,6 +499,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
     }
 
+
+    private Object readResolve() {
+        if (pushCredentialsId == null && registry != null) {
+            pushCredentialsId = registry.getCredentialsId();
+        }
+        if (pullCredentialsId == null && fromRegistry != null) {
+            pullCredentialsId = fromRegistry.getCredentialsId();
+        }
+        return this;
+    }
 
 }
 
