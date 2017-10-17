@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+* upgrade docker-java API client to 3.0.14
+
 ## 1.0.0
 
 * fix missuse of obsolete serverUrl
