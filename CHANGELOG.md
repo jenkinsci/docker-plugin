@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0
+
+* fix missuse of obsolete serverUrl
+* removed some obsolete code
+* fix serialization issue with DockerBuildPublisher on a remote agent
+* implemented credentials migrattion to docker-commons
+* minor UI fixes
+* fix registry authentication (username/password)
+
+## 0.18.0
+* Token Macro is actually a required plugin dependency
+* Template sections in cloud configuration is now collapsible
+* Fix a regression in SSH launcher
+* Fix swarm standalone pull status detection
+* Use non infinite default timeout
+
 ## 0.17.0
 
 * Move to [docker-java](http://wiki.jenkins-ci.org/display/JENKINS/Docker+Java+API+Plugin) 3.0.13
