@@ -30,7 +30,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     // store real UI configuration
     protected final SSHConnector sshConnector;
 
-    private final Boolean useSSHKey;
+    public final Boolean useSSHKey;
 
     @DataBoundConstructor
     public DockerComputerSSHLauncher(SSHConnector sshConnector, boolean useSSHKey) {
