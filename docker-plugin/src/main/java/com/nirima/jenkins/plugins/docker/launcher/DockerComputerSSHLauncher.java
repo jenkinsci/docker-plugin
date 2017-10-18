@@ -15,6 +15,7 @@ import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import com.google.common.annotations.Beta;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -30,16 +31,21 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     // store real UI configuration
     protected final SSHConnector sshConnector;
 
-    private final Boolean useSSHKey;
+    private Boolean useSSHKey;
 
     @DataBoundConstructor
-    public DockerComputerSSHLauncher(SSHConnector sshConnector, boolean useSSHKey) {
+    public DockerComputerSSHLauncher(SSHConnector sshConnector) {
         this.sshConnector = sshConnector;
-        this.useSSHKey = useSSHKey;
     }
 
     public SSHConnector getSshConnector() {
         return sshConnector;
+    }
+
+
+    @DataBoundSetter
+    public void setUseSSHKey(boolean useSSHKey) {
+        this.useSSHKey = useSSHKey;
     }
 
     public boolean isUseSSHkey() {
