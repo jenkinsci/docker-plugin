@@ -12,6 +12,7 @@ import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.util.ListBoxModel;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import com.google.common.annotations.Beta;
@@ -33,6 +34,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
     private Boolean useSSHKey;
 
+    private String user;
+
     @DataBoundConstructor
     public DockerComputerSSHLauncher(SSHConnector sshConnector) {
         this.sshConnector = sshConnector;
@@ -50,6 +53,15 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
     public boolean isUseSSHkey() {
         return useSSHKey == null || useSSHKey.booleanValue();
+    }
+
+    @DataBoundSetter
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getUser() {
+        return StringUtils.isEmpty(user) ? "root" : user;
     }
 
     /**

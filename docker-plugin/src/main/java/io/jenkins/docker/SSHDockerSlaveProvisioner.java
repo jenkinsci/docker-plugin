@@ -105,7 +105,7 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
         String pem = PEMEncodable.create(id.getPrivate()).encode();
 
         // TODO find how to inject authorized_key owned by a (configurable) user "jenkins"
-        return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "InstanceIdentity", "root",
+        return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "InstanceIdentity", launcher.getUser(),
                 new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(pem), null,
                 "private key for docker ssh agent");
     }

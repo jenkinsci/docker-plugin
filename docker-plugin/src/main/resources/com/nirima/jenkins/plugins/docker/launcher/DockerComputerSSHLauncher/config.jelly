@@ -8,6 +8,10 @@
     <f:entry field="useSSHKey" title="inject SSH key">
         <f:checkbox default="true"/>
     </f:entry>
-    
+
+    <f:entry field="user" title="connect as user">
+        <f:textbox default="root"/>
+    </f:entry>
+
     <f:property field="sshConnector"/>
 </j:jelly>
