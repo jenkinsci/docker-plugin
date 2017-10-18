@@ -5,8 +5,8 @@
         <span class="info">Prerequisites:</span> Docker image must have <a href="https://www.openssh.com/">sshd</a> installed.
     </f:block>
 
-    <f:entry field="useSSHKey" title="disable SSH key management">
-        <f:checkbox/>
+    <f:entry field="useSSHKey" title="inject SSH key">
+        <f:checkbox default="true"/>
     </f:entry>
     
     <f:property field="sshConnector"/>
