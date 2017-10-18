@@ -66,10 +66,11 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
         final InspectContainerResponse inspect = client.inspectContainerCmd(container).exec();
         if ("exited".equals(inspect.getState().getStatus())) {
             // Something went wrong
-
             // FIXME report error "somewhere" visible to end user.
             LOGGER.error("Failed to launch docker SSH agent :" + inspect.getState().getExitCode());
+            throw new IOException("Failed to launch docker SSH agent. Container exited with status " + inspect.getState().getExitCode());
         }
+        LOGGER.debug("container created {}", inspect);
 
         StandardUsernameCredentials pk = getPrivateKeyAsCredentials();
 

@@ -63,7 +63,9 @@ public class JNLPDockerSlaveProvisioner extends DockerSlaveProvisioner {
 
             // FIXME report error "somewhere" visible to end user.
             LOGGER.error("Failed to launch docker JNLP agent :" + inspect.getState().getExitCode());
+            throw new IOException("Failed to launch docker SSH agent. Container exited with status " + inspect.getState().getExitCode());
         }
+        LOGGER.debug("container created {}", inspect);
 
         return slave;
     }
