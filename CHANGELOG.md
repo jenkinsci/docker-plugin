@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+* fix credential management to access a private docker registry (google cloud)
+* log in debug diagnostic information on created container
+* fix confusing title used for SSH key injection option
+
 ## 1.0.1
 
 * upgrade docker-java API client to 3.0.14
