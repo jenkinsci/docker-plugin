@@ -10,6 +10,7 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Container;
@@ -44,6 +45,7 @@ import io.jenkins.docker.DockerSlaveProvisioner;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Base64;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.accmod.Restricted;
@@ -758,7 +760,11 @@ public class DockerCloud extends Cloud {
     public static AuthConfig getAuthConfig(DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
         AuthConfig auth = new AuthConfig();
 
-        final String token = registry.getToken(context instanceof Item ? (Item) context : null).getToken();
+        final DockerRegistryToken t = registry.getToken(context instanceof Item ? (Item) context : null);
+        if (t == null) {
+            throw new DockerClientException("Failed to obtain docker API authentication from credentials " + registry.getCredentialsId());
+        }
+        final String token = t.getToken();
         // What docker-commons claim to be a "token" is actually configuration storage
         // see https://github.com/docker/docker-ce/blob/v17.09.0-ce/components/cli/cli/config/configfile/file.go#L214
         // i.e base64 encoded username : password
