@@ -1,7 +1,9 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
@@ -10,7 +12,6 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
-import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Container;
@@ -31,7 +32,6 @@ import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Label;
 import hudson.model.Node;
@@ -42,6 +42,7 @@ import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.DockerSlaveProvisioner;
+import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Base64;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
@@ -67,6 +68,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
+
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -760,10 +764,18 @@ public class DockerCloud extends Cloud {
     public static AuthConfig getAuthConfig(DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
         AuthConfig auth = new AuthConfig();
 
-        final DockerRegistryToken t = registry.getToken(context instanceof Item ? (Item) context : null);
-        if (t == null) {
-            throw new DockerClientException("Failed to obtain docker API authentication from credentials " + registry.getCredentialsId());
+        // we can't use DockerRegistryEndpoint#getToken as this one do check domainRequirement based on registry URL
+        // but in some context (typically, passing registry auth for `docker build`) we just can't guess this one.
+
+        Credentials c = firstOrNull(CredentialsProvider.lookupCredentials(
+                IdCredentials.class, context, Jenkins.getAuthentication(),Collections.EMPTY_LIST),
+                withId(registry.getCredentialsId()));
+
+        if (c == null) {
+            throw new IllegalArgumentException("Invalid Credential ID " + registry.getCredentialsId());
         }
+
+        final DockerRegistryToken t = AuthenticationTokens.convert(DockerRegistryToken.class, c);
         final String token = t.getToken();
         // What docker-commons claim to be a "token" is actually configuration storage
         // see https://github.com/docker/docker-ce/blob/v17.09.0-ce/components/cli/cli/config/configfile/file.go#L214
