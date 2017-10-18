@@ -1,3 +1,9 @@
 <div>
-    The command to run for this image, defaults to "/usr/sbin/sshd -D"
+    The command to run for this image. Be aware setting this might have impacts on the Launch mechanism,
+    for sample SSH Launcher do configure sshd with injected keys authentication, overriding this command might
+    prevent the agent to start.
+    <br/>
+    If you need your image to start some additional services, you should consider using an Entrypoint, and
+    follow <a href="https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#entrypoint">best practices</a>
+    so that the command is eventually executed by your entrypoint script.
 </div>
