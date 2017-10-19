@@ -98,6 +98,10 @@ public class JNLPDockerSlaveProvisioner extends DockerSlaveProvisioner {
                 computer.getJnlpMac(),
                 computer.getName()));
         cmd.withCmd(args);
+
+        if (StringUtils.isNotBlank(launcher.getUser())) {
+            cmd.withUser(launcher.getUser());
+        }
     }
 
     @Override
