@@ -1,29 +1,27 @@
 package io.jenkins.docker;
 
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
-import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
-import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Ports;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerComputer;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
-import com.trilead.ssh2.signature.RSAPublicKey;
+import com.nirima.jenkins.plugins.docker.utils.PortUtils;
 import hudson.model.Descriptor;
-import hudson.plugins.sshslaves.SSHConnector;
 import hudson.plugins.sshslaves.SSHLauncher;
-import jenkins.bouncycastle.api.PEMEncodable;
+import io.jenkins.docker.connector.DockerComputerSSHConnector;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +30,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.security.NoSuchAlgorithmException;
-
-import static com.trilead.ssh2.signature.RSASHA1Verify.encodeSSHRSAPublicKey;
-import static hudson.remoting.Base64.encode;
+import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Launch Jenkins agent and connect using ssh.
@@ -49,10 +46,10 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
     private static final Logger LOGGER = LoggerFactory.getLogger(SSHDockerSlaveProvisioner.class);
 
 
-    private final DockerComputerSSHLauncher launcher;
+    private final DockerComputerSSHConnector launcher;
     private DockerSlave slave;
 
-    public SSHDockerSlaveProvisioner(DockerCloud cloud, DockerTemplate template, DockerClient client, DockerComputerSSHLauncher launcher) {
+    public SSHDockerSlaveProvisioner(DockerCloud cloud, DockerTemplate template, DockerClient client, DockerComputerSSHConnector launcher) {
         super(cloud, template, client);
         this.launcher = launcher;
 
@@ -72,15 +69,14 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
         }
         LOGGER.debug("container created {}", inspect);
 
-        StandardUsernameCredentials pk = getPrivateKeyAsCredentials();
+        final InetSocketAddress address = getBindingForPort(cloud, inspect, launcher.getPort());
 
-        final InetSocketAddress address = launcher.getAddressForSSHD(cloud, inspect);
-        final SSHConnector sshConnector = launcher.getSshConnector();
 
+        StandardUsernameCredentials pk = launcher.getSshKeyStrategy().getCredentials();
         SSHLauncher ssh = new SSHLauncher(address.getHostString(), address.getPort(), pk,
-                sshConnector.jvmOptions,
-                sshConnector.javaPath, sshConnector.prefixStartSlaveCmd,
-                sshConnector.suffixStartSlaveCmd, sshConnector.launchTimeoutSeconds);
+                launcher.getJvmOptions(),
+                launcher.getJavaPath(), launcher.getPrefixStartSlaveCmd(),
+                launcher.getSuffixStartSlaveCmd(), launcher.getLaunchTimeoutSeconds());
 
         this.slave = new DockerSlave(cloud, template, ssh);
         Jenkins.getActiveInstance().addNode(slave);
@@ -92,35 +88,16 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
         return slave;
     }
 
-    /**
-     * expose InstanceIdentity as a SSH key pair for credentials API
-     */
-    private StandardUsernameCredentials getPrivateKeyAsCredentials() throws IOException {
-
-        if (!launcher.isUseSSHkey()) {
-            return launcher.getSshConnector().getCredentials();
-        }
-
-        InstanceIdentity id = InstanceIdentity.get();
-        String pem = PEMEncodable.create(id.getPrivate()).encode();
-
-        // TODO find how to inject authorized_key owned by a (configurable) user "jenkins"
-        return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "InstanceIdentity", launcher.getUser(),
-                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(pem), null,
-                "private key for docker ssh agent");
-    }
-
     @Override
     protected void prepareCreateContainerCommand(CreateContainerCmd cmd) throws DockerException, IOException {
 
-        final int sshPort = launcher.getSshConnector().port;
+        final int sshPort = launcher.getPort();
 
 
-        // AuthorizedKeysCommand
-
+        // TODO define a strategy for SSHD process configuration so we support more than openssh's sshd
         if (cmd.getCmd() == null || cmd.getCmd().length == 0) {
 
-            if (launcher.isUseSSHkey()) {
+            if (launcher.getSshKeyStrategy().getInjectedKey() != null) {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(sshPort),
                             // override sshd_config to force retrieval of InstanceIdentity public for as authentication
                             "-o", "AuthorizedKeysCommand "+ "/root/authorized_key",
@@ -143,11 +120,10 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
     @Override
     protected void setupContainer() throws IOException {
 
-        if (launcher.isUseSSHkey()) {
-            InstanceIdentity id = InstanceIdentity.get();
-            final java.security.interfaces.RSAPublicKey rsa = id.getPublic();
+        final String key = launcher.getSshKeyStrategy().getInjectedKey();
+        if (key != null) {
             String AuthorizedKeysCommand = "#!/bin/sh\n"
-                    + "echo 'ssh-rsa " + encode(encodeSSHRSAPublicKey(new RSAPublicKey(rsa.getPublicExponent(), rsa.getModulus()))) + "'";
+                    + "echo '" + key + "'";
 
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
                  TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
@@ -169,4 +145,69 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
             }
         }
     }
+
+
+    // TODO move external port binding detection to dedicated class / strategy (there's to much ways to get this wrong)
+
+    @Restricted(NoExternalUse.class)
+    public static InetSocketAddress getBindingForPort(DockerCloud cloud, InspectContainerResponse ir, int internalPort) {
+        // get exposed port
+        ExposedPort sshPort = new ExposedPort(internalPort);
+        String host = null;
+        Integer port = 22;
+
+        final NetworkSettings networkSettings = ir.getNetworkSettings();
+        final Ports ports = networkSettings.getPorts();
+        final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
+
+        // Get the binding that goes to the port that we're interested in (e.g: 22)
+        final Ports.Binding[] sshBindings = bindings.get(sshPort);
+
+        // Find where it's mapped to
+        for (Ports.Binding b : sshBindings) {
+
+            // TODO: I don't really follow why docker-java here is capable of
+            // returning a range - surely an exposed port cannot be bound to a *range*?
+            String hps = b.getHostPortSpec();
+
+            port = Integer.valueOf(hps);
+            host = b.getHostIp();
+        }
+
+        //get address, if docker on localhost, then use local?
+        if (host == null || host.equals("0.0.0.0")) {
+            String url = cloud.getDockerHost().getUri();
+            host = getDockerHostFromCloud(cloud);
+
+            if( url.startsWith("unix") && (host == null || host.trim().isEmpty()) ) {
+                // Communicating with local sockets.
+                host = "0.0.0.0";
+            } else {
+
+            /* Don't use IP from DOCKER_HOST because it is invalid or we are
+             * connecting to a system that supports a single host abstraction
+             * like Joyent's Triton. */
+                if (host == null || host.equals("0.0.0.0")) {
+                    // Try to connect to the container directly (without going through the host)
+                    host = networkSettings.getIpAddress();
+                    port = internalPort;
+                }
+            }
+        }
+
+        return new InetSocketAddress(host, port);
+    }
+
+    private static String getDockerHostFromCloud(DockerCloud cloud) {
+        String url;
+        String host;
+        url = cloud.getDockerHost().getUri();
+        String dockerHostname = cloud.getDockerHostname();
+        if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
+            return dockerHostname;
+        } else {
+            return URI.create(url).getHost();
+        }
+    }
+
 }

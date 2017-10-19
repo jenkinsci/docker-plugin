@@ -1,0 +1,35 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" >
+
+    <f:block>
+        <span class="info">Prerequisites:</span> Docker image must have <a href="https://www.openssh.com/">sshd</a> installed.
+    </f:block>
+
+    <f:dropdownDescriptorSelector field="sshKeyStrategy" title="SSH key" descriptors="${descriptor.SSHKeyStrategyDescriptors}"/>
+
+    <f:advanced>
+        <f:entry title="${%Port}" field="port">
+            <f:textbox default="22" />
+        </f:entry>
+
+        <f:entry title="${%JavaPath}" field="javaPath">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="${%JVM Options}" field="jvmOptions">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="${%Prefix Start Slave Command}" field="prefixStartSlaveCmd">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="${%Suffix Start Slave Command}" field="suffixStartSlaveCmd">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="${%Connection Timeout in Seconds}" field="launchTimeoutSeconds">
+            <f:textbox name="launchTimeoutSeconds" />
+        </f:entry>
+    </f:advanced>
+</j:jelly>

@@ -25,6 +25,7 @@ import io.jenkins.docker.AttachedDockerSlaveProvisioner;
 import io.jenkins.docker.DockerSlaveProvisioner;
 import io.jenkins.docker.JNLPDockerSlaveProvisioner;
 import io.jenkins.docker.SSHDockerSlaveProvisioner;
+import io.jenkins.docker.connector.DockerComputerSSHConnector;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.kohsuke.accmod.Restricted;
@@ -146,8 +147,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public DockerSlaveProvisioner getProvisioner(DockerCloud cloud) {
         if (launcher instanceof DockerComputerJNLPLauncher) {
             return new JNLPDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerJNLPLauncher) launcher);
-        } else if (launcher instanceof DockerComputerSSHLauncher) {
-            return new SSHDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerSSHLauncher) launcher);
+        } else if (launcher instanceof DockerComputerSSHConnector) {
+            return new SSHDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerSSHConnector) launcher);
         } else {
             return new AttachedDockerSlaveProvisioner(cloud, this, cloud.getClient());
         }

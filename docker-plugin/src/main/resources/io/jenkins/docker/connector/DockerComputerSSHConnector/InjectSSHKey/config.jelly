@@ -1,0 +1,15 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" >
+
+    <f:block>
+        A dedicated SSH key (based on Jenkins master's unique Identity) will be injected into container and sshd
+        configured accordingly.
+        <br/>
+        <u>Note:</u> If you use a non standard <code>sshd</code>, or provide a custom container command, this might not work.
+    </f:block>
+
+    <f:entry title="${%User}" field="user">
+        <f:textbox default="root" />
+    </f:entry>
+
+</j:jelly>
