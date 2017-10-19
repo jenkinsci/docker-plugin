@@ -71,6 +71,15 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
 
         final InetSocketAddress address = getBindingForPort(cloud, inspect, launcher.getPort());
 
+        // Wait until sshd has started
+        // TODO we could (also) have a more generic mechanism relying on healthcheck (inspect State.Health.Status)
+        final PortUtils.ConnectionCheck connectionCheck =
+                PortUtils.connectionCheck( address )
+                        .withRetries( 30 )
+                        .withEveryRetryWaitFor( 2, TimeUnit.SECONDS );
+        if (!connectionCheck.execute() || connectionCheck.useSSH().execute()) {
+            throw new IOException("SSH service didn't started after 60s.");
+        }
 
         StandardUsernameCredentials pk = launcher.getSshKeyStrategy().getCredentials();
         SSHLauncher ssh = new SSHLauncher(address.getHostString(), address.getPort(), pk,
