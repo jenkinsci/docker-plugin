@@ -109,7 +109,7 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
             if (launcher.getSshKeyStrategy().getInjectedKey() != null) {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(sshPort),
                             // override sshd_config to force retrieval of InstanceIdentity public for as authentication
-                            "-o", "AuthorizedKeysCommand "+ "/root/authorized_key",
+                            "-o", "AuthorizedKeysCommand "+ "/root/authorized_key \"%u\"",
                             "-o", "AuthorizedKeysCommandUser root"
                 );
             } else {
@@ -132,7 +132,8 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
         final String key = launcher.getSshKeyStrategy().getInjectedKey();
         if (key != null) {
             String AuthorizedKeysCommand = "#!/bin/sh\n"
-                    + "echo '" + key + "'";
+                    + "[ \"$1\" = \"" + ((DockerComputerSSHConnector.InjectSSHKey) launcher.getSshKeyStrategy()).getUser()
+                    + "\" ] && echo '" + key + "' || :";
 
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
                  TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
