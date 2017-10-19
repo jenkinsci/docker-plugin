@@ -2,9 +2,11 @@
 
 ## 1.0.2
 
-* fix credential management to access a private docker registry (google cloud)
+* fix credential management to access a private docker registry
 * log in debug diagnostic information on created container
-* fix confusing title used for SSH key injection option
+* re-implemented UI for SSH connector with explicit SSH key strategies
+* use configured user for JNLP launcher
+* wait for ssh service to be up before trying to connect
 
 ## 1.0.1
 
