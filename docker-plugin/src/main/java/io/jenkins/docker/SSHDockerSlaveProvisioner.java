@@ -72,6 +72,9 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
         }
         LOGGER.debug("container created {}", inspect);
 
+        // Make sure, the ssh daemon is up and running
+        template.getLauncher().waitUp(template.getDisplayName(), template, inspect);
+
         StandardUsernameCredentials pk = getPrivateKeyAsCredentials();
 
         final InetSocketAddress address = launcher.getAddressForSSHD(cloud, inspect);
