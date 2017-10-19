@@ -768,7 +768,7 @@ public class DockerCloud extends Cloud {
         // but in some context (typically, passing registry auth for `docker build`) we just can't guess this one.
 
         Credentials c = firstOrNull(CredentialsProvider.lookupCredentials(
-                IdCredentials.class, context, Jenkins.getAuthentication(),Collections.EMPTY_LIST),
+                IdCredentials.class, context, ACL.SYSTEM, Collections.EMPTY_LIST),
                 withId(registry.getCredentialsId()));
 
         if (c == null) {
