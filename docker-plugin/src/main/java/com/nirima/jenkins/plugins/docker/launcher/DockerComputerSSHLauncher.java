@@ -6,12 +6,17 @@ import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.Ports;
 import com.google.common.base.Preconditions;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import com.nirima.jenkins.plugins.docker.utils.PortUtils;
+
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.plugins.sshslaves.SSHConnector;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
+
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import com.google.common.annotations.Beta;
@@ -20,6 +25,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -159,4 +165,13 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         }
     }
 
+    @Override
+    public boolean waitUp( String cloudId, DockerTemplate dockerTemplate, InspectContainerResponse containerInspect ) {
+        super.waitUp( cloudId, dockerTemplate, containerInspect );
+
+        final PortUtils.ConnectionCheck connectionCheck =
+                        PortUtils.connectionCheck( getAddressForSSHD( (DockerCloud)Jenkins.getInstance().getCloud( cloudId ), containerInspect ) ).withRetries( 30 ).withEveryRetryWaitFor( 2, TimeUnit.SECONDS );
+
+        return (connectionCheck.execute() && connectionCheck.useSSH().execute());
+    }
 }
