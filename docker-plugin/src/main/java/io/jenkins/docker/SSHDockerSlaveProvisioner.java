@@ -77,7 +77,7 @@ public class SSHDockerSlaveProvisioner extends DockerSlaveProvisioner {
                 PortUtils.connectionCheck( address )
                         .withRetries( 30 )
                         .withEveryRetryWaitFor( 2, TimeUnit.SECONDS );
-        if (!connectionCheck.execute() || connectionCheck.useSSH().execute()) {
+        if (!connectionCheck.execute() || !connectionCheck.useSSH().execute()) {
             throw new IOException("SSH service didn't started after 60s.");
         }
 
