@@ -148,7 +148,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         LOG.info("Starting container for image {}", xImage);
         llog.println("Starting container for image " + xImage);
-        String containerId = DockerCloud.runContainer(template, client, null);
+        String containerId = DockerCloud.runContainer(template, client);
 
         LOG.info("Started container {}", containerId);
         llog.println("Started container " + containerId);

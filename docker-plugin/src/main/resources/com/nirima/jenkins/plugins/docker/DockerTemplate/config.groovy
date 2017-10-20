@@ -57,25 +57,8 @@ f.advanced(title: _("Experimental Options"), align: "left") {
     }
 }
 
-f.dropdownList(name: "launcher", title: _("Launch method"),
-        help: descriptor.getHelpFile('launcher')) {
-    DockerFunctions.dockerComputerLauncherDescriptors.each { ld ->
-        if (ld != null) {
-            f.dropdownListBlock(value: ld.clazz.name, name: ld.displayName,
-                    selected: instance.launcher == null ? false : instance.launcher.descriptor.equals(ld),
-                    title: ld.displayName) {
-                descriptor = ld
-                if (instance.launcher != null && instance.launcher.descriptor.equals(ld)) {
-                    instance = instance.launcher
-                }
-                f.invisibleEntry() {
-                    input(type: "hidden", name: "stapler-class", value: ld.clazz.name)
-                }
-                st.include(from: ld, page: ld.configPage, optional: "true")
-            }
-        }
-    }
-}
+f.dropdownDescriptorSelector(field: "connector", title: _("Connect method"),
+        descriptors: DockerFunctions.dockerComputerConnectorDescriptors)
 
 f.entry(title: _("Remote FS Root Mapping"), field: "remoteFsMapping") {
     f.textbox()

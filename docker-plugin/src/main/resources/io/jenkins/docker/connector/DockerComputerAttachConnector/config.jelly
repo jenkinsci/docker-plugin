@@ -1,0 +1,12 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+
+    <f:block>
+        <span class="info">Prerequisites:</span> Docker image must have <a href="https://go.java">Java</a> installed.
+    </f:block>
+
+    <f:entry title="${%User}" field="user">
+        <f:textbox/>
+    </f:entry>
+
+</j:jelly>

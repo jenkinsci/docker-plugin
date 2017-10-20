@@ -10,6 +10,7 @@ import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
+import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -483,6 +484,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     @Override
     public Descriptor<DockerTemplateBase> getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(DockerTemplateBase.class);
+    }
+
+    public String getFullImageId() {
+        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(image);
+        // if image was specified without tag, then treat as latest
+        return repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
     }
 
     @Extension

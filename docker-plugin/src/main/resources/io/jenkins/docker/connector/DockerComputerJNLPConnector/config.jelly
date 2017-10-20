@@ -2,7 +2,8 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
 
     <f:block>
-        <span class="info">Prerequisites:</span> Docker image must have <a href="https://go.java">Java</a> installed.
+        <span class="info">Prerequisites:</span> Docker image must have <a href="https://go.java">Java</a> installed,
+        and Jenkins master has to be accessible over network <em>from</em> container.
     </f:block>
 
     <f:entry title="${%User}" field="user">

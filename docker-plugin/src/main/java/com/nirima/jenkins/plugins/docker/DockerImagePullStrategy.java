@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Image;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -72,18 +73,13 @@ public enum DockerImagePullStrategy {
             return false;
         }
 
-        List<Image> images = client.listImagesCmd().exec();
-
-        boolean imageExists = Iterables.any(images, new Predicate<Image>() {
-            @Override
-            public boolean apply(Image image) {
-                if (image == null || image.getRepoTags() == null) {
-                    return false;
-                } else {
-                    return Arrays.asList(image.getRepoTags()).contains(image);
-                }
-            }
-        });
+        boolean imageExists;
+        try {
+            client.inspectImageCmd(image).exec();
+            imageExists = true;
+        } catch (NotFoundException e) {
+            imageExists = false;
+        }
 
         return imageExists ?
                 pullIfExists(image) :

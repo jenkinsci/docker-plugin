@@ -59,12 +59,9 @@ public class DockerImagePullStrategyTest {
     @Test
     public void shouldPullImageTest() {
 
-        DockerCloud dockerCloud = spy(createDockerCloud());
-
         DockerClient dockerClient = mockDockerClient();
-        doReturn(dockerClient).when(dockerCloud).getClient();
 
-        assertEquals(shouldPull, dockerCloud.shouldPullImage(imageName, pullStrategy));
+        assertEquals(shouldPull, pullStrategy.shouldPullImage(dockerClient, imageName));
     }
 
     public DockerImagePullStrategyTest(String existedImage, String imageName, DockerImagePullStrategy pullStrategy, boolean shouldPull) {

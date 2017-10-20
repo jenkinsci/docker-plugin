@@ -2,12 +2,9 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
-import com.nirima.jenkins.plugins.docker.launcher.DockerComputerJNLPLauncher;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
-import com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.Util;
@@ -21,15 +18,9 @@ import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
-import io.jenkins.docker.AttachedDockerSlaveProvisioner;
-import io.jenkins.docker.DockerSlaveProvisioner;
-import io.jenkins.docker.JNLPDockerSlaveProvisioner;
-import io.jenkins.docker.SSHDockerSlaveProvisioner;
-import io.jenkins.docker.connector.DockerComputerSSHConnector;
+import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -51,7 +42,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private final String labelString;
 
-    private DockerComputerLauncher launcher;
+    private DockerComputerConnector connector;
+
+    @Deprecated
+    private transient DockerComputerLauncher launcher;
 
     public final String remoteFsMapping;
 
@@ -110,47 +104,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.nodeProperties.clear();
         if (nodeProperties != null) {
             this.nodeProperties.addAll(nodeProperties);
-        }
-    }
-
-    /**
-     * Contains all available arguments
-     * @throws IOException 
-     */
-    @Restricted(value = NoExternalUse.class)
-    public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
-                          String labelString,
-                          String remoteFs,
-                          String remoteFsMapping,
-                          String instanceCapStr,
-                          List<? extends NodeProperty<?>> nodeProperties,
-                          Node.Mode mode,
-                          int numExecutors,
-                          DockerComputerLauncher launcher,
-                          RetentionStrategy retentionStrategy,
-                          boolean removeVolumes,
-                          DockerImagePullStrategy pullStrategy) {
-        this(dockerTemplateBase,
-                labelString,
-                remoteFs,
-                remoteFsMapping,
-                instanceCapStr,
-                nodeProperties);
-        setMode(mode);
-        setNumExecutors(numExecutors);
-        setLauncher(launcher);
-        setRetentionStrategy(retentionStrategy);
-        setRemoveVolumes(removeVolumes);
-        setPullStrategy(pullStrategy);
-    }
-
-    public DockerSlaveProvisioner getProvisioner(DockerCloud cloud) {
-        if (launcher instanceof DockerComputerJNLPLauncher) {
-            return new JNLPDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerJNLPLauncher) launcher);
-        } else if (launcher instanceof DockerComputerSSHConnector) {
-            return new SSHDockerSlaveProvisioner(cloud, this, cloud.getClient(), (DockerComputerSSHConnector) launcher);
-        } else {
-            return new AttachedDockerSlaveProvisioner(cloud, this, cloud.getClient());
         }
     }
 
@@ -243,9 +196,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     // --
 
     public String getFullImageId() {
-        NameParser.ReposTag repostag = NameParser.parseRepositoryTag(dockerTemplateBase.getImage());
-        // if image was specified without tag, then treat as latest
-        return repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+        return dockerTemplateBase.getFullImageId();
     }
 
 
@@ -318,12 +269,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
 
     @DataBoundSetter
-    public void setLauncher(DockerComputerLauncher launcher) {
-        this.launcher = launcher;
+    public void setConnector(DockerComputerConnector connector) {
+        this.connector = connector;
     }
 
-    public DockerComputerLauncher getLauncher() {
-        return launcher;
+    public DockerComputerConnector getConnector() {
+        return connector;
     }
 
     public String getRemoteFs() {
@@ -414,6 +365,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             LOGGER.log(Level.SEVERE, "Can't parse labels: ", t);
         }
 
+        if (connector == null && launcher != null) {
+            connector = launcher.convertToConnector();
+        }
+
         return this;
     }
 
@@ -422,7 +377,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return "DockerTemplate{" +
                 "configVersion=" + configVersion +
                 ", labelString='" + labelString + '\'' +
-                ", launcher=" + launcher +
+                ", connector=" + connector +
                 ", remoteFsMapping='" + remoteFsMapping + '\'' +
                 ", remoteFs='" + remoteFs + '\'' +
                 ", instanceCap=" + instanceCap +
