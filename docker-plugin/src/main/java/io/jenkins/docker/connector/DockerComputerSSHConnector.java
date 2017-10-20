@@ -199,10 +199,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             throw new IOException("SSH service didn't started after 60s.");
         }
 
-        StandardUsernameCredentials pk = sshKeyStrategy.getCredentials();
-        SSHLauncher ssh = new SSHLauncher(address.getHostString(), address.getPort(), pk,
-                jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds);
-        return ssh;
+        return sshKeyStrategy.getSSHLauncher(address, this);
     }
 
 
@@ -256,13 +253,14 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
     private String getDockerHostFromCloud(DockerCloud cloud) {
         String url;
-        String host;
         url = cloud.getDockerHost().getUri();
         String dockerHostname = cloud.getDockerHostname();
         if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
             return dockerHostname;
         } else {
-            return URI.create(url).getHost();
+            final URI uri = URI.create(url);
+            if (uri.getScheme().equals("unix")) return null;
+            return uri.getHost();
         }
     }
 
@@ -282,13 +280,11 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
     public abstract static class SSHKeyStrategy extends AbstractDescribableImpl<SSHKeyStrategy> {
 
-        /** Credentials to use for SSHLauncher to establish a connection */
-        public abstract StandardUsernameCredentials getCredentials() throws IOException;
-
         public abstract String getInjectedKey() throws IOException;
 
-        public abstract String getUser() throws IOException;
+        public abstract String getUser();
 
+        public abstract ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector dockerComputerSSHConnector) throws IOException;
     }
 
     public static class InjectSSHKey extends SSHKeyStrategy {
@@ -305,14 +301,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
 
         @Override
-        public StandardUsernameCredentials getCredentials() throws IOException {
+        public ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector connector) throws IOException {
             InstanceIdentity id = InstanceIdentity.get();
             String pem = PEMEncodable.create(id.getPrivate()).encode();
 
-            // TODO find how to inject authorized_key owned by a (configurable) user "jenkins"
-            return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "InstanceIdentity", user,
-                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(pem), null,
-                    "private key for docker ssh agent");
+            return new DockerSSHLauncher(address.getHostString(), address.getPort(), user, pem,
+                    connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd, connector.launchTimeoutSeconds);
         }
 
         @Override
@@ -347,13 +341,14 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
 
         @Override
-        public StandardUsernameCredentials getCredentials() throws IOException {
-            return SSHLauncher.lookupSystemCredentials(credentialsId);
+        public String getUser() {
+            return SSHLauncher.lookupSystemCredentials(credentialsId).getUsername();
         }
 
         @Override
-        public String getUser() throws IOException {
-            return getCredentials().getUsername();
+        public ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector connector) throws IOException {
+            return new SSHLauncher(address.getHostString(), address.getPort(), getCredentialsId(),
+                    connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd, connector.launchTimeoutSeconds);
         }
 
         @Override
@@ -377,5 +372,26 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
     }
 
+    /**
+     * Custom flavour of SSHLauncher which allows to inject some custom credentials without this one being stored
+     * in a CredentialStore
+     */
+    private static class DockerSSHLauncher extends SSHLauncher {
 
+        private String user;
+        private String privateKey;
+
+        public DockerSSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds) {
+            super(host, port, "InstanceIdentity", jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds);
+            this.user = user;
+            this.privateKey = privateKey;
+        }
+
+        @Override
+        public StandardUsernameCredentials getCredentials() {
+            return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "InstanceIdentity", user,
+                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null,
+                    "private key for docker ssh agent");
+        }
+    }
 }

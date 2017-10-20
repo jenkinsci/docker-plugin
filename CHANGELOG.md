@@ -7,6 +7,7 @@
 * re-implemented UI for SSH connector with explicit SSH key strategies
 * use configured user for JNLP launcher
 * wait for ssh service to be up before trying to connect
+* refactored launchers for extensibility and pipeline compatibility (reconnect slave after restart) 
 
 ## 1.0.1
 
