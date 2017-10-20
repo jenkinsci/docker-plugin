@@ -13,12 +13,10 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
-import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.slaves.ComputerLauncher;
-import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -64,72 +62,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector {
 
     @Override
     protected ComputerLauncher launch(DockerCloud cloud, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
-        return new NoOpLauncher();
-    }
-
-    public void afterAgentCreated(DockerCloud cloud, DockerTemplate template, String containerId, DockerSlave slave) throws InterruptedException, IOException {
-
-        final DockerClient client = cloud.getClient();
-        final SlaveComputer computer = slave.getComputer();
-        if (computer == null) {
-            throw new IllegalStateException("DockerSlave hasn't been registered as an active Node");
-        }
-
-        computer.getListener().getLogger().println("Connecting to docker container "+containerId);
-
-        final ExecCreateCmd cmd = client.execCreateCmd(containerId)
-                .withAttachStdin(true)
-                .withAttachStdout(true)
-                .withAttachStderr(true)
-                .withTty(false)
-                .withCmd("java", "-jar", template.remoteFs + '/' + remoting.getName());
-
-        if (StringUtils.isNotBlank(user)) {
-            cmd.withUser(user);
-        }
-
-        final ExecCreateCmdResponse exec = cmd.exec();
-
-        final PipedInputStream containerStdin = new PipedInputStream();
-        final OutputStream out = new PipedOutputStream(containerStdin);
-
-        final PipedOutputStream containerStdout = new PipedOutputStream();
-        final InputStream in = new PipedInputStream(containerStdout);
-
-        final AttachContainerResultCallback callback = new AttachContainerResultCallback() {
-            public void onNext(Frame item) {
-                switch (item.getStreamType()) {
-                    case STDERR:
-                        computer.getListener().error(new String(item.getPayload(), StandardCharsets.UTF_8));
-                        break;
-                    case STDOUT:
-                    case RAW:
-                        try {
-                            containerStdout.write(item.getPayload());
-                        } catch (IOException e) {
-                            throw new DockerException("Failed to collect stdout", 0, e);
-                        }
-                }
-            }
-        };
-
-        client.execStartCmd(exec.getId())
-                .withStdIn(containerStdin)
-                .exec(callback);
-
-        computer.setChannel(in, out, computer.getListener(), new Channel.Listener() {
-            @Override
-            public void onClosed(Channel channel, IOException cause) {
-                try {
-                    callback.close();
-                } catch (IOException e) {
-                    Throwables.propagate(e);
-                }
-            }
-        });
-
-
-
+        return new DockerAttachLauncher(cloud, inspect.getId(), user, template.remoteFs);
     }
 
     @Extension(ordinal = -1)
@@ -141,10 +74,78 @@ public class DockerComputerAttachConnector extends DockerComputerConnector {
         }
     }
 
-    private static class NoOpLauncher extends ComputerLauncher {
+    private static class DockerAttachLauncher extends ComputerLauncher {
 
-        public void launch(SlaveComputer computer, TaskListener listener) {
-            // Nop
+        private final String cloudName;
+        private final String containerId;
+        private final String user;
+        private final String remoteFs;
+
+        private DockerAttachLauncher(DockerCloud cloud, String containerId, String user, String remoteFs) {
+            this.cloudName = cloud.name;
+            this.containerId = containerId;
+            this.user = user;
+            this.remoteFs = remoteFs;
+        }
+
+        public void launch(final SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+            final DockerCloud cloud = DockerCloud.getCloudByName(cloudName);
+
+            final DockerClient client = cloud.getClient();
+
+            computer.getListener().getLogger().println("Connecting to docker container "+containerId);
+
+            final ExecCreateCmd cmd = client.execCreateCmd(containerId)
+                    .withAttachStdin(true)
+                    .withAttachStdout(true)
+                    .withAttachStderr(true)
+                    .withTty(false)
+                    .withCmd("java", "-jar", remoteFs + '/' + remoting.getName());
+
+            if (StringUtils.isNotBlank(user)) {
+                cmd.withUser(user);
+            }
+
+            final ExecCreateCmdResponse exec = cmd.exec();
+
+            final PipedInputStream containerStdin = new PipedInputStream();
+            final OutputStream out = new PipedOutputStream(containerStdin);
+
+            final PipedOutputStream containerStdout = new PipedOutputStream();
+            final InputStream in = new PipedInputStream(containerStdout);
+
+            final AttachContainerResultCallback callback = new AttachContainerResultCallback() {
+                public void onNext(Frame item) {
+                    switch (item.getStreamType()) {
+                        case STDERR:
+                            computer.getListener().error(new String(item.getPayload(), StandardCharsets.UTF_8));
+                            break;
+                        case STDOUT:
+                        case RAW:
+                            try {
+                                containerStdout.write(item.getPayload());
+                            } catch (IOException e) {
+                                throw new DockerException("Failed to collect stdout", 0, e);
+                            }
+                    }
+                }
+            };
+
+            client.execStartCmd(exec.getId())
+                    .withStdIn(containerStdin)
+                    .exec(callback);
+
+            computer.setChannel(in, out, computer.getListener(), new Channel.Listener() {
+                @Override
+                public void onClosed(Channel channel, IOException cause) {
+                    try {
+                        callback.close();
+                    } catch (IOException e) {
+                        Throwables.propagate(e);
+                    }
+                }
+            });
+
         }
 
     }
