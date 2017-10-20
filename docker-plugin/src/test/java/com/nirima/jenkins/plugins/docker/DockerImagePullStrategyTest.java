@@ -6,13 +6,14 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.ListImagesCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Image;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,34 +25,28 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class DockerImagePullStrategyTest {
 
-    private final List<Image> imageList;
     private final String imageName;
     private final DockerImagePullStrategy pullStrategy;
     private final boolean shouldPull;
+    private final boolean existedImage;
 
     @Parameterized.Parameters(name = "existing image: ''{0}'', image to pull: ''{1}'', strategy: ''{2}''")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"", "repo/name", DockerImagePullStrategy.PULL_LATEST, true},
-                {"repo/name:latest", "repo/name", DockerImagePullStrategy.PULL_LATEST, true},
-                {"", "repo/name:latest", DockerImagePullStrategy.PULL_LATEST, true},
-                {"repo/name:latest", "repo/name:latest", DockerImagePullStrategy.PULL_LATEST, true},
-                {"", "repo/name:1.0", DockerImagePullStrategy.PULL_LATEST, true},
-                {"repo/name:1.0", "repo/name:1.0", DockerImagePullStrategy.PULL_LATEST, false},
+                {false, "repo/name:latest", DockerImagePullStrategy.PULL_LATEST, true},
+                {true, "repo/name:latest", DockerImagePullStrategy.PULL_LATEST, true},
+                {false, "repo/name:1.0", DockerImagePullStrategy.PULL_LATEST, true},
+                {true, "repo/name:1.0", DockerImagePullStrategy.PULL_LATEST, false},
 
-                {"", "repo/name", DockerImagePullStrategy.PULL_ALWAYS, true},
-                {"repo/name:latest", "repo/name", DockerImagePullStrategy.PULL_ALWAYS, true},
-                {"", "repo/name:latest", DockerImagePullStrategy.PULL_ALWAYS, true},
-                {"repo/name:latest", "repo/name:latest", DockerImagePullStrategy.PULL_ALWAYS, true},
-                {"", "repo/name:1.0", DockerImagePullStrategy.PULL_ALWAYS, true},
-                {"repo/name:1.0", "repo/name:1.0", DockerImagePullStrategy.PULL_ALWAYS, true},
+                {false, "repo/name:latest", DockerImagePullStrategy.PULL_ALWAYS, true},
+                {true, "repo/name:latest", DockerImagePullStrategy.PULL_ALWAYS, true},
+                {false, "repo/name:1.0", DockerImagePullStrategy.PULL_ALWAYS, true},
+                {true, "repo/name:1.0", DockerImagePullStrategy.PULL_ALWAYS, true},
 
-                {"", "repo/name", DockerImagePullStrategy.PULL_NEVER, false},
-                {"repo/name:latest", "repo/name", DockerImagePullStrategy.PULL_NEVER, false},
-                {"", "repo/name:latest", DockerImagePullStrategy.PULL_NEVER, false},
-                {"repo/name:latest", "repo/name:latest", DockerImagePullStrategy.PULL_NEVER, false},
-                {"", "repo/name:1.0", DockerImagePullStrategy.PULL_NEVER, false},
-                {"repo/name:1.0", "repo/name:1.0", DockerImagePullStrategy.PULL_NEVER, false},
+                {false, "repo/name:latest", DockerImagePullStrategy.PULL_NEVER, false},
+                {true, "repo/name:latest", DockerImagePullStrategy.PULL_NEVER, false},
+                {false, "repo/name:1.0", DockerImagePullStrategy.PULL_NEVER, false},
+                {true, "repo/name:1.0", DockerImagePullStrategy.PULL_NEVER, false},
 
         });
     }
@@ -64,8 +59,8 @@ public class DockerImagePullStrategyTest {
         assertEquals(shouldPull, pullStrategy.shouldPullImage(dockerClient, imageName));
     }
 
-    public DockerImagePullStrategyTest(String existedImage, String imageName, DockerImagePullStrategy pullStrategy, boolean shouldPull) {
-        imageList = Collections.singletonList(mockImage(existedImage));
+    public DockerImagePullStrategyTest(boolean existedImage, String imageName, DockerImagePullStrategy pullStrategy, boolean shouldPull) {
+        this.existedImage =existedImage;
         this.imageName = imageName;
         this.pullStrategy = pullStrategy;
         this.shouldPull = shouldPull;
@@ -83,20 +78,19 @@ public class DockerImagePullStrategyTest {
                 null, //version
                 null); // dockerHostname
     }
-    private Image mockImage(String repoTag) {
-        Image img = mock(Image.class);
-        when(img.getRepoTags()).thenReturn(new String[]{repoTag});
-        return img;
-    }
+
 
     private DockerClient mockDockerClient() {
 
-        ListImagesCmd listImagesCmd = mock(ListImagesCmd.class);
+        InspectImageCmd cmd = mock(InspectImageCmd.class);
 
-        when(listImagesCmd.exec()).thenReturn(imageList);
+        if (existedImage)
+            when(cmd.exec()).thenReturn(mock(InspectImageResponse.class));
+        else
+            when(cmd.exec()).thenThrow(new NotFoundException("not found"));
 
         DockerClient dockerClient = mock(DockerClient.class);
-        when(dockerClient.listImagesCmd()).thenReturn(listImagesCmd);
+        when(dockerClient.inspectImageCmd(imageName)).thenReturn(cmd);
 
         return dockerClient;
     }
