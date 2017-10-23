@@ -5,6 +5,8 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -699,18 +701,15 @@ public class DockerCloud extends Cloud {
             }
         }
 
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String value) {
             AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
             if (!ac.hasPermission(Jenkins.ADMINISTER)) {
-                return new ListBoxModel();
+                return new StandardListBoxModel().includeCurrentValue(value);
             }
 
-            List<DockerServerCredentials> credentials = CredentialsProvider.lookupCredentials(DockerServerCredentials.class, context, ACL.SYSTEM,Collections.<DomainRequirement>emptyList());
-
-            return new StandardListBoxModel()
-                    .withEmptySelection()
-                    .withMatching(CredentialsMatchers.always(), credentials);
+            return new StandardListBoxModel().includeAs(
+                    ACL.SYSTEM, context, DockerServerCredentials.class,
+                    Collections.<DomainRequirement>emptyList());
         }
     }
 
