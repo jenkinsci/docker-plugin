@@ -30,7 +30,7 @@ public class DockerCloudRetentionStrategy extends CloudRetentionStrategy {
     public static final class DescriptorImpl extends hudson.model.Descriptor<RetentionStrategy<?>> {
         @Override
         public String getDisplayName() {
-            return "Cloud Retention Strategy";
+            return "Remove container if unused";
         }
     }
 }

@@ -4,8 +4,12 @@ import com.google.common.base.Objects;
 import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.model.Run;
+import hudson.model.Slave;
 import hudson.slaves.AbstractCloudComputer;
+import jenkins.model.Jenkins;
 
+import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

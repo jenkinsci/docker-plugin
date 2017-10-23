@@ -1,13 +1,17 @@
 package com.nirima.jenkins.plugins.docker.strategy;
 
 import hudson.Extension;
-import hudson.model.*;
-import hudson.slaves.*;
-import hudson.util.TimeUnit2;
-import jenkins.model.Jenkins;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.Executor;
+import hudson.model.ExecutorListener;
+import hudson.model.Queue;
+import hudson.slaves.AbstractCloudComputer;
+import hudson.slaves.AbstractCloudSlave;
+import hudson.slaves.CloudRetentionStrategy;
+import hudson.slaves.EphemeralNode;
+import hudson.slaves.RetentionStrategy;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -129,7 +133,7 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
     public static final class DescriptorImpl extends Descriptor<RetentionStrategy<?>> {
         @Override
         public String getDisplayName() {
-            return "Docker Once Retention Strategy";
+            return "Use container only once";
         }
     }
 
