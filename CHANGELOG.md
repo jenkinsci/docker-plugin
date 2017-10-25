@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+* fix configuration lost when upgrading from 0.x to 1.0.2
+
 ## 1.0.2
 
 * fix credential management to access a private docker registry
