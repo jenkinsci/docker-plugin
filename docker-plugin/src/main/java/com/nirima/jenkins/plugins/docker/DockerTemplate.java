@@ -357,20 +357,19 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             } else {
                configDefaults();
             }
+
+            try {
+                labelSet = Label.parse(labelString); // fails sometimes under debugger
+            } catch (Throwable t) {
+                LOGGER.log(Level.SEVERE, "Can't parse labels: ", t);
+            }
+
+            if (connector == null && launcher != null) {
+                connector = launcher.convertToConnector();
+            }
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Can't convert old values to new (double conversion?): ", t);
         }
-
-        try {
-            labelSet = Label.parse(labelString); // fails sometimes under debugger
-        } catch (Throwable t) {
-            LOGGER.log(Level.SEVERE, "Can't parse labels: ", t);
-        }
-
-        if (connector == null && launcher != null) {
-            connector = launcher.convertToConnector();
-        }
-
         return this;
     }
 
