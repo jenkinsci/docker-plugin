@@ -21,6 +21,8 @@ import hudson.util.FormValidation;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -370,6 +372,18 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         return this;
+    }
+
+    @Restricted(NoExternalUse.class)
+    public DockerTemplate cloneWithLabel(String label) {
+        final DockerTemplate template = new DockerTemplate(dockerTemplateBase, label, remoteFs, remoteFsMapping, "1", nodeProperties);
+        template.setConnector(connector);
+        template.setMode(Node.Mode.EXCLUSIVE);
+        template.setNumExecutors(1);
+        template.setPullStrategy(pullStrategy);
+        template.setRemoveVolumes(removeVolumes);
+        template.setRetentionStrategy(retentionStrategy);
+        return template;
     }
 
     @Override

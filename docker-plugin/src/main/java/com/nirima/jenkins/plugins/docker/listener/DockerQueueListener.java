@@ -1,16 +1,25 @@
 package com.nirima.jenkins.plugins.docker.listener;
 
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
+import hudson.model.InvisibleAction;
+import hudson.model.Label;
 import hudson.model.Project;
 import hudson.model.Queue.Item;
 import hudson.model.Queue.LeftItem;
 import hudson.model.Queue.WaitingItem;
+import hudson.model.labels.LabelAssignmentAction;
+import hudson.model.labels.LabelAtom;
 import hudson.model.queue.QueueListener;
+import hudson.model.queue.SubTask;
 import hudson.slaves.Cloud;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerJobProperty;
 import com.nirima.jenkins.plugins.docker.DockerJobTemplateProperty;
+
+import javax.annotation.Nonnull;
+import java.util.UUID;
 
 /**
  * This listener handles templates which are configured in a project.
@@ -26,7 +35,10 @@ public class DockerQueueListener extends QueueListener {
         if (jobTemplate != null) {
             Cloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
             if (cloud instanceof DockerCloud) {
-                ((DockerCloud) cloud).addJobTemplate(wi.getId(), jobTemplate.getTemplate());
+                final String uuid = UUID.randomUUID().toString();
+                final DockerTemplate template = jobTemplate.getTemplate().cloneWithLabel(uuid);
+                ((DockerCloud) cloud).addJobTemplate(wi.getId(), template);
+                wi.addAction(new DockerTemplateLabelAssignmentAction(uuid));
             }
         }
     }
@@ -60,5 +72,19 @@ public class DockerQueueListener extends QueueListener {
         }
 
         return null;
+    }
+
+    private static class DockerTemplateLabelAssignmentAction extends InvisibleAction implements LabelAssignmentAction {
+
+        private final String uuid;
+
+        private DockerTemplateLabelAssignmentAction(String uuid) {
+            this.uuid = uuid;
+        }
+
+        @Override
+        public Label getAssignedLabel(@Nonnull SubTask task) {
+            return new LabelAtom(uuid);
+        }
     }
 }
