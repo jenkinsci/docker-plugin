@@ -25,8 +25,8 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         connector.setJvmOptions(sshConnector.jvmOptions);
         connector.setLaunchTimeoutSeconds(sshConnector.launchTimeoutSeconds);
         connector.setPort(sshConnector.port);
-        connector.setPrefixStartSlaveCmd(sshConnector.suffixStartSlaveCmd);
-        connector.setSuffixStartSlaveCmd(sshConnector.prefixStartSlaveCmd);
+        connector.setPrefixStartSlaveCmd(sshConnector.prefixStartSlaveCmd);
+        connector.setSuffixStartSlaveCmd(sshConnector.suffixStartSlaveCmd);
 
         return connector;
     }
