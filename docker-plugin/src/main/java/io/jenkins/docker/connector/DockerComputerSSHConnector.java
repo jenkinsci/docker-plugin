@@ -142,7 +142,14 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
 
         cmd.withPortSpecs(port+"/tcp");
-        cmd.withPortBindings(PortBinding.parse(":"+port));
+        final PortBinding sshPortBinding = PortBinding.parse(":" + port);
+        final Ports portBindings = cmd.getPortBindings();
+        if(portBindings != null) {
+            portBindings.add(sshPortBinding);
+            cmd.withPortBindings(portBindings);
+        } else {
+            cmd.withPortBindings(sshPortBinding);
+        }
         cmd.withExposedPorts(ExposedPort.parse(port+"/tcp"));
     }
 
