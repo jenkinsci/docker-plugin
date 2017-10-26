@@ -56,11 +56,6 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      */
     public void afterContainerStarted(DockerCloud cloud, DockerTemplate template, String containerId) throws IOException, InterruptedException {}
 
-    /**
-     * {@link DockerSlave} has been registered on jenkins.
-     */
-    public void afterAgentCreated(DockerCloud cloud, DockerTemplate template, String containerId, DockerSlave slave) throws IOException, InterruptedException {}
-
 
     /**
      * Ensure container is already set with a command, or set one to make it wait indefinitely

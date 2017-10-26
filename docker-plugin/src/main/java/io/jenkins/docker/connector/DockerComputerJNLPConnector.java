@@ -55,8 +55,36 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
 
     @Override
-    protected ComputerLauncher launch(DockerCloud cloud, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
-        return new JNLPLauncher();
+    protected ComputerLauncher launch(final DockerCloud cloud, final DockerTemplate template, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+        return new ComputerLauncher() {
+
+            @Override
+            public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+                final DockerClient client = cloud.getClient();
+
+                List<String> args = buildCommand(template, computer);
+
+                final String containerId = inspect.getId();
+                final ExecCreateCmd cmd = client.execCreateCmd(containerId)
+                        .withAttachStdout(true)
+                        .withTty(true)
+                        .withCmd(args.toArray(new String[args.size()]));
+
+                if (StringUtils.isNotBlank(user)) {
+                    cmd.withUser(user);
+                }
+
+                final ExecCreateCmdResponse exec = cmd.exec();
+
+                final PrintStream logger = computer.getListener().getLogger();
+                final ExecStartResultCallback start = client.execStartCmd(exec.getId())
+                        .withDetach(true)
+                        .withTty(true)
+                        .exec(new ExecStartResultCallback(logger, logger));
+
+                start.awaitCompletion();
+            }
+        };
 
     }
 
@@ -69,39 +97,6 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     public void afterContainerStarted(DockerCloud cloud, DockerTemplate template, String containerId) throws IOException, InterruptedException {
         final DockerClient client = cloud.getClient();
         injectRemotingJar(containerId, template.remoteFs, client);
-    }
-
-
-    @Override
-    public void afterAgentCreated(DockerCloud cloud, DockerTemplate template, String containerId, DockerSlave slave) throws InterruptedException {
-        final SlaveComputer computer = slave.getComputer();
-        if (computer == null) {
-            throw new IllegalStateException("DockerSlave hasn't been registered as an active Node");
-        }
-
-        final DockerClient client = cloud.getClient();
-
-        List<String> args = buildCommand(template, computer);
-
-
-        final ExecCreateCmd cmd = client.execCreateCmd(containerId)
-                .withAttachStdout(true)
-                .withTty(true)
-                .withCmd(args.toArray(new String[args.size()]));
-
-        if (StringUtils.isNotBlank(user)) {
-            cmd.withUser(user);
-        }
-
-        final ExecCreateCmdResponse exec = cmd.exec();
-
-        final PrintStream logger = computer.getListener().getLogger();
-        final ExecStartResultCallback start = client.execStartCmd(exec.getId())
-                .withDetach(true)
-                .withTty(true)
-                .exec(new ExecStartResultCallback(logger, logger));
-
-        start.awaitCompletion();
     }
 
     private List<String> buildCommand(DockerTemplate template, SlaveComputer computer) {

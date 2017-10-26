@@ -307,18 +307,7 @@ public class DockerCloud extends Cloud {
                                 }
                             }
                         }),
-                        t.getNumExecutors())
-                {
-
-                      @Override
-                      public String toString() {
-                          return Objects.toStringHelper(this)
-                                  .add("displayName", displayName)
-                                  .add("future", future)
-                                  .add("numExecutors", numExecutors)
-                                  .toString();
-                      }
-                 });
+                        t.getNumExecutors()));
 
                 excessWorkload -= t.getNumExecutors();
             }
@@ -418,11 +407,6 @@ public class DockerCloud extends Cloud {
 
         slave.setContainerId(containerId);
         slave.setCloudId(name);
-
-        Jenkins.getInstance().addNode(slave);
-
-        connector.afterAgentCreated(this, template, containerId, slave);
-
         return slave;
     }
 
