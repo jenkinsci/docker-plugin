@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
+import hudson.slaves.Cloud;
+import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
@@ -48,21 +50,12 @@ public class DockerJobTemplateProperty implements Describable<DockerJobTemplateP
             return "Docker Job Image Property";
         }
 
-        /**
-         * Validates the given name of the Docker Cloud. It checks against the
-         * global defined Docker clouds.
-         * 
-         * @param cloudname
-         *            Name of the cloud to use.
-         * @return Returns an error message if the given <code>cloudname</code>
-         *         is not defined in the global Docker configuration.
-         */
-        public FormValidation doCheckCloudname(@QueryParameter String cloudname) {
-            if (DockerCloud.getCloudByName(cloudname) == null) {
-                return FormValidation.error("Cloud doesn't exists.", cloudname);
+        public ListBoxModel doFillCloudnameItems() {
+            ListBoxModel model = new ListBoxModel();
+            for (Cloud cloud : DockerCloud.instances()) {
+                model.add(cloud.name);
             }
-
-            return FormValidation.ok();
+            return model;
         }
     }
 }

@@ -662,6 +662,17 @@ public class DockerCloud extends Cloud {
         this.exposeDockerHost = exposeDockerHost;
     }
 
+    public static List<DockerCloud> instances() {
+        List<DockerCloud> instances = new ArrayList<>();
+        for (Cloud cloud : Jenkins.getInstance().clouds) {
+            if (cloud instanceof DockerCloud) {
+                instances.add((DockerCloud) cloud);
+            }
+
+        }
+        return instances;
+    }
+
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {

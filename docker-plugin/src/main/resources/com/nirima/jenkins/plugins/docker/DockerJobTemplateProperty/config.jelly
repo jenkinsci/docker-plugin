@@ -1,8 +1,8 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-    <f:entry title="${%Cloud name}" field="cloudname">
-        <f:textbox/>
+    <f:entry title="${%Docker Cloud}" field="cloudname">
+        <f:select/>
     </f:entry>
 
     <f:property field="template"/>

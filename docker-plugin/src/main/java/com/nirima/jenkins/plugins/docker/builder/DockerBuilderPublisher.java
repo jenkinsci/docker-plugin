@@ -491,7 +491,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         public ListBoxModel doFillCloudItems() {
             ListBoxModel model = new ListBoxModel();
             model.add("Cloud this build is running on", "");
-            for (Cloud cloud : Jenkins.getInstance().clouds) {
+            for (Cloud cloud : DockerCloud.instances()) {
                 model.add(cloud.name);
             }
             return model;

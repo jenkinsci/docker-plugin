@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.exception.DockerException;
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
 import hudson.Launcher;
 import hudson.model.Describable;
@@ -50,7 +51,7 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
         public ListBoxModel doFillCloudNameItems() {
             ListBoxModel model = new ListBoxModel();
             model.add("Cloud this build is running on", "");
-            for (Cloud cloud : Jenkins.getInstance().clouds) {
+            for (Cloud cloud : DockerCloud.instances()) {
                 model.add(cloud.name);
             }
             return model;
