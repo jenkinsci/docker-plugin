@@ -292,23 +292,33 @@ public class DockerCloud extends Cloud {
                 }
 
                 r.add(new NodeProvisioner.PlannedNode(
-                                t.getDockerTemplateBase().getDisplayName(),
-                                Computer.threadPoolForRemoting.submit(new Callable<Node>() {
-                                    public Node call() throws Exception {
-                                        try {
-                                            // TODO where can we log provisioning progress ?
-                                            return provisionFromTemplate(t, TaskListener.NULL);
-                                        } catch (Exception ex) {
-                                            LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
-                                                    t, getDisplayName(), ex);
-                                            throw Throwables.propagate(ex);
-                                        } finally {
-                                            decrementAmiSlaveProvision(t.getDockerTemplateBase().getImage());
-                                        }
-                                    }
-                                }),
-                                t.getNumExecutors())
-                );
+                        t.getDockerTemplateBase().getDisplayName(),
+                        Computer.threadPoolForRemoting.submit(new Callable<Node>() {
+                            public Node call() throws Exception {
+                                try {
+                                    // TODO where can we log provisioning progress ?
+                                    return provisionFromTemplate(t, TaskListener.NULL);
+                                } catch (Exception ex) {
+                                    LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
+                                            t, getDisplayName(), ex);
+                                    throw Throwables.propagate(ex);
+                                } finally {
+                                    decrementAmiSlaveProvision(t.getDockerTemplateBase().getImage());
+                                }
+                            }
+                        }),
+                        t.getNumExecutors())
+                {
+
+                      @Override
+                      public String toString() {
+                          return Objects.toStringHelper(this)
+                                  .add("displayName", displayName)
+                                  .add("future", future)
+                                  .add("numExecutors", numExecutors)
+                                  .toString();
+                      }
+                 });
 
                 excessWorkload -= t.getNumExecutors();
             }

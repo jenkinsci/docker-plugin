@@ -19,6 +19,7 @@ import static hudson.slaves.NodeProvisioner.StrategyDecision;
 import static hudson.slaves.NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
 import static hudson.slaves.NodeProvisioner.StrategyDecision.PROVISIONING_COMPLETED;
 import static java.util.logging.Level.FINE;
+import static java.util.logging.Level.FINEST;
 
 /**
  * Based on https://github.com/jenkinsci/one-shot-executor-plugin/blob/master/src/main/java/org/jenkinsci/plugins/oneshot/OneShotProvisionerStrategy.java
@@ -56,10 +57,12 @@ public class FastNodeProvisionerStrategy extends Strategy {
         }
 
         LoadStatistics.LoadStatisticsSnapshot snapshot = state.getSnapshot();
+        LOGGER.log(FINEST, "Available executors={0}, connecting={1}, planned={2}",
+                new Object[]{snapshot.getAvailableExecutors(), snapshot.getConnectingExecutors(), state.getPlannedCapacitySnapshot()});
         int availableCapacity =
-                snapshot.getAvailableExecutors()
-                        + snapshot.getConnectingExecutors()
-                        + state.getPlannedCapacitySnapshot();
+              snapshot.getAvailableExecutors()
+            + snapshot.getConnectingExecutors()
+            + state.getPlannedCapacitySnapshot();
 
         int currentDemand = snapshot.getQueueLength();
         LOGGER.log(FINE, "Available capacity={0}, currentDemand={1}",
