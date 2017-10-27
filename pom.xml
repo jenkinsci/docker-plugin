@@ -10,7 +10,7 @@
 
     <groupId>com.nirima</groupId>
     <artifactId>docker-plugin-parent</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Docker plugin parent pom</name>

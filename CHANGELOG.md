@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.4
+
+* fix support for binded ports
+* fix SSH command Prefix / Suffix
+* fix JNLP agent provisionning
+* disable Matrix-autorisation node property (JENKINS-47697)
+
 ## 1.0.3
 
 * fix configuration lost when upgrading from 0.x to 1.0.2
