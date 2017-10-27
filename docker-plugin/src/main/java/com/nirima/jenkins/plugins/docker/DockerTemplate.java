@@ -31,6 +31,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -426,10 +427,22 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             return FormValidation.ok();
         }
 
-
+        /**
+         * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
+         */
         public List<NodePropertyDescriptor> getNodePropertyDescriptors() {
             DockerSlave.DescriptorImpl descriptor = (DockerSlave.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(DockerSlave.class);
-            return descriptor.nodePropertyDescriptors(null);
+            final List<NodePropertyDescriptor> descriptors = descriptor.nodePropertyDescriptors(null);
+
+            final Iterator<NodePropertyDescriptor> iterator = descriptors.iterator();
+            while (iterator.hasNext()) {
+                final NodePropertyDescriptor de = iterator.next();
+                // see https://issues.jenkins-ci.org/browse/JENKINS-47697
+                if ("org.jenkinsci.plugins.matrixauth.AuthorizationMatrixNodeProperty".equals(de.getKlass().toJavaClass().getName())) {
+                    iterator.remove();
+                }
+            }
+            return descriptors;
         }
 
         @Override
