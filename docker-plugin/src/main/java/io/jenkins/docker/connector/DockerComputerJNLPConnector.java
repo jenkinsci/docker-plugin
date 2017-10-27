@@ -13,6 +13,8 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.ComputerLauncherFilter;
+import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 import jenkins.model.Jenkins;
@@ -56,7 +58,12 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     @Override
     protected ComputerLauncher launch(final DockerCloud cloud, final DockerTemplate template, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
-        return new ComputerLauncher() {
+        return new DelegatingComputerLauncher(new JNLPLauncher()) {
+
+            @Override
+            public boolean isLaunchSupported() {
+                return true;
+            }
 
             @Override
             public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
