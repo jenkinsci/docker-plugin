@@ -1,7 +1,13 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.exception.DockerClientException;
+import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
@@ -12,12 +18,14 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
+import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
+import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
@@ -26,6 +34,8 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -34,12 +44,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 public class DockerTemplate implements Describable<DockerTemplate> {
-    private static final Logger LOGGER = Logger.getLogger(DockerTemplate.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerTemplate.class.getName());
 
     private int configVersion = 2;
 
@@ -362,14 +370,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             try {
                 labelSet = Label.parse(labelString); // fails sometimes under debugger
             } catch (Throwable t) {
-                LOGGER.log(Level.SEVERE, "Can't parse labels: ", t);
+                LOGGER.error("Can't parse labels: ", t);
             }
 
             if (connector == null && launcher != null) {
                 connector = launcher.convertToConnector();
             }
         } catch (Throwable t) {
-            LOGGER.log(Level.SEVERE, "Can't convert old values to new (double conversion?): ", t);
+            LOGGER.error("Can't convert old values to new (double conversion?): ", t);
         }
         return this;
     }
@@ -414,6 +422,77 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     @Override
     public Descriptor<DockerTemplate> getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
+    }
+
+    void pullImage(DockerAPI api) throws IOException, InterruptedException {
+
+        String image = getFullImageId();
+        final DockerClient client = api.getClient();
+
+        if (pullStrategy.shouldPullImage(client, image)) {
+            // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
+            LOGGER.info("Pulling image '{}'. This may take awhile...", image);
+
+            long startTime = System.currentTimeMillis();
+
+            PullImageCmd cmd =  client.pullImageCmd(image);
+            final DockerRegistryEndpoint registry = getRegistry();
+            DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
+            cmd.exec(new PullImageResultCallback()).awaitCompletion();
+
+            try {
+                client.inspectImageCmd(image).exec();
+            } catch (NotFoundException e) {
+                throw new DockerClientException("Could not pull image: " + image, e);
+            }
+
+            long pullTime = System.currentTimeMillis() - startTime;
+            LOGGER.info("Finished pulling image '{}', took {} ms", image, pullTime);
+        }
+
+    }
+
+    @Restricted(NoExternalUse.class)
+    public DockerSlave provisionFromTemplate(TaskListener listener, DockerAPI api) throws IOException, Descriptor.FormException, InterruptedException {
+
+        final DockerClient client = api.getClient();
+        final DockerComputerConnector connector = getConnector();
+        pullImage(api);
+
+        LOGGER.info("Trying to run container for {}", getImage());
+        CreateContainerCmd cmd = client.createContainerCmd(getImage());
+        fillContainerConfig(cmd);
+
+        connector.beforeContainerCreated(api, this, cmd);
+
+        String containerId = cmd.exec().getId();
+
+        try {
+            connector.beforeContainerStarted(api, this, containerId);
+
+            client.startContainerCmd(containerId).exec();
+
+            connector.afterContainerStarted(api, this, containerId);
+        } catch (DockerException e) {
+            // if something went wrong, cleanup aborted container
+            client.removeContainerCmd(containerId).withForce(true).exec();
+            throw e;
+        }
+
+        DockerSlave slave = new DockerSlave(this, containerId,
+                 "docker-" + containerId.substring(0,12),
+                "Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + "]",
+                getRemoteFs(),
+                getNumExecutors(),
+                getMode(),
+                getLabelString(),
+                connector.launch(api, containerId, this, listener),
+                getRetentionStrategyCopy(),
+                getNodeProperties());
+
+        slave.setContainerId(containerId);
+        slave.setDockerAPI(api);
+        return slave;
     }
 
     @Extension

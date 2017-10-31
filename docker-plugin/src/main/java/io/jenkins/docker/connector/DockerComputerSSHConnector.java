@@ -25,6 +25,7 @@ import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -272,7 +273,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
 
-    @Extension
+    @Extension @Symbol("ssh")
     public static final class DescriptorImpl extends Descriptor<DockerComputerConnector> {
 
         @Override

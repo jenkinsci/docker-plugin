@@ -25,6 +25,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
@@ -51,6 +52,7 @@ public class DockerSlave extends AbstractCloudSlave {
     @CheckForNull private String cloudId;
 
     private transient Run theRun;
+    private DockerAPI dockerAPI;
 
     public DockerSlave(DockerTemplate dockerTemplate, String containerId,
                        String name, String nodeDescription,
@@ -67,6 +69,7 @@ public class DockerSlave extends AbstractCloudSlave {
         this.containerId = containerId;
     }
 
+    @Deprecated
     public DockerSlave(String slaveName, String nodeDescription, ComputerLauncher launcher, String containerId,
                        DockerTemplate dockerTemplate, String cloudId)
             throws IOException, Descriptor.FormException {
@@ -98,6 +101,7 @@ public class DockerSlave extends AbstractCloudSlave {
                 template.getNodeProperties()
         );
         this.cloudId = cloud.getDisplayName();
+        this.dockerAPI = cloud.getDockerApi();
         this.dockerTemplate = template;
     }
 
@@ -115,6 +119,14 @@ public class DockerSlave extends AbstractCloudSlave {
 
     public void setCloudId(String cloudId) {
         this.cloudId = cloudId;
+    }
+
+    public void setDockerAPI(DockerAPI dockerAPI) {
+        this.dockerAPI = dockerAPI;
+    }
+
+    public DockerAPI getDockerAPI() {
+        return dockerAPI;
     }
 
     public DockerTemplate getDockerTemplate() {

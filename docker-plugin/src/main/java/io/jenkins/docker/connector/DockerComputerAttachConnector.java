@@ -18,6 +18,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.client.DockerAPI;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -26,12 +27,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class DockerComputerAttachConnector extends DockerComputerConnector {
+public class DockerComputerAttachConnector extends DockerComputerConnector implements Serializable {
+
 
     private String user;
 
@@ -64,7 +67,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector {
         return new DockerAttachLauncher(api, inspect.getId(), user, template.remoteFs);
     }
 
-    @Extension(ordinal = -1)
+    @Extension(ordinal = -1) @Symbol("attach")
     public static class DescriptorImpl extends Descriptor<DockerComputerConnector> {
 
         @Override

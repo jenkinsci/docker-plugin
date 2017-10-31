@@ -1,0 +1,11 @@
+<div>
+    <p>
+        Allocates a new Jenkins agent using a specified Docker image and runs tasks on it. Example:
+    </p>
+    <pre>docker-node(image: 'cloudbees/jnlp-slave-with-java-build-tools') {
+    git 'https://github.com/jglick/simple-maven-project-with-tests'
+    withMaven {
+        sh 'mvn install'
+    }
+}</pre>
+</div>

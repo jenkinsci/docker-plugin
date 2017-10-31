@@ -3,22 +3,15 @@ package com.nirima.jenkins.plugins.docker;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.IdCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
-import com.github.dockerjava.api.exception.DockerClientException;
-import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Version;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import hudson.Extension;
@@ -29,31 +22,23 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
-import hudson.security.AccessControlled;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 import io.jenkins.docker.client.DockerAPI;
-import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Base64;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -287,7 +272,10 @@ public class DockerCloud extends Cloud {
                             public Node call() throws Exception {
                                 try {
                                     // TODO where can we log provisioning progress ?
-                                    return provisionFromTemplate(t, TaskListener.NULL);
+                                    final DockerAPI api = DockerCloud.this.getDockerApi();
+                                    final DockerSlave slave = t.provisionFromTemplate(TaskListener.NULL, api);
+                                    slave.setCloudId(DockerCloud.this.name);
+                                    return slave;
                                 } catch (Exception ex) {
                                     LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                             t, getDisplayName(), ex);
@@ -328,76 +316,6 @@ public class DockerCloud extends Cloud {
         startCommand.exec();
 
         return containerId;
-    }
-
-    private void pullImage(DockerTemplate template) throws IOException, InterruptedException {
-
-        String image = template.getFullImageId();
-        final DockerClient client = getClient();
-
-        if (template.getPullStrategy().shouldPullImage(client, image)) {
-            // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
-            LOGGER.info("Pulling image '{}'. This may take awhile...", image);
-
-            long startTime = System.currentTimeMillis();
-
-            PullImageCmd cmd =  client.pullImageCmd(image);
-            final DockerRegistryEndpoint registry = template.getRegistry();
-            setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
-            cmd.exec(new PullImageResultCallback()).awaitCompletion();
-
-            try {
-                client.inspectImageCmd(image).exec();
-            } catch (NotFoundException e) {
-                throw new DockerClientException("Could not pull image: " + image, e);
-            }
-
-            long pullTime = System.currentTimeMillis() - startTime;
-            LOGGER.info("Finished pulling image '{}', took {} ms", image, pullTime);
-        }
-
-    }
-
-    private DockerSlave provisionFromTemplate(DockerTemplate template, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
-
-        final DockerClient client = getClient();
-        final DockerComputerConnector connector = template.getConnector();
-        pullImage(template);
-
-        LOGGER.info("Trying to run container for {}", template.getImage());
-        CreateContainerCmd cmd = client.createContainerCmd(template.getImage());
-        template.fillContainerConfig(cmd);
-
-        connector.beforeContainerCreated(dockerApi, template, cmd);
-
-        String containerId = cmd.exec().getId();
-
-        try {
-            connector.beforeContainerStarted(dockerApi, template, containerId);
-
-            client.startContainerCmd(containerId).exec();
-
-            connector.afterContainerStarted(dockerApi, template, containerId);
-        } catch (DockerException e) {
-            // if something went wrong, cleanup aborted container
-            client.removeContainerCmd(containerId).withForce(true).exec();
-            throw e;
-        }
-
-        DockerSlave slave = new DockerSlave(template, containerId,
-                name + '-' + containerId.substring(0,12),
-                "Docker Agent [" + template.getImage() + " on "+ name + "]",
-                template.getRemoteFs(),
-                template.getNumExecutors(),
-                template.getMode(),
-                template.getLabelString(),
-                connector.launch(dockerApi, containerId, template, listener),
-                template.getRetentionStrategyCopy(),
-                template.getNodeProperties());
-
-        slave.setContainerId(containerId);
-        slave.setCloudId(name);
-        return slave;
     }
 
     @Override

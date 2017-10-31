@@ -40,6 +40,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,10 +53,10 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
 /**
  * Base for docker templates - does not include Jenkins items like labels.
  */
-public class DockerTemplateBase implements Describable<DockerTemplateBase> {
+public class DockerTemplateBase implements Describable<DockerTemplateBase>, Serializable {
     private static final Logger LOGGER = Logger.getLogger(DockerTemplateBase.class.getName());
 
-    private String image;
+    private final String image;
 
     private String pullCredentialsId;
     private transient DockerRegistryEndpoint registry;
@@ -63,18 +64,18 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     /**
      * Field dockerCommand
      */
-    public final String dockerCommand;
+    public String dockerCommand;
 
     /**
      * Field lxcConfString
      */
-    public final String lxcConfString;
+    public String lxcConfString;
 
-    public final String hostname;
+    public String hostname;
 
-    public final String[] dnsHosts;
+    public String[] dnsHosts;
 
-    public final String network;
+    public String network;
 
     /**
      * Every String is volume specification
@@ -93,17 +94,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     public String[] volumesFrom2;
 
     @CheckForNull
-    public final String[] environment;
+    public String[] environment;
 
-    public final String bindPorts;
-    public final boolean bindAllPorts;
+    public String bindPorts;
+    public boolean bindAllPorts;
 
-    public final Integer memoryLimit;
-    public final Integer memorySwap;
-    public final Integer cpuShares;
+    public Integer memoryLimit;
+    public Integer memorySwap;
+    public Integer cpuShares;
 
-    public final boolean privileged;
-    public final boolean tty;
+    public boolean privileged;
+    public boolean tty;
 
     @CheckForNull
     private String macAddress;
@@ -112,6 +113,18 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
     private List<String> extraHosts;
 
     @DataBoundConstructor
+    public DockerTemplateBase(String image) {
+        if (image == null) {
+            throw new IllegalArgumentException("Image can't be null");
+        }
+
+        this.image = image.trim();
+    }
+
+    /**
+     * @deprecated use DataBoundSetters
+     */
+    @Deprecated
     public DockerTemplateBase(String image,
                               String pullCredentialsId,
                               String dnsString,
@@ -131,7 +144,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
                               boolean tty,
                               String macAddress
     ) {
-        setImage(image);
+        this(image);
         this.pullCredentialsId = pullCredentialsId;
         this.dockerCommand = dockerCommand;
         this.lxcConfString = lxcConfString;
@@ -204,14 +217,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
             }
         }
         return strings.toArray(new String[strings.size()]);
-    }
-
-    public void setImage(String image) {
-        if (image == null) {
-            throw new IllegalArgumentException("Image can't be null");
-        }
-
-        this.image = image.trim();
     }
 
     public String getImage() {
@@ -414,7 +419,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase> {
       	  }
         }
 
-        if (dnsHosts.length > 0) {
+        if (dnsHosts != null && dnsHosts.length > 0) {
             containerConfig.withDns(dnsHosts);
         }
 
