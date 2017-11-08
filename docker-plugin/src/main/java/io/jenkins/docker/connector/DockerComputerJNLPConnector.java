@@ -119,7 +119,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
                 "-cp", template.remoteFs + "/" + remoting.getName(),
                 "hudson.remoting.jnlp.Main", "-headless"));
         if (StringUtils.isNotBlank(jnlpLauncher.tunnel)) {
-            args.addAll(Arrays.asList("--tunnel", jnlpLauncher.tunnel));
+            args.addAll(Arrays.asList("-tunnel", jnlpLauncher.tunnel));
         }
 
         args.addAll(Arrays.asList(
