@@ -9,7 +9,6 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
-import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
@@ -21,6 +20,7 @@ import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
 import hudson.util.ListBoxModel;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -125,7 +125,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     @Override
-    public void beforeContainerCreated(DockerCloud cloud, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {
+    public void beforeContainerCreated(DockerAPI api, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {
 
         // TODO define a strategy for SSHD process configuration so we support more than openssh's sshd
         if (cmd.getCmd() == null || cmd.getCmd().length == 0) {
@@ -154,7 +154,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     @Override
-    public void beforeContainerStarted(DockerCloud cloud, DockerTemplate template, String containerId) throws IOException, InterruptedException {
+    public void beforeContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {
 
         final String key = sshKeyStrategy.getInjectedKey();
         if (key != null) {
@@ -175,7 +175,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
                 try (InputStream is = new ByteArrayInputStream(bos.toByteArray())) {
 
-                    cloud.getClient().copyArchiveToContainerCmd(containerId)
+                    api.getClient().copyArchiveToContainerCmd(containerId)
                             .withTarInputStream(is)
                             .withRemotePath("/root")
                             .exec();
@@ -185,7 +185,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     @Override
-    protected ComputerLauncher launch(DockerCloud cloud, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+    protected ComputerLauncher launch(DockerAPI api, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
         if ("exited".equals(inspect.getState().getStatus())) {
             // Something went wrong
             // FIXME report error "somewhere" visible to end user.
@@ -194,7 +194,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
         LOGGER.debug("container created {}", inspect);
 
-        final InetSocketAddress address = getBindingForPort(cloud, inspect, port);
+        final InetSocketAddress address = getBindingForPort(api, inspect, port);
 
         // Wait until sshd has started
         // TODO we could (also) have a more generic mechanism relying on healthcheck (inspect State.Health.Status)
@@ -210,7 +210,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
 
-    private InetSocketAddress getBindingForPort(DockerCloud cloud, InspectContainerResponse ir, int internalPort) {
+    private InetSocketAddress getBindingForPort(DockerAPI api, InspectContainerResponse ir, int internalPort) {
         // get exposed port
         ExposedPort sshPort = new ExposedPort(internalPort);
         String host = null;
@@ -236,8 +236,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         //get address, if docker on localhost, then use local?
         if (host == null || host.equals("0.0.0.0")) {
-            String url = cloud.getDockerHost().getUri();
-            host = getDockerHostFromCloud(cloud);
+            String url = api.getDockerHost().getUri();
+            host = getDockerHostFromCloud(api);
 
             if( url.startsWith("unix") && (host == null || host.trim().isEmpty()) ) {
                 // Communicating with local sockets.
@@ -258,10 +258,10 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         return new InetSocketAddress(host, port);
     }
 
-    private String getDockerHostFromCloud(DockerCloud cloud) {
+    private String getDockerHostFromCloud(DockerAPI api) {
         String url;
-        url = cloud.getDockerHost().getUri();
-        String dockerHostname = cloud.getDockerHostname();
+        url = api.getDockerHost().getUri();
+        String dockerHostname = api.getHostname();
         if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
             return dockerHostname;
         } else {

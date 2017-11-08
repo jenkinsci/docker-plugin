@@ -3,7 +3,6 @@ package io.jenkins.docker.connector;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.thoughtworks.xstream.InitializationException;
@@ -12,6 +11,7 @@ import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.Which;
 import hudson.slaves.ComputerLauncher;
+import io.jenkins.docker.client.DockerAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,18 +43,18 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     /**
      * Can be overridden by concrete implementations to provide some customization to the container creation command
      */
-    public void beforeContainerCreated(DockerCloud cloud, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {}
+    public void beforeContainerCreated(DockerAPI api, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {}
 
     /**
      * Container has been created but not started yet, that's a good opportunity to inject <code>remoting.jar</code>
      * using {@link #injectRemotingJar(String, String, DockerClient)}
      */
-    public void beforeContainerStarted(DockerCloud cloud, DockerTemplate template, String containerId) throws IOException, InterruptedException {}
+    public void beforeContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {}
 
     /**
      * Container has started. Good place to check it's healthy before considering agent is ready to accept connexions
      */
-    public void afterContainerStarted(DockerCloud cloud, DockerTemplate template, String containerId) throws IOException, InterruptedException {}
+    public void afterContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {}
 
 
     /**
@@ -84,22 +84,22 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
         return workdir + '/' + remoting.getName();
     }
 
-    public final ComputerLauncher launch(DockerCloud cloud, @Nonnull String containerId, DockerTemplate template, TaskListener listener) throws IOException, InterruptedException {
+    public final ComputerLauncher launch(DockerAPI api, @Nonnull String containerId, DockerTemplate template, TaskListener listener) throws IOException, InterruptedException {
 
-        final InspectContainerResponse inspect = cloud.getClient().inspectContainerCmd(containerId).exec();
+        final InspectContainerResponse inspect = api.getClient().inspectContainerCmd(containerId).exec();
         final Boolean running = inspect.getState().getRunning();
         if (Boolean.FALSE.equals(running)) {
             listener.error("Container {} is not running. {}", containerId, inspect.getState().getStatus());
             throw new IOException("Container is not running.");
         }
 
-        return launch(cloud, template, inspect, listener);
+        return launch(api, template, inspect, listener);
     }
 
     /**
      * Create a Launcher to create an Agent with this container. Can assume container has been created by this
      * DockerAgentConnector so adequate setup did take place.
      */
-    protected abstract ComputerLauncher launch(DockerCloud cloud, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
+    protected abstract ComputerLauncher launch(DockerAPI api, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
 
 }

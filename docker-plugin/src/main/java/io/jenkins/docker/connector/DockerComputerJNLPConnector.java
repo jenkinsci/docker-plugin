@@ -6,17 +6,15 @@ import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
-import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
-import hudson.slaves.ComputerLauncherFilter;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -57,7 +55,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
 
     @Override
-    protected ComputerLauncher launch(final DockerCloud cloud, final DockerTemplate template, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+    protected ComputerLauncher launch(final DockerAPI api, final DockerTemplate template, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
         return new DelegatingComputerLauncher(new JNLPLauncher()) {
 
             @Override
@@ -67,7 +65,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
             @Override
             public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-                final DockerClient client = cloud.getClient();
+                final DockerClient client = api.getClient();
 
                 List<String> args = buildCommand(template, computer);
 
@@ -96,13 +94,13 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     }
 
     @Override
-    public void beforeContainerCreated(DockerCloud cloud, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {
+    public void beforeContainerCreated(DockerAPI api, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {
         ensureWaiting(cmd);
     }
 
     @Override
-    public void afterContainerStarted(DockerCloud cloud, DockerTemplate template, String containerId) throws IOException, InterruptedException {
-        final DockerClient client = cloud.getClient();
+    public void afterContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {
+        final DockerClient client = api.getClient();
         injectRemotingJar(containerId, template.remoteFs, client);
     }
 

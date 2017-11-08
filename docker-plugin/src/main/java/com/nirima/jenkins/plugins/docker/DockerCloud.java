@@ -368,16 +368,16 @@ public class DockerCloud extends Cloud {
         CreateContainerCmd cmd = client.createContainerCmd(template.getImage());
         template.fillContainerConfig(cmd);
 
-        connector.beforeContainerCreated(this, template, cmd);
+        connector.beforeContainerCreated(dockerApi, template, cmd);
 
         String containerId = cmd.exec().getId();
 
         try {
-            connector.beforeContainerStarted(this, template, containerId);
+            connector.beforeContainerStarted(dockerApi, template, containerId);
 
             client.startContainerCmd(containerId).exec();
 
-            connector.afterContainerStarted(this, template, containerId);
+            connector.afterContainerStarted(dockerApi, template, containerId);
         } catch (DockerException e) {
             // if something went wrong, cleanup aborted container
             client.removeContainerCmd(containerId).withForce(true).exec();
@@ -391,7 +391,7 @@ public class DockerCloud extends Cloud {
                 template.getNumExecutors(),
                 template.getMode(),
                 template.getLabelString(),
-                connector.launch(this, containerId, template, listener),
+                connector.launch(dockerApi, containerId, template, listener),
                 template.getRetentionStrategyCopy(),
                 template.getNodeProperties());
 
