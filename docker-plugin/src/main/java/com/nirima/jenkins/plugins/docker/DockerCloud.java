@@ -277,7 +277,7 @@ public class DockerCloud extends Cloud {
                 final DockerTemplate t = templates.get(0); // get first
 
                 LOGGER.info("Will provision '{}', for label: '{}', in cloud: '{}'",
-                        t.getDockerTemplateBase().getImage(), label, getDisplayName());
+                        t.getImage(), label, getDisplayName());
 
                 try {
                     if (!addProvisionedSlave(t)) {
@@ -286,13 +286,13 @@ public class DockerCloud extends Cloud {
                     }
                 } catch (Exception e) {
                     LOGGER.warn("Bad template '{}' in cloud '{}': '{}'. Trying next template...",
-                            t.getDockerTemplateBase().getImage(), getDisplayName(), e.getMessage(), e);
+                            t.getImage(), getDisplayName(), e.getMessage(), e);
                     templates.remove(t);
                     continue;
                 }
 
                 r.add(new NodeProvisioner.PlannedNode(
-                        t.getDockerTemplateBase().getDisplayName(),
+                        t.getDisplayName(),
                         Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                             public Node call() throws Exception {
                                 try {
@@ -303,7 +303,7 @@ public class DockerCloud extends Cloud {
                                             t, getDisplayName(), ex);
                                     throw Throwables.propagate(ex);
                                 } finally {
-                                    decrementAmiSlaveProvision(t.getDockerTemplateBase().getImage());
+                                    decrementAmiSlaveProvision(t.getImage());
                                 }
                             }
                         }),
@@ -549,7 +549,7 @@ public class DockerCloud extends Cloud {
      * Check not too many already running.
      */
     private synchronized boolean addProvisionedSlave(DockerTemplate t) throws Exception {
-        String ami = t.getDockerTemplateBase().getImage();
+        String ami = t.getImage();
         int amiCap = t.instanceCap;
 
         int estimatedTotalSlaves = countCurrentDockerSlaves(null);
