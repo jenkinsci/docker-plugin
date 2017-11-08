@@ -1,12 +1,9 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.Credentials;
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -24,10 +21,6 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
-import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
-import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
-import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
-import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlugin;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -41,6 +34,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
@@ -67,7 +61,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
@@ -91,13 +84,16 @@ public class DockerCloud extends Cloud {
     private transient String serverUrl;
     @Deprecated
     public  transient String credentialsId;
+    @Deprecated
+    private transient int connectTimeout;
+    @Deprecated
+    private transient int readTimeout;
+    @Deprecated
+    private transient String version;
+    @Deprecated
+    private transient String dockerHostname;
 
-    private int connectTimeout;
-    public final int readTimeout;
-    public final String version;
-    public final String dockerHostname;
-
-    private transient DockerClient connection;
+    private DockerAPI dockerApi;
 
     /**
      * Total max allowed number of containers
@@ -128,6 +124,20 @@ public class DockerCloud extends Cloud {
 
     @DataBoundConstructor
     public DockerCloud(String name,
+                       DockerAPI dockerApi,
+                       List<? extends DockerTemplate> templates) {
+
+        super(name);
+        this.dockerApi = dockerApi;
+        if (templates != null) {
+            this.templates = new ArrayList<>(templates);
+        } else {
+            this.templates = new ArrayList<>();
+        }
+    }
+
+    @Deprecated
+    public DockerCloud(String name,
                        List<? extends DockerTemplate> templates,
                        DockerServerEndpoint dockerHost,
                        int containerCap,
@@ -135,20 +145,7 @@ public class DockerCloud extends Cloud {
                        int readTimeout,
                        String version,
                        String dockerHostname) {
-        super(name);
-        this.version = version;
-        this.dockerHost = dockerHost;
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
-        this.dockerHostname = dockerHostname;
-
-        if (templates != null) {
-            this.templates = new ArrayList<>(templates);
-        } else {
-            this.templates = new ArrayList<>();
-        }
-
-        setContainerCap(containerCap);
+        this(name, new DockerAPI(dockerHost, connectTimeout, version, dockerHostname), templates);
     }
 
     @Deprecated
@@ -180,13 +177,19 @@ public class DockerCloud extends Cloud {
     }
 
 
+    public DockerAPI getDockerApi() {
+        return dockerApi;
+    }
+
+    @Deprecated
     public int getConnectTimeout() {
-        return connectTimeout;
+        return dockerApi.getConnectTimeout();
     }
 
 
+    @Deprecated
     public DockerServerEndpoint getDockerHost() {
-        return dockerHost;
+        return dockerApi.getDockerHost();
     }
 
     @Deprecated
@@ -194,8 +197,9 @@ public class DockerCloud extends Cloud {
         return getDockerHost().getUri();
     }
 
+    @Deprecated
     public String getDockerHostname() {
-        return dockerHostname;
+        return dockerApi.getHostname();
     }
 
     /**
@@ -214,6 +218,7 @@ public class DockerCloud extends Cloud {
         return containerCap;
     }
 
+    @DataBoundSetter
     public void setContainerCap(int containerCap) {
         this.containerCap = containerCap;
     }
@@ -231,22 +236,7 @@ public class DockerCloud extends Cloud {
      * @return Docker client.
      */
     public synchronized DockerClient getClient() {
-        if (connection == null) {
-            final DockerClientConfig clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
-                    .forCloud(this)
-                    .build();
-
-            final DockerCmdExecConfig execConfig = DockerCmdExecConfigBuilderForPlugin.builder()
-                    .forCloud(this)
-                    .build();
-
-            connection = ClientBuilderForPlugin.builder()
-                    .withDockerClientConfig(clientConfig)
-                    .withDockerCmdExecConfig(execConfig)
-                    .build();
-        }
-
-        return connection;
+        return dockerApi.getClient();
     }
 
     /**
@@ -595,10 +585,13 @@ public class DockerCloud extends Cloud {
             template.readResolve();
         }
 
-        if (dockerHost == null) {
+        if (dockerHost == null && serverUrl != null) {
             serverUrl = sanitizeUrl(serverUrl);
             // migration to docker-commons
             dockerHost = new DockerServerEndpoint(serverUrl, credentialsId);
+        }
+        if (dockerApi == null) {
+            dockerApi = new DockerAPI(dockerHost, connectTimeout, version, dockerHostname);
         }
 
         return this;
@@ -673,48 +666,6 @@ public class DockerCloud extends Cloud {
         @Override
         public String getDisplayName() {
             return "Docker";
-        }
-
-        public FormValidation doTestConnection(
-                @QueryParameter String uri,
-                @QueryParameter String credentialsId,
-                @QueryParameter String version,
-                @QueryParameter Integer readTimeout,
-                @QueryParameter Integer connectTimeout
-        ) throws IOException, ServletException, DockerException {
-            try {
-                final DockerClientConfig clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
-                        .forServer(uri, version)
-                        .withCredentials(credentialsId)
-                        .build();
-
-                final DockerCmdExecConfig execConfig = DockerCmdExecConfigBuilderForPlugin.builder()
-                        .withReadTimeout(readTimeout)
-                        .withConnectTimeout(connectTimeout)
-                        .build();
-
-                DockerClient dc = ClientBuilderForPlugin.builder()
-                        .withDockerClientConfig(clientConfig)
-                        .withDockerCmdExecConfig(execConfig)
-                        .build();
-
-                Version verResult = dc.versionCmd().exec();
-
-                return FormValidation.ok("Version = " + verResult.getVersion() + ", API Version = " + verResult.getApiVersion());
-            } catch (Exception e) {
-                return FormValidation.error(e, e.getMessage());
-            }
-        }
-
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String value) {
-            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
-            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
-                return new StandardListBoxModel().includeCurrentValue(value);
-            }
-
-            return new StandardListBoxModel().includeAs(
-                    ACL.SYSTEM, context, DockerServerCredentials.class,
-                    Collections.<DomainRequirement>emptyList());
         }
     }
 

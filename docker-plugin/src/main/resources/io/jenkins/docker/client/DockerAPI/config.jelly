@@ -1,0 +1,24 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" >
+
+    <f:property field="dockerHost"/>
+
+    <f:advanced>
+        <f:entry title="${%Docker API Version}" field="apiVersion">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="${%Connection Timeout (seconds)}" field="connectTimeout">
+            <f:textbox default="60"/>
+        </f:entry>
+
+        <f:entry title="${%Docker Hostname or IP address}" field="hostname">
+            <f:textbox/>
+        </f:entry>
+    </f:advanced>
+
+    <!-- we can't pass dockerhost here, need to "flatmap" it's attributes -->
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
+                      with="uri,credentialsId,apiVersion,connectTimeout"/>
+
+</j:jelly>

@@ -7,7 +7,6 @@ import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
-import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
@@ -18,10 +17,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
-import com.nirima.jenkins.plugins.docker.client.ClientBuilderForPlugin;
-import com.nirima.jenkins.plugins.docker.client.ClientConfigBuilderForPlugin;
-import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfig;
-import com.nirima.jenkins.plugins.docker.client.DockerCmdExecConfigBuilderForPlugin;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.AbortException;
 import hudson.Extension;
@@ -38,6 +33,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
@@ -252,16 +248,12 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         final List<String> tagsToUse;
 
+        private final DockerAPI dockerApi;
+
         // Marshal the builder across the wire.
         private transient DockerClient _client;
 
-        final DockerClientConfig clientConfig;
-        final DockerCmdExecConfig dockerCmdExecConfig;
-
         final transient hudson.model.Run<?, ?> run;
-
-        final String url;
-
 
         private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerCloud dockerCloud) {
 
@@ -270,15 +262,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             this.listener = listener;
             this.fpChild = fpChild;
             this.tagsToUse = tagsToUse;
-
-
-            // Don't build it yet. This may happen on a remote server.
-            clientConfig = ClientConfigBuilderForPlugin.dockerClientConfig()
-                    .forCloud(dockerCloud).build();
-            dockerCmdExecConfig = DockerCmdExecConfigBuilderForPlugin.builder()
-                    .forCloud(dockerCloud).build();
-
-            url = dockerCloud.getDockerHost().getUri();
+            this.dockerApi = dockerCloud.getDockerApi();
 
         }
 
@@ -288,13 +272,10 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         private DockerClient getClient() {
             if (_client == null) {
-                Validate.notNull(clientConfig, "Could not get client because we could not find the cloud that the " +
+                Validate.notNull(dockerApi, "Could not get client because we could not find the cloud that the " +
                         "project was built on. Was this build run on Docker?");
 
-                _client = ClientBuilderForPlugin.builder()
-                        .withDockerCmdExecConfig(dockerCmdExecConfig)
-                        .withDockerClientConfig(clientConfig)
-                        .build();
+                _client = dockerApi.getClient();
             }
 
             return _client;
@@ -313,7 +294,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             log("Docker Build Response : " + imageId);
 
             // Add an action to the build
-            run.addAction(new DockerBuildImageAction(url, imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
+            run.addAction(new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
             run.save();
 
             if (pushOnSuccess) {
