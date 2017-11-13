@@ -19,6 +19,7 @@ import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -102,8 +103,10 @@ public class DockerNodeStep extends Step {
 
             // TODO launch asynchronously, not in CPS VM thread
             listener.getLogger().println("Launching new docker node based on "+image);
+
             final DockerAPI api = new DockerAPI(new DockerServerEndpoint(dockerHost, null));
             final DockerSlave slave = t.provisionFromTemplate(listener, api);
+
             Jenkins.getInstance().addNode(slave);
 
             // FIXME we need to wait for node to be online ...
@@ -113,18 +116,36 @@ public class DockerNodeStep extends Step {
             }
             listener.getLogger().println("Node is connected.");
 
-            final FilePath ws = slave.createPath(remoteFs);
+            final FilePath ws = slave.createPath(remoteFs+"/workspace");
             FlowNode flowNode = getContext().get(FlowNode.class);
             flowNode.addAction(new WorkspaceActionImpl(ws, flowNode));
-            getContext().newBodyInvoker().withContexts(slave.toComputer(), ws).start();
+            getContext().newBodyInvoker().withCallback(new Callback(slave)).withContexts(slave.toComputer(), ws).start();
 
             return false;
         }
 
         @Override
-        public void stop(@Nonnull Throwable throwable) throws Exception {
-            final DockerSlave slave = getContext().get(DockerSlave.class);
-            if (slave != null) slave.terminate();
+        public void stop(@Nonnull Throwable cause) throws Exception {
+            
+        }
+    }
+
+
+    private static class Callback extends BodyExecutionCallback.TailCall {
+
+        private final String nodeName;
+
+        public Callback(DockerSlave node) {
+            this.nodeName = node.getNodeName();
+        }
+
+        @Override
+        protected void finished(StepContext context) throws Exception {
+            final DockerSlave node = (DockerSlave) Jenkins.getInstance().getNode(nodeName);
+            if (node != null) {
+                node.terminate();
+                Jenkins.getInstance().removeNode(node);
+            }
         }
     }
 
