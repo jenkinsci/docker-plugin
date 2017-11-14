@@ -7,6 +7,7 @@ import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.core.command.CreateContainerCmdImpl;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import io.jenkins.docker.client.DockerAPI;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -23,7 +24,7 @@ public class DockerComputerSSHConnectorTest {
         cmd.withPortBindings(PortBinding.parse("42:42"));
 
         connector.setPort(22);
-        connector.beforeContainerCreated(Mockito.mock(DockerCloud.class), Mockito.mock(DockerTemplate.class), cmd);
+        connector.beforeContainerCreated(Mockito.mock(DockerAPI.class), Mockito.mock(DockerTemplate.class), cmd);
         final Ports portBindings = cmd.getPortBindings();
         Assert.assertNotNull(portBindings);
         final Map<ExposedPort, Ports.Binding[]> bindingMap = portBindings.getBindings();
