@@ -33,8 +33,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 
-import static hudson.plugins.sshslaves.SSHLauncher.lookupSystemCredentials;
-
 /**
  * Utilities to fetch things out of jenkins environment.
  */

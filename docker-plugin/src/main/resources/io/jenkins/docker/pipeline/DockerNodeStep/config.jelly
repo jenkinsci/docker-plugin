@@ -5,6 +5,10 @@
     <f:textbox/>
   </f:entry>
 
+  <f:entry field="credentialsId" title="Docker API credentials">
+    <c:select/>
+  </f:entry>
+
   <f:entry title="Docker image" field="image">
     <f:textbox/>
   </f:entry>
