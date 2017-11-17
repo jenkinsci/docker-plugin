@@ -1,21 +1,14 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.google.common.base.Strings;
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Launcher;
-import hudson.model.Build;
 import hudson.model.Run;
-import com.google.common.base.Strings;
-
-import com.github.dockerjava.api.DockerClient;
-import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerSlave;
-import hudson.model.AbstractBuild;
-import hudson.model.Node;
 import jenkins.model.Jenkins;
 
-import com.google.common.base.Optional;
-
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 
 /**

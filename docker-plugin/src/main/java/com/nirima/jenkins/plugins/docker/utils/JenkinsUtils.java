@@ -1,24 +1,9 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerSlave;
-
-import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Map;
-
-import javax.annotation.Nullable;
-
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
@@ -27,11 +12,17 @@ import hudson.model.Run;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.slaves.Cloud;
+import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
+import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Utilities to fetch things out of jenkins environment.
@@ -46,12 +37,11 @@ public class JenkinsUtils {
     public static Optional<DockerCloud> getCloudForBuild(AbstractBuild build) {
 
         Node node = build.getBuiltOn();
-        if (node instanceof DockerSlave) {
-            DockerSlave slave = (DockerSlave) node;
-            return Optional.of(slave.getCloud());
+        if (node instanceof DockerTransientNode) {
+            return Optional.of(((DockerTransientNode) node).getCloud());
         }
 
-        return Optional.absent();
+        return Optional.empty();
     }
 
     /**
@@ -62,13 +52,12 @@ public class JenkinsUtils {
         if( channel instanceof Channel) {
             Channel c = (Channel)channel;
             Node node = Jenkins.getInstance().getNode( c.getName() );
-            if (node instanceof DockerSlave) {
-                DockerSlave slave = (DockerSlave) node;
-                return Optional.of(slave.getCloud());
+            if (node instanceof DockerTransientNode) {
+                return Optional.of(((DockerTransientNode) node).getCloud());
             }
         }
 
-        return Optional.absent();
+        return Optional.empty();
     }
 
     public static Optional<DockerCloud> getCloudThatWeBuiltOn(Run<?,?> build, Launcher launcher) {

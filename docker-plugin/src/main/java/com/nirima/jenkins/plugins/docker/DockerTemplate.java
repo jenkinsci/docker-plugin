@@ -18,13 +18,16 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
+import hudson.model.Slave;
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
+import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
@@ -267,14 +270,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return retentionStrategy;
     }
 
-    /**
-     * tmp fix for terminating boolean caching
-     */
     public RetentionStrategy getRetentionStrategyCopy() {
-        if (retentionStrategy instanceof DockerOnceRetentionStrategy) {
-            DockerOnceRetentionStrategy onceRetention = (DockerOnceRetentionStrategy) retentionStrategy;
-            return new DockerOnceRetentionStrategy(onceRetention.getIdleMinutes());
-        }
         return retentionStrategy;
     }
 
@@ -453,7 +449,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @Restricted(NoExternalUse.class)
-    public DockerSlave provisionFromTemplate(TaskListener listener, DockerAPI api) throws IOException, Descriptor.FormException, InterruptedException {
+    public Node provisionNode(TaskListener listener, DockerAPI api) throws IOException, Descriptor.FormException, InterruptedException {
 
         final DockerClient client = api.getClient();
         final DockerComputerConnector connector = getConnector();
@@ -479,20 +475,16 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             throw e;
         }
 
-        DockerSlave slave = new DockerSlave(this, containerId,
-                 "docker-" + containerId.substring(0,12),
-                "Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + "]",
-                getRemoteFs(),
-                getNumExecutors(),
-                getMode(),
-                getLabelString(),
-                connector.launch(api, containerId, this, listener),
-                getRetentionStrategyCopy(),
-                getNodeProperties());
-
-        slave.setContainerId(containerId);
-        slave.setDockerAPI(api);
-        return slave;
+        final ComputerLauncher launcher = connector.createLauncher(api, containerId, this, listener);
+        DockerTransientNode node = new DockerTransientNode(containerId, remoteFs, launcher);
+        node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + "]");
+        node.setMode(mode);
+        node.setLabelString(labelString);
+        node.setRetentionStrategy(retentionStrategy);
+        node.setNodeProperties(nodeProperties);
+        node.setRemoveVolumes(removeVolumes);
+        node.setDockerAPI(api);
+        return node;
     }
 
     @Extension
@@ -510,7 +502,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
          */
         public List<NodePropertyDescriptor> getNodePropertyDescriptors() {
-            DockerSlave.DescriptorImpl descriptor = (DockerSlave.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(DockerSlave.class);
+            Slave.SlaveDescriptor descriptor = (Slave.SlaveDescriptor) Jenkins.getInstance().getDescriptorOrDie(Slave.class);
             final List<NodePropertyDescriptor> descriptors = descriptor.nodePropertyDescriptors(null);
 
             final Iterator<NodePropertyDescriptor> iterator = descriptors.iterator();

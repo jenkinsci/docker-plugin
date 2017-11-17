@@ -4,6 +4,7 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildVariableContributor;
 import hudson.model.Executor;
+import io.jenkins.docker.DockerComputer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Map;

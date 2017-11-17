@@ -273,8 +273,8 @@ public class DockerCloud extends Cloud {
                                 try {
                                     // TODO where can we log provisioning progress ?
                                     final DockerAPI api = DockerCloud.this.getDockerApi();
-                                    final DockerSlave slave = t.provisionFromTemplate(TaskListener.NULL, api);
-                                    slave.setCloudId(DockerCloud.this.name);
+                                    final Node slave = t.provisionNode(TaskListener.NULL, api);
+                                    // FIXME slave.setCloudId(DockerCloud.this.name);
                                     return slave;
                                 } catch (Exception ex) {
                                     LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",

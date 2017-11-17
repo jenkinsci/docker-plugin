@@ -84,7 +84,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
         return workdir + '/' + remoting.getName();
     }
 
-    public final ComputerLauncher launch(DockerAPI api, @Nonnull String containerId, DockerTemplate template, TaskListener listener) throws IOException, InterruptedException {
+    public final ComputerLauncher createLauncher(DockerAPI api, @Nonnull String containerId, DockerTemplate template, TaskListener listener) throws IOException, InterruptedException {
 
         final InspectContainerResponse inspect = api.getClient().inspectContainerCmd(containerId).exec();
         final Boolean running = inspect.getState().getRunning();
@@ -93,13 +93,13 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
             throw new IOException("Container is not running.");
         }
 
-        return launch(api, template, inspect, listener);
+        return createLauncher(api, template, inspect, listener);
     }
 
     /**
      * Create a Launcher to create an Agent with this container. Can assume container has been created by this
      * DockerAgentConnector so adequate setup did take place.
      */
-    protected abstract ComputerLauncher launch(DockerAPI api, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
+    protected abstract ComputerLauncher createLauncher(DockerAPI api, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
 
 }

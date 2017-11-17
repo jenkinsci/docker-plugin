@@ -1,20 +1,20 @@
 package com.nirima.jenkins.plugins.docker.strategy;
 
+import io.jenkins.docker.DockerComputer;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Executor;
 import hudson.model.ExecutorListener;
 import hudson.model.Queue;
-import hudson.slaves.AbstractCloudComputer;
-import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.EphemeralNode;
 import hudson.slaves.RetentionStrategy;
+import io.jenkins.docker.DockerTransientNode;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.io.IOException;
+import javax.annotation.Nonnull;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,7 +27,7 @@ import static hudson.util.TimeUnit2.MINUTES;
  * Retention strategy that allows a cloud slave to run only a single build before disconnecting.
  * A {@link ContinuableExecutable} does not trigger termination.
  */
-public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implements ExecutorListener {
+public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerComputer> implements ExecutorListener {
 
     private static final Logger LOGGER = Logger.getLogger(DockerOnceRetentionStrategy.class.getName());
 
@@ -41,7 +41,6 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
      */
     @DataBoundConstructor
     public DockerOnceRetentionStrategy(int idleMinutes) {
-        super(idleMinutes);
         this.timeout = idleMinutes;
     }
 
@@ -50,14 +49,14 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
     }
 
     @Override
-    public long check(final AbstractCloudComputer c) {
+    public long check(@Nonnull DockerComputer c) {
         // When the slave is idle we should disable accepting tasks and check to see if it is already trying to
         // terminate. If it's not already trying to terminate then lets terminate manually.
-        if (c.isIdle() && !disabled) {
+        if (c.isIdle()) {
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
             if (idleMilliseconds > MINUTES.toMillis(timeout)) {
                 LOGGER.log(Level.FINE, "Disconnecting {0}", c.getName());
-                done(c);
+                done(c, null);
             }
         }
 
@@ -66,11 +65,11 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
     }
 
     @Override
-    public void start(AbstractCloudComputer c) {
+    public void start(DockerComputer c) {
         if (c.getNode() instanceof EphemeralNode) {
             throw new IllegalStateException("May not use OnceRetentionStrategy on an EphemeralNode: " + c);
         }
-        super.start(c);
+        c.connect(true);
     }
 
     @Override
@@ -88,17 +87,17 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
     }
 
     private void done(Executor executor) {
-        final AbstractCloudComputer<?> c = (AbstractCloudComputer) executor.getOwner();
+        final DockerComputer c = (DockerComputer) executor.getOwner();
         Queue.Executable exec = executor.getCurrentExecutable();
         if (exec instanceof ContinuableExecutable && ((ContinuableExecutable) exec).willContinue()) {
             LOGGER.log(Level.FINE, "not terminating {0} because {1} says it will be continued", new Object[]{c.getName(), exec});
             return;
         }
         LOGGER.log(Level.FINE, "terminating {0} since {1} seems to be finished", new Object[]{c.getName(), exec});
-        done(c);
+        done(c, exec);
     }
 
-    private void done(final AbstractCloudComputer<?> c) {
+    private void done(final DockerComputer c, Queue.Executable exec) {
         c.setAcceptingTasks(false); // just in case
         synchronized (this) {
             if (terminating) {
@@ -106,26 +105,13 @@ public class DockerOnceRetentionStrategy extends CloudRetentionStrategy implemen
             }
             terminating = true;
         }
-        Computer.threadPoolForRemoting.submit(new Runnable() {
-            @Override
-            public void run() {
-                Queue.withLock( new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            AbstractCloudSlave node = c.getNode();
-                            if (node != null) {
-                                node.terminate();
-                            }
-                        } catch (InterruptedException | IOException e) {
-                            LOGGER.log(Level.WARNING, "Failed to terminate " + c.getName(), e);
-                            synchronized (DockerOnceRetentionStrategy.this) {
-                                terminating = false;
-                            }
-                        }
-                    }
-                });
-            }
+        Computer.threadPoolForRemoting.submit(() -> {
+            Queue.withLock( () -> {
+                DockerTransientNode node = c.getNode();
+                if (node != null) {
+                    node.terminate(c.getListener(), exec);
+                }
+            });
         });
     }
 

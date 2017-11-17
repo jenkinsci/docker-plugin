@@ -5,6 +5,7 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import io.jenkins.docker.DockerTransientNode;
 import org.jenkinsci.plugins.tokenmacro.DataBoundTokenMacro;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 
@@ -18,9 +19,8 @@ public class DockerHostTokenMacro extends DataBoundTokenMacro {
     @Override
     public String evaluate(AbstractBuild<?, ?> abstractBuild, TaskListener taskListener, String s) throws MacroEvaluationException, IOException, InterruptedException {
         Node node = abstractBuild.getBuiltOn();
-        if( node instanceof DockerSlave) {
-            DockerSlave dockerSlave = (DockerSlave)node;
-            return dockerSlave.getContainerId();
+        if( node instanceof DockerTransientNode) {
+            return ((DockerTransientNode) node).getContainerId();
         }
 
         return null;

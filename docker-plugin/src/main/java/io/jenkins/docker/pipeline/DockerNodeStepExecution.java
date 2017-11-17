@@ -1,11 +1,11 @@
 package io.jenkins.docker.pipeline;
 
-import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.FilePath;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import jenkins.model.Jenkins;
@@ -54,7 +54,7 @@ class DockerNodeStepExecution extends StepExecution {
         listener.getLogger().println("Launching new docker node based on " + image);
 
         final DockerAPI api = new DockerAPI(new DockerServerEndpoint(dockerHost, credentialsId));
-        final DockerSlave slave = t.provisionFromTemplate(listener, api);
+        final Node slave = t.provisionNode(listener, api);
 
         Jenkins.getInstance().addNode(slave);
 
@@ -82,17 +82,17 @@ class DockerNodeStepExecution extends StepExecution {
 
         private final String nodeName;
 
-        public Callback(DockerSlave node) {
+        public Callback(Node node) {
             this.nodeName = node.getNodeName();
         }
 
         @Override
         protected void finished(StepContext context) throws Exception {
-            final DockerSlave node = (DockerSlave) Jenkins.getInstance().getNode(nodeName);
+            final DockerTransientNode node = (DockerTransientNode) Jenkins.getInstance().getNode(nodeName);
             if (node != null) {
                 TaskListener listener = context.get(TaskListener.class);
                 listener.getLogger().println("Waiting for node to be online ...");
-                node.terminate();
+                node.terminate(listener, null);
                 Jenkins.getInstance().removeNode(node);
             }
         }
