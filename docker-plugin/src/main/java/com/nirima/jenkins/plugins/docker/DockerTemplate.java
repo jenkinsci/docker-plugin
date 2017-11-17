@@ -16,6 +16,7 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Slave;
@@ -43,6 +44,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -502,10 +505,19 @@ public class DockerTemplate implements Describable<DockerTemplate> {
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
          */
         public List<NodePropertyDescriptor> getNodePropertyDescriptors() {
-            Slave.SlaveDescriptor descriptor = (Slave.SlaveDescriptor) Jenkins.getInstance().getDescriptorOrDie(Slave.class);
-            final List<NodePropertyDescriptor> descriptors = descriptor.nodePropertyDescriptors(null);
 
-            final Iterator<NodePropertyDescriptor> iterator = descriptors.iterator();
+            // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
+            List<NodePropertyDescriptor> result = new ArrayList<NodePropertyDescriptor>();
+            Collection<NodePropertyDescriptor> list =
+                    (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
+            for (NodePropertyDescriptor npd : DescriptorVisibilityFilter.applyType(DockerTransientNode.class, list)) {
+                if (npd.isApplicable(DockerTransientNode.class)) {
+                    result.add(npd);
+                }
+            }
+
+
+            final Iterator<NodePropertyDescriptor> iterator = result.iterator();
             while (iterator.hasNext()) {
                 final NodePropertyDescriptor de = iterator.next();
                 // see https://issues.jenkins-ci.org/browse/JENKINS-47697
@@ -513,7 +525,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                     iterator.remove();
                 }
             }
-            return descriptors;
+            return result;
         }
 
         @Override
