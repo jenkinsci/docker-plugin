@@ -34,8 +34,6 @@ public class DockerTransientNode extends Slave {
 
     private String cloudId;
 
-    private Callback callback;
-
     public DockerTransientNode(String containerId, String remoteFS, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
         super("docker-" + containerId.substring(0,12), remoteFS, launcher);
         setNumExecutors(1);
@@ -50,6 +48,10 @@ public class DockerTransientNode extends Slave {
 
     public void setDockerAPI(DockerAPI dockerAPI) {
         this.dockerAPI = dockerAPI;
+    }
+
+    public DockerAPI getDockerAPI() {
+        return dockerAPI;
     }
 
     public boolean isRemoveVolumes() {
@@ -67,12 +69,6 @@ public class DockerTransientNode extends Slave {
     public void setCloudId(String cloudId) {
         this.cloudId = cloudId;
     }
-
-    public void setCallback(Callback callback) {
-        this.callback = callback;
-    }
-
-
 
     @Override
     public DockerComputer createComputer() {
@@ -103,8 +99,6 @@ public class DockerTransientNode extends Slave {
                     listener.error("Failed to stop instance " + getContainerId() + " for slave " + name + " due to exception", ex.getMessage());
                     listener.error("Causing exception for failure on stopping the instance was", ex);
                 }
-
-                callback.onCompletion(this, exec);
 
                 try {
                     client.removeContainerCmd(containerId)
@@ -139,16 +133,5 @@ public class DockerTransientNode extends Slave {
 
         return (DockerCloud) cloud;
     }
-
-    public static interface Callback extends Serializable {
-
-        /**
-         * Callback to get notified as container has been stopped and will be removed.
-         * The {@link Queue.Executable} assigned to this {@link DockerTransientNode} si also passed, but may be
-         * <code>null</code> as something went wrong during provisioning.
-         */
-        void onCompletion(DockerTransientNode dockerTransientNode, @CheckForNull Queue.Executable exec);
-    }
-
 
 }

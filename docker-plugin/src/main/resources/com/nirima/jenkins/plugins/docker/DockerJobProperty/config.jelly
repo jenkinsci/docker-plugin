@@ -10,9 +10,7 @@
             <f:textbox/>
         </f:entry>
 
-        <f:entry title="${%Push on successful build}" field="pushOnSuccess">
-            <f:checkbox/>
-        </f:entry>
+        <f:optionalProperty title="${%Push on successful build}" field="registry"/>
 
         <f:entry title="${%Clean local images}" field="cleanImages">
             <f:checkbox default="true"/>
