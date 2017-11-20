@@ -64,8 +64,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     @Deprecated
     private transient DockerComputerLauncher launcher;
 
-    public final String remoteFsMapping;
-
     public String remoteFs = "/home/jenkins";
 
     public final int instanceCap;
@@ -93,7 +91,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      */
     public DockerTemplate() {
         this.labelString = "";
-        this.remoteFsMapping = Jenkins.getInstance().getRootDir().getAbsolutePath();
         this.instanceCap = 1;
     }
 
@@ -101,14 +98,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
                           String labelString,
                           String remoteFs,
-                          String remoteFsMapping,
                           String instanceCapStr,
                           List<? extends NodeProperty<?>> nodeProperties
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.labelString = Util.fixNull(labelString);
         this.remoteFs = Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
-        this.remoteFsMapping = remoteFsMapping;
 
         if (instanceCapStr.equals("")) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -303,10 +298,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return instanceCap;
     }
 
-    public String getRemoteFsMapping() {
-        return remoteFsMapping;
-    }
-
     public Set<LabelAtom> getLabelSet() {
         return labelSet;
     }
@@ -383,7 +374,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Restricted(NoExternalUse.class)
     public DockerTemplate cloneWithLabel(String label) {
-        final DockerTemplate template = new DockerTemplate(dockerTemplateBase, label, remoteFs, remoteFsMapping, "1", nodeProperties);
+        final DockerTemplate template = new DockerTemplate(dockerTemplateBase, label, remoteFs, "1", nodeProperties);
         template.setConnector(connector);
         template.setMode(Node.Mode.EXCLUSIVE);
         template.setNumExecutors(1);
@@ -399,7 +390,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 "configVersion=" + configVersion +
                 ", labelString='" + labelString + '\'' +
                 ", connector=" + connector +
-                ", remoteFsMapping='" + remoteFsMapping + '\'' +
                 ", remoteFs='" + remoteFs + '\'' +
                 ", instanceCap=" + instanceCap +
                 ", mode=" + mode +

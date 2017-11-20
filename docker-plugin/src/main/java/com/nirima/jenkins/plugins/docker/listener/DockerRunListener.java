@@ -32,7 +32,7 @@ public class DockerRunListener extends RunListener<Run<?,?>> {
             if (n instanceof DockerTransientNode) {
                 DockerTransientNode node = (DockerTransientNode) n;
                 build.addAction(new DockerBuildAction(node.getDockerAPI().getDockerHost().getUri(),
-                        node.getContainerId(), null, null));
+                        node.getContainerId(), null));
             }
         }
     }

@@ -60,10 +60,6 @@ f.advanced(title: _("Experimental Options"), align: "left") {
 f.dropdownDescriptorSelector(field: "connector", title: _("Connect method"),
         descriptors: DockerFunctions.dockerComputerConnectorDescriptors)
 
-f.entry(title: _("Remote FS Root Mapping"), field: "remoteFsMapping") {
-    f.textbox()
-}
-
 f.entry(title: _("Remove volumes"), field: "removeVolumes") {
     f.checkbox()
 }

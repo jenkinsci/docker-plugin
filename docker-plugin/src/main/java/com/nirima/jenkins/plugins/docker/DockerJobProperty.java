@@ -14,21 +14,16 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Job;
-import hudson.model.JobProperty;
-import hudson.model.JobPropertyDescriptor;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
 import jenkins.model.OptionalJobProperty;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.export.Exported;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,7 +178,7 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
     }
 
     private void addJenkinsAction(AbstractBuild build, String dockerHost, String containerId, String tag_image) throws IOException {
-        build.addAction(new DockerBuildAction(dockerHost, containerId, tag_image, null));
+        build.addAction(new DockerBuildAction(dockerHost, containerId, tag_image));
         build.save();
     }
 

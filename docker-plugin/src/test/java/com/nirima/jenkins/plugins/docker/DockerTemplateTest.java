@@ -49,7 +49,6 @@ public class DockerTemplateTest {
                 dockerTemplateBase,
                 labelString,
                 remoteFs,
-                remoteFsMapping,
                 instanceCapStr,
                 null
         );
