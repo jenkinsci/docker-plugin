@@ -92,7 +92,7 @@ class DockerNodeStepExecution extends StepExecution {
             if (node != null) {
                 TaskListener listener = context.get(TaskListener.class);
                 listener.getLogger().println("Waiting for node to be online ...");
-                node.terminate(listener, null);
+                node.terminate(listener);
                 Jenkins.getInstance().removeNode(node);
             }
         }

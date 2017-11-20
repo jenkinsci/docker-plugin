@@ -32,7 +32,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
     private static final Logger LOGGER = Logger.getLogger(DockerOnceRetentionStrategy.class.getName());
 
     private int timeout = 10;
-    private transient boolean terminating;
+    private transient volatile boolean terminating;
 
     /**
      * Creates the retention strategy.
@@ -56,7 +56,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
             if (idleMilliseconds > MINUTES.toMillis(timeout)) {
                 LOGGER.log(Level.FINE, "Disconnecting {0}", c.getName());
-                done(c, null);
+                done(c);
             }
         }
 
@@ -94,22 +94,20 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
             return;
         }
         LOGGER.log(Level.FINE, "terminating {0} since {1} seems to be finished", new Object[]{c.getName(), exec});
-        done(c, exec);
+        done(c);
     }
 
-    private void done(final DockerComputer c, Queue.Executable exec) {
+    private synchronized void done(final DockerComputer c) {
         c.setAcceptingTasks(false); // just in case
-        synchronized (this) {
-            if (terminating) {
-                return;
-            }
-            terminating = true;
+        if (terminating) {
+            return;
         }
+        terminating = true;
         Computer.threadPoolForRemoting.submit(() -> {
             Queue.withLock( () -> {
                 DockerTransientNode node = c.getNode();
                 if (node != null) {
-                    node.terminate(c.getListener(), exec);
+                    node.terminate(c.getListener());
                 }
             });
         });

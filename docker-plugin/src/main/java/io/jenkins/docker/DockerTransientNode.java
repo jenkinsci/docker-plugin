@@ -75,7 +75,7 @@ public class DockerTransientNode extends Slave {
         return new DockerComputer(this);
     }
 
-    public void terminate(TaskListener listener, Queue.Executable exec) {
+    public void terminate(TaskListener listener) {
         try {
             toComputer().disconnect(new DockerOfflineCause());
             listener.getLogger().println("Disconnected computer");
@@ -122,7 +122,6 @@ public class DockerTransientNode extends Slave {
         } catch (IOException e) {
             listener.error("Failed to remove Docker Node", e);
         }
-
     }
 
     public DockerCloud getCloud() {
