@@ -1,0 +1,14 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:entry title="${%Additional tag to add}" field="additionalTag">
+        <f:textbox/>
+    </f:entry>
+
+    <f:optionalProperty title="${%Push on successful build}" field="registry"/>
+
+    <f:entry title="${%Clean local images}" field="cleanImages">
+        <f:checkbox default="true"/>
+    </f:entry>
+
+</j:jelly>

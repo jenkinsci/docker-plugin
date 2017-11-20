@@ -21,6 +21,7 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
+import jenkins.model.OptionalJobProperty;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
@@ -37,15 +38,10 @@ import java.io.IOException;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 
 
-public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
+public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerJobProperty.class.getName());
 
-
-    /**
-     * Tag on completion (commit).
-     */
-    public final boolean tagOnCompletion;
 
     public final String additionalTag;
 
@@ -54,18 +50,16 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
     private DockerRegistryEndpoint registry;
 
     public final boolean cleanImages;
-    public final DockerJobTemplateProperty dockerJobTemplate;
+
+    @Deprecated
+    private DockerJobTemplateProperty dockerJobTemplate;
 
     @DataBoundConstructor
     public DockerJobProperty(
-            boolean tagOnCompletion,
             String additionalTag,
-            boolean cleanImages,
-            DockerJobTemplateProperty dockerJobTemplate) {
-        this.tagOnCompletion = tagOnCompletion;
+            boolean cleanImages) {
         this.additionalTag = additionalTag;
         this.cleanImages = cleanImages;
-        this.dockerJobTemplate = dockerJobTemplate;
     }
 
     @Exported
@@ -76,11 +70,6 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
     @Exported
     public boolean isPushOnSuccess() {
         return pushOnSuccess;
-    }
-
-    @Exported
-    public boolean isTagOnCompletion() {
-        return tagOnCompletion;
     }
 
     @Exported
@@ -115,13 +104,6 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
         final String containerId = dockerNode.getContainerId();
         final DockerClient client = dockerNode.getDockerAPI().getClient();
         final String dockerHost = dockerNode.getDockerAPI().getDockerHost().getUri();
-
-        // The slave has stopped. Should we commit / tag / push ?
-
-        if (!tagOnCompletion) {
-            addJenkinsAction(build, dockerHost, containerId, null);
-            return true;
-        }
 
         // Commit
         String tag_image = client.commitCmd(containerId)
@@ -195,7 +177,7 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
             if (!Strings.isNullOrEmpty(tagToken))
                 tagToken = TokenMacro.expandAll(build, listener, tagToken);
         } catch (Exception e) {
-            LOGGER.warn("can't expand macroses", e);
+            LOGGER.warn("can't expand macro", e);
         }
         return tagToken;
     }
@@ -206,27 +188,9 @@ public class DockerJobProperty extends JobProperty<AbstractProject<?, ?>> {
     }
 
     @Extension
-    public static final class DescriptorImpl extends JobPropertyDescriptor {
+    public static final class DescriptorImpl extends OptionalJobPropertyDescriptor {
         public String getDisplayName() {
-            return "Docker Job Properties";
-        }
-
-        @Override
-        public boolean isApplicable(Class<? extends Job> jobType) {
-            return true;
-        }
-
-        @Override
-        public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            DockerJobProperty dockerJobProperty;
-
-            if (req.hasParameter("hasDockerContainer")) {
-                dockerJobProperty = req.bindJSON(DockerJobProperty.class, formData);
-            } else {
-                dockerJobProperty = null;
-            }
-
-            return dockerJobProperty;
+            return "Commit agent's Docker container";
         }
     }
 

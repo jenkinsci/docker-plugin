@@ -64,6 +64,10 @@ public class DockerQueueListener extends QueueListener {
         if (item.task instanceof Project) {
             Project<?, ?> project = (Project<?, ?>) item.task;
             if (project != null) {
+                final DockerJobTemplateProperty p = project.getProperty(DockerJobTemplateProperty.class);
+                if (p != null) return p;
+
+                // backward compatibility. DockerJobTemplateProperty used to be a nested object in DockerJobProperty
                 DockerJobProperty property = project.getProperty(DockerJobProperty.class);
                 if (property != null) {
                     return property.getDockerJobTemplate();

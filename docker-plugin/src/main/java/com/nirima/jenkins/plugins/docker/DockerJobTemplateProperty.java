@@ -1,7 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
+import hudson.model.AbstractProject;
+import hudson.model.JobProperty;
+import hudson.model.JobPropertyDescriptor;
 import hudson.slaves.Cloud;
 import hudson.util.ListBoxModel;
+import jenkins.model.OptionalJobProperty;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
@@ -17,7 +21,7 @@ import jenkins.model.Jenkins;
  * 
  * @author Ingo Rissmann
  */
-public class DockerJobTemplateProperty implements Describable<DockerJobTemplateProperty> {
+public class DockerJobTemplateProperty extends OptionalJobProperty<AbstractProject<?,?>> {
     public final String cloudname;
     public final DockerTemplate template;
 
@@ -37,17 +41,13 @@ public class DockerJobTemplateProperty implements Describable<DockerJobTemplateP
         return template;
     }
 
-    @Override
-    public Descriptor<DockerJobTemplateProperty> getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(DockerJobTemplateProperty.class);
-    }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<DockerJobTemplateProperty> {
+    public static class DescriptorImpl extends OptionalJobPropertyDescriptor {
 
         @Override
         public String getDisplayName() {
-            return "Docker Job Image Property";
+            return "Define a Docker template";
         }
 
         public ListBoxModel doFillCloudnameItems() {
