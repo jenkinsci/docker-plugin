@@ -16,6 +16,7 @@ import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -34,7 +35,7 @@ public class DockerTransientNode extends Slave {
 
     private String cloudId;
 
-    public DockerTransientNode(String containerId, String remoteFS, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
+    public DockerTransientNode(@Nonnull String containerId, String remoteFS, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
         super("docker-" + containerId.substring(0,12), remoteFS, launcher);
         setNumExecutors(1);
         setMode(Mode.EXCLUSIVE);
@@ -83,40 +84,36 @@ public class DockerTransientNode extends Slave {
             listener.error("Can't disconnect", e);
         }
 
-        if (containerId != null) {
-            Computer.threadPoolForRemoting.submit(() -> {
+        Computer.threadPoolForRemoting.submit(() -> {
 
-                DockerClient client = dockerAPI.getClient();
+            DockerClient client = dockerAPI.getClient();
 
-                try {
-                    client.stopContainerCmd(containerId)
-                            .withTimeout(10)
-                            .exec();
-                    listener.getLogger().println("Stopped container "+ containerId);
-                } catch(NotFoundException e) {
-                    listener.getLogger().println("Container already removed " + containerId);
-                } catch (Exception ex) {
-                    listener.error("Failed to stop instance " + getContainerId() + " for slave " + name + " due to exception", ex.getMessage());
-                    listener.error("Causing exception for failure on stopping the instance was", ex);
-                }
+            try {
+                client.stopContainerCmd(containerId)
+                        .withTimeout(10)
+                        .exec();
+                listener.getLogger().println("Stopped container "+ containerId);
+            } catch(NotFoundException e) {
+                listener.getLogger().println("Container already removed " + containerId);
+            } catch (Exception ex) {
+                listener.error("Failed to stop instance " + getContainerId() + " for slave " + name + " due to exception", ex.getMessage());
+                listener.error("Causing exception for failure on stopping the instance was", ex);
+            }
 
-                try {
-                    client.removeContainerCmd(containerId)
-                            .withRemoveVolumes(removeVolumes)
-                            .exec();
+            try {
+                client.removeContainerCmd(containerId)
+                        .withRemoveVolumes(removeVolumes)
+                        .exec();
 
-                    listener.getLogger().println("Removed container " + containerId);
-                } catch (NotFoundException e) {
-                    listener.getLogger().println("Container already gone.");
-                } catch (Exception ex) {
-                    listener.error("Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception: " + ex.getMessage());
-                    listener.error("Causing exception for failre on removing instance was", ex);
-                }
-            });
+                listener.getLogger().println("Removed container " + containerId);
+            } catch (NotFoundException e) {
+                listener.getLogger().println("Container already gone.");
+            } catch (Exception ex) {
+                listener.error("Failed to remove instance " + getContainerId() + " for slave " + name + " due to exception: " + ex.getMessage());
+                listener.error("Causing exception for failre on removing instance was", ex);
+            }
+        });
 
-        } else {
-            listener.error("ContainerId is absent, no way to remove/stop container");
-        }
         try {
             Jenkins.getInstance().removeNode(this);
         } catch (IOException e) {
