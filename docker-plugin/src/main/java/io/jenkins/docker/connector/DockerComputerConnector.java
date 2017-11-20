@@ -3,14 +3,19 @@ package io.jenkins.docker.connector;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.thoughtworks.xstream.InitializationException;
 import hudson.model.AbstractDescribableImpl;
+import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.Which;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.DelegatingComputerLauncher;
+import hudson.slaves.SlaveComputer;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +89,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
         return workdir + '/' + remoting.getName();
     }
 
-    public final ComputerLauncher createLauncher(DockerAPI api, @Nonnull String containerId, DockerTemplate template, TaskListener listener) throws IOException, InterruptedException {
+    public final ComputerLauncher createLauncher(final DockerAPI api, @Nonnull final String containerId, DockerTemplate template, TaskListener listener) throws IOException, InterruptedException {
 
         final InspectContainerResponse inspect = api.getClient().inspectContainerCmd(containerId).exec();
         final Boolean running = inspect.getState().getRunning();
@@ -93,7 +98,24 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
             throw new IOException("Container is not running.");
         }
 
-        return createLauncher(api, template, inspect, listener);
+        final ComputerLauncher launcher = createLauncher(api, template, inspect, listener);
+        return new DelegatingComputerLauncher(launcher) {
+
+            @Override
+            public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+                try {
+                    api.getClient().inspectContainerCmd(containerId).exec();
+                } catch (NotFoundException e) {
+                    // Container has been removed
+                    Queue.withLock( () -> {
+                        DockerTransientNode node = (DockerTransientNode) computer.getNode();
+                        node.terminate(listener);
+                    });
+                    return;
+                }
+                super.launch(computer, listener);
+            }
+        };
     }
 
     /**
