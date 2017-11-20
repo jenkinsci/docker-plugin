@@ -452,7 +452,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @Restricted(NoExternalUse.class)
-    public Node provisionNode(TaskListener listener, DockerAPI api) throws IOException, Descriptor.FormException, InterruptedException {
+    public DockerTransientNode provisionNode(TaskListener listener, DockerAPI api) throws IOException, Descriptor.FormException, InterruptedException {
 
         final DockerClient client = api.getClient();
         final DockerComputerConnector connector = getConnector();

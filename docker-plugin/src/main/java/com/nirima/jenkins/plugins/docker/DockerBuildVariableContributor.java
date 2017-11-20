@@ -29,7 +29,7 @@ public class DockerBuildVariableContributor extends BuildVariableContributor {
             variables.put("JENKINS_CLOUD_ID", dockerComputer.getCloudId());
 
             final DockerCloud cloud = dockerComputer.getCloud();
-            if (cloud.isExposeDockerHost()) {
+            if (cloud != null && cloud.isExposeDockerHost()) {
                 //replace http:// and https:// from docker-java to tcp://
                 String dockerHost = cloud.getDockerHost().getUri();
                 if (dockerHost.startsWith("unix:")) {

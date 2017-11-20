@@ -117,6 +117,12 @@ public class DockerTransientNode extends Slave {
         } else {
             listener.error("ContainerId is absent, no way to remove/stop container");
         }
+        try {
+            Jenkins.getInstance().removeNode(this);
+        } catch (IOException e) {
+            listener.error("Failed to remove Docker Node", e);
+        }
+
     }
 
     public DockerCloud getCloud() {

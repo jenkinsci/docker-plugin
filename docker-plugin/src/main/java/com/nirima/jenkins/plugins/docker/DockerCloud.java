@@ -24,6 +24,8 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
+import io.jenkins.docker.DockerComputer;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
@@ -31,6 +33,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
+import org.jenkinsci.remoting.util.ListenableFuture;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -46,6 +49,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
@@ -266,26 +274,33 @@ public class DockerCloud extends Cloud {
                     continue;
                 }
 
-                r.add(new NodeProvisioner.PlannedNode(
-                        t.getDisplayName(),
-                        Computer.threadPoolForRemoting.submit(new Callable<Node>() {
-                            public Node call() throws Exception {
-                                try {
-                                    // TODO where can we log provisioning progress ?
-                                    final DockerAPI api = DockerCloud.this.getDockerApi();
-                                    final Node slave = t.provisionNode(TaskListener.NULL, api);
-                                    // FIXME slave.setCloudId(DockerCloud.this.name);
-                                    return slave;
-                                } catch (Exception ex) {
-                                    LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
-                                            t, getDisplayName(), ex);
-                                    throw Throwables.propagate(ex);
-                                } finally {
-                                    decrementAmiSlaveProvision(t.getImage());
-                                }
-                            }
-                        }),
-                        t.getNumExecutors()));
+                final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
+                r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors()));
+
+                Computer.threadPoolForRemoting.submit(new Runnable() {
+                    public void run() {
+                        try {
+                            // TODO where can we log provisioning progress ?
+                            final DockerAPI api = DockerCloud.this.getDockerApi();
+                            final DockerTransientNode slave = t.provisionNode(TaskListener.NULL, api);
+                            slave.setCloudId(DockerCloud.this.name);
+                            plannedNode.complete(slave);
+
+                            // On provisioning completion, let's trigger NodeProvisioner
+                            final NodeProvisioner provisioner = (label == null
+                                    ? Jenkins.getInstance().unlabeledNodeProvisioner
+                                    : label.nodeProvisioner);
+                            provisioner.suggestReviewNow();
+
+                        } catch (Exception ex) {
+                            LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
+                                    t, getDisplayName(), ex);
+                            throw Throwables.propagate(ex);
+                        } finally {
+                            decrementAmiSlaveProvision(t.getImage());
+                        }
+                    }
+                });
 
                 excessWorkload -= t.getNumExecutors();
             }
