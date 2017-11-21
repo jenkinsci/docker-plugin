@@ -349,6 +349,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public String getEnvironmentsString() {
+        if (environment == null) return null;
         return Joiner.on("\n").join(environment);
     }
 

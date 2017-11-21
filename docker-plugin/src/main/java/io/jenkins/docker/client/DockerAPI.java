@@ -24,10 +24,20 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.newsclub.net.unix.AFUNIXSocket;
+import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 import javax.servlet.ServletException;
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.util.Collections;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
@@ -121,7 +131,34 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         return credentials == null ? null :
             new DockerServerCredentialsSSLConfig(credentials);
     }
-    
+
+    /**
+     * Create a plain {@link Socket} to docker API endpoint
+     */
+    public Socket getSocket() throws IOException {
+
+        try {
+            final URI uri = new URI(dockerHost.getUri());
+            if ("unix".equals(uri.getScheme())) {
+                final AFUNIXSocketAddress unix = new AFUNIXSocketAddress(new File("/var/run/docker.sock"));
+                final Socket socket = AFUNIXSocket.newInstance();
+                socket.connect(unix);
+                return socket;
+            }
+
+            final SSLConfig sslConfig = toSSlConfig(dockerHost.getCredentialsId());
+            if (sslConfig != null) {
+                return sslConfig.getSSLContext().getSocketFactory().createSocket(uri.getHost(), uri.getPort());
+            } else {
+                return new Socket(uri.getHost(), uri.getPort());
+            }
+        } catch (Exception e) {
+            throw new IOException("Failed to create a Socker for docker URI " + dockerHost.getUri(), e);
+        }
+
+
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerAPI> {
 
