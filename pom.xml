@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>2.35</version>
+        <version>2.36</version>
     </parent>
 
     <groupId>com.nirima</groupId>
