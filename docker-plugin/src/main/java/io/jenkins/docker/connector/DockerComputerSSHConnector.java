@@ -9,7 +9,6 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
-import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
 import hudson.Extension;
@@ -126,7 +125,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     @Override
-    public void beforeContainerCreated(DockerAPI api, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {
+    public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
 
         // TODO define a strategy for SSHD process configuration so we support more than openssh's sshd
         if (cmd.getCmd() == null || cmd.getCmd().length == 0) {
@@ -155,7 +154,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     @Override
-    public void beforeContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {
+    public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
 
         final String key = sshKeyStrategy.getInjectedKey();
         if (key != null) {
@@ -186,7 +185,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     @Override
-    protected ComputerLauncher createLauncher(DockerAPI api, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+    protected ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
         if ("exited".equals(inspect.getState().getStatus())) {
             // Something went wrong
             // FIXME report error "somewhere" visible to end user.

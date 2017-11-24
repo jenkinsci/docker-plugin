@@ -452,23 +452,23 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         CreateContainerCmd cmd = client.createContainerCmd(getImage());
         fillContainerConfig(cmd);
 
-        connector.beforeContainerCreated(api, this, cmd);
+        connector.beforeContainerCreated(api, remoteFs, cmd);
 
         String containerId = cmd.exec().getId();
 
         try {
-            connector.beforeContainerStarted(api, this, containerId);
+            connector.beforeContainerStarted(api, remoteFs, containerId);
 
             client.startContainerCmd(containerId).exec();
 
-            connector.afterContainerStarted(api, this, containerId);
+            connector.afterContainerStarted(api, remoteFs, containerId);
         } catch (DockerException e) {
             // if something went wrong, cleanup aborted container
             client.removeContainerCmd(containerId).withForce(true).exec();
             throw e;
         }
 
-        final ComputerLauncher launcher = connector.createLauncher(api, containerId, this, listener);
+        final ComputerLauncher launcher = connector.createLauncher(api, containerId, remoteFs, listener);
         DockerTransientNode node = new DockerTransientNode(containerId, remoteFs, launcher);
         node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + "]");
         node.setMode(mode);

@@ -6,7 +6,6 @@ import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
-import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
@@ -56,7 +55,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
 
     @Override
-    protected ComputerLauncher createLauncher(final DockerAPI api, final DockerTemplate template, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+    protected ComputerLauncher createLauncher(final DockerAPI api, final String workdir, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
         return new DelegatingComputerLauncher(new JNLPLauncher()) {
 
             @Override
@@ -68,7 +67,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
             public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
                 final DockerClient client = api.getClient();
 
-                List<String> args = buildCommand(template, computer);
+                List<String> args = buildCommand(workdir, computer);
 
                 final String containerId = inspect.getId();
                 final ExecCreateCmd cmd = client.execCreateCmd(containerId)
@@ -95,17 +94,17 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     }
 
     @Override
-    public void beforeContainerCreated(DockerAPI api, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {
+    public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
         ensureWaiting(cmd);
     }
 
     @Override
-    public void afterContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {
+    public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
         final DockerClient client = api.getClient();
-        injectRemotingJar(containerId, template.remoteFs, client);
+        injectRemotingJar(containerId, workdir, client);
     }
 
-    private List<String> buildCommand(DockerTemplate template, SlaveComputer computer) {
+    private List<String> buildCommand(String workdir, SlaveComputer computer) {
         List<String> args = new ArrayList<>();
         args.add("java");
 
@@ -115,7 +114,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         }
 
         args.addAll(Arrays.asList(
-                "-cp", template.remoteFs + "/" + remoting.getName(),
+                "-cp", workdir + "/" + remoting.getName(),
                 "hudson.remoting.jnlp.Main", "-headless"));
         if (StringUtils.isNotBlank(jnlpLauncher.tunnel)) {
             args.addAll(Arrays.asList("-tunnel", jnlpLauncher.tunnel));

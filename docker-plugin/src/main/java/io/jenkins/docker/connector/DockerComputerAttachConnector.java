@@ -5,7 +5,6 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
@@ -18,10 +17,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.newsclub.net.unix.AFUNIXSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
 
-import java.io.File;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,19 +49,19 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     }
 
     @Override
-    public void beforeContainerCreated(DockerAPI api, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {
+    public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
         ensureWaiting(cmd);
     }
 
     @Override
-    public void afterContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {
+    public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
         final DockerClient client = api.getClient();
-        injectRemotingJar(containerId, template.remoteFs, client);
+        injectRemotingJar(containerId, workdir, client);
     }
 
     @Override
-    protected ComputerLauncher createLauncher(DockerAPI api, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
-        return new DockerAttachLauncher(api, inspect.getId(), user, template.remoteFs);
+    protected ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+        return new DockerAttachLauncher(api, inspect.getId(), user, workdir);
     }
 
     @Extension(ordinal = -1) @Symbol("attach")

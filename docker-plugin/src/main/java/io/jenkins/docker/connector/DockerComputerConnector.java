@@ -48,18 +48,18 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     /**
      * Can be overridden by concrete implementations to provide some customization to the container creation command
      */
-    public void beforeContainerCreated(DockerAPI api, DockerTemplate template, CreateContainerCmd cmd) throws IOException, InterruptedException {}
+    public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {}
 
     /**
      * Container has been created but not started yet, that's a good opportunity to inject <code>remoting.jar</code>
      * using {@link #injectRemotingJar(String, String, DockerClient)}
      */
-    public void beforeContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {}
+    public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {}
 
     /**
      * Container has started. Good place to check it's healthy before considering agent is ready to accept connexions
      */
-    public void afterContainerStarted(DockerAPI api, DockerTemplate template, String containerId) throws IOException, InterruptedException {}
+    public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {}
 
 
     /**
@@ -89,7 +89,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
         return workdir + '/' + remoting.getName();
     }
 
-    public final ComputerLauncher createLauncher(final DockerAPI api, @Nonnull final String containerId, DockerTemplate template, TaskListener listener) throws IOException, InterruptedException {
+    public final ComputerLauncher createLauncher(final DockerAPI api, @Nonnull final String containerId, String workdir, TaskListener listener) throws IOException, InterruptedException {
 
         final InspectContainerResponse inspect = api.getClient().inspectContainerCmd(containerId).exec();
         final Boolean running = inspect.getState().getRunning();
@@ -98,7 +98,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
             throw new IOException("Container is not running.");
         }
 
-        final ComputerLauncher launcher = createLauncher(api, template, inspect, listener);
+        final ComputerLauncher launcher = createLauncher(api, workdir, inspect, listener);
         return new DelegatingComputerLauncher(launcher) {
 
             @Override
@@ -122,6 +122,6 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * Create a Launcher to create an Agent with this container. Can assume container has been created by this
      * DockerAgentConnector so adequate setup did take place.
      */
-    protected abstract ComputerLauncher createLauncher(DockerAPI api, DockerTemplate template, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
+    protected abstract ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
 
 }
