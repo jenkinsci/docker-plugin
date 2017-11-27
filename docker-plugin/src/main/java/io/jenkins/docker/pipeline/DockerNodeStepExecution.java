@@ -2,7 +2,10 @@ package io.jenkins.docker.pipeline;
 
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import hudson.EnvVars;
 import hudson.FilePath;
+import hudson.Util;
+import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import io.jenkins.docker.DockerTransientNode;
@@ -68,7 +71,16 @@ class DockerNodeStepExecution extends StepExecution {
         final FilePath ws = slave.createPath(remoteFs + "/workspace");
         FlowNode flowNode = getContext().get(FlowNode.class);
         flowNode.addAction(new WorkspaceActionImpl(ws, flowNode));
-        getContext().newBodyInvoker().withCallback(new Callback(slave)).withContexts(slave.toComputer(), ws).start();
+        Computer computer = slave.toComputer();
+        EnvVars env = computer.getEnvironment();
+        env.overrideExpandingAll(computer.buildEnvironment(listener));
+        env.put("NODE_NAME", computer.getName());
+
+        env.put("EXECUTOR_NUMBER", "0");
+        env.put("NODE_LABELS", Util.join(slave.getAssignedLabels(), " "));
+        env.put("WORKSPACE", ws.getRemote());
+
+        getContext().newBodyInvoker().withCallback(new Callback(slave)).withContexts(slave.toComputer(), env, ws).start();
 
         return false;
     }

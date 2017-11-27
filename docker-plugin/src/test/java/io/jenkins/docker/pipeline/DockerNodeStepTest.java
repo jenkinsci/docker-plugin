@@ -24,21 +24,39 @@
 
 package io.jenkins.docker.pipeline;
 
+import com.google.common.collect.ImmutableSet;
+import hudson.FilePath;
 import hudson.model.DownloadService;
+import hudson.model.Node;
+import hudson.model.Slave;
+import hudson.model.TaskListener;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.tasks.Maven;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.InstallSourceProperty;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
+import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
+import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
+import org.jvnet.hudson.test.TestExtension;
+import org.kohsuke.stapler.DataBoundConstructor;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
+import java.util.Set;
 
 public class DockerNodeStepTest {
     @ClassRule
@@ -79,6 +97,7 @@ public class DockerNodeStepTest {
         });
     }
 
+    @Issue("JENKINS-36913")
     @Test
     public void toolInstall() throws Exception {
         story.addStep(new Statement() {
@@ -104,6 +123,7 @@ public class DockerNodeStepTest {
         });
     }
 
+    @Issue("JENKINS-33510")
     @Test
     public void changeDir() throws Exception {
         story.addStep(new Statement() {
@@ -122,4 +142,155 @@ public class DockerNodeStepTest {
             }
         });
     }
+
+    @Issue("JENKINS-41894")
+    @Test
+    public void deleteDir() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "deleteDir");
+                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                        "  sh 'mkdir -p subdir'\n" +
+                        "  assert fileExists('subdir')\n" +
+                        "  dir('subdir') {\n" +
+                        "    echo \"dir now is '${pwd()}'\"\n" +
+                        "    deleteDir()\n" +
+                        "  }\n" +
+                        "  assert !fileExists('subdir')\n" +
+                        "}\n", true));
+                WorkflowRun r = story.j.buildAndAssertSuccess(j);
+                story.j.assertLogContains("dir now is '/home/jenkins/workspace/subdir'", r);
+            }
+        });
+    }
+
+    @Issue("JENKINS-46831")
+    @Test
+    public void nodeWithinDockerNodeWithinNode() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                Slave s1 = story.j.createOnlineSlave();
+                s1.setLabelString("first-agent");
+                s1.setMode(Node.Mode.EXCLUSIVE);
+                s1.getNodeProperties().add(new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("ONAGENT", "true"),
+                        new EnvironmentVariablesNodeProperty.Entry("WHICH_AGENT", "first")));
+
+                Slave s2 = story.j.createOnlineSlave();
+                s2.setLabelString("other-agent");
+                s2.setMode(Node.Mode.EXCLUSIVE);
+                s2.getNodeProperties().add(new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("ONAGENT", "true"),
+                        new EnvironmentVariablesNodeProperty.Entry("WHICH_AGENT", "second")));
+
+                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "nodeWithinDockerNode");
+                j.setDefinition(new CpsFlowDefinition("node('first-agent') {\n" +
+                        "  sh 'echo \"FIRST: WHICH_AGENT=|$WHICH_AGENT|\"'\n" +
+                        "  dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                        "    sh 'echo \"DOCKER: WHICH_AGENT=|$WHICH_AGENT|\"'\n" +
+                        "    node('other-agent') {\n" +
+                        "      sh 'echo \"SECOND: WHICH_AGENT=|$WHICH_AGENT|\"'\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}\n", true));
+                WorkflowRun r = story.j.buildAndAssertSuccess(j);
+                story.j.assertLogContains("FIRST: WHICH_AGENT=|first|", r);
+                story.j.assertLogContains("SECOND: WHICH_AGENT=|second|", r);
+                story.j.assertLogContains("DOCKER: WHICH_AGENT=||", r);
+            }
+        });
+    }
+
+    @Issue("JENKINS-47805")
+    @Test
+    public void pathModification() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "pathModification");
+                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                        "  echo \"Original PATH: ${env.PATH}\"\n" +
+                        "  def origPath = env.PATH\n" +
+                        "  pathModifier('/some/fake/path') {\n" +
+                        "    echo \"Modified PATH: ${env.PATH}\"\n" +
+                        "    assert env.PATH == '/some/fake/path:' + origPath" +
+                        "  }\n" +
+                        "}\n", true));
+                story.j.buildAndAssertSuccess(j);
+            }
+        });
+    }
+
+    public static class PathModifierStep extends Step {
+        private String element;
+
+        @DataBoundConstructor
+        public PathModifierStep(String element) {
+            this.element = element;
+        }
+
+        public String getElement() {
+            return element;
+        }
+
+        @Override
+        public StepExecution start(StepContext context) throws Exception {
+            return new PathModifierStepExecution(context, this);
+        }
+
+        @TestExtension("pathModification")
+        public static class PathModifierStepDescriptor extends StepDescriptor {
+            @Override
+            public String getFunctionName() {
+                return "pathModifier";
+            }
+
+            @Override
+            public String getDisplayName() {
+                return "Add element to PATH";
+            }
+
+            @Override
+            public boolean takesImplicitBlockArgument() {
+                return true;
+            }
+
+            @Override
+            public Set<? extends Class<?>> getRequiredContext() {
+                return ImmutableSet.of(TaskListener.class, FilePath.class);
+            }
+        }
+    }
+
+    public static class PathModifierStepExecution extends StepExecution {
+        private transient PathModifierStep step;
+        private transient BodyExecution body;
+
+        public PathModifierStepExecution(StepContext context, PathModifierStep step) throws Exception {
+            super(context);
+            this.step = step;
+        }
+
+        @Override
+        public boolean start() throws Exception {
+            EnvironmentExpander envEx = EnvironmentExpander.merge(getContext().get(EnvironmentExpander.class),
+                    EnvironmentExpander.constant(Collections.singletonMap("PATH+MODIFIER", step.getElement())));
+
+            body = getContext().newBodyInvoker()
+                    .withContext(envEx)
+                    // Could use a dedicated BodyExecutionCallback here if we wished to print a message at the end ("Returning to ${cwd}"):
+                    .withCallback(BodyExecutionCallback.wrap(getContext()))
+                    .start();
+            return false;
+
+        }
+
+        @Override
+        public void stop(@Nonnull Throwable cause) throws Exception {
+            if (body!=null)
+                body.cancel(cause);
+        }
+
+    }
+
 }
