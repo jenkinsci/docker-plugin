@@ -31,5 +31,14 @@
         <f:entry title="${%Connection Timeout in Seconds}" field="launchTimeoutSeconds">
             <f:textbox name="launchTimeoutSeconds" />
         </f:entry>
+
+        <f:entry title="${%Maximum Number of Retries}" field="maxNumRetries">
+            <f:textbox name="maxNumRetries" />
+        </f:entry>
+
+        <f:entry title="${%Seconds To Wait Between Retries}" field="retryWaitTime">
+            <f:textbox name="retryWaitTime" />
+        </f:entry>
+
     </f:advanced>
 </j:jelly>

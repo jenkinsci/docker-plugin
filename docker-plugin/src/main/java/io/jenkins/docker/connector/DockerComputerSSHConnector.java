@@ -60,6 +60,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     private String prefixStartSlaveCmd;
     private String suffixStartSlaveCmd;
     private Integer launchTimeoutSeconds;
+    private Integer maxNumRetries;
+    private Integer retryWaitTime;
+
 
     @DataBoundConstructor
     public DockerComputerSSHConnector(SSHKeyStrategy sshKeyStrategy) {
@@ -122,6 +125,24 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     @DataBoundSetter
     public void setLaunchTimeoutSeconds(Integer launchTimeoutSeconds) {
         this.launchTimeoutSeconds = launchTimeoutSeconds;
+    }
+
+    public Integer getMaxNumRetries() {
+        return maxNumRetries;
+    }
+
+    @DataBoundSetter
+    public void setMaxNumRetries(Integer maxNumRetries) {
+        this.maxNumRetries = maxNumRetries;
+    }
+
+    public Integer getRetryWaitTime() {
+        return retryWaitTime;
+    }
+
+    @DataBoundSetter
+    public void setRetryWaitTime(Integer retryWaitTime) {
+        this.retryWaitTime = retryWaitTime;
     }
 
     @Override
@@ -313,7 +334,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             String pem = PEMEncodable.create(id.getPrivate()).encode();
 
             return new DockerSSHLauncher(address.getHostString(), address.getPort(), user, pem,
-                    connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd, connector.launchTimeoutSeconds);
+                    connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd,
+                    connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime
+            );
         }
 
         @Override
@@ -355,7 +378,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         @Override
         public ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector connector) throws IOException {
             return new SSHLauncher(address.getHostString(), address.getPort(), getCredentialsId(),
-                    connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd, connector.launchTimeoutSeconds);
+                    connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd,
+                    connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime
+            );
         }
 
         @Override
@@ -388,8 +413,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         private String user;
         private String privateKey;
 
-        public DockerSSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds) {
-            super(host, port, "InstanceIdentity", jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds);
+        public DockerSSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds, Integer maxNumRetries, Integer retryWaitTime) {
+            super(host, port, "InstanceIdentity", jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime);
             this.user = user;
             this.privateKey = privateKey;
         }
