@@ -32,7 +32,6 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
     private static final Logger LOGGER = Logger.getLogger(DockerOnceRetentionStrategy.class.getName());
 
     private int timeout = 10;
-    private transient volatile boolean terminating;
 
     /**
      * Creates the retention strategy.
@@ -99,10 +98,6 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
 
     private synchronized void done(final DockerComputer c) {
         c.setAcceptingTasks(false); // just in case
-        if (terminating) {
-            return;
-        }
-        terminating = true;
         Computer.threadPoolForRemoting.submit(() -> {
             Queue.withLock( () -> {
                 DockerTransientNode node = c.getNode();
