@@ -11,19 +11,25 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
+import com.trilead.ssh2.KnownHosts;
+import com.trilead.ssh2.signature.RSAKeyAlgorithm;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.plugins.sshslaves.verifiers.HostKey;
+import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.SlaveComputer;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.kohsuke.stapler.AncestorInPath;
@@ -37,8 +43,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +74,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     private Integer launchTimeoutSeconds;
     private Integer maxNumRetries;
     private Integer retryWaitTime;
-
 
     @DataBoundConstructor
     public DockerComputerSSHConnector(SSHKeyStrategy sshKeyStrategy) {
@@ -154,8 +165,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             if (sshKeyStrategy.getInjectedKey() != null) {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port),
                         // override sshd_config to force retrieval of InstanceIdentity public for as authentication
-                        "-o", "AuthorizedKeysCommand "+ "/root/authorized_key",
-                        "-o", "AuthorizedKeysCommandUser root"
+                        "-o", "AuthorizedKeysCommand /root/authorized_key",
+                        "-o", "AuthorizedKeysCommandUser root",
+                        "-o", "HostKey /root/host_key"
                 );
             } else {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port));
@@ -186,12 +198,22 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
                  TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
+
                 TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
                 entry.setSize(AuthorizedKeysCommand.getBytes().length);
                 entry.setMode(0700);
                 tar.putArchiveEntry(entry);
                 tar.write(AuthorizedKeysCommand.getBytes());
                 tar.closeArchiveEntry();
+
+                byte[] hostKey = sshKeyStrategy.getInjectedHostKey().getBytes();
+                entry = new TarArchiveEntry("host_key");
+                entry.setSize(hostKey.length);
+                entry.setMode(0400);
+                tar.putArchiveEntry(entry);
+                tar.write(hostKey);
+                tar.closeArchiveEntry();
+
                 tar.close();
 
                 try (InputStream is = new ByteArrayInputStream(bos.toByteArray())) {
@@ -310,6 +332,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         public abstract String getInjectedKey() throws IOException;
 
+        public abstract String getInjectedHostKey() throws IOException;
+
         public abstract String getUser();
 
         public abstract ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector dockerComputerSSHConnector) throws IOException;
@@ -319,9 +343,42 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         private final String user;
 
+        private transient String fingerprint;
+
+        private transient String hostKey;
+
         @DataBoundConstructor
         public InjectSSHKey(String user) {
             this.user = user;
+            generateHostKey();
+        }
+
+        private Object readResolve() {
+            generateHostKey();
+            return this;
+        }
+
+        /**
+         * Generate a transient RSA host key for sshd
+         */
+        private void generateHostKey() {
+            try {
+                KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+                keyGen.initialize(512);
+                final KeyPair keyPair = keyGen.genKeyPair();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try (Writer osWriter = new OutputStreamWriter(baos);
+                     JcaPEMWriter writer = new JcaPEMWriter(osWriter)) {
+                    writer.writeObject(keyPair.getPrivate());
+                }
+                this.hostKey = new String(baos.toByteArray());
+
+                final RSAKeyAlgorithm algorithm = new RSAKeyAlgorithm();
+                byte[] b = algorithm.encodePublicKey((RSAPublicKey) keyPair.getPublic());
+                this.fingerprint = KnownHosts.createHexFingerprint("ssh-rsa", b);
+            } catch (NoSuchAlgorithmException | IOException e) {
+                e.printStackTrace();
+            }
         }
 
         public String getUser() {
@@ -335,7 +392,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
             return new DockerSSHLauncher(address.getHostString(), address.getPort(), user, pem,
                     connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd,
-                    connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime
+                    connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime,
+                    new FingerprintSshHostKeyVerificationStrategy(fingerprint)
             );
         }
 
@@ -346,6 +404,11 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             return "ssh-rsa " + encode(encodeSSHRSAPublicKey(new com.trilead.ssh2.signature.RSAPublicKey(rsa.getPublicExponent(), rsa.getModulus())));
         }
 
+        @Override
+        public String getInjectedHostKey() throws IOException {
+            return hostKey;
+        }
+
         @Extension
         public static final class DescriptorImpl extends Descriptor<SSHKeyStrategy> {
 
@@ -354,6 +417,31 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             public String getDisplayName() {
                 return "Inject SSH key";
             }
+        }
+
+    }
+
+    /**
+     * {@link SshHostKeyVerificationStrategy} implementation to only accepts our own generated ssh-rsa public key,
+     * based on fingerprints comparison.
+     */
+    public static class FingerprintSshHostKeyVerificationStrategy extends SshHostKeyVerificationStrategy {
+
+        private final String fingerprint;
+
+        public FingerprintSshHostKeyVerificationStrategy(String fingerprint) {
+            this.fingerprint = fingerprint;
+        }
+
+        @Override
+        public boolean verify(SlaveComputer computer, HostKey hostKey, TaskListener listener) throws Exception {
+            final String hostKeyFingerprint = hostKey.getFingerprint();
+            return fingerprint.equals(hostKeyFingerprint);
+        }
+
+        @Override
+        public String[] getPreferredKeyAlgorithms(SlaveComputer computer) throws IOException {
+            return new String[] { "ssh-rsa"};
         }
     }
 
@@ -396,6 +484,11 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             return null;
         }
 
+        @Override
+        public String getInjectedHostKey() throws IOException {
+            return null;
+        }
+
 
         @Extension
         public static final class DescriptorImpl extends Descriptor<SSHKeyStrategy> {
@@ -421,8 +514,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         private String user;
         private String privateKey;
 
-        public DockerSSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds, Integer maxNumRetries, Integer retryWaitTime) {
-            super(host, port, "InstanceIdentity", jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime);
+        public DockerSSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds, Integer maxNumRetries, Integer retryWaitTime, SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy) {
+            super(host, port, "InstanceIdentity", jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
             this.user = user;
             this.privateKey = privateKey;
         }
