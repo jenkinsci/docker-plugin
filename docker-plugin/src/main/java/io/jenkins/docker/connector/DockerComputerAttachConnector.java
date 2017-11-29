@@ -64,12 +64,12 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         return new DockerAttachLauncher(api, inspect.getId(), user, workdir);
     }
 
-    @Extension(ordinal = -1) @Symbol("attach")
+    @Extension(ordinal = 100) @Symbol("attach")
     public static class DescriptorImpl extends Descriptor<DockerComputerConnector> {
 
         @Override
         public String getDisplayName() {
-            return "(Experimental) Attach Docker container";
+            return "Attach Docker container";
         }
     }
 
