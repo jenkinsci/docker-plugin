@@ -29,7 +29,6 @@ import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.kohsuke.stapler.AncestorInPath;
@@ -43,8 +42,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.KeyPair;
@@ -55,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.trilead.ssh2.signature.RSASHA1Verify.encodeSSHRSAPublicKey;
 import static hudson.remoting.Base64.encode;
 
 /**
@@ -366,12 +362,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
                 keyGen.initialize(512);
                 final KeyPair keyPair = keyGen.genKeyPair();
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                try (Writer osWriter = new OutputStreamWriter(baos);
-                     JcaPEMWriter writer = new JcaPEMWriter(osWriter)) {
-                    writer.writeObject(keyPair.getPrivate());
-                }
-                this.hostKey = new String(baos.toByteArray());
+                this.hostKey = PEMEncodable.create(keyPair.getPrivate()).encode();
 
                 final RSAKeyAlgorithm algorithm = new RSAKeyAlgorithm();
                 byte[] b = algorithm.encodePublicKey((RSAPublicKey) keyPair.getPublic());
@@ -400,8 +391,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         @Override
         public String getInjectedKey() throws IOException {
             InstanceIdentity id = InstanceIdentity.get();
-            final java.security.interfaces.RSAPublicKey rsa = id.getPublic();
-            return "ssh-rsa " + encode(encodeSSHRSAPublicKey(new com.trilead.ssh2.signature.RSAPublicKey(rsa.getPublicExponent(), rsa.getModulus())));
+            return "ssh-rsa " + encode(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
         }
 
         @Override
