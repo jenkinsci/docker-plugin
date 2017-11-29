@@ -5,6 +5,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
@@ -252,7 +253,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     private InetSocketAddress getBindingForPort(DockerAPI api, InspectContainerResponse ir, int internalPort) {
         // get exposed port
         ExposedPort sshPort = new ExposedPort(internalPort);
-        String host = null;
         Integer port = 22;
 
         final NetworkSettings networkSettings = ir.getNetworkSettings();
@@ -264,33 +264,33 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         // Find where it's mapped to
         for (Ports.Binding b : sshBindings) {
-
-            // TODO: I don't really follow why docker-java here is capable of
-            // returning a range - surely an exposed port cannot be bound to a *range*?
             String hps = b.getHostPortSpec();
-
             port = Integer.valueOf(hps);
-            host = b.getHostIp();
         }
 
-        //get address, if docker on localhost, then use local?
-        if (host == null || host.equals("0.0.0.0")) {
-            String url = api.getDockerHost().getUri();
-            host = getDockerHostFromCloud(api);
 
-            if( url.startsWith("unix") && (host == null || host.trim().isEmpty()) ) {
-                // Communicating with local sockets.
+        // Now, try to guess the external IP ssh is exposed to
+        String host = null;
+
+        // If an explicit IP/hostname has been defined, always prefer this one
+        String dockerHostname = api.getHostname();
+        if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
+            host = dockerHostname;
+        }
+
+        if (host == null && ir.getExecDriver().startsWith("sdc")) {
+            // We run on Joyent's Triton
+            // see https://docs.joyent.com/public-cloud/instances/docker/how/inspect-containers
+            host = networkSettings.getIpAddress();
+        }
+
+        if (host == null) {
+            final URI uri = URI.create(api.getDockerHost().getUri());
+            if(uri.getScheme().equals("unix")) {
+                // Communicating with unix domain socket. so we assume localhost
                 host = "0.0.0.0";
             } else {
-
-            /* Don't use IP from DOCKER_HOST because it is invalid or we are
-             * connecting to a system that supports a single host abstraction
-             * like Joyent's Triton. */
-                if (host == null || host.equals("0.0.0.0")) {
-                    // Try to connect to the container directly (without going through the host)
-                    host = networkSettings.getIpAddress();
-                    port = internalPort;
-                }
+                host = uri.getHost();
             }
         }
 
@@ -300,14 +300,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     private String getDockerHostFromCloud(DockerAPI api) {
         String url;
         url = api.getDockerHost().getUri();
-        String dockerHostname = api.getHostname();
-        if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
-            return dockerHostname;
-        } else {
-            final URI uri = URI.create(url);
-            if (uri.getScheme().equals("unix")) return null;
-            return uri.getHost();
-        }
+        final URI uri = URI.create(url);
+        if (uri.getScheme().equals("unix")) return null;
+        return uri.getHost();
     }
 
 
