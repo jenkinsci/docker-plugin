@@ -236,6 +236,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public String getDnsString() {
+        if (dnsHosts == null) return null;
         return Joiner.on(" ").join(dnsHosts);
     }
 
@@ -249,6 +250,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public String getVolumesString() {
+        if (volumes == null) return null;
         return Joiner.on("\n").join(volumes);
     }
 

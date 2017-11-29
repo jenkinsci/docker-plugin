@@ -23,7 +23,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     public DockerComputerConnector convertToConnector() {
         DockerComputerSSHConnector.SSHKeyStrategy strategy =
                 isUseSSHKey() ? new DockerComputerSSHConnector.InjectSSHKey(user)
-                          : new DockerComputerSSHConnector.ManuallyConfiguredSSHKey(sshConnector.getCredentialsId());
+                          : new DockerComputerSSHConnector.ManuallyConfiguredSSHKey(sshConnector.getCredentialsId(), null);
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(strategy);
         connector.setJavaPath(sshConnector.javaPath);
         connector.setJvmOptions(sshConnector.jvmOptions);

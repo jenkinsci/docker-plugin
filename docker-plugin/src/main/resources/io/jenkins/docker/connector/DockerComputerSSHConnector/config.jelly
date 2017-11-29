@@ -5,7 +5,7 @@
         <span class="info">Prerequisites:</span> Docker image must have <a href="https://www.openssh.com/">sshd</a> installed.
     </f:block>
 
-    <f:dropdownDescriptorSelector field="sshKeyStrategy" title="SSH key" descriptors="${descriptor.SSHKeyStrategyDescriptors}"/>
+    <f:dropdownDescriptorSelector  title="SSH key" field="sshKeyStrategy" />
 
     <f:advanced>
         <f:entry title="${%Port}" field="port">

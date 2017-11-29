@@ -361,9 +361,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         private final String credentialsId;
 
+        private final SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy;
+
         @DataBoundConstructor
-        public ManuallyConfiguredSSHKey(String credentialsId) {
+        public ManuallyConfiguredSSHKey(String credentialsId, SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy) {
             this.credentialsId = credentialsId;
+            this.sshHostKeyVerificationStrategy = sshHostKeyVerificationStrategy;
         }
 
         public String getCredentialsId() {
@@ -375,11 +378,16 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             return SSHLauncher.lookupSystemCredentials(credentialsId).getUsername();
         }
 
+        public SshHostKeyVerificationStrategy getSshHostKeyVerificationStrategy() {
+            return sshHostKeyVerificationStrategy;
+        }
+
         @Override
         public ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector connector) throws IOException {
             return new SSHLauncher(address.getHostString(), address.getPort(), getCredentialsId(),
                     connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd,
-                    connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime
+                    connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime,
+                    sshHostKeyVerificationStrategy
             );
         }
 
