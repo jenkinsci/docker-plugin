@@ -39,6 +39,10 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     public DockerComputerAttachConnector() {
     }
 
+    public DockerComputerAttachConnector(String user) {
+        this.user = user;
+    }
+
     public String getUser() {
         return user;
     }
@@ -64,12 +68,22 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         return new DockerAttachLauncher(api, inspect.getId(), user, workdir);
     }
 
-    @Extension(ordinal = -1) @Symbol("attach")
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerComputerAttachConnector that = (DockerComputerAttachConnector) o;
+
+        return user != null ? user.equals(that.user) : that.user == null;
+    }
+
+    @Extension(ordinal = 100) @Symbol("attach")
     public static class DescriptorImpl extends Descriptor<DockerComputerConnector> {
 
         @Override
         public String getDisplayName() {
-            return "(Experimental) Attach Docker container";
+            return "Attach Docker container";
         }
     }
 

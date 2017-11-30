@@ -96,12 +96,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @DataBoundConstructor
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
+                          DockerComputerConnector connector,
                           String labelString,
                           String remoteFs,
                           String instanceCapStr,
                           List<? extends NodeProperty<?>> nodeProperties
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
+        this.connector = connector;
         this.labelString = Util.fixNull(labelString);
         this.remoteFs = Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
 
@@ -217,10 +219,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase;
     }
 
-    public void setDockerTemplateBase(DockerTemplateBase dockerTemplateBase) {
-        this.dockerTemplateBase = dockerTemplateBase;
-    }
-
     public boolean isRemoveVolumes() {
         return removeVolumes;
     }
@@ -270,12 +268,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public RetentionStrategy getRetentionStrategyCopy() {
         return retentionStrategy;
-    }
-
-
-    @DataBoundSetter
-    public void setConnector(DockerComputerConnector connector) {
-        this.connector = connector;
     }
 
     public DockerComputerConnector getConnector() {
@@ -374,8 +366,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Restricted(NoExternalUse.class)
     public DockerTemplate cloneWithLabel(String label) {
-        final DockerTemplate template = new DockerTemplate(dockerTemplateBase, label, remoteFs, "1", nodeProperties);
-        template.setConnector(connector);
+        final DockerTemplate template = new DockerTemplate(dockerTemplateBase, connector, label, remoteFs, "1", nodeProperties);
         template.setMode(Node.Mode.EXCLUSIVE);
         template.setNumExecutors(1);
         template.setPullStrategy(pullStrategy);
@@ -478,6 +469,47 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         node.setRemoveVolumes(removeVolumes);
         node.setDockerAPI(api);
         return node;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerTemplate template = (DockerTemplate) o;
+
+        if (configVersion != template.configVersion) return false;
+        if (instanceCap != template.instanceCap) return false;
+        if (numExecutors != template.numExecutors) return false;
+        if (removeVolumes != template.removeVolumes) return false;
+        if (!labelString.equals(template.labelString)) return false;
+        if (!connector.equals(template.connector)) return false;
+        if (!remoteFs.equals(template.remoteFs)) return false;
+        if (mode != template.mode) return false;
+        if (!retentionStrategy.equals(template.retentionStrategy)) return false;
+        if (!dockerTemplateBase.equals(template.dockerTemplateBase)) return false;
+        if (!pullStrategy.equals(template.pullStrategy)) return false;
+        if (!nodeProperties.equals(template.nodeProperties)) return false;
+        return dockerTemplateBase.equals(template.dockerTemplateBase);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = configVersion;
+        result = 31 * result + labelString.hashCode();
+        result = 31 * result + connector.hashCode();
+        result = 31 * result + remoteFs.hashCode();
+        result = 31 * result + instanceCap;
+        result = 31 * result + mode.hashCode();
+        result = 31 * result + retentionStrategy.hashCode();
+        result = 31 * result + numExecutors;
+        result = 31 * result + dockerTemplateBase.hashCode();
+        result = 31 * result + (removeVolumes ? 1 : 0);
+        result = 31 * result + labelSet.hashCode();
+        result = 31 * result + pullStrategy.hashCode();
+        result = 31 * result + nodeProperties.hashCode();
+        return result;
     }
 
     @Extension

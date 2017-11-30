@@ -108,6 +108,16 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
         });
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerOnceRetentionStrategy that = (DockerOnceRetentionStrategy) o;
+
+        return timeout == that.timeout;
+    }
+
     @Extension
     public static final class DescriptorImpl extends Descriptor<RetentionStrategy<?>> {
         @Override

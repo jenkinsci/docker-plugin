@@ -6,14 +6,12 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.LxcConf;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
 import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
@@ -42,6 +40,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -64,12 +63,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     /**
      * Field dockerCommand
      */
-    public String dockerCommand;
-
-    /**
-     * Field lxcConfString
-     */
-    public String lxcConfString;
+    private String dockerCommand;
 
     public String hostname;
 
@@ -133,7 +127,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               String volumesString,
                               String volumesFromString,
                               String environmentsString,
-                              String lxcConfString,
                               String hostname,
                               Integer memoryLimit,
                               Integer memorySwap,
@@ -142,33 +135,27 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               boolean bindAllPorts,
                               boolean privileged,
                               boolean tty,
-                              String macAddress
+                              String macAddress,
+                              String extraHostsString
     ) {
         this(image);
-        this.pullCredentialsId = pullCredentialsId;
-        this.dockerCommand = dockerCommand;
-        this.lxcConfString = lxcConfString;
-        this.privileged = privileged;
-        this.tty = tty;
-        this.hostname = hostname;
-
-        this.bindPorts = bindPorts;
-        this.bindAllPorts = bindAllPorts;
-
-        this.memoryLimit = memoryLimit;
-        this.memorySwap = memorySwap;
-        this.cpuShares = cpuShares;
-
-        this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
-
-        this.network = network;
-
-        setVolumes(splitAndFilterEmpty(volumesString, "\n"));
+        setPullCredentialsId(pullCredentialsId);
+        setDnsString(dnsString);
+        setNetwork(network);
+        setDockerCommand(dockerCommand);
+        setVolumesString(volumesString);
         setVolumesFromString(volumesFromString);
-
-        this.environment = splitAndFilterEmpty(environmentsString, "\n");
-
+        setEnvironmentsString(environmentsString);
+        setHostname(hostname);
+        setMemoryLimit(memoryLimit);
+        setMemorySwap(memorySwap);
+        setCpuShares(cpuShares);
+        setBindPorts(bindPorts);
+        setBindAllPorts(bindAllPorts);
+        setPrivileged(privileged);
+        setTty(tty);
         setMacAddress(macAddress);
+        setExtraHostsString(extraHostsString);
     }
 
     protected Object readResolve() {
@@ -227,17 +214,46 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return pullCredentialsId;
     }
 
-    public DockerRegistryEndpoint getRegistry() {
-        if (registry == null) {
-            registry = new DockerRegistryEndpoint(null, pullCredentialsId);
-        }
+    @DataBoundSetter
+    public void setPullCredentialsId(String pullCredentialsId) {
+        this.pullCredentialsId = pullCredentialsId;
+    }
 
-        return registry;
+    public String getDockerCommand() {
+        return dockerCommand;
+    }
+
+    @DataBoundSetter
+    public void setDockerCommand(String dockerCommand) {
+        this.dockerCommand = dockerCommand;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    @DataBoundSetter
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
     }
 
     public String getDnsString() {
         if (dnsHosts == null) return null;
         return Joiner.on(" ").join(dnsHosts);
+    }
+
+    @DataBoundSetter
+    public void setDnsString(String dnsString) {
+        this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
+    }
+
+    public String getNetwork() {
+        return network;
+    }
+
+    @DataBoundSetter
+    public void setNetwork(String network) {
+        this.network = network;
     }
 
     @CheckForNull
@@ -254,6 +270,126 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").join(volumes);
     }
 
+    @DataBoundSetter
+    public void setVolumesString(String volumesString) {
+        this.volumes = splitAndFilterEmpty(volumesString, "\n");
+    }
+
+    public String getVolumesFromString() {
+        return Joiner.on("\n").join(getVolumesFrom2());
+    }
+
+    @DataBoundSetter
+    public void setVolumesFromString(String volumesFromString) {
+        setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
+    }
+
+    public String getEnvironmentsString() {
+        if (environment == null) return null;
+        return Joiner.on("\n").join(environment);
+    }
+
+    @DataBoundSetter
+    public void setEnvironmentsString(String environmentsString) {
+        this.environment = splitAndFilterEmpty(environmentsString, "\n");
+    }
+
+    public String getBindPorts() {
+        return bindPorts;
+    }
+
+    @DataBoundSetter
+    public void setBindPorts(String bindPorts) {
+        this.bindPorts = bindPorts;
+    }
+
+    public boolean isBindAllPorts() {
+        return bindAllPorts;
+    }
+
+    @DataBoundSetter
+    public void setBindAllPorts(boolean bindAllPorts) {
+        this.bindAllPorts = bindAllPorts;
+    }
+
+    public Integer getMemoryLimit() {
+        return memoryLimit;
+    }
+
+    @DataBoundSetter
+    public void setMemoryLimit(Integer memoryLimit) {
+        this.memoryLimit = memoryLimit;
+    }
+
+    public Integer getMemorySwap() {
+        return memorySwap;
+    }
+
+    @DataBoundSetter
+    public void setMemorySwap(Integer memorySwap) {
+        this.memorySwap = memorySwap;
+    }
+
+    public Integer getCpuShares() {
+        return cpuShares;
+    }
+
+    @DataBoundSetter
+    public void setCpuShares(Integer cpuShares) {
+        this.cpuShares = cpuShares;
+    }
+
+    public boolean isPrivileged() {
+        return privileged;
+    }
+
+    @DataBoundSetter
+    public void setPrivileged(boolean privileged) {
+        this.privileged = privileged;
+    }
+
+    public boolean isTty() {
+        return tty;
+    }
+
+    @DataBoundSetter
+    public void setTty(boolean tty) {
+        this.tty = tty;
+    }
+
+    @CheckForNull
+    public String getMacAddress() {
+        return trimToNull(macAddress);
+    }
+
+    @DataBoundSetter
+    public void setMacAddress(String macAddress) {
+        this.macAddress = trimToNull(macAddress);
+    }
+
+    @DataBoundSetter
+    public void setExtraHostsString(String extraHostsString) {
+        setExtraHosts(splitAndFilterEmptyList(extraHostsString, "\n"));
+    }
+
+    public String getExtraHostsString() {
+        if (extraHosts == null) {
+            return "";
+        } else {
+            return Joiner.on("\n").join(extraHosts);
+        }
+    }
+
+    // -- UI binding End
+
+
+    public DockerRegistryEndpoint getRegistry() {
+        if (registry == null) {
+            registry = new DockerRegistryEndpoint(null, pullCredentialsId);
+        }
+        return registry;
+    }
+    
     /**
      * @deprecated use {@link #getVolumesFrom2()}
      */
@@ -270,38 +406,21 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.volumesFrom2 = volumes;
     }
 
-    public void setVolumesFromString(String volumesFromString) {
-        setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
-    }
-
-    public String getVolumesFromString() {
-        return Joiner.on("\n").join(getVolumesFrom2());
-    }
 
     @CheckForNull
-    public String getMacAddress() {
-        return trimToNull(macAddress);
+    public List<String> getExtraHosts() {
+        return extraHosts;
     }
 
-    public void setMacAddress(String macAddress) {
-        this.macAddress = trimToNull(macAddress);
+    public void setExtraHosts(List<String> extraHosts) {
+        this.extraHosts = extraHosts;
     }
+
 
     public String getDisplayName() {
         return "Image of " + getImage();
     }
 
-    public Integer getMemoryLimit() {
-        return memoryLimit;
-    }
-    
-    public Integer getMemorySwap() {
-   	  return memorySwap;
-    }
-
-    public Integer getCpuShares() {
-        return cpuShares;
-    }
 
     public String[] getDockerCommandArray() {
         String[] dockerCommandArray = new String[0];
@@ -331,51 +450,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                 });
     }
 
-    public List<LxcConf> getLxcConf() {
-        List<LxcConf> temp = new ArrayList<>();
-        if (lxcConfString == null || lxcConfString.trim().equals(""))
-            return temp;
-        for (String item : lxcConfString.split(",")) {
-            String[] keyValuePairs = item.split("=");
-            if (keyValuePairs.length == 2) {
-                LOGGER.info("lxc-conf option: " + keyValuePairs[0] + "=" + keyValuePairs[1]);
-                LxcConf optN = new LxcConf();
-                optN.setKey(keyValuePairs[0]);
-                optN.setValue(keyValuePairs[1]);
-                temp.add(optN);
-            } else {
-                LOGGER.warning("Specified option: " + item + " is not in the form X=Y, please correct.");
-            }
-        }
-        return temp;
-    }
-
-    public String getEnvironmentsString() {
-        if (environment == null) return null;
-        return Joiner.on("\n").join(environment);
-    }
-
-    @CheckForNull
-    public List<String> getExtraHosts() {
-        return extraHosts;
-    }
-
-    public void setExtraHosts(List<String> extraHosts) {
-        this.extraHosts = extraHosts;
-    }
-
-    @DataBoundSetter
-    public void setExtraHostsString(String extraHostsString) {
-        setExtraHosts(splitAndFilterEmptyList(extraHostsString, "\n"));
-    }
-
-    public String getExtraHostsString() {
-        if (CollectionUtils.isEmpty(getExtraHosts())) {
-            return "";
-        } else {
-            return Joiner.on("\n").join(getExtraHosts());
-        }
-    }
 
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         if (hostname != null && !hostname.isEmpty()) {
@@ -398,11 +472,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
 
         containerConfig.withLabels(map);
-
-        List<LxcConf> lxcConfs = getLxcConf();
-        if (!lxcConfs.isEmpty()) {
-            containerConfig.withLxcConf(Iterables.toArray(lxcConfs, LxcConf.class));
-        }
 
         if (cpuShares != null && cpuShares > 0) {
             containerConfig.withCpuShares(cpuShares);
@@ -483,13 +552,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     @Override
-    public String toString() {
-        return Objects.toStringHelper(this)
-                .add("image", getImage())
-                .toString();
-    }
-
-    @Override
     public Descriptor<DockerTemplateBase> getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(DockerTemplateBase.class);
     }
@@ -498,6 +560,86 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(image);
         // if image was specified without tag, then treat as latest
         return repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("DockerTemplateBase{");
+        sb.append("image='").append(image).append('\'');
+        sb.append(", pullCredentialsId='").append(pullCredentialsId).append('\'');
+        sb.append(", registry=").append(registry);
+        sb.append(", dockerCommand='").append(dockerCommand).append('\'');
+        sb.append(", hostname='").append(hostname).append('\'');
+        sb.append(", dnsHosts=").append(Arrays.toString(dnsHosts));
+        sb.append(", network='").append(network).append('\'');
+        sb.append(", volumes=").append(Arrays.toString(volumes));
+        sb.append(", volumesFrom2=").append(Arrays.toString(volumesFrom2));
+        sb.append(", environment=").append(Arrays.toString(environment));
+        sb.append(", bindPorts='").append(bindPorts).append('\'');
+        sb.append(", bindAllPorts=").append(bindAllPorts);
+        sb.append(", memoryLimit=").append(memoryLimit);
+        sb.append(", memorySwap=").append(memorySwap);
+        sb.append(", cpuShares=").append(cpuShares);
+        sb.append(", privileged=").append(privileged);
+        sb.append(", tty=").append(tty);
+        sb.append(", macAddress='").append(macAddress).append('\'');
+        sb.append(", extraHosts=").append(extraHosts);
+        sb.append('}');
+        return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerTemplateBase that = (DockerTemplateBase) o;
+
+        if (bindAllPorts != that.bindAllPorts) return false;
+        if (privileged != that.privileged) return false;
+        if (tty != that.tty) return false;
+        if (!image.equals(that.image)) return false;
+        if (pullCredentialsId != null ? !pullCredentialsId.equals(that.pullCredentialsId) : that.pullCredentialsId != null)
+            return false;
+        if (registry != null ? !registry.equals(that.registry) : that.registry != null) return false;
+        if (dockerCommand != null ? !dockerCommand.equals(that.dockerCommand) : that.dockerCommand != null)
+            return false;
+        if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
+        if (!Arrays.equals(dnsHosts, that.dnsHosts)) return false;
+        if (network != null ? !network.equals(that.network) : that.network != null) return false;
+        if (!Arrays.equals(volumes, that.volumes)) return false;
+        if (!Arrays.equals(volumesFrom2, that.volumesFrom2)) return false;
+        if (!Arrays.equals(environment, that.environment)) return false;
+        if (bindPorts != null ? !bindPorts.equals(that.bindPorts) : that.bindPorts != null) return false;
+        if (memoryLimit != null ? !memoryLimit.equals(that.memoryLimit) : that.memoryLimit != null) return false;
+        if (memorySwap != null ? !memorySwap.equals(that.memorySwap) : that.memorySwap != null) return false;
+        if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
+        if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
+        return extraHosts != null ? extraHosts.equals(that.extraHosts) : that.extraHosts == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = image.hashCode();
+        result = 31 * result + (pullCredentialsId != null ? pullCredentialsId.hashCode() : 0);
+        result = 31 * result + (registry != null ? registry.hashCode() : 0);
+        result = 31 * result + (dockerCommand != null ? dockerCommand.hashCode() : 0);
+        result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(dnsHosts);
+        result = 31 * result + (network != null ? network.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(volumes);
+        result = 31 * result + Arrays.hashCode(volumesFrom2);
+        result = 31 * result + Arrays.hashCode(environment);
+        result = 31 * result + (bindPorts != null ? bindPorts.hashCode() : 0);
+        result = 31 * result + (bindAllPorts ? 1 : 0);
+        result = 31 * result + (memoryLimit != null ? memoryLimit.hashCode() : 0);
+        result = 31 * result + (memorySwap != null ? memorySwap.hashCode() : 0);
+        result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
+        result = 31 * result + (privileged ? 1 : 0);
+        result = 31 * result + (tty ? 1 : 0);
+        result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
+        result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
+        return result;
     }
 
     @Extension

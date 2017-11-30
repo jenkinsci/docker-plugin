@@ -26,7 +26,6 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                                 String volumesString,
                                 String volumesFrom,
                                 String environmentsString,
-                                String lxcConfString,
                                 String hostname,
                                 Integer memoryLimit,
                                 Integer memorySwap,
@@ -35,7 +34,8 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                                 boolean bindAllPorts,
                                 boolean privileged,
                                 boolean tty,
-                                String macAddress) {
+                                String macAddress,
+                                String extraHostsString) {
         super(image,
                 pullCredentialsId,
                 dnsString,
@@ -44,7 +44,6 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                 volumesString,
                 volumesFrom,
                 environmentsString,
-                lxcConfString,
                 hostname,
                 memoryLimit,
                 memorySwap,
@@ -53,7 +52,8 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                 bindAllPorts,
                 privileged,
                 tty,
-                macAddress);
+                macAddress,
+                extraHostsString);
     }
 
     @Override

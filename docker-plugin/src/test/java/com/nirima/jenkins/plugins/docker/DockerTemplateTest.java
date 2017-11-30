@@ -31,22 +31,23 @@ public class DockerTemplateTest {
     String volumesString = "volumes";
     String volumesFrom = "volumesFrom";
     String environmentsString = "environmentString";
-    String lxcConfString = "lxcConf";
     String hostname = "hostname";
     String bindPorts = "0.0.0.0:22";
     boolean bindAllPorts = true;
     boolean privileged = false;
     boolean tty = false;
     String macAddress = "92:d0:c6:0a:29:33";
+    String extraHostsString = "extraHostsString";
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, null, dnsString, network,
                 dockerCommand, volumesString, volumesString, environmentsString,
-                lxcConfString, hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress);
+                hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
 
         return new DockerTemplate(
                 dockerTemplateBase,
+                null,
                 labelString,
                 remoteFs,
                 instanceCapStr,
