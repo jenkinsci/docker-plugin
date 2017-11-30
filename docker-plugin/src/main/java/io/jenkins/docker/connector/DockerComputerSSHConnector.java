@@ -267,34 +267,33 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             String hps = b.getHostPortSpec();
             port = Integer.valueOf(hps);
         }
+        String host = getExternalIP(api, ir, networkSettings);
 
 
-        // Now, try to guess the external IP ssh is exposed to
-        String host = null;
+        return new InetSocketAddress(host, port);
+    }
 
+    private String getExternalIP(DockerAPI api, InspectContainerResponse ir, NetworkSettings networkSettings) {
         // If an explicit IP/hostname has been defined, always prefer this one
         String dockerHostname = api.getHostname();
         if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
-            host = dockerHostname;
+            return dockerHostname;
         }
 
-        if (host == null && ir.getExecDriver().startsWith("sdc")) {
+        final String driver = ir.getExecDriver();
+        if (driver != null && driver.startsWith("sdc")) {
             // We run on Joyent's Triton
             // see https://docs.joyent.com/public-cloud/instances/docker/how/inspect-containers
-            host = networkSettings.getIpAddress();
+            return networkSettings.getIpAddress();
         }
 
-        if (host == null) {
-            final URI uri = URI.create(api.getDockerHost().getUri());
-            if(uri.getScheme().equals("unix")) {
-                // Communicating with unix domain socket. so we assume localhost
-                host = "0.0.0.0";
-            } else {
-                host = uri.getHost();
-            }
+        final URI uri = URI.create(api.getDockerHost().getUri());
+        if(uri.getScheme().equals("unix")) {
+            // Communicating with unix domain socket. so we assume localhost
+            return "0.0.0.0";
+        } else {
+            return uri.getHost();
         }
-
-        return new InetSocketAddress(host, port);
     }
 
     private String getDockerHostFromCloud(DockerAPI api) {
