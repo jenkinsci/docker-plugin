@@ -24,7 +24,7 @@ public class DockerComputerSSHConnectorTest {
         cmd.withPortBindings(PortBinding.parse("42:42"));
 
         connector.setPort(22);
-        connector.beforeContainerCreated(Mockito.mock(DockerAPI.class), Mockito.mock(DockerTemplate.class), cmd);
+        connector.beforeContainerCreated(Mockito.mock(DockerAPI.class), "/workdir", cmd);
         final Ports portBindings = cmd.getPortBindings();
         Assert.assertNotNull(portBindings);
         final Map<ExposedPort, Ports.Binding[]> bindingMap = portBindings.getBindings();

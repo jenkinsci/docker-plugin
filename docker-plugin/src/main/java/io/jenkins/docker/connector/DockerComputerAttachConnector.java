@@ -39,6 +39,10 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     public DockerComputerAttachConnector() {
     }
 
+    public DockerComputerAttachConnector(String user) {
+        this.user = user;
+    }
+
     public String getUser() {
         return user;
     }
@@ -62,6 +66,16 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     @Override
     protected ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
         return new DockerAttachLauncher(api, inspect.getId(), user, workdir);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerComputerAttachConnector that = (DockerComputerAttachConnector) o;
+
+        return user != null ? user.equals(that.user) : that.user == null;
     }
 
     @Extension(ordinal = 100) @Symbol("attach")

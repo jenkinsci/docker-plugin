@@ -71,8 +71,8 @@ public class DockerCloud extends Cloud {
     private List<DockerTemplate> templates;
     private transient HashMap<Long, DockerTemplate> jobTemplates;
 
-    private DockerServerEndpoint dockerHost;
-
+    @Deprecated
+    private transient DockerServerEndpoint dockerHost;
     @Deprecated
     private transient String serverUrl;
     @Deprecated
@@ -112,26 +112,22 @@ public class DockerCloud extends Cloud {
     /**
      * Indicate if docker host used to run container is exposed inside container as DOCKER_HOST environment variable
      */
-    private Boolean exposeDockerHost;
+    private boolean exposeDockerHost;
 
 
     @DataBoundConstructor
     public DockerCloud(String name,
                        DockerAPI dockerApi,
-                       List<? extends DockerTemplate> templates) {
+                       List<DockerTemplate> templates) {
 
         super(name);
         this.dockerApi = dockerApi;
-        if (templates != null) {
-            this.templates = new ArrayList<>(templates);
-        } else {
-            this.templates = new ArrayList<>();
-        }
+        this.templates = templates;
     }
 
     @Deprecated
     public DockerCloud(String name,
-                       List<? extends DockerTemplate> templates,
+                       List<DockerTemplate> templates,
                        DockerServerEndpoint dockerHost,
                        int containerCap,
                        int connectTimeout,
@@ -143,7 +139,7 @@ public class DockerCloud extends Cloud {
 
     @Deprecated
     public DockerCloud(String name,
-                       List<? extends DockerTemplate> templates,
+                       List<DockerTemplate> templates,
                        String serverUrl,
                        int containerCap,
                        int connectTimeout,
@@ -156,7 +152,7 @@ public class DockerCloud extends Cloud {
 
     @Deprecated
     public DockerCloud(String name,
-                       List<? extends DockerTemplate> templates,
+                       List<DockerTemplate> templates,
                        String serverUrl,
                        String containerCapStr,
                        int connectTimeout,
@@ -390,9 +386,7 @@ public class DockerCloud extends Cloud {
     }
 
     public List<DockerTemplate> getTemplates() {
-    	List<DockerTemplate> t = new ArrayList<DockerTemplate>(templates);
-    	t.addAll(getJobTemplates().values());
-        return t;
+    	return templates;
     }
 
     /**
@@ -532,10 +526,14 @@ public class DockerCloud extends Cloud {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
-                .add("name", name)
-                .add("serverUrl", serverUrl)
-                .toString();
+        final StringBuilder sb = new StringBuilder("DockerCloud{");
+        sb.append("name=").append(name);
+        sb.append(", dockerApi=").append(dockerApi);
+        sb.append(", containerCap=").append(containerCap);
+        sb.append(", exposeDockerHost=").append(exposeDockerHost);
+        sb.append(", templates='").append(templates).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 
     @Override
@@ -545,12 +543,10 @@ public class DockerCloud extends Cloud {
 
         DockerCloud that = (DockerCloud) o;
 
+        if (!dockerApi.equals(that.dockerApi)) return false;
         if (containerCap != that.containerCap) return false;
-        if (connectTimeout != that.connectTimeout) return false;
-        if (readTimeout != that.readTimeout) return false;
         if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
-        if (!dockerHost.equals(that.dockerHost))return false;
-        if (version != null ? !version.equals(that.version) : that.version != null) return false;
+        if (exposeDockerHost != that.exposeDockerHost)return false;
         return true;
     }
 
@@ -574,7 +570,7 @@ public class DockerCloud extends Cloud {
 
     public boolean isExposeDockerHost() {
         // if null (i.e migration from previous installation) consider true for backward compatibility
-        return exposeDockerHost != null ? exposeDockerHost : true;
+        return exposeDockerHost;
     }
 
     @DataBoundSetter

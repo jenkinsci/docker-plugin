@@ -18,6 +18,7 @@ import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
@@ -42,6 +43,7 @@ import java.util.Collections;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -92,7 +94,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
 
     @DataBoundSetter
     public void setApiVersion(String apiVersion) {
-        this.apiVersion = apiVersion;
+        this.apiVersion = trimToNull(apiVersion);
     }
 
     public String getHostname() {
@@ -101,7 +103,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
 
     @DataBoundSetter
     public void setHostname(String hostname) {
-        this.hostname = hostname;
+        this.hostname = trimToNull(hostname);
     }
 
     public DockerClient getClient() {
@@ -155,8 +157,30 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         } catch (Exception e) {
             throw new IOException("Failed to create a Socker for docker URI " + dockerHost.getUri(), e);
         }
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        DockerAPI dockerAPI = (DockerAPI) o;
+
+        if (connectTimeout != dockerAPI.connectTimeout) return false;
+        if (dockerHost != null ? !dockerHost.equals(dockerAPI.dockerHost) : dockerAPI.dockerHost != null) return false;
+        if (apiVersion != null ? !apiVersion.equals(dockerAPI.apiVersion) : dockerAPI.apiVersion != null) return false;
+        if (hostname != null ? !hostname.equals(dockerAPI.hostname) : dockerAPI.hostname != null) return false;
+        return client != null ? client.equals(dockerAPI.client) : dockerAPI.client == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = dockerHost != null ? dockerHost.hashCode() : 0;
+        result = 31 * result + connectTimeout;
+        result = 31 * result + (apiVersion != null ? apiVersion.hashCode() : 0);
+        result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
+        result = 31 * result + (client != null ? client.hashCode() : 0);
+        return result;
     }
 
     @Extension
