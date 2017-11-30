@@ -21,7 +21,6 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Item;
 import hudson.model.TaskListener;
@@ -358,7 +357,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             }
 
             // tag built image with tags
-            for (String tag : tags) {
+            for (String tag : tagsToUse) {
                 final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
                 final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
                 log("Tagging built image with " + reposTag.repos + ":" + commitTag);
@@ -414,12 +413,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         List<String> expandedTags;
 
-        if (run instanceof AbstractBuild) {
-            expandedTags = expandTags((AbstractBuild<?, ?>) run, launcher, listener);
-        } else {
-            expandedTags = tags;
+        expandedTags = expandTags(run, workspace, launcher, listener);
+        String expandedDockerFileDirectory = dockerFileDirectory;
+        try {
+            expandedDockerFileDirectory = TokenMacro.expandAll(run, workspace, listener, this.dockerFileDirectory);
+        } catch (MacroEvaluationException e) {
+            listener.getLogger().println("Couldn't macro expand docker file directory " + dockerFileDirectory);
         }
-        new Run(run, launcher, listener, new FilePath(workspace, dockerFileDirectory), expandedTags, getCloud(launcher)).run();
+        new Run(run, launcher, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, getCloud(launcher)).run();
 
     }
 
@@ -429,11 +430,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     }
 
 
-    private List<String> expandTags(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) {
+    private List<String> expandTags(hudson.model.Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) {
         List<String> eTags = new ArrayList<>(tags.size());
         for (String tag : tags) {
             try {
-                eTags.add(TokenMacro.expandAll(build, listener, tag));
+                eTags.add(TokenMacro.expandAll(build, workspace, listener, tag));
             } catch (MacroEvaluationException | IOException | InterruptedException e) {
                 listener.getLogger().println("Couldn't macro expand tag " + tag);
             }
