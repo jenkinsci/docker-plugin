@@ -63,7 +63,8 @@ class DockerNodeStepExecution extends StepExecution {
 
         // FIXME we need to wait for node to be online ...
         listener.getLogger().println("Waiting for node to be online ...");
-        while (slave.toComputer().isOffline()) {
+        Computer computer;
+        while ((computer = slave.toComputer()) != null && computer.isOffline()) {
             Thread.sleep(1000);
         }
         listener.getLogger().println("Node " + slave.getNodeName() + " is online.");
@@ -71,11 +72,10 @@ class DockerNodeStepExecution extends StepExecution {
         final FilePath ws = slave.createPath(remoteFs + "/workspace");
         FlowNode flowNode = getContext().get(FlowNode.class);
         flowNode.addAction(new WorkspaceActionImpl(ws, flowNode));
-        Computer computer = slave.toComputer();
+
         EnvVars env = computer.getEnvironment();
         env.overrideExpandingAll(computer.buildEnvironment(listener));
         env.put("NODE_NAME", computer.getName());
-
         env.put("EXECUTOR_NUMBER", "0");
         env.put("NODE_LABELS", Util.join(slave.getAssignedLabels(), " "));
         env.put("WORKSPACE", ws.getRemote());
