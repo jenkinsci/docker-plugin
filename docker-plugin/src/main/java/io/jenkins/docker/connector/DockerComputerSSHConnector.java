@@ -280,6 +280,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             return dockerHostname;
         }
 
+        // see https://github.com/joyent/sdc-docker/issues/132
         final String driver = ir.getExecDriver();
         if (driver != null && driver.startsWith("sdc")) {
             // We run on Joyent's Triton
@@ -295,17 +296,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             return uri.getHost();
         }
     }
-
-    private String getDockerHostFromCloud(DockerAPI api) {
-        String url;
-        url = api.getDockerHost().getUri();
-        final URI uri = URI.create(url);
-        if (uri.getScheme().equals("unix")) return null;
-        return uri.getHost();
-    }
-
-
-
 
     @Extension @Symbol("ssh")
     public static final class DescriptorImpl extends Descriptor<DockerComputerConnector> {
