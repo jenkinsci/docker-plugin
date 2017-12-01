@@ -32,7 +32,7 @@
     </f:entry>
 
     <f:entry title="${%Pull strategy}" field="pullStrategy">
-        <f:enum/>
+        <f:enum>${it.description}</f:enum>
     </f:entry>
 
     <f:descriptorList title="Node Properties" descriptors="${descriptor.nodePropertyDescriptors}" field="nodeProperties"/>
