@@ -18,6 +18,7 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
@@ -37,9 +38,8 @@ public class DockerNodeStep extends Step {
     private String remoteFs;
 
     @DataBoundConstructor
-    public DockerNodeStep(String dockerHost, String credentialsId, String image, String remoteFs) {
+    public DockerNodeStep(String dockerHost, String image, String remoteFs) {
         this.dockerHost = dockerHost;
-        this.credentialsId = credentialsId;
         this.image = image;
         this.remoteFs = remoteFs;
     }
@@ -50,6 +50,11 @@ public class DockerNodeStep extends Step {
 
     public String getCredentialsId() {
         return credentialsId;
+    }
+
+    @DataBoundSetter
+    public void setCredentialsId(String credentialsId) {
+        this.credentialsId = credentialsId;
     }
 
     public String getImage() {
