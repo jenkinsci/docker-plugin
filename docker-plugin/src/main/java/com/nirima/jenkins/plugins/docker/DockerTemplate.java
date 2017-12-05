@@ -7,6 +7,7 @@ import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
@@ -19,7 +20,6 @@ import hudson.model.Descriptor;
 import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.Label;
 import hudson.model.Node;
-import hudson.model.Slave;
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.slaves.ComputerLauncher;
@@ -404,7 +404,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
-    void pullImage(DockerAPI api) throws IOException, InterruptedException {
+    void pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
 
         String image = getFullImageId();
         final DockerClient client = api.getClient();
@@ -418,7 +418,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             PullImageCmd cmd =  client.pullImageCmd(image);
             final DockerRegistryEndpoint registry = getRegistry();
             DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
-            cmd.exec(new PullImageResultCallback()).awaitCompletion();
+            cmd.exec(new PullImageResultCallback() {
+                @Override
+                public void onNext(PullResponseItem item) {
+                    listener.getLogger().println(item.getStatus());
+                }
+            }).awaitCompletion();
 
             try {
                 client.inspectImageCmd(image).exec();
@@ -433,11 +438,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @Restricted(NoExternalUse.class)
-    public DockerTransientNode provisionNode(TaskListener listener, DockerAPI api) throws IOException, Descriptor.FormException, InterruptedException {
+    public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
 
         final DockerClient client = api.getClient();
         final DockerComputerConnector connector = getConnector();
-        pullImage(api);
+        pullImage(api, listener);
 
         LOGGER.info("Trying to run container for {}", getImage());
         CreateContainerCmd cmd = client.createContainerCmd(getImage());

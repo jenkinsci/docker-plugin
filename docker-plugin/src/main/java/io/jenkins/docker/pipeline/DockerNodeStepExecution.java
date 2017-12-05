@@ -43,7 +43,14 @@ class DockerNodeStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        TaskListener listener = getContext().get(TaskListener.class);
+        final TaskListener listener = getContext().get(TaskListener.class);
+        listener.getLogger().println("Launching new docker node based on " + image);
+        Computer.threadPoolForRemoting.submit(() -> createNode(listener));
+        return false;
+    }
+
+    private void createNode(TaskListener listener) {
+
         final String uuid = UUID.randomUUID().toString();
 
         final DockerTemplate t = new DockerTemplate(
@@ -53,37 +60,43 @@ class DockerNodeStepExecution extends StepExecution {
 
         t.setMode(Node.Mode.EXCLUSIVE); // Doing this we enforce no other task will use this agent
 
-        // TODO launch asynchronously, not in CPS VM thread
-        listener.getLogger().println("Launching new docker node based on " + image);
-
         final DockerAPI api = new DockerAPI(new DockerServerEndpoint(dockerHost, credentialsId));
-        final Node slave = t.provisionNode(listener, api);
 
-        Jenkins.getInstance().addNode(slave);
-
-        // FIXME we need to wait for node to be online ...
-        listener.getLogger().println("Waiting for node to be online ...");
+        Node slave;
         Computer computer;
-        while ((computer = slave.toComputer()) != null && computer.isOffline()) {
-            Thread.sleep(1000);
+        EnvVars env;
+        FilePath ws;
+        try {
+            // TODO extract the "pull" process into a new pipeline step so this one is resumable
+            slave = t.provisionNode(api, listener);
+            Jenkins.getInstance().addNode(slave);
+
+            // FIXME we need to wait for node to be online ...
+            listener.getLogger().println("Waiting for node to be online ...");
+            while ((computer = slave.toComputer()) == null || computer.isOffline()) {
+                Thread.sleep(1000);
+            }
+            listener.getLogger().println("Node " + slave.getNodeName() + " is online.");
+
+            // TODO workspace should be a volume
+            ws = slave.createPath(remoteFs + "/workspace");
+            FlowNode flowNode = getContext().get(FlowNode.class);
+            flowNode.addAction(new WorkspaceActionImpl(ws, flowNode));
+
+            env = computer.getEnvironment();
+            env.overrideExpandingAll(computer.buildEnvironment(listener));
+            env.put("NODE_NAME", computer.getName());
+            env.put("EXECUTOR_NUMBER", "0");
+            env.put("NODE_LABELS", Util.join(slave.getAssignedLabels(), " "));
+            env.put("WORKSPACE", ws.getRemote());
+        } catch (Exception e) {
+            getContext().onFailure(e);
+            return;
         }
-        listener.getLogger().println("Node " + slave.getNodeName() + " is online.");
 
-        final FilePath ws = slave.createPath(remoteFs + "/workspace");
-        FlowNode flowNode = getContext().get(FlowNode.class);
-        flowNode.addAction(new WorkspaceActionImpl(ws, flowNode));
-
-        EnvVars env = computer.getEnvironment();
-        env.overrideExpandingAll(computer.buildEnvironment(listener));
-        env.put("NODE_NAME", computer.getName());
-        env.put("EXECUTOR_NUMBER", "0");
-        env.put("NODE_LABELS", Util.join(slave.getAssignedLabels(), " "));
-        env.put("WORKSPACE", ws.getRemote());
-
-        getContext().newBodyInvoker().withCallback(new Callback(slave)).withContexts(slave.toComputer(), env, ws).start();
-
-        return false;
+        getContext().newBodyInvoker().withCallback(new Callback(slave)).withContexts(computer, env, ws).start();
     }
+
 
     @Override
     public void stop(@Nonnull Throwable cause) throws Exception {
