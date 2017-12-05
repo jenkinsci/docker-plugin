@@ -1,6 +1,6 @@
 # Creating new issue
 
-- try reproduce with `evarga/jenkins-slave` image with dumb freestyle job
+- try reproduce with `jenkins/(ssh-slave|jnlp-slave|slave)` image with dumb freestyle job
 - provide full description of issue
 - check `Manage Jenkins` -> `Manage Old Data` for not updated configuraiton and provide this info
 - provide full list of installed plugins with versions, jenkins core version

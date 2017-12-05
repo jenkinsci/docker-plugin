@@ -1,11 +1,25 @@
 # Changelog
 
+## 1.1
+
+* :warning: Require Jenkins 2.60+ and Java 8
+* :construction: Introduce experimental Pipeline support with `dockerNode` [JENKINS-48050](https://issues.jenkins-ci.org/browse/JENKINS-48050)
+* Huge improvement in "attached" launcher performances
+* reviewed SSH external IP detection
+* introduce support for SSH host key verification
+* added support for variables in tags and Dockerfile directory
+* removed "mappedFsWorkspace" option, which only make sense for a local docker host.
+* refactoring
+* fix `-tunnel` option for JNLP slaves
+* fix UI data-binding issues
+
+
 ## 1.0.4
 
 * fix support for binded ports
 * fix SSH command Prefix / Suffix
 * fix JNLP agent provisionning
-* disable Matrix-autorisation node property (JENKINS-47697)
+* disable Matrix-autorisation node property [JENKINS-47697](https://issues.jenkins-ci.org/browse/JENKINS-47697)
 
 ## 1.0.3
 

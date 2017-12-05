@@ -71,7 +71,7 @@ public class DockerNodeStep extends Step {
         @Nonnull
         @Override
         public String getDisplayName() {
-            return "Docker Node";
+            return "(\uD83D\uDEA7) Docker Node";
         }
 
 
