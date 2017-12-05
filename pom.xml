@@ -8,8 +8,9 @@
         <version>2.36</version>
     </parent>
 
-    <groupId>com.nirima</groupId>
+    <groupId>io.jenkins.docker</groupId>
     <artifactId>docker-plugin</artifactId>
+    <version>1.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -215,5 +216,26 @@
 
         </plugins>
     </build>
+
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/docker-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
 
 </project>
