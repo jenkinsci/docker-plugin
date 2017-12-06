@@ -63,6 +63,11 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
 
     private transient DockerClient client = null;
 
+    /**
+     * Is this host actually a swarm?
+     */
+    private transient Boolean _isSwarm;
+
     @DataBoundConstructor
     public DockerAPI(DockerServerEndpoint dockerHost) {
         this.dockerHost = dockerHost;
@@ -104,6 +109,15 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
     @DataBoundSetter
     public void setHostname(String hostname) {
         this.hostname = trimToNull(hostname);
+    }
+
+    public boolean isSwarm() {
+        Version remoteVersion = getClient().versionCmd().exec();
+        // Cache the return.
+        if( _isSwarm == null ) {
+            _isSwarm = remoteVersion.getVersion().startsWith("swarm");
+        }
+        return _isSwarm;
     }
 
     public DockerClient getClient() {
