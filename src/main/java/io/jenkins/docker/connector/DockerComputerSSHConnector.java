@@ -267,17 +267,27 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             String hps = b.getHostPortSpec();
             port = Integer.valueOf(hps);
         }
-        String host = getExternalIP(api, ir, networkSettings);
-
+        String host = getExternalIP(api, ir, networkSettings, sshBindings);
 
         return new InetSocketAddress(host, port);
     }
 
-    private String getExternalIP(DockerAPI api, InspectContainerResponse ir, NetworkSettings networkSettings) {
+    private String getExternalIP(DockerAPI api, InspectContainerResponse ir, NetworkSettings networkSettings,
+                                 Ports.Binding[] sshBindings) {
         // If an explicit IP/hostname has been defined, always prefer this one
         String dockerHostname = api.getHostname();
         if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
             return dockerHostname;
+        }
+
+        // for (standalone) swarm, need to get the address of the actual host
+        if (api.isSwarm()) {
+            for (Ports.Binding b : sshBindings) {
+                String ipAddress = b.getHostIp();
+                if (ipAddress != null && !"0.0.0.0".equals(ipAddress)) {
+                    return ipAddress;
+                }
+            }
         }
 
         // see https://github.com/joyent/sdc-docker/issues/132

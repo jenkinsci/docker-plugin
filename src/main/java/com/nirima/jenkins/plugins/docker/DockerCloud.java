@@ -86,11 +86,6 @@ public class DockerCloud extends Cloud {
     private int containerCap = 100;
 
     /**
-     * Is this cloud actually a swarm?
-     */
-    private transient Boolean _isSwarm;
-
-    /**
      * Is this cloud running Joyent Triton?
      */
     private transient Boolean _isTriton;
@@ -540,15 +535,6 @@ public class DockerCloud extends Cloud {
         if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
         if (exposeDockerHost != that.exposeDockerHost)return false;
         return true;
-    }
-
-    /* package */ boolean isSwarm() {
-        Version remoteVersion = getClient().versionCmd().exec();
-        // Cache the return.
-        if( _isSwarm == null ) {
-            _isSwarm = remoteVersion.getVersion().startsWith("swarm");
-        }
-        return _isSwarm;
     }
 
     public boolean isTriton() {
