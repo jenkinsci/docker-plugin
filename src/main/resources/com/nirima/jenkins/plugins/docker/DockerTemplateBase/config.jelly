@@ -31,15 +31,15 @@
     </f:entry>
 
     <f:entry title="${%Volumes}" field="volumesString">
-      <f:textbox />
+      <f:expandableTextbox />
     </f:entry>
 
     <f:entry title="${%Volumes From}" field="volumesFromString">
-      <f:textbox />
+      <f:expandableTextbox />
     </f:entry>
 
     <f:entry title="${%Environment}" field="environmentsString">
-      <f:textbox />
+      <f:expandableTextbox />
     </f:entry>
 
     <f:entry title="${%Port bindings}" field="bindPorts">

@@ -34,6 +34,7 @@ import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.tasks.Maven;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.InstallSourceProperty;
+import org.apache.commons.lang3.SystemUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -44,6 +45,8 @@ import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,6 +62,14 @@ import java.util.Collections;
 import java.util.Set;
 
 public class DockerNodeStepTest {
+
+//Skip this test on Windows OS family, as it have no unix sock
+    @Before
+    public void beforeTest()
+    {
+        Assume.assumeTrue(!SystemUtils.IS_OS_WINDOWS);
+    }
+
     @ClassRule
     public static BuildWatcher buildWatcher = new BuildWatcher();
 
