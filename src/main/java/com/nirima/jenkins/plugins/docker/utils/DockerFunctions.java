@@ -20,13 +20,4 @@ public class DockerFunctions {
     public static List<Descriptor<DockerComputerConnector>> getDockerComputerConnectorDescriptors() {
         return Jenkins.getInstance().getDescriptorList(DockerComputerConnector.class);
     }
-
-    public static List<Descriptor<RetentionStrategy<?>>> getDockerRetentionStrategyDescriptors() {
-        List<Descriptor<RetentionStrategy<?>>> strategies = new ArrayList<>();
-
-        strategies.add(Jenkins.getInstance().getDescriptor(DockerOnceRetentionStrategy.class));
-        strategies.add(Jenkins.getInstance().getDescriptor(DockerCloudRetentionStrategy.class));
-
-        return strategies;
-    }
 }

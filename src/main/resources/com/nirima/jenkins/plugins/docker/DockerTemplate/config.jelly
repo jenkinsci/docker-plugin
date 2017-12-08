@@ -18,8 +18,8 @@
 
     <f:slave-mode name="mode" node="${instance}"/>
 
-    <f:dropdownDescriptorSelector field="retentionStrategy" title="Availability"
-                    descriptors="${com.nirima.jenkins.plugins.docker.utils.DockerFunctions.dockerRetentionStrategyDescriptors}"/>
+    <f:property field="retentionStrategy" title="Availability"
+                propertyDescriptor="${descriptor.retentionStrategyDescriptor}"/>
 
     <f:entry title="${%Number of executors}" field="numExecutors">
         <f:number default="1"/>

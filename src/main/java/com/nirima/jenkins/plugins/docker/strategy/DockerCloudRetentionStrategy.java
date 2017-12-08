@@ -11,26 +11,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
 /**
  * {@link CloudRetentionStrategy} that has Descriptor and UI with description
  */
-public class DockerCloudRetentionStrategy extends CloudRetentionStrategy {
+@Deprecated
+public class DockerCloudRetentionStrategy {
 
-    private final int timeout;
+    private transient int timeout;
 
-    @DataBoundConstructor
-    public DockerCloudRetentionStrategy(int timeout) {
-        super(timeout);
-        this.timeout = timeout;
-    }
-
-    // for UI binding
-    public int getTimeout() {
-        return timeout;
-    }
-
-    @Extension
-    public static final class DescriptorImpl extends hudson.model.Descriptor<RetentionStrategy<?>> {
-        @Override
-        public String getDisplayName() {
-            return "Remove container if unused";
-        }
+    private Object readResolve() {
+        return new DockerOnceRetentionStrategy(timeout);
     }
 }

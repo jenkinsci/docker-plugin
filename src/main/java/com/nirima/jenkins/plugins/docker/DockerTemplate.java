@@ -70,6 +70,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private Node.Mode mode = Node.Mode.NORMAL;
 
+    // for backward compatibility reason can't declare this attribute as type DockerOnceRetentionStrategy
     private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(10);
 
     private int numExecutors = 1;
@@ -554,6 +555,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             }
             return result;
         }
+
+        public Descriptor getRetentionStrategyDescriptor() {
+            return Jenkins.getInstance().getDescriptor(DockerOnceRetentionStrategy.class);
+        }
+
+
 
         @Override
         public String getDisplayName() {
