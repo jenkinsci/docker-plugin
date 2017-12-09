@@ -75,6 +75,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     @DataBoundConstructor
     public DockerComputerSSHConnector(SSHKeyStrategy sshKeyStrategy) {
         this.sshKeyStrategy = sshKeyStrategy;
+        this.port = 22;
     }
 
     public SSHKeyStrategy getSshKeyStrategy() {
