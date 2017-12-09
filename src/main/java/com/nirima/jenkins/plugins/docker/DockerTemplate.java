@@ -259,15 +259,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @DataBoundSetter
-    public void setRetentionStrategy(RetentionStrategy retentionStrategy) {
+    public void setRetentionStrategy(DockerOnceRetentionStrategy retentionStrategy) {
         this.retentionStrategy = retentionStrategy;
     }
 
     public RetentionStrategy getRetentionStrategy() {
-        return retentionStrategy;
-    }
-
-    public RetentionStrategy getRetentionStrategyCopy() {
         return retentionStrategy;
     }
 
@@ -372,7 +368,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         template.setNumExecutors(1);
         template.setPullStrategy(pullStrategy);
         template.setRemoveVolumes(removeVolumes);
-        template.setRetentionStrategy(retentionStrategy);
+        template.setRetentionStrategy((DockerOnceRetentionStrategy) retentionStrategy);
         return template;
     }
 
