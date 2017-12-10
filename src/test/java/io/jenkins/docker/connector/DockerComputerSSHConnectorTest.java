@@ -5,52 +5,24 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.core.command.CreateContainerCmdImpl;
-import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Label;
-import hudson.model.Result;
-import hudson.tasks.Shell;
 import io.jenkins.docker.client.DockerAPI;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class DockerComputerSSHConnectorTest {
-
-    @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
+public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
 
     @Test
-    public void run_ssh_agent() throws IOException, ExecutionException, InterruptedException {
-        DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)),
-                Collections.singletonList(
-                        new DockerTemplate(
-                                new DockerTemplateBase("jenkins/ssh-slave"),
-                                new DockerComputerSSHConnector(new DockerComputerSSHConnector.InjectSSHKey("jenkins")),
-                                "docker-ssh", "/home/jenkins", "10", Collections.EMPTY_LIST
-                        )
-                ));
-
-        jenkins.getInstance().clouds.replaceBy(Collections.singleton(cloud));
-
-        final FreeStyleProject project = jenkins.createFreeStyleProject("test-docker-ssh");
-        project.setAssignedLabel(Label.get("docker-ssh"));
-        project.getBuildersList().add(new Shell("echo 'hello docker'"));
-        final FreeStyleBuild build = project.scheduleBuild2(0).get();
-        Assert.assertTrue(build.getResult() == Result.SUCCESS);
+    public void should_connect_agent() throws InterruptedException, ExecutionException, IOException {
+        should_connect_agent(
+                new DockerComputerSSHConnector(new DockerComputerSSHConnector.InjectSSHKey("jenkins")),
+                "jenkins/ssh-slave"
+        );
     }
-
 
     @Test
     public void testPortBinding() throws IOException, InterruptedException {

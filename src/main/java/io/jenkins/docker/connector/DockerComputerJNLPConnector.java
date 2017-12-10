@@ -33,6 +33,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     private String user;
     private final JNLPLauncher jnlpLauncher;
+    private String jenkinsUrl;
 
     @DataBoundConstructor
     public DockerComputerJNLPConnector(JNLPLauncher jnlpLauncher) {
@@ -47,6 +48,16 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     @DataBoundSetter
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public DockerComputerJNLPConnector user(String user) {
+        this.user = user;
+        return this;
+    }
+
+    public DockerComputerJNLPConnector jenkinsUrl(String jenkinsUrl) {
+        this.jenkinsUrl = jenkinsUrl;
+        return this;
     }
 
     public JNLPLauncher getJnlpLauncher() {
@@ -121,12 +132,11 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         }
 
         args.addAll(Arrays.asList(
-                "-url", Jenkins.getInstance().getRootUrl(),
+                "-url", jenkinsUrl == null ? Jenkins.getInstance().getRootUrl() : jenkinsUrl,
                 computer.getJnlpMac(),
                 computer.getName()));
         return args;
     }
-
 
     @Extension @Symbol("jnlp")
     public static final class DescriptorImpl extends Descriptor<DockerComputerConnector> {
