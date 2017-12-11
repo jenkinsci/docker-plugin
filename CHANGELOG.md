@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.1
+
+Regression fix release
+* Fix SSH connector with standalone swarm
+* Restore multi-line control for container setting
+* fix configuration conversion from legacy DockerCloudRetentionStrategy 
+
+
 ## 1.1
 
 * :warning: Require Jenkins 2.60+ and Java 8
