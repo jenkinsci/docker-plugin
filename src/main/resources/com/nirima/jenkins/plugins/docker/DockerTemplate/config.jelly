@@ -21,10 +21,6 @@
     <f:property field="retentionStrategy" title="Availability"
                 propertyDescriptor="${descriptor.retentionStrategyDescriptor}"/>
 
-    <f:entry title="${%Number of executors}" field="numExecutors">
-        <f:number default="1"/>
-    </f:entry>
-
     <f:dropdownDescriptorSelector field="connector" title="Connect method"/>
 
     <f:entry title="${%Remove volumes}" field="removeVolumes">

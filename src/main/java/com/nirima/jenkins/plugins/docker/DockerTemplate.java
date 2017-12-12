@@ -73,8 +73,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     // for backward compatibility reason can't declare this attribute as type DockerOnceRetentionStrategy
     private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(10);
 
-    private int numExecutors = 1;
-
     private DockerTemplateBase dockerTemplateBase;
 
     private boolean removeVolumes;
@@ -83,7 +81,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private @CheckForNull DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
         
-    private List<? extends NodeProperty<?>> nodeProperties;
+    private List<? extends NodeProperty<?>> nodeProperties = Collections.EMPTY_LIST;
 
 
     /**
@@ -235,20 +233,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return mode;
     }
 
-    /**
-     * Experimental option allows set number of executors
-     */
-    @DataBoundSetter
-    public void setNumExecutors(int numExecutors) {
-        this.numExecutors = numExecutors;
-    }
-
     public int getNumExecutors() {
-        if (getRetentionStrategy() instanceof DockerOnceRetentionStrategy) {
-            return 1; // works only with one executor!
-        }
-
-        return numExecutors;
+        return 1; // works only with one executor!
     }
 
     @DataBoundSetter
@@ -358,7 +344,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public DockerTemplate cloneWithLabel(String label)  {
         final DockerTemplate template = new DockerTemplate(dockerTemplateBase, connector, label, remoteFs, "1");
         template.setMode(Node.Mode.EXCLUSIVE);
-        template.setNumExecutors(1);
         template.setPullStrategy(pullStrategy);
         template.setRemoveVolumes(removeVolumes);
         template.setRetentionStrategy((DockerOnceRetentionStrategy) retentionStrategy);
@@ -376,7 +361,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 ", instanceCap=" + instanceCap +
                 ", mode=" + mode +
                 ", retentionStrategy=" + retentionStrategy +
-                ", numExecutors=" + numExecutors +
                 ", dockerTemplateBase=" + dockerTemplateBase +
                 ", removeVolumes=" + removeVolumes +
                 ", pullStrategy=" + pullStrategy +
@@ -477,7 +461,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         if (configVersion != template.configVersion) return false;
         if (instanceCap != template.instanceCap) return false;
-        if (numExecutors != template.numExecutors) return false;
         if (removeVolumes != template.removeVolumes) return false;
         if (!labelString.equals(template.labelString)) return false;
         if (!connector.equals(template.connector)) return false;
@@ -499,7 +482,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         result = 31 * result + instanceCap;
         result = 31 * result + mode.hashCode();
         result = 31 * result + retentionStrategy.hashCode();
-        result = 31 * result + numExecutors;
         result = 31 * result + dockerTemplateBase.hashCode();
         result = 31 * result + (removeVolumes ? 1 : 0);
         result = 31 * result + labelSet.hashCode();
@@ -510,15 +492,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<DockerTemplate> {
-
-        public FormValidation doCheckNumExecutors(@QueryParameter int numExecutors) {
-            if (numExecutors > 1) {
-                return FormValidation.warning("Experimental, see help");
-            } else if (numExecutors < 1) {
-                return FormValidation.error("Must be > 0");
-            }
-            return FormValidation.ok();
-        }
 
         /**
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.

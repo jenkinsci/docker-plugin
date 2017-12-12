@@ -6,11 +6,7 @@ import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
-import hudson.Extension;
 import hudson.model.Node;
-import hudson.model.Slave;
-import hudson.slaves.NodeProperty;
-import hudson.slaves.NodePropertyDescriptor;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
@@ -19,7 +15,6 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.Collections;
 
@@ -65,7 +60,6 @@ public class DockerCloudTest {
         template.setPullStrategy(DockerImagePullStrategy.PULL_NEVER);
         template.setMode(Node.Mode.NORMAL);
         template.setRemoveVolumes(true);
-        template.setNumExecutors(42);
         template.setRetentionStrategy(new DockerOnceRetentionStrategy(33));
 
         DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")),
