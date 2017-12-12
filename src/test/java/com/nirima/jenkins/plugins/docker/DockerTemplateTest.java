@@ -45,14 +45,7 @@ public class DockerTemplateTest {
                 dockerCommand, volumesString, volumesString, environmentsString,
                 hostname, memoryLimit, memorySwap, cpuShares, bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
 
-        return new DockerTemplate(
-                dockerTemplateBase,
-                null,
-                labelString,
-                remoteFs,
-                instanceCapStr,
-                null
-        );
+        return new DockerTemplate(dockerTemplateBase, null, labelString, remoteFs, instanceCapStr);
     }
 
     @Test

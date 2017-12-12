@@ -35,5 +35,8 @@
         <f:enum>${it.description}</f:enum>
     </f:entry>
 
-    <f:descriptorList title="Node Properties" descriptors="${descriptor.nodePropertyDescriptors}" field="nodeProperties"/>
+    <f:entry title="Node Properties">
+        <f:repeatableHeteroProperty field="nodeProperties" oneEach="true" hasHeader="true"
+                                    addCaption="Add Node Property" deleteCaption="Delete Node Property"/>
+    </f:entry>
 </j:jelly>

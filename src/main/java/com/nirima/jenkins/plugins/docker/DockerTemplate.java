@@ -83,8 +83,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private @CheckForNull DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
         
-    private DescribableList<NodeProperty<?>, NodePropertyDescriptor> nodeProperties = 
-        new DescribableList<NodeProperty<?>, NodePropertyDescriptor>(Jenkins.getInstance());
+    private List<? extends NodeProperty<?>> nodeProperties;
 
 
     /**
@@ -100,8 +99,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                           DockerComputerConnector connector,
                           String labelString,
                           String remoteFs,
-                          String instanceCapStr,
-                          List<? extends NodeProperty<?>> nodeProperties
+                          String instanceCapStr
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.connector = connector;
@@ -115,11 +113,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         labelSet = Label.parse(labelString);
-        
-        this.nodeProperties.clear();
-        if (nodeProperties != null) {
-            this.nodeProperties.addAll(nodeProperties);
-        }
     }
 
     // -- DockerTemplateBase mixin
@@ -301,12 +294,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
     
     public List<? extends NodeProperty<?>> getNodeProperties() {
-        return Collections.<NodeProperty<?>>unmodifiableList(nodeProperties);
+        return Collections.unmodifiableList(nodeProperties);
     }
     
     @DataBoundSetter
-    public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) throws IOException {
-        this.nodeProperties.replaceBy(nodeProperties);
+    public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
+        this.nodeProperties = nodeProperties;
     }
     
     /**
@@ -362,13 +355,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @Restricted(NoExternalUse.class)
-    public DockerTemplate cloneWithLabel(String label) {
-        final DockerTemplate template = new DockerTemplate(dockerTemplateBase, connector, label, remoteFs, "1", nodeProperties);
+    public DockerTemplate cloneWithLabel(String label)  {
+        final DockerTemplate template = new DockerTemplate(dockerTemplateBase, connector, label, remoteFs, "1");
         template.setMode(Node.Mode.EXCLUSIVE);
         template.setNumExecutors(1);
         template.setPullStrategy(pullStrategy);
         template.setRemoveVolumes(removeVolumes);
         template.setRetentionStrategy((DockerOnceRetentionStrategy) retentionStrategy);
+        template.setNodeProperties(nodeProperties);
         return template;
     }
 
@@ -516,6 +510,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<DockerTemplate> {
+
         public FormValidation doCheckNumExecutors(@QueryParameter int numExecutors) {
             if (numExecutors > 1) {
                 return FormValidation.warning("Experimental, see help");
@@ -528,7 +523,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         /**
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
          */
-        public List<NodePropertyDescriptor> getNodePropertyDescriptors() {
+        public List<NodePropertyDescriptor> getNodePropertiesDescriptors() {
 
             // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
             List<NodePropertyDescriptor> result = new ArrayList<NodePropertyDescriptor>();

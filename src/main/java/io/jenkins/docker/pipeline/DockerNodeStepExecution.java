@@ -56,7 +56,7 @@ class DockerNodeStepExecution extends StepExecution {
         final DockerTemplate t = new DockerTemplate(
                 new DockerTemplateBase(image),
                 new DockerComputerAttachConnector(),
-                uuid, remoteFs, "1", Collections.EMPTY_LIST);
+                uuid, remoteFs, "1");
 
         t.setMode(Node.Mode.EXCLUSIVE); // Doing this we enforce no other task will use this agent
 

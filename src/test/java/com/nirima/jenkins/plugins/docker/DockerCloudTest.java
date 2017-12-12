@@ -10,7 +10,10 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Hudson;
+import hudson.model.Node;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
@@ -22,6 +25,7 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.Collections;
+import java.util.List;
 
 import static com.cloudbees.plugins.credentials.CredentialsScope.SYSTEM;
 
@@ -56,16 +60,22 @@ public class DockerCloudTest {
         UsernamePasswordCredentials rc = new UsernamePasswordCredentialsImpl(SYSTEM, "pullCredentialsId", null, null, null);
         store.addCredentials(Domain.global(), rc);
 
+        final DockerTemplate template = new DockerTemplate(
+                new DockerTemplateBase("image", "pullCredentialsId", "dnsStirng", "network",
+                        "dockerCommand", "volumesString", "volumesFroString", "environmentString",
+                        "hostname", 128, 256, 42, "bindPorts", true, true, true, "macAddress", "extraHostsString"),
+                new DockerComputerAttachConnector("jenkins"),
+                "labelString", "remoteFs", "10");
+        template.setNodeProperties(Collections.singletonList(
+                new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("FOO", "BAR"))));
+        template.setPullStrategy(DockerImagePullStrategy.PULL_NEVER);
+        template.setMode(Node.Mode.NORMAL);
+        template.setRemoveVolumes(true);
+        template.setNumExecutors(42);
+        template.setRetentionStrategy(new DockerOnceRetentionStrategy(33));
+
         DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")),
-                Collections.singletonList(
-                new DockerTemplate(
-                        new DockerTemplateBase("image", "pullCredentialsId", "dnsStirng", "network",
-                                "dockerCommand", "volumesString", "volumesFroString", "environmentString", 
-                                "hostname", 128, 256, 42, "bindPorts", true, true, true, "macAddress", "extraHostsString"),
-                        new DockerComputerAttachConnector("jenkins"),
-                        "labelString", "remoteFs", "10", Collections.EMPTY_LIST
-                )
-        ));
+                Collections.singletonList(template));
 
         jenkins.getInstance().clouds.replaceBy(Collections.singleton(cloud));
 

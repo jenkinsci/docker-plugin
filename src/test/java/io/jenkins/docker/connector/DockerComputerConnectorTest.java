@@ -39,7 +39,7 @@ public abstract class DockerComputerConnectorTest {
                         new DockerTemplate(
                                 new DockerTemplateBase(image),
                                 connector,
-                                "docker-ssh", "/home/jenkins", "10", Collections.EMPTY_LIST
+                                "docker-ssh", "/home/jenkins", "10"
                         )
                 ));
 
