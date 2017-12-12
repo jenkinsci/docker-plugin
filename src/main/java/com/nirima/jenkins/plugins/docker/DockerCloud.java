@@ -274,6 +274,7 @@ public class DockerCloud extends Cloud {
                                     ? Jenkins.getInstance().unlabeledNodeProvisioner
                                     : label.nodeProvisioner);
                             provisioner.suggestReviewNow();
+                            Jenkins.getInstance().addNode(slave);
 
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
