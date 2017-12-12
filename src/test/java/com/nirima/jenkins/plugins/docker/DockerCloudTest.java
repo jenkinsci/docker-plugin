@@ -1,19 +1,16 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
-import hudson.model.Hudson;
+import hudson.Extension;
 import hudson.model.Node;
-import hudson.slaves.EnvironmentVariablesNodeProperty;
+import hudson.model.Slave;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
@@ -21,11 +18,10 @@ import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.Collections;
-import java.util.List;
 
 import static com.cloudbees.plugins.credentials.CredentialsScope.SYSTEM;
 
@@ -66,8 +62,6 @@ public class DockerCloudTest {
                         "hostname", 128, 256, 42, "bindPorts", true, true, true, "macAddress", "extraHostsString"),
                 new DockerComputerAttachConnector("jenkins"),
                 "labelString", "remoteFs", "10");
-        template.setNodeProperties(Collections.singletonList(
-                new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("FOO", "BAR"))));
         template.setPullStrategy(DockerImagePullStrategy.PULL_NEVER);
         template.setMode(Node.Mode.NORMAL);
         template.setRemoveVolumes(true);
@@ -82,6 +76,5 @@ public class DockerCloudTest {
         jenkins.configRoundtrip();
 
         Assert.assertEquals(cloud, jenkins.getInstance().clouds.get(0));
-
     }
 }
