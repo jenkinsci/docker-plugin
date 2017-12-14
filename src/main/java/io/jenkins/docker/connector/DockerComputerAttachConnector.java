@@ -153,14 +153,6 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
 
             final InputStream demux = new DockerMultiplexedInputStream(in);
 
-            new FilterOutputStream(out) {
-                @Override
-                public void write(int b) throws IOException {
-                    logger.print((char) b);
-                    super.write(b);
-                }
-            };
-
             computer.setChannel(demux, out, listener, new Channel.Listener() {
                 @Override
                 public void onClosed(Channel channel, IOException cause) {
