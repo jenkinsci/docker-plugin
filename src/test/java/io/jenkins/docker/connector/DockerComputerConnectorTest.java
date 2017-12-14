@@ -9,9 +9,11 @@ import hudson.model.Label;
 import hudson.model.Result;
 import hudson.tasks.Shell;
 import io.jenkins.docker.client.DockerAPI;
+import org.apache.commons.lang.SystemUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -34,6 +36,9 @@ public abstract class DockerComputerConnectorTest {
 
 
     protected void should_connect_agent(DockerComputerConnector connector, String image) throws IOException, ExecutionException, InterruptedException {
+
+        Assume.assumeTrue(!SystemUtils.IS_OS_WINDOWS);
+
         DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)),
                 Collections.singletonList(
                         new DockerTemplate(
