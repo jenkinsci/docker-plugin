@@ -2,7 +2,6 @@ package io.jenkins.docker.connector;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Label;
@@ -13,6 +12,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -35,6 +35,9 @@ public abstract class DockerComputerConnectorTest {
 
 
     protected void should_connect_agent(DockerTemplate template) throws IOException, ExecutionException, InterruptedException {
+
+        // FIXME on CI windows nodes don't have Docker4Windows
+        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
 
         String dockerHost = SystemUtils.IS_OS_WINDOWS ? "tcp://localhost:2375" : "unix:///var/run/docker.sock";
 

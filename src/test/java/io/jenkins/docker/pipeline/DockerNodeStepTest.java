@@ -45,6 +45,8 @@ import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,6 +62,12 @@ import java.util.Collections;
 import java.util.Set;
 
 public class DockerNodeStepTest {
+
+    @Before
+    public void before() {
+        // FIXME on CI windows nodes don't have Docker4Windows
+        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    }
 
 
     String dockerHost = SystemUtils.IS_OS_WINDOWS ? "tcp://localhost:2375" : "unix:///var/run/docker.sock";
