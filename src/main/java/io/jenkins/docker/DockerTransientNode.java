@@ -7,18 +7,15 @@ import com.nirima.jenkins.plugins.docker.DockerOfflineCause;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.Queue;
 import hudson.model.Slave;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.client.DockerAPI;
-import jenkins.model.Jenkins;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.io.Serializable;
+import javax.annotation.Nonnull;
+import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * A {@link Slave} node designed to be used only once for a build.
@@ -69,6 +66,9 @@ public class DockerTransientNode extends Slave {
 
     public void setCloudId(String cloudId) {
         this.cloudId = cloudId;
+        if (StringUtils.isNotBlank(cloudId)) {
+            setNodeName(cloudId+"-"+containerId.substring(0,12));
+        }
     }
 
     @Override
