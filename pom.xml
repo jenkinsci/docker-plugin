@@ -27,7 +27,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
-        <jenkins.version>2.60.3</jenkins.version>
+        <jenkins.version>2.89.1</jenkins.version>
     </properties>
 
     <dependencies>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>script-security</artifactId>
-            <version>1.35</version>
+            <version>1.36</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -151,12 +151,6 @@
             <version>3.0.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>script-security</artifactId>
-            <version>1.35</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-cps</artifactId>
@@ -216,6 +210,29 @@
 
         </plugins>
     </build>
+
+    <profiles>
+      <!-- Workaround to add new dependency for Jenkins Version 2.86+ as it's removed from Jenkins Core  -->
+      <profile>
+        <id>jenkins_after_2_86</id>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+            <property>
+                <name>jenkins.version</name>
+                <value>2.89.1</value>
+            </property>
+        </activation>
+        <dependencies>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>command-launcher</artifactId>
+                <version>1.2</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+      </profile>
+    </profiles>
+
 
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
