@@ -5,6 +5,9 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.core.command.CreateContainerCmdImpl;
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import hudson.slaves.JNLPLauncher;
 import io.jenkins.docker.client.DockerAPI;
 import org.junit.Assert;
 import org.junit.Test;
@@ -18,10 +21,14 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
 
     @Test
     public void should_connect_agent() throws InterruptedException, ExecutionException, IOException {
-        should_connect_agent(
+
+        final DockerTemplate template = new DockerTemplate(
+                new DockerTemplateBase("jenkins/ssh-slave"),
                 new DockerComputerSSHConnector(new DockerComputerSSHConnector.InjectSSHKey("jenkins")),
-                "jenkins/ssh-slave"
+                "docker-agent", "/home/jenkins/agent", "10"
         );
+
+        should_connect_agent(template);
     }
 
     @Test

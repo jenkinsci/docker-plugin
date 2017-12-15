@@ -1,5 +1,8 @@
 package io.jenkins.docker.connector;
 
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import hudson.slaves.JNLPLauncher;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -10,10 +13,14 @@ public class DockerComputerAtatchConnectorTest extends DockerComputerConnectorTe
 
     @Test
     public void should_connect_agent() throws InterruptedException, ExecutionException, IOException, URISyntaxException {
-        should_connect_agent(
+
+        final DockerTemplate template = new DockerTemplate(
+                new DockerTemplateBase("jenkins/slave"),
                 new DockerComputerAttachConnector("jenkins"),
-                "jenkins/slave"
+                "docker-agent", "/home/jenkins/agent", "10"
         );
+
+        should_connect_agent(template);
     }
 
 

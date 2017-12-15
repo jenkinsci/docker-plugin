@@ -45,8 +45,6 @@ import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,12 +61,8 @@ import java.util.Set;
 
 public class DockerNodeStepTest {
 
-//Skip this test on Windows OS family, as it have no unix sock
-    @Before
-    public void beforeTest()
-    {
-        Assume.assumeTrue(!SystemUtils.IS_OS_WINDOWS);
-    }
+
+    String dockerHost = SystemUtils.IS_OS_WINDOWS ? "tcp://localhost:2375" : "unix:///var/run/docker.sock";
 
     @ClassRule
     public static BuildWatcher buildWatcher = new BuildWatcher();

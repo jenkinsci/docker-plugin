@@ -9,11 +9,10 @@ import hudson.model.Label;
 import hudson.model.Result;
 import hudson.tasks.Shell;
 import io.jenkins.docker.client.DockerAPI;
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -35,23 +34,17 @@ public abstract class DockerComputerConnectorTest {
     public JenkinsRule j = new JenkinsRule();
 
 
-    protected void should_connect_agent(DockerComputerConnector connector, String image) throws IOException, ExecutionException, InterruptedException {
+    protected void should_connect_agent(DockerTemplate template) throws IOException, ExecutionException, InterruptedException {
 
-        Assume.assumeTrue(!SystemUtils.IS_OS_WINDOWS);
+        String dockerHost = SystemUtils.IS_OS_WINDOWS ? "tcp://localhost:2375" : "unix:///var/run/docker.sock";
 
-        DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)),
-                Collections.singletonList(
-                        new DockerTemplate(
-                                new DockerTemplateBase(image),
-                                connector,
-                                "docker-ssh", "/home/jenkins", "10"
-                        )
-                ));
+        DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint(dockerHost, null)),
+                Collections.singletonList(template));
 
         j.jenkins.clouds.replaceBy(Collections.singleton(cloud));
 
         final FreeStyleProject project = j.createFreeStyleProject("test-docker-ssh");
-        project.setAssignedLabel(Label.get("docker-ssh"));
+        project.setAssignedLabel(Label.get("docker-agent"));
         project.getBuildersList().add(new Shell("whoami"));
         final FreeStyleBuild build = project.scheduleBuild2(0).get();
         Assert.assertTrue(build.getResult() == Result.SUCCESS);
