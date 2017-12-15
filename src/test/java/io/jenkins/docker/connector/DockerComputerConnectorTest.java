@@ -9,11 +9,14 @@ import hudson.model.Label;
 import hudson.model.Result;
 import hudson.tasks.Shell;
 import io.jenkins.docker.client.DockerAPI;
+import org.apache.commons.lang3.SystemUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.JenkinsRuleWithPortBind;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -30,10 +33,13 @@ public abstract class DockerComputerConnectorTest {
     }
 
     @Rule
-    public JenkinsRule j = new JenkinsRule();
+    public JenkinsRule j = new JenkinsRuleWithPortBind();
 
 
     protected void should_connect_agent(DockerComputerConnector connector, String image) throws IOException, ExecutionException, InterruptedException {
+        //Skip this test on Windows OS family, as it have no unix sock
+        Assume.assumeTrue(!SystemUtils.IS_OS_WINDOWS);
+
         DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)),
                 Collections.singletonList(
                         new DockerTemplate(
