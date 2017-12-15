@@ -216,7 +216,6 @@
       <profile>
         <id>jenkins_after_2_86</id>
         <activation>
-            <activeByDefault>true</activeByDefault>
             <property>
                 <name>jenkins.version</name>
                 <value>2.89.1</value>
