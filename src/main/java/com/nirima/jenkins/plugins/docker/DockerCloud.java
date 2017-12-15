@@ -374,7 +374,7 @@ public class DockerCloud extends Cloud {
     }
 
     public List<DockerTemplate> getTemplates() {
-    	return templates;
+    	return templates == null ? Collections.EMPTY_LIST : templates;
     }
 
     /**
