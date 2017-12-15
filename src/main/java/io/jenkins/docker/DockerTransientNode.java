@@ -55,6 +55,13 @@ public class DockerTransientNode extends Slave {
         return dockerAPI;
     }
 
+    public String getDisplayName() {
+        if (cloudId != null) {
+            return getNodeName() + " on " + cloudId;
+        }
+        return getNodeName();
+    }
+
     public boolean isRemoveVolumes() {
         return removeVolumes;
     }

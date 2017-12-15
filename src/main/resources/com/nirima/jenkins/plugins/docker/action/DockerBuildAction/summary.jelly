@@ -6,15 +6,20 @@
 
  		<h1>Docker Build Data</h1>
 
-           	<b>Host:</b> ${it.containerHost}
-             <br/>
-
-             <b>Original Container Id:</b> ${it.containerId}
-             <br/>
-             <j:if test="${it.taggedId != null}">
-             <b>Committed Container Id:</b> ${it.taggedId}
-             <br/>
-             </j:if>
+    <ul>
+      <j:choose>
+        <j:when test="${it.cloudId != null}">
+          <li><b>Cloud:</b> ${it.cloudId}</li>
+        </j:when>
+        <j:otherwise>
+          <li><b>Host:</b> ${it.containerHost}</li>
+        </j:otherwise>
+      </j:choose>
+      <li><b>Container Id:</b> ${it.containerId}</li>
+      <j:if test="${it.taggedId != null}">
+        <li><b>Committed Container Id:</b> ${it.taggedId}</li>
+      </j:if>
+    </ul>
 
 	</t:summary>
 </j:jelly>
