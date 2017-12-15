@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2
+* Attach DockerBuildAction to the build to document container used to run the build
+* workaround inconsistent delays provisioning a new node when a job waits in queue.
+* 
+
 ## 1.1.1
 
 Regression fix release
