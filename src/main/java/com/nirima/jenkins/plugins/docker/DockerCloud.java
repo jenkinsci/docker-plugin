@@ -270,15 +270,12 @@ public class DockerCloud extends Cloud {
                             plannedNode.complete(slave);
 
                             // On provisioning completion, let's trigger NodeProvisioner
-                            final NodeProvisioner provisioner = (label == null
-                                    ? Jenkins.getInstance().unlabeledNodeProvisioner
-                                    : label.nodeProvisioner);
-                            provisioner.suggestReviewNow();
                             Jenkins.getInstance().addNode(slave);
 
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                     t, getDisplayName(), ex);
+                            plannedNode.completeExceptionally(ex);
                             throw Throwables.propagate(ex);
                         } finally {
                             decrementAmiSlaveProvision(t.getImage());
