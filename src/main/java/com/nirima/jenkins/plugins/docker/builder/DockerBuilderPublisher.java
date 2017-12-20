@@ -105,8 +105,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public final String dockerFileDirectory;
 
-    private String pullCredentialsId;
-    private transient DockerRegistryEndpoint fromRegistry;
+    private transient String pullCredentialsId;
+    private DockerRegistryEndpoint fromRegistry;
 
     /**
      * @deprecated use {@link #tags}
@@ -129,7 +129,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
-                                  String pullCredentialsId,
+                                  DockerRegistryEndpoint fromRegistry,
                                   String cloud,
                                   String tagsString,
                                   boolean pushOnSuccess,
@@ -137,7 +137,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                                   boolean cleanImages,
                                   boolean cleanupWithJenkinsJobDelete) {
         this.dockerFileDirectory = dockerFileDirectory;
-        this.pullCredentialsId = pullCredentialsId;
+        this.fromRegistry = fromRegistry;
         setTagsString(tagsString);
         this.tag = null;
         this.cloud = cloud;
@@ -147,7 +147,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
     }
 
-    public DockerRegistryEndpoint getRegistry() {
+    public DockerRegistryEndpoint getRegistry(Identifier identifier) {
         if (registry == null) {
             registry = new DockerRegistryEndpoint(null, pushCredentialsId);
         }
@@ -179,9 +179,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     }
 
     public DockerRegistryEndpoint getFromRegistry() {
-        if (fromRegistry == null) {
-            fromRegistry = new DockerRegistryEndpoint(null, pullCredentialsId);
-        }
         return fromRegistry;
     }
 
@@ -331,7 +328,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             if (pullRegistry != null && pullRegistry.getCredentialsId() != null) {
                 auths.addConfig(DockerCloud.getAuthConfig(pullRegistry, run.getParent().getParent()));
             }
-
             final DockerClient client = getClient();
 
             log("Docker Build: building image at path " + fpChild.getRemote());
@@ -388,7 +384,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 };
                 try {
                     PushImageCmd cmd = getClient().pushImageCmd(identifier);
-                    DockerCloud.setRegistryAuthentication(cmd, getRegistry(), run.getParent().getParent());
+
+                    int i = identifier.repository.name.indexOf('/');
+                    String registry = i >= 0 ?
+                            identifier.repository.name.substring(0,i) : null;
+
+                    DockerCloud.setRegistryAuthentication(cmd,
+                            new DockerRegistryEndpoint(registry, pushCredentialsId),
+                            run.getParent().getParent());
                     cmd.exec(resultCallback).awaitSuccess();
                 } catch (DockerException ex) {
                     // Private Docker registries fall over regularly. Tell the user so they
@@ -497,8 +500,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         if (pushCredentialsId == null && registry != null) {
             pushCredentialsId = registry.getCredentialsId();
         }
-        if (pullCredentialsId == null && fromRegistry != null) {
-            pullCredentialsId = fromRegistry.getCredentialsId();
+        if (pullCredentialsId != null) {
+            fromRegistry = new DockerRegistryEndpoint(null, pullCredentialsId);
         }
         return this;
     }

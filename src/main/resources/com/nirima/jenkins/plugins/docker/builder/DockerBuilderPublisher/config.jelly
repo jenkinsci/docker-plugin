@@ -10,8 +10,8 @@
         <f:block>
         Credentials to pull image from upstream registry
         </f:block>
-        <f:entry title="${%Registry Credentials}" field="pullCredentialsId">
-            <c:select/>
+        <f:entry title="${%Registry Credentials}">
+            <f:property field="fromRegistry"/>
         </f:entry>
     </f:advanced>
 

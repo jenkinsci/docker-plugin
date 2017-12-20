@@ -620,6 +620,9 @@ public class DockerCloud extends Cloud {
             auth.withUsername(username);
         }
         auth.withPassword(decode.substring(i+1));
+        if (registry.getUrl() != null) {
+            auth.withRegistryAddress(registry.getUrl());
+        }
         return auth;
     }
 }
