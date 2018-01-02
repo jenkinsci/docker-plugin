@@ -164,8 +164,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             if (sshKeyStrategy.getInjectedKey() != null) {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port),
                         // override sshd_config to force retrieval of InstanceIdentity public for as authentication
-                        "-o", "AuthorizedKeysCommand /root/authorized_key",
-                        "-o", "AuthorizedKeysCommandUser root"
+                        "-o", "AuthorizedKeysCommand=/root/authorized_key",
+                        "-o", "AuthorizedKeysCommandUser=root"
                 );
             } else {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port));
