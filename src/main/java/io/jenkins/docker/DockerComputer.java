@@ -3,9 +3,11 @@ package io.jenkins.docker;
 import com.google.common.base.Objects;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
+import hudson.EnvVars;
 import hudson.slaves.SlaveComputer;
 
 import javax.annotation.CheckForNull;
+import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -36,6 +38,19 @@ public class DockerComputer extends SlaveComputer {
 
     public String getCloudId() {
         return getNode().getCloudId();
+    }
+
+    @Override
+    public EnvVars getEnvironment() throws IOException, InterruptedException {
+        EnvVars variables = super.getEnvironment();
+        variables.put("DOCKER_CONTAINER_ID", getContainerId());
+        final DockerCloud cloud = getCloud();
+        if (cloud != null && cloud.isExposeDockerHost()) {
+            variables.put("JENKINS_CLOUD_ID", cloud.name);
+            String dockerHost = cloud.getDockerApi().getDockerHost().getUri();
+            variables.put("DOCKER_HOST", dockerHost);
+        }
+        return variables;
     }
 
     @Override
