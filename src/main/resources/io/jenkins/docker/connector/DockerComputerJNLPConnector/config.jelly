@@ -10,5 +10,9 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="${%Jenkins URL}" field="jenkinsUrl">
+        <f:textbox/>
+    </f:entry>
+
     <f:property field="jnlpLauncher"/>
 </j:jelly>
