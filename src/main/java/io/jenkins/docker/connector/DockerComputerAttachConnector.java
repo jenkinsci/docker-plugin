@@ -5,6 +5,7 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
@@ -18,7 +19,6 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -52,6 +52,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         this.user = user;
     }
 
+
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
         ensureWaiting(cmd);
@@ -64,7 +65,9 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     }
 
     @Override
-    protected ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+    protected ComputerLauncher createLauncher(DockerAPI api, String workdir, DockerTemplate.ContainerCommandCreator containerCommandCreator, TaskListener listener) throws IOException, InterruptedException {
+        CreateContainerCmd cmd = containerCommandCreator.createContainerCmd(api);
+        InspectContainerResponse inspect = executeContainer(api, listener, cmd, workdir);
         return new DockerAttachLauncher(api, inspect.getId(), user, workdir);
     }
 
