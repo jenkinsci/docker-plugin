@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
@@ -369,7 +370,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @DataBoundSetter
     public void setExtraHostsString(String extraHostsString) {
-        setExtraHosts(splitAndFilterEmptyList(extraHostsString, "\n"));
+        setExtraHosts(isEmpty(extraHostsString) ?
+                Collections.EMPTY_LIST :
+                splitAndFilterEmptyList(extraHostsString, "\n"));
     }
 
     public String getExtraHostsString() {
