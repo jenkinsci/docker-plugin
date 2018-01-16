@@ -24,10 +24,10 @@ import java.io.IOException;
  */
 public class DockerTransientNode extends Slave {
 
-    //Keeping real containerId information, but using containerUniqueName as containerId
-    private String containerId;
+    //Keeping real containerId information, but using containerName as containerId
+    private final String containerId;
 
-    private String containerUniqueName;
+    private final String containerName;
 
     private DockerAPI dockerAPI;
 
@@ -36,21 +36,25 @@ public class DockerTransientNode extends Slave {
     private String cloudId;
 
 
-    public DockerTransientNode(@Nonnull String uniqueName, String workdir, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
-        super("docker-" + uniqueName, workdir, launcher);
-        this.containerUniqueName = uniqueName;
+    public DockerTransientNode(@Nonnull String uid, String containerId, String workdir, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
+        super(nodeName(uid), workdir, launcher);
+        this.containerName = uid;
+        this.containerId = containerId;
         setNumExecutors(1);
         setMode(Mode.EXCLUSIVE);
         setRetentionStrategy(new DockerOnceRetentionStrategy(10));
     }
 
-    public void setRealContainerId(String containerId){
-        this.containerId = containerId;
+    public static String nodeName(@Nonnull String containerName) {
+        return "docker-" + containerName;
     }
 
     public String getContainerId(){
-        // For old sake. If the containerUniqueName was not introduced yet, use the containerId
-        return containerUniqueName == null ? containerId : containerUniqueName;
+        return containerId;
+    }
+
+    public String getContainerName() {
+        return containerName;
     }
 
     public void setDockerAPI(DockerAPI dockerAPI) {

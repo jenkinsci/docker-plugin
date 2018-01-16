@@ -9,7 +9,6 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
-import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
 import com.trilead.ssh2.signature.RSAKeyAlgorithm;
@@ -210,8 +209,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     @Override
-    protected ComputerLauncher createLauncher(DockerAPI api, String workdir, DockerTemplate.ContainerCommandCreator containerCommandCreator, TaskListener listener) throws IOException, InterruptedException {
-        final InspectContainerResponse inspect = executeContainer(api, listener, containerCommandCreator.createContainerCmd(api), workdir);
+    protected ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
         if ("exited".equals(inspect.getState().getStatus())) {
             // Something went wrong
             // FIXME report error "somewhere" visible to end user.

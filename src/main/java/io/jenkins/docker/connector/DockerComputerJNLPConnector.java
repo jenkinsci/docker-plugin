@@ -3,7 +3,6 @@ package io.jenkins.docker.connector;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.core.command.WaitContainerResultCallback;
-import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
@@ -11,8 +10,10 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
+import jenkins.slaves.JnlpSlaveAgentProtocol;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -68,55 +69,36 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
 
     @Override
-    protected ComputerLauncher createLauncher(final DockerAPI api, final String workdir, final DockerTemplate.ContainerCommandCreator containerCommandCreator, TaskListener listener) throws IOException, InterruptedException {
-        return new DelegatingComputerLauncher(new JNLPLauncher()) {
-
-            @Override
-            public boolean isLaunchSupported() {
-                return true;
-            }
-
-            @Override
-            public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-                final CreateContainerCmd cmd = containerCommandCreator.createContainerCmd(api);
-                List<String> args = buildCommand(computer);
-                cmd.withCmd(args.toArray(new String[args.size()]));
-                String vmargs = jnlpLauncher.vmargs;
-                if (StringUtils.isNotBlank(vmargs)) {
-                    cmd.withEnv("JAVA_OPT=" + vmargs.trim());
-                }
-                if (StringUtils.isNotBlank(user)) {
-                    cmd.withUser(user);
-                }
-
-                final InspectContainerResponse inspect = executeContainer(api, listener, cmd, workdir);
-                final String containerId = inspect.getId();
-                api.getClient().waitContainerCmd(containerId)
-                        .exec(new WaitContainerResultCallback());
-            }
-        };
-
+    protected ComputerLauncher createLauncher(final DockerAPI api, final String workdir, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+        return new JNLPLauncher();
     }
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
-    }
-
-    @Override
-    public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
-    }
-
-    private List<String> buildCommand(SlaveComputer computer) {
         List<String> args = new ArrayList<>();
         if (StringUtils.isNotBlank(jnlpLauncher.tunnel)) {
             args.addAll(Arrays.asList("-tunnel", jnlpLauncher.tunnel));
         }
 
+        String nodeName = DockerTransientNode.nodeName(cmd.getName());
+
         args.addAll(Arrays.asList(
                 "-url", StringUtils.isEmpty(jenkinsUrl) ? Jenkins.getInstance().getRootUrl() : jenkinsUrl,
-                computer.getJnlpMac(),
-                computer.getName()));
-        return args;
+                JnlpSlaveAgentProtocol.SLAVE_SECRET.mac(nodeName),
+                nodeName));
+
+        cmd.withCmd(args.toArray(new String[args.size()]));
+        String vmargs = jnlpLauncher.vmargs;
+        if (StringUtils.isNotBlank(vmargs)) {
+            cmd.withEnv("JAVA_OPT=" + vmargs.trim());
+        }
+        if (StringUtils.isNotBlank(user)) {
+            cmd.withUser(user);
+        }
+    }
+
+    @Override
+    public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
     }
 
     @Extension @Symbol("jnlp")

@@ -30,7 +30,7 @@ public class DockerSlave extends Slave {
 
     protected Object readResolve() {
         try {
-            return new DockerTransientNode(containerId, dockerTemplate.remoteFs, getLauncher());
+            return new DockerTransientNode(containerId, containerId, dockerTemplate.remoteFs, getLauncher());
         } catch (Descriptor.FormException | IOException e) {
             throw new RuntimeException("Failed to migrate DockerSlave", e);
         }
