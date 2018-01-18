@@ -1,18 +1,11 @@
 package com.nirima.jenkins.plugins.docker;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.Item;
-import hudson.model.Run;
-import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
-import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.AncestorInPath;
-
-import java.io.IOException;
 
 /**
  * A simple template storage.

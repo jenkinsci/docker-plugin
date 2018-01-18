@@ -20,7 +20,6 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 
 import javax.annotation.Nonnull;
-import java.util.Collections;
 import java.util.UUID;
 
 /**

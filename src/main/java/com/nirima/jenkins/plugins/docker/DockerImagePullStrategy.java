@@ -2,12 +2,6 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.Image;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Kanstantsin Shautsou

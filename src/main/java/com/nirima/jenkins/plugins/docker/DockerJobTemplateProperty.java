@@ -1,20 +1,13 @@
 package com.nirima.jenkins.plugins.docker;
 
 import hudson.model.AbstractProject;
-import hudson.model.JobProperty;
-import hudson.model.JobPropertyDescriptor;
 import hudson.slaves.Cloud;
 import hudson.util.ListBoxModel;
 import jenkins.model.OptionalJobProperty;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
 
 import hudson.Extension;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.util.FormValidation;
-import jenkins.model.Jenkins;
 
 /**
  * Represents an own section to specify a Docker Template in job configuration.

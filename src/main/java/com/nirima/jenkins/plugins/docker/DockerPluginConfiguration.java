@@ -1,9 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
-import hudson.Extension;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.util.Collections;

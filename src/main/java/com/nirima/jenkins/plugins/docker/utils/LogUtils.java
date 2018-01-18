@@ -1,7 +1,6 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
 import com.github.dockerjava.api.model.ResponseItem;
-import hudson.model.BuildListener;
 import hudson.model.TaskListener;
 
 /**

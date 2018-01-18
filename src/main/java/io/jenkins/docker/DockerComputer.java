@@ -2,7 +2,6 @@ package io.jenkins.docker;
 
 import com.google.common.base.Objects;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerSlave;
 import hudson.EnvVars;
 import hudson.slaves.SlaveComputer;
 

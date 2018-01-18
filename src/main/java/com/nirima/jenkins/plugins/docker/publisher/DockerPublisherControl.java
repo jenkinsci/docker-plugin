@@ -13,7 +13,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.logging.Logger;
 
 /**
  * Post-build step that allow stop all matched container
