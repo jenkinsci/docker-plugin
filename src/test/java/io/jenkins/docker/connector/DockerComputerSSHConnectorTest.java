@@ -7,7 +7,6 @@ import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.core.command.CreateContainerCmdImpl;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
-import hudson.slaves.JNLPLauncher;
 import io.jenkins.docker.client.DockerAPI;
 import org.junit.Assert;
 import org.junit.Test;

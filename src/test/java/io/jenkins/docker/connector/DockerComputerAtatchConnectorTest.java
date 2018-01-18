@@ -2,7 +2,6 @@ package io.jenkins.docker.connector;
 
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
-import hudson.slaves.JNLPLauncher;
 import org.junit.Test;
 
 import java.io.IOException;

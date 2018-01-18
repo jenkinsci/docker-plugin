@@ -4,8 +4,6 @@ import com.github.dockerjava.api.exception.DockerException;
 import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.kohsuke.stapler.DataBoundConstructor;

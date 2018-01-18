@@ -3,7 +3,6 @@ package com.nirima.jenkins.plugins.docker.action;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.github.dockerjava.api.command.InspectContainerResponse;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.Describable;
