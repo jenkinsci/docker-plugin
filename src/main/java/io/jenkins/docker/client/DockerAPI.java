@@ -3,12 +3,13 @@ package io.jenkins.docker.client;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.SSLConfig;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -49,7 +50,11 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
 
     private DockerServerEndpoint dockerHost;
 
+    /** Connection timeout in seconds */
     private int connectTimeout;
+
+    /** Read timeout in seconds */
+    private int readTimeout;
 
     private String apiVersion;
 
@@ -67,9 +72,10 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         this.dockerHost = dockerHost;
     }
 
-    public DockerAPI(DockerServerEndpoint dockerHost, int connectTimeout, String apiVersion, String hostname) {
+    public DockerAPI(DockerServerEndpoint dockerHost, int connectTimeout, int readTimeout, String apiVersion, String hostname) {
         this.dockerHost = dockerHost;
         this.connectTimeout = connectTimeout;
+        this.readTimeout = readTimeout;
         this.apiVersion = apiVersion;
         this.hostname = hostname;
     }
@@ -85,6 +91,15 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
     @DataBoundSetter
     public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
+    }
+
+    public int getReadTimeout() {
+        return readTimeout;
+    }
+
+    @DataBoundSetter
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
     }
 
     public String getApiVersion() {
@@ -116,13 +131,16 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
 
     public DockerClient getClient() {
         if (client == null) {
+            final Integer readTimeoutInMillisecondsOrNull = readTimeout > 0 ? Integer.valueOf(readTimeout * 1000) : null;
+            final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? Integer.valueOf(connectTimeout * 1000) : null;
             client = DockerClientBuilder.getInstance(
                 new DefaultDockerClientConfig.Builder()
                     .withDockerHost(dockerHost.getUri())
                     .withCustomSslConfig(toSSlConfig(dockerHost.getCredentialsId()))
                 )
                 .withDockerCmdExecFactory(new NettyDockerCmdExecFactory()
-                .withConnectTimeout(connectTimeout))
+                .withReadTimeout(readTimeoutInMillisecondsOrNull)
+                .withConnectTimeout(connectTimeoutInMillisecondsOrNull))
                 .build();
         }
         return client;
@@ -130,7 +148,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
 
     private static SSLConfig toSSlConfig(String credentialsId) {
         if (credentialsId == null) return null;
-        
+
         DockerServerCredentials credentials = firstOrNull(
             lookupCredentials(
                 DockerServerCredentials.class,
@@ -146,7 +164,6 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
      * Create a plain {@link Socket} to docker API endpoint
      */
     public Socket getSocket() throws IOException {
-
         try {
             final URI uri = new URI(dockerHost.getUri());
             if ("unix".equals(uri.getScheme())) {
@@ -175,6 +192,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         DockerAPI dockerAPI = (DockerAPI) o;
 
         if (connectTimeout != dockerAPI.connectTimeout) return false;
+        if (readTimeout != dockerAPI.readTimeout) return false;
         if (dockerHost != null ? !dockerHost.equals(dockerAPI.dockerHost) : dockerAPI.dockerHost != null) return false;
         if (apiVersion != null ? !apiVersion.equals(dockerAPI.apiVersion) : dockerAPI.apiVersion != null) return false;
         if (hostname != null ? !hostname.equals(dockerAPI.hostname) : dockerAPI.hostname != null) return false;
@@ -185,6 +203,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
     public int hashCode() {
         int result = dockerHost != null ? dockerHost.hashCode() : 0;
         result = 31 * result + connectTimeout;
+        result = 31 * result + readTimeout;
         result = 31 * result + (apiVersion != null ? apiVersion.hashCode() : 0);
         result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
         result = 31 * result + (client != null ? client.hashCode() : 0);
@@ -199,24 +218,35 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             if (!ac.hasPermission(Jenkins.ADMINISTER)) {
                 return new StandardListBoxModel().includeCurrentValue(value);
             }
-
             return new StandardListBoxModel().includeAs(
                     ACL.SYSTEM, context, DockerServerCredentials.class,
                     Collections.<DomainRequirement>emptyList());
+        }
+
+        public FormValidation doCheckConnectionTimeout(@QueryParameter String value) {
+            return FormValidation.validateNonNegativeInteger(value);
+        }
+
+        public FormValidation doCheckReadTimeout(@QueryParameter String value) {
+            return FormValidation.validateNonNegativeInteger(value);
         }
 
         public FormValidation doTestConnection(
                 @QueryParameter String uri,
                 @QueryParameter String credentialsId,
                 @QueryParameter String apiVersion,
-                @QueryParameter Integer connectTimeout
-        ) throws IOException, ServletException, DockerException {
+                @QueryParameter int connectTimeout,
+                @QueryParameter int readTimeout
+        ) {
             try {
-                DockerClient dc = new DockerAPI(new DockerServerEndpoint(uri, credentialsId), connectTimeout, apiVersion, null)
-                        .getClient();
-                Version verResult = dc.versionCmd().exec();
-
-                return FormValidation.ok("Version = " + verResult.getVersion() + ", API Version = " + verResult.getApiVersion());
+                final DockerServerEndpoint dsep = new DockerServerEndpoint(uri, credentialsId);
+                final DockerAPI dapi = new DockerAPI(dsep, connectTimeout, readTimeout, apiVersion, null);
+                final DockerClient dc = dapi.getClient();
+                final VersionCmd vc = dc.versionCmd();
+                final Version v = vc.exec();
+                final String actualVersion = v.getVersion();
+                final String actualApiVersion = v.getApiVersion();
+                return FormValidation.ok("Version = " + actualVersion + ", API Version = " + actualApiVersion);
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
             }

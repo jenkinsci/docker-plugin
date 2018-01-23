@@ -8,8 +8,12 @@
             <f:textbox/>
         </f:entry>
 
-        <f:entry title="${%Connection Timeout (seconds)}" field="connectTimeout">
-            <f:textbox default="60"/>
+        <f:entry title="${%Connection Timeout}" field="connectTimeout">
+            <f:textbox clazz="required number" default="60"/>
+        </f:entry>
+
+        <f:entry title="${%Read Timeout}" field="readTimeout">
+            <f:textbox clazz="required number" default="60"/>
         </f:entry>
 
         <f:entry title="${%Docker Hostname or IP address}" field="hostname">
@@ -19,6 +23,6 @@
 
     <!-- we can't pass dockerhost here, need to "flatmap" it's attributes -->
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
-                      with="uri,credentialsId,apiVersion,connectTimeout"/>
+                      with="uri,credentialsId,apiVersion,connectTimeout,readTimeout"/>
 
 </j:jelly>
