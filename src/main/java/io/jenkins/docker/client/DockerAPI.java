@@ -4,7 +4,6 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.VersionCmd;
-import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -28,7 +27,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 
-import javax.servlet.ServletException;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -43,7 +42,7 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Serializable {
+public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Serializable, Closeable {
 
     private static final long serialVersionUID = 1L;
 
@@ -146,6 +145,14 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         return client;
     }
 
+    @Override
+    public void close() throws IOException {
+        if (client != null) {
+            client.close();
+            client = null;
+        }
+    }
+
     private static SSLConfig toSSlConfig(String credentialsId) {
         if (credentialsId == null) return null;
 
@@ -241,12 +248,20 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             try {
                 final DockerServerEndpoint dsep = new DockerServerEndpoint(uri, credentialsId);
                 final DockerAPI dapi = new DockerAPI(dsep, connectTimeout, readTimeout, apiVersion, null);
-                final DockerClient dc = dapi.getClient();
-                final VersionCmd vc = dc.versionCmd();
-                final Version v = vc.exec();
-                final String actualVersion = v.getVersion();
-                final String actualApiVersion = v.getApiVersion();
-                return FormValidation.ok("Version = " + actualVersion + ", API Version = " + actualApiVersion);
+                try {
+                    final DockerClient dc = dapi.getClient();
+                    final VersionCmd vc = dc.versionCmd();
+                    final Version v = vc.exec();
+                    final String actualVersion = v.getVersion();
+                    final String actualApiVersion = v.getApiVersion();
+                    return FormValidation.ok("Version = " + actualVersion + ", API Version = " + actualApiVersion);
+                } finally {
+                    // nobody else can see this DockerAPI instance, we must close it
+                    try {
+                        dapi.close();
+                    } catch (IOException ignored) {
+                    }
+                }
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
             }
