@@ -113,7 +113,6 @@ import com.github.dockerjava.netty.exec.InspectImageCmdExec;
 import com.github.dockerjava.netty.exec.InspectNetworkCmdExec;
 import com.github.dockerjava.netty.exec.InspectVolumeCmdExec;
 import com.github.dockerjava.netty.exec.KillContainerCmdExec;
-import com.github.dockerjava.netty.exec.ListContainersCmdExec;
 import com.github.dockerjava.netty.exec.ListImagesCmdExec;
 import com.github.dockerjava.netty.exec.ListNetworksCmdExec;
 import com.github.dockerjava.netty.exec.ListVolumesCmdExec;
