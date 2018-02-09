@@ -102,7 +102,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.labelString = Util.fixNull(labelString);
         this.remoteFs = Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
 
-        if (instanceCapStr.equals("")) {
+        if (Strings.isNullOrEmpty(instanceCapStr)) {
             this.instanceCap = Integer.MAX_VALUE;
         } else {
             this.instanceCap = Integer.parseInt(instanceCapStr);

@@ -10,7 +10,6 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.AuthConfig;
-import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Version;
 import com.google.common.base.Throwables;
 import hudson.Extension;
@@ -45,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
@@ -61,7 +61,7 @@ public class DockerCloud extends Cloud {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerCloud.class);
 
     private List<DockerTemplate> templates;
-    private transient HashMap<Long, DockerTemplate> jobTemplates;
+    private transient Map<Long, DockerTemplate> jobTemplates;
 
     @Deprecated
     private transient DockerServerEndpoint dockerHost;
@@ -94,7 +94,7 @@ public class DockerCloud extends Cloud {
      * Track the count per image name for images currently being
      * provisioned, but not necessarily reported yet by docker.
      */
-    private static final HashMap<String, Integer> provisionedImages = new HashMap<>();
+    static final Map<String, Map<String, Integer>> CONTAINERS_IN_PROGRESS = new HashMap<>();
 
     /**
      * Indicate if docker host used to run container is exposed inside container as DOCKER_HOST environment variable
@@ -185,9 +185,8 @@ public class DockerCloud extends Cloud {
     public String getContainerCapStr() {
         if (containerCap == Integer.MAX_VALUE) {
             return "";
-        } else {
-            return String.valueOf(containerCap);
         }
+        return String.valueOf(containerCap);
     }
 
     public int getContainerCap() {
@@ -218,35 +217,85 @@ public class DockerCloud extends Cloud {
     /**
      * Decrease the count of slaves being "provisioned".
      */
-    private void decrementAmiSlaveProvision(String ami) {
-        synchronized (provisionedImages) {
-            int currentProvisioning;
-            try {
-                currentProvisioning = provisionedImages.get(ami);
-            } catch (NullPointerException npe) {
-                return;
+    void decrementContainersInProgress(DockerTemplate template) {
+        adjustContainersInProgress(this, template, -1);
+    }
+
+    /**
+     * Increase the count of slaves being "provisioned".
+     */
+    void incrementContainersInProgress(DockerTemplate template) {
+        adjustContainersInProgress(this, template, +1);
+    }
+
+    private static void adjustContainersInProgress(DockerCloud cloud, DockerTemplate template, int adjustment) {
+        final String cloudId = cloud.name;
+        final String templateId = template.getImage();
+        synchronized (CONTAINERS_IN_PROGRESS) {
+            Map<String, Integer> mapForThisCloud = CONTAINERS_IN_PROGRESS.get(cloudId);
+            if (mapForThisCloud == null) {
+                mapForThisCloud = new HashMap<>();
+                CONTAINERS_IN_PROGRESS.put(cloudId, mapForThisCloud);
             }
-            provisionedImages.put(ami, Math.max(currentProvisioning - 1, 0));
+            final Integer oldValue = mapForThisCloud.get(templateId);
+            final int oldNumber = oldValue == null ? 0 : oldValue.intValue();
+            final int newNumber = oldNumber + adjustment;
+            if (newNumber != 0) {
+                final Integer newValue = Integer.valueOf(newNumber);
+                mapForThisCloud.put(templateId, newValue);
+            } else {
+                mapForThisCloud.remove(templateId);
+                if (mapForThisCloud.isEmpty()) {
+                    CONTAINERS_IN_PROGRESS.remove(cloudId);
+                }
+            }
+        }
+    }
+
+    int countContainersInProgress(DockerTemplate template) {
+        final String cloudId = super.name;
+        final String templateId = template.getImage();
+        synchronized (CONTAINERS_IN_PROGRESS) {
+            final Map<String, Integer> allInProgressOrNull = CONTAINERS_IN_PROGRESS.get(cloudId);
+            final Integer templateInProgressOrNull = allInProgressOrNull == null
+                    ? null
+                    : allInProgressOrNull.get(templateId);
+            final int templateInProgress = templateInProgressOrNull == null ? 0 : templateInProgressOrNull.intValue();
+            return templateInProgress;
+        }
+    }
+
+    int countContainersInProgress() {
+        final String cloudId = this.name;
+        synchronized (CONTAINERS_IN_PROGRESS) {
+            final Map<String, Integer> allInProgressOrNull = CONTAINERS_IN_PROGRESS.get(cloudId);
+            int totalInProgressForCloud = 0;
+            if (allInProgressOrNull != null) {
+                for (int count : allInProgressOrNull.values()) {
+                    totalInProgressForCloud += count;
+                }
+            }
+            return totalInProgressForCloud;
         }
     }
 
     @Override
-    public synchronized Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
+    public synchronized Collection<NodeProvisioner.PlannedNode> provision(final Label label, final int numberOfExecutorsRequired) {
         try {
-            LOGGER.info("Asked to provision {} slave(s) for: {}", excessWorkload, label);
+            LOGGER.info("Asked to provision {} slave(s) for: {}", numberOfExecutorsRequired, label);
 
-            List<NodeProvisioner.PlannedNode> r = new ArrayList<>();
-
+            final List<NodeProvisioner.PlannedNode> r = new ArrayList<>();
             final List<DockerTemplate> templates = getTemplates(label);
+            int remainingWorkload = numberOfExecutorsRequired;
 
-            while (excessWorkload > 0 && !templates.isEmpty()) {
+            while (remainingWorkload > 0 && !templates.isEmpty()) {
                 final DockerTemplate t = templates.get(0); // get first
 
                 LOGGER.info("Will provision '{}', for label: '{}', in cloud: '{}'",
                         t.getImage(), label, getDisplayName());
 
                 try {
-                    if (!addProvisionedSlave(t)) {
+                    if (!canAddProvisionedSlave(t)) {
                         templates.remove(t);
                         continue;
                     }
@@ -260,7 +309,8 @@ public class DockerCloud extends Cloud {
                 final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
                 r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors()));
 
-                Computer.threadPoolForRemoting.submit(new Runnable() {
+                final Runnable taskToCreateNewSlave = new Runnable() {
+                    @Override
                     public void run() {
                         try {
                             // TODO where can we log provisioning progress ?
@@ -278,12 +328,22 @@ public class DockerCloud extends Cloud {
                             plannedNode.completeExceptionally(ex);
                             throw Throwables.propagate(ex);
                         } finally {
-                            decrementAmiSlaveProvision(t.getImage());
+                            decrementContainersInProgress(t);
                         }
                     }
-                });
+                };
+                boolean taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement = false;
+                incrementContainersInProgress(t);
+                try {
+                    Computer.threadPoolForRemoting.submit(taskToCreateNewSlave);
+                    taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement = true;
+                } finally {
+                    if (!taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement) {
+                        decrementContainersInProgress(t);
+                    }
+                }
 
-                excessWorkload -= t.getNumExecutors();
+                remainingWorkload -= t.getNumExecutors();
             }
 
             return r;
@@ -356,7 +416,7 @@ public class DockerCloud extends Cloud {
      * @param template The template to bound to a specific job.
      */
     public synchronized void addJobTemplate(long jobId, DockerTemplate template) {
-    	jobTemplates.put(jobId, template);
+        getJobTemplates().put(jobId, template);
     }
 
     /**
@@ -365,13 +425,13 @@ public class DockerCloud extends Cloud {
      * @param jobId Id of the job.
      */
     public synchronized void removeJobTemplate(long jobId) {
-    	if (jobTemplates.remove(jobId) == null) {
-    		LOGGER.warn("Couldn't remove template for job with id: {}", jobId);
-    	}
+        if (getJobTemplates().remove(jobId) == null) {
+            LOGGER.warn("Couldn't remove template for job with id: {}", jobId);
+        }
     }
 
     public List<DockerTemplate> getTemplates() {
-    	return templates == null ? Collections.EMPTY_LIST : templates;
+        return templates == null ? Collections.EMPTY_LIST : templates;
     }
 
     /**
@@ -395,23 +455,23 @@ public class DockerCloud extends Cloud {
         // add temporary templates matched to requested label
         for (DockerTemplate template : getJobTemplates().values()) {
             if (label != null && label.matches(template.getLabelSet())) {
-                    dockerTemplates.add(template);
+                dockerTemplates.add(template);
             }
         }
 
         return dockerTemplates;
     }
-    
+
     /**
      * Private method to ensure that the map of job specific templates is initialized.
      * 
      * @return The map of job specific templates.
      */
-    private HashMap<Long, DockerTemplate> getJobTemplates() {
+    private Map<Long, DockerTemplate> getJobTemplates() {
         if (jobTemplates == null) {
             jobTemplates = new HashMap<Long, DockerTemplate>();
         }
-        
+
         return jobTemplates;
     }
 
@@ -423,68 +483,81 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Counts the number of instances in Docker currently running that are using the specified image.
+     * Counts the number of instances currently running in Docker that are using
+     * the specified image.
+     * <p>
+     * <b>WARNING:</b> This method can be slow so it should be called sparingly.
      *
-     * @param imageName If null, then all instances are counted.
-     *            <p/>
-     *            This includes those instances that may be started outside Hudson.
+     * @param imageName
+     *            If null, then all instances belonging to this Jenkins instance
+     *            are counted. Otherwise, only those started with the specified
+     *            image are counted.
      */
-    public int countCurrentDockerSlaves(final String imageName) throws Exception {
-        int count = 0;
-        List<Container> containers = getClient().listContainersCmd().exec();
-
-        if (imageName == null) {
-            count = containers.size();
-        } else {
-            for (Container container : containers) {
-                String containerImage = container.getImage();
-                if (containerImage.equals(imageName)) {
-                    count++;
-                }
-            }
+    public int countContainersInDocker(final String imageName) throws Exception {
+        final Map<String, String> labelFilter = new HashMap<>();
+        labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID,
+                DockerTemplateBase.getJenkinsInstanceIdForContainerLabel());
+        if (imageName != null) {
+            labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_IMAGE, imageName);
         }
-
+        final List<?> containers = getClient().listContainersCmd().withLabelFilter(labelFilter).exec();
+        final int count = containers.size();
         return count;
     }
 
     /**
      * Check not too many already running.
      */
-    private synchronized boolean addProvisionedSlave(DockerTemplate t) throws Exception {
-        String ami = t.getImage();
-        int amiCap = t.instanceCap;
+    private boolean canAddProvisionedSlave(DockerTemplate t) throws Exception {
+        final String templateImage = t.getImage();
+        final int templateContainerCap = t.instanceCap;
+        final int cloudContainerCap = getContainerCap();
 
-        int estimatedTotalSlaves = countCurrentDockerSlaves(null);
-        int estimatedAmiSlaves = countCurrentDockerSlaves(ami);
-
-        synchronized (provisionedImages) {
-            int currentProvisioning = 0;
-            if (provisionedImages.containsKey(ami)) {
-                currentProvisioning = provisionedImages.get(ami);
-            }
-
-            for (int amiCount : provisionedImages.values()) {
-                estimatedTotalSlaves += amiCount;
-            }
-
-            estimatedAmiSlaves += currentProvisioning;
-
-            if (estimatedTotalSlaves >= getContainerCap()) {
-                LOGGER.info("Not Provisioning '{}'; Server '{}' full with '{}' container(s)", ami, name, getContainerCap());
+        final boolean haveCloudContainerCap = cloudContainerCap > 0 && cloudContainerCap != Integer.MAX_VALUE;
+        final boolean haveTemplateContainerCap = templateContainerCap > 0 && templateContainerCap != Integer.MAX_VALUE;
+        final int estimatedTotalSlaves;
+        if (haveCloudContainerCap) {
+            final int totalContainersInCloud = countContainersInDocker(null);
+            final int containersInProgress = countContainersInProgress();
+            estimatedTotalSlaves = totalContainersInCloud + containersInProgress;
+            if (estimatedTotalSlaves >= cloudContainerCap) {
+                LOGGER.info("Not Provisioning '{}'; Cloud '{}' full with '{}' container(s)", templateImage, name, cloudContainerCap);
                 return false;      // maxed out
             }
-
-            if (amiCap != 0 && estimatedAmiSlaves >= amiCap) {
-                LOGGER.info("Not Provisioning '{}'. Instance limit of '{}' reached on server '{}'", ami, amiCap, name);
-                return false;      // maxed out
-            }
-
-            LOGGER.info("Provisioning '{}' number '{}' on '{}'; Total containers: '{}'",
-                    ami, estimatedAmiSlaves, name, estimatedTotalSlaves);
-
-            provisionedImages.put(ami, currentProvisioning + 1);
-            return true;
+        } else {
+            estimatedTotalSlaves = -1;
         }
+        final int estimatedTemplateSlaves;
+        if (haveTemplateContainerCap) {
+            final int totalContainersOfThisTemplateInCloud = countContainersInDocker(templateImage);
+            final int containersInProgress = countContainersInProgress(t);
+            estimatedTemplateSlaves = totalContainersOfThisTemplateInCloud + containersInProgress;
+            if (estimatedTemplateSlaves >= templateContainerCap) {
+                LOGGER.info("Not Provisioning '{}'. Template instance limit of '{}' reached on cloud '{}'", templateImage, templateContainerCap, name);
+                return false;      // maxed out
+            }
+        } else {
+            estimatedTemplateSlaves = -1;
+        }
+
+        if (haveCloudContainerCap) {
+            if (haveTemplateContainerCap) {
+                LOGGER.info("Provisioning '{}' number {} (of {}) on '{}'; Total containers: {} (of {})",
+                        templateImage, estimatedTemplateSlaves + 1, templateContainerCap, name,
+                        estimatedTotalSlaves, cloudContainerCap);
+            } else {
+                LOGGER.info("Provisioning '{}' on '{}'; Total containers: {} (of {})", templateImage, name,
+                        estimatedTotalSlaves, cloudContainerCap);
+            }
+        } else {
+            if (haveTemplateContainerCap) {
+                LOGGER.info("Provisioning '{}' number {} (of {}) on '{}'", templateImage,
+                        estimatedTemplateSlaves + 1, templateContainerCap, name);
+            } else {
+                LOGGER.info("Provisioning '{}' on '{}'", templateImage, name);
+            }
+        }
+        return true;
     }
 
     public static DockerCloud getCloudByName(String name) {
@@ -522,13 +595,26 @@ public class DockerCloud extends Cloud {
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((dockerApi == null) ? 0 : dockerApi.hashCode());
+        result = prime * result + containerCap;
+        result = prime * result + ((templates == null) ? 0 : templates.hashCode());
+        result = prime * result + (exposeDockerHost ? 1231 : 1237);
+        return result;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         DockerCloud that = (DockerCloud) o;
 
-        if (!dockerApi.equals(that.dockerApi)) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (dockerApi != null ? !dockerApi.equals(that.dockerApi) : that.dockerApi != null) return false;
         if (containerCap != that.containerCap) return false;
         if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
         if (exposeDockerHost != that.exposeDockerHost)return false;
