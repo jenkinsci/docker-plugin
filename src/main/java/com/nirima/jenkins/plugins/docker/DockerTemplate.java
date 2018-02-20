@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
@@ -30,6 +31,7 @@ import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -61,7 +63,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     @Deprecated
     private transient DockerComputerLauncher launcher;
 
-    public String remoteFs = "/home/jenkins";
+    public String remoteFs;
 
     public final int instanceCap;
 
@@ -89,17 +91,26 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.instanceCap = 1;
     }
 
-    @DataBoundConstructor
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
                           DockerComputerConnector connector,
                           String labelString,
                           String remoteFs,
+                          String instanceCapStr) {
+        this(dockerTemplateBase, connector, labelString, instanceCapStr);
+        setRemoteFs(remoteFs);
+    }
+
+
+    @DataBoundConstructor
+    public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
+                          DockerComputerConnector connector,
+                          String labelString,
                           String instanceCapStr
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.connector = connector;
         this.labelString = Util.fixNull(labelString);
-        this.remoteFs = Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
+        this.remoteFs = remoteFs;
 
         if (Strings.isNullOrEmpty(instanceCapStr)) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -251,6 +262,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return remoteFs;
     }
 
+    @DataBoundSetter
+    public void setRemoteFs(String remoteFs) {
+        this.remoteFs = remoteFs;
+    }
+
     public String getInstanceCapStr() {
         if (instanceCap == Integer.MAX_VALUE) {
             return "";
@@ -375,7 +391,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
-    void pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
+    InspectImageResponse pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
 
         String image = getFullImageId();
         final DockerClient client = api.getClient();
@@ -406,13 +422,21 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             LOGGER.info("Finished pulling image '{}', took {} ms", image, pullTime);
         }
 
+        return client.inspectImageCmd(image).exec();
+
     }
 
     @Restricted(NoExternalUse.class)
     public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
 
         final DockerComputerConnector connector = getConnector();
-        pullImage(api, listener);
+        final InspectImageResponse image = pullImage(api, listener);
+        if (StringUtils.isBlank(remoteFs)) {
+            remoteFs = image.getContainerConfig().getWorkingDir();
+        }
+        if (StringUtils.isBlank(remoteFs)) {
+            remoteFs = "/";
+        }
 
         LOGGER.info("Trying to run container for {}", getImage());
 

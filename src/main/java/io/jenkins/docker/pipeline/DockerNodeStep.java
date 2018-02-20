@@ -38,10 +38,9 @@ public class DockerNodeStep extends Step {
     private String remoteFs;
 
     @DataBoundConstructor
-    public DockerNodeStep(String dockerHost, String image, String remoteFs) {
+    public DockerNodeStep(String dockerHost, String image) {
         this.dockerHost = dockerHost;
         this.image = image;
-        this.remoteFs = remoteFs;
     }
 
     public String getDockerHost() {
@@ -65,6 +64,10 @@ public class DockerNodeStep extends Step {
         return remoteFs;
     }
 
+    @DataBoundSetter
+    public void setRemoteFs(String remoteFs) {
+        this.remoteFs = remoteFs;
+    }
 
     @Override
     public StepExecution start(StepContext context) throws Exception {
