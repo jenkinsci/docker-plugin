@@ -16,6 +16,7 @@ import jenkins.model.Jenkins;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A {@link Slave} node designed to be used only once for a build.
@@ -35,6 +36,8 @@ public class DockerTransientNode extends Slave {
 
     private String cloudId;
 
+    private AtomicBoolean acceptingTasks = new AtomicBoolean(true);
+
 
     public DockerTransientNode(@Nonnull String uid, String containerId, String workdir, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
         super(nodeName(uid), workdir, launcher);
@@ -43,6 +46,15 @@ public class DockerTransientNode extends Slave {
         setNumExecutors(1);
         setMode(Mode.EXCLUSIVE);
         setRetentionStrategy(new DockerOnceRetentionStrategy(10));
+    }
+
+    @Override
+    public boolean isAcceptingTasks() {
+        return acceptingTasks == null || acceptingTasks.get();
+    }
+
+    public void setAcceptingTasks(boolean acceptingTasks) {
+        this.acceptingTasks.set(acceptingTasks);
     }
 
     public static String nodeName(@Nonnull String containerName) {
