@@ -120,7 +120,7 @@ class DockerNodeStepExecution extends StepExecution {
         EnvVars env = null;
         try {
             // TODO workspace should be a volume
-            ws = node.createPath(remoteFs + "/workspace");
+            ws = node.createPath(node.getRemoteFS() + "/workspace");
             FlowNode flowNode = getContext().get(FlowNode.class);
             flowNode.addAction(new WorkspaceActionImpl(ws, flowNode));
 

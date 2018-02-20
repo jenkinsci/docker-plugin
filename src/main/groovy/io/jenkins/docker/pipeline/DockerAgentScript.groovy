@@ -17,7 +17,7 @@ class DockerAgentScript extends DeclarativeAgentScript<DockerAgent> {
     @Override
     Closure run(Closure body) {
         return {
-            script.dockerNode(dockerHost:"unix://var/run/docker.sock", image:describable.image, remoteFs:"/tmp") {
+            script.dockerNode(dockerHost:"unix://var/run/docker.sock", image:describable.image) {
                 body.call()
             }
         }
