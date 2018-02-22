@@ -288,6 +288,22 @@ public class DockerCloud extends Cloud {
             final List<DockerTemplate> templates = getTemplates(label);
             int remainingWorkload = numberOfExecutorsRequired;
 
+            // Take account of the executors that will result from the containers which we
+            // are already committed to starting but which have yet to be given to Jenkins
+            for ( final DockerTemplate t : templates ) {
+                final int numberOfContainersInProgress = countContainersInProgress(t);
+                final int numberOfExecutorsInProgress = t.getNumExecutors() * numberOfContainersInProgress;
+                remainingWorkload -= numberOfExecutorsInProgress;
+            }
+            if ( remainingWorkload != numberOfExecutorsRequired ) {
+                final int numberOfExecutorsInProgress = numberOfExecutorsRequired - remainingWorkload;
+                if( remainingWorkload<=0 ) {
+                    LOGGER.info("Not provisioning additional slaves for {}; we have {} executors being started already", label, numberOfExecutorsInProgress);
+                } else {
+                    LOGGER.info("Only provisioning {} slaves for {}; we have {} executors being started already", remainingWorkload, label, numberOfExecutorsInProgress);
+                }
+            }
+
             while (remainingWorkload > 0 && !templates.isEmpty()) {
                 final DockerTemplate t = templates.get(0); // get first
 
