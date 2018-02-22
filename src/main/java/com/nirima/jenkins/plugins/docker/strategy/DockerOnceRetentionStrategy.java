@@ -10,9 +10,11 @@ import hudson.model.Queue;
 import hudson.slaves.CloudRetentionStrategy;
 import hudson.slaves.EphemeralNode;
 import hudson.slaves.RetentionStrategy;
+import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 import java.util.logging.Level;
@@ -30,8 +32,9 @@ import static hudson.util.TimeUnit2.MINUTES;
 public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerComputer> implements ExecutorListener {
 
     private static final Logger LOGGER = Logger.getLogger(DockerOnceRetentionStrategy.class.getName());
+    private static int DEFAULT_IDLEMINUTES = 10;
 
-    private int timeout = 10;
+    private int idleMinutes = DEFAULT_IDLEMINUTES;
 
     /**
      * Creates the retention strategy.
@@ -40,11 +43,14 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
      */
     @DataBoundConstructor
     public DockerOnceRetentionStrategy(int idleMinutes) {
-        this.timeout = idleMinutes;
+        this.idleMinutes = idleMinutes;
     }
 
     public int getIdleMinutes() {
-        return timeout;
+        if (idleMinutes < 1) {
+            idleMinutes = DEFAULT_IDLEMINUTES;
+        }
+        return idleMinutes;
     }
 
     @Override
@@ -53,7 +59,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
         // terminate. If it's not already trying to terminate then lets terminate manually.
         if (c.isIdle()) {
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
-            if (idleMilliseconds > MINUTES.toMillis(timeout)) {
+            if (idleMilliseconds > MINUTES.toMillis(getIdleMinutes())) {
                 LOGGER.log(Level.FINE, "Disconnecting {0}", c.getName());
                 done(c);
             }
@@ -115,7 +121,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
 
         DockerOnceRetentionStrategy that = (DockerOnceRetentionStrategy) o;
 
-        return timeout == that.timeout;
+        return idleMinutes == that.idleMinutes;
     }
 
     @Extension
@@ -124,6 +130,9 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
         public String getDisplayName() {
             return "Use container only once";
         }
-    }
 
+        public FormValidation doCheckIdleMinutes(@QueryParameter String value) {
+            return FormValidation.validatePositiveInteger(value);
+        }
+    }
 }
