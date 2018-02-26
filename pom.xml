@@ -217,22 +217,6 @@
                     <compatibleSinceVersion>0.17</compatibleSinceVersion>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>gmaven-plugin</artifactId>
-                <version>1.5-jenkins-3</version>
-                <configuration>
-                    <providerSelection>1.${java.level}</providerSelection>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
 
