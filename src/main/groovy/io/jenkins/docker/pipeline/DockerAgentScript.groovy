@@ -1,4 +1,4 @@
-package io.jenkins.docker.pipeline;
+package io.jenkins.docker.pipeline
 
 import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentScript
 import org.jenkinsci.plugins.workflow.cps.CpsScript
@@ -12,6 +12,7 @@ class DockerAgentScript extends DeclarativeAgentScript<DockerAgent> {
     DockerAgentScript(CpsScript s, DockerAgent dockerAgent) {
         super(s, dockerAgent)
     }
+
 
     @Override
     Closure run(Closure closure) {
