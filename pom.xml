@@ -27,6 +27,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
+        <groovy.version>2.4.7</groovy.version>
         <jenkins.version>2.60.3</jenkins.version>
     </properties>
 
@@ -74,7 +75,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>2.13</version>
+            <version>2.14</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -111,10 +112,15 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>2.13</version>
+            <version>2.14</version>
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>org.jenkinsci.plugins</groupId>
+            <artifactId>pipeline-model-extensions</artifactId>
+            <version>1.2.7</version>
+        </dependency>
 
         <dependency>
             <groupId>com.kohlschutter.junixsocket</groupId>
@@ -185,6 +191,16 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>structs</artifactId>
+                <version>1.9</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <plugins>
             <plugin>
@@ -206,6 +222,24 @@
                 <configuration>
                     <compatibleSinceVersion>0.17</compatibleSinceVersion>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+                <version>1.5-jenkins-3</version>
+                <configuration>
+                    <providerSelection>1.${java.level}</providerSelection>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generateStubs</goal>
+                            <goal>compile</goal>
+                            <goal>generateTestStubs</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
