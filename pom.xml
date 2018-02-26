@@ -158,12 +158,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-cps</artifactId>
-            <version>2.41</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>jenkins-test-harness-tools</artifactId>
             <version>2.2</version>
@@ -233,10 +227,7 @@
                 <executions>
                     <execution>
                         <goals>
-                            <goal>generateStubs</goal>
                             <goal>compile</goal>
-                            <goal>generateTestStubs</goal>
-                            <goal>testCompile</goal>
                         </goals>
                     </execution>
                 </executions>
