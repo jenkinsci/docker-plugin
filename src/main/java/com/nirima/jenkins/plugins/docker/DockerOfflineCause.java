@@ -8,6 +8,6 @@ import hudson.slaves.OfflineCause;
 public class DockerOfflineCause extends OfflineCause {
     @Override
     public String toString() {
-        return "Shutting down Docker";
+        return "Shutting down Docker container";
     }
 }
