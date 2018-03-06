@@ -328,10 +328,11 @@ public class DockerCloud extends Cloud {
                 final Runnable taskToCreateNewSlave = new Runnable() {
                     @Override
                     public void run() {
+                        DockerTransientNode slave = null;
                         try {
                             // TODO where can we log provisioning progress ?
                             final DockerAPI api = DockerCloud.this.getDockerApi();
-                            final DockerTransientNode slave = t.provisionNode(api, TaskListener.NULL);
+                            slave = t.provisionNode(api, TaskListener.NULL);
                             slave.setCloudId(DockerCloud.this.name);
                             plannedNode.complete(slave);
 
@@ -342,6 +343,9 @@ public class DockerCloud extends Cloud {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                     t, getDisplayName(), ex);
                             plannedNode.completeExceptionally(ex);
+                            if (slave != null) {
+                                slave.terminate(LOGGER);
+                            }
                             throw Throwables.propagate(ex);
                         } finally {
                             decrementContainersInProgress(t);

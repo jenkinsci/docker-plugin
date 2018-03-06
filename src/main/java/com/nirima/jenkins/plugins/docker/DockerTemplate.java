@@ -4,7 +4,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
-import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PullResponseItem;
@@ -255,9 +254,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public String getInstanceCapStr() {
         if (instanceCap == Integer.MAX_VALUE) {
             return "";
-        } else {
-            return String.valueOf(instanceCap);
         }
+        return String.valueOf(instanceCap);
     }
 
     public int getInstanceCap() {
@@ -420,7 +418,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         final DockerClient client = api.getClient();
 
-        CreateContainerCmd cmd = client.createContainerCmd(getImage());
+        final CreateContainerCmd cmd = client.createContainerCmd(getImage());
         fillContainerConfig(cmd);
 
         // Unique ID we use both as Node identifier and container Name
@@ -430,29 +428,43 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         connector.beforeContainerCreated(api, remoteFs, cmd);
 
-        LOGGER.info("Trying to run container {} from image: {}", uid, getImage());
-        String containerId = cmd.exec().getId();
+        LOGGER.info("Trying to run container for node {} from image: {}", uid, getImage());
+        boolean finallyRemoveTheContainer = true;
+        final String containerId = cmd.exec().getId();
+        // if we get this far, we have created the container so,
+        // if we fail to return the node, we need to ensure it's cleaned up.
+        LOGGER.info("Started container ID {} for node {} from image: {}", containerId, uid, getImage());
 
         try {
             connector.beforeContainerStarted(api, remoteFs, containerId);
             client.startContainerCmd(containerId).exec();
             connector.afterContainerStarted(api, remoteFs, containerId);
-        } catch (DockerException e) {
+
+            final ComputerLauncher launcher = connector.createLauncher(api, containerId, remoteFs, listener);
+    
+            final DockerTransientNode node = new DockerTransientNode(uid, containerId, remoteFs, launcher);
+            node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
+            node.setMode(mode);
+            node.setLabelString(labelString);
+            node.setRetentionStrategy(retentionStrategy);
+            node.setNodeProperties(nodeProperties);
+            node.setRemoveVolumes(removeVolumes);
+            node.setDockerAPI(api);
+            finallyRemoveTheContainer = false;
+            return node;
+        } finally {
             // if something went wrong, cleanup aborted container
-            client.removeContainerCmd(containerId).withForce(true).exec();
+            // while ensuring that the original exception escapes.
+            if ( finallyRemoveTheContainer ) {
+                try {
+                    client.removeContainerCmd(containerId).withForce(true).exec();
+                } catch (NotFoundException ex) {
+                    LOGGER.info("Unable to remove container '" + containerId + "' as it had already gone.");
+                } catch (Throwable ex) {
+                    LOGGER.error("Unable to remove container '" + containerId + "' due to exception:", ex);
+                }
+            }
         }
-
-        final ComputerLauncher launcher = connector.createLauncher(api, containerId, remoteFs, listener);
-
-        DockerTransientNode node = new DockerTransientNode(uid, containerId, remoteFs, launcher);
-        node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + "]");
-        node.setMode(mode);
-        node.setLabelString(labelString);
-        node.setRetentionStrategy(retentionStrategy);
-        node.setNodeProperties(nodeProperties);
-        node.setRemoveVolumes(removeVolumes);
-        node.setDockerAPI(api);
-        return node;
     }
 
 
