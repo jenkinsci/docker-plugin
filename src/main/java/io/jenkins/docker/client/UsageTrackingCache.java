@@ -115,6 +115,7 @@ public class UsageTrackingCache<K, V> {
             durationCache.cleanUp();
             return value;
         }
+        durationCache.cleanUp(); // force cleanup activity
         return null;
     }
 
@@ -129,7 +130,6 @@ public class UsageTrackingCache<K, V> {
      *            The entry to be cached.
      */
     public void cacheAndIncrementUsage(@Nonnull K key, @Nonnull V entry) {
-        durationCache.cleanUp(); // force cleanup activity
         final CacheEntry<K, V> record = new CacheEntry<>(key, entry, 1);
         final CacheEntry<K, V> oldKeyRecord = activeCacheByKey.put(key, record);
         final CacheEntry<K, V> oldValueRecord = activeCacheByValue.put(entry, record);

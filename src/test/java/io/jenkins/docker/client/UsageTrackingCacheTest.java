@@ -112,8 +112,6 @@ public class UsageTrackingCacheTest {
         assertNothingExpired(expiryList);
     }
 
-    // TODO: ensure that expiry handler isn't called when we don't expect it to
-    // be called
     @Test
     public void getAndIncrementUsageGivenOldInactiveDataInCacheThenDiscardsOldDataAndReturnsNull() throws Exception {
         final String key = "key";
@@ -172,15 +170,15 @@ public class UsageTrackingCacheTest {
 
     private static <L> void assertNothingExpired(List<L> list) {
         assertNotNull(list);
-        assertEquals(0, list.size());
+        assertEquals("Number of keys and values in the expiryList", 0, list.size());
     }
 
     private static <K extends L, V extends L, L> void assertExpired(List<L> expiryList, K key, V value) {
         assertNotNull(expiryList);
+        assertEquals("Number of keys and values in the expiryList", 2, expiryList.size());
         final L actualExpiredKey = expiryList.get(0);
-        assertEquals(key, actualExpiredKey);
+        assertEquals("Expired key", key, actualExpiredKey);
         final L actualExpiredValue = expiryList.get(1);
-        assertEquals(value, actualExpiredValue);
-        assertEquals(2, expiryList.size());
+        assertEquals("Expired value", value, actualExpiredValue);
     }
 }
