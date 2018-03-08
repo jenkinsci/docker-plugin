@@ -9,6 +9,7 @@ import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import io.jenkins.docker.client.DockerAPI;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +42,18 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
         final PrintStream llog = listener.getLogger();
 
         final DockerCloud cloud = getCloud(build, launcher);
-        DockerTemplate template = cloud.getTemplate(templateId);
-        DockerClient client = cloud.getClient();
+        final DockerTemplate template = cloud.getTemplate(templateId);
+        final DockerAPI dockerApi = cloud.getDockerApi();
+        final DockerClient client = dockerApi.takeClient();
+        try {
+            executeOnDocker(build, llog, cloud, template, client);
+        } finally {
+            dockerApi.releaseClient(client);
+        }
+    }
+
+    private void executeOnDocker(Run<?, ?> build, PrintStream llog, DockerCloud cloud, DockerTemplate template, DockerClient client)
+            throws DockerException {
         String containerId = DockerCloud.runContainer(template.getDockerTemplateBase(), client);
 
         LOG.info("Starting container {}, cloud {}", containerId, cloud.getDisplayName());

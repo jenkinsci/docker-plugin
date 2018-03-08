@@ -1,10 +1,12 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.DockerClient;
 import com.nirima.jenkins.plugins.docker.utils.Consts;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -36,19 +38,29 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
     }
 
     public Collection getImages(){
-        return theCloud.getClient().listImagesCmd().exec();
+        final DockerAPI dockerApi = theCloud.getDockerApi();
+        final DockerClient client = dockerApi.takeClient();
+        try {
+            return client.listImagesCmd().exec();
+        } finally {
+            dockerApi.releaseClient(client);
+        }
     }
 
     public Collection getProcesses() {
-        return theCloud.getClient().listContainersCmd().exec();
+        final DockerAPI dockerApi = theCloud.getDockerApi();
+        final DockerClient client = dockerApi.takeClient();
+        try {
+            return client.listContainersCmd().exec();
+        } finally {
+            dockerApi.releaseClient(client);
+        }
     }
 
     public String asTime(Long time) {
         if( time == null )
             return "";
-
         long when = System.currentTimeMillis() - time;
-
         Date dt = new Date(when);
         return dt.toString();
     }
@@ -60,21 +72,21 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
     public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest req, StaplerResponse rsp) throws ServletException,
             IOException,
             InterruptedException {
-
-        theCloud.getClient()
-            .stopContainerCmd(stopId).exec();
-
+        final DockerAPI dockerApi = theCloud.getDockerApi();
+        final DockerClient client = dockerApi.takeClient();
+        try {
+            client.stopContainerCmd(stopId).exec();
+        } finally {
+            dockerApi.releaseClient(client);
+        }
         rsp.sendRedirect(".");
     }
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<DockerManagementServer> {
-
         @Override
         public String getDisplayName() {
             return "server ";
         }
-
-
     }
 }

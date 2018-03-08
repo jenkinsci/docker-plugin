@@ -1,0 +1,13 @@
+<div>
+    Timeout, in seconds, to apply when expecting data from the Docker API when performing the docker pull operation.
+    0 means no time limit, but this is not recommended (if your docker API locks up, some aspects of Jenkins can also lock up).
+    <br/>
+    i.e. you probably want this set to as long as it takes to pull the entire image onto a fresh docker server.
+    e.g. a few minutes.
+    <p>
+    Note:
+    This overrides the read timeout specified for the cloud,
+    but only for the docker pull operation
+    (as this operation is expected to take longer than most docker operations).
+    </p>
+</div>

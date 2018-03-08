@@ -3,11 +3,14 @@ package com.nirima.jenkins.plugins.docker.action;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import io.jenkins.docker.DockerTransientNode;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.export.ExportedBean;
 
@@ -33,16 +36,21 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
     }
 
     public DockerBuildAction(DockerTransientNode node) {
-        this.containerHost = node.getDockerAPI().getDockerHost().getUri();
+        final DockerAPI dockerAPI = node.getDockerAPI();
+        this.containerHost = dockerAPI.getDockerHost().getUri();
         this.containerId = node.getContainerId();
         this.cloudId = node.getCloudId();
-
-
         try {
+            final InspectContainerResponse containerDetails;
+            final DockerClient client = dockerAPI.takeClient();
+            try {
+                containerDetails = client.inspectContainerCmd(containerId).exec();
+            } finally {
+                dockerAPI.releaseClient(client);
+            }
             this.inspect = new ObjectMapper()
                 .enable(SerializationFeature.INDENT_OUTPUT)
-                .writeValueAsString(
-                    node.getDockerAPI().getClient().inspectContainerCmd(containerId).exec());
+                .writeValueAsString(containerDetails);
         } catch (JsonProcessingException e) {
             this.inspect = "Failed to capture container inspection data: "+e.getMessage();
         }

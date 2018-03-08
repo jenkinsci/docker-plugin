@@ -246,9 +246,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         private final DockerAPI dockerApi;
 
-        // Marshal the builder across the wire.
-        private transient DockerClient _client;
-
         final transient hudson.model.Run<?, ?> run;
 
         private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerCloud dockerCloud) {
@@ -262,19 +259,19 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         }
 
-//        public Run(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener, DockerCloud cloud) {
-//            this(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), expandTags(run, launcher, listener), cloud);
-//        }
+        private DockerAPI getDockerAPI() {
+            Validate.notNull(dockerApi, "Could not get client because we could not find the cloud that the " +
+                    "project was built on. Was this build run on Docker?");
+            return dockerApi;
+        }
 
-        private DockerClient getClient() {
-            if (_client == null) {
-                Validate.notNull(dockerApi, "Could not get client because we could not find the cloud that the " +
-                        "project was built on. Was this build run on Docker?");
+        private DockerClient takeClient() {
+            // use a connection without an activity timeout
+            return getDockerAPI().takeClient(0);
+        }
 
-                _client = dockerApi.getClient();
-            }
-
-            return _client;
+        private void releaseClient(DockerClient client) {
+            getDockerAPI().releaseClient(client);
         }
 
         boolean run() throws IOException, InterruptedException {
@@ -317,9 +314,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
 
         private void cleanImages(String id) {
-            getClient().removeImageCmd(id)
+            final DockerClient client = takeClient();
+            try {
+                client.removeImageCmd(id)
                     .withForce(true)
                     .exec();
+            } finally {
+                releaseClient(client);
+            }
         }
 
         private String buildImage() throws IOException, InterruptedException {
@@ -328,7 +330,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             if (pullRegistry != null && pullRegistry.getCredentialsId() != null) {
                 auths.addConfig(DockerCloud.getAuthConfig(pullRegistry, run.getParent().getParent()));
             }
-            final DockerClient client = getClient();
 
             log("Docker Build: building image at path " + fpChild.getRemote());
             final InputStream tar = fpChild.act(new DockerBuildCallable());
@@ -343,21 +344,26 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     super.onNext(item);
                 }
             };
-            String imageId = client.buildImageCmd(tar)
-                    .withBuildAuthConfigs(auths)
-                    .exec(resultCallback)
-                    .awaitImageId();
-
-            if (imageId == null) {
-                throw new AbortException("Built image id is null. Some error accured");
-            }
-
-            // tag built image with tags
-            for (String tag : tagsToUse) {
-                final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
-                final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
-                log("Tagging built image with " + reposTag.repos + ":" + commitTag);
-                client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
+            final DockerClient client = takeClient();
+            final String imageId;
+            try {
+                imageId = client.buildImageCmd(tar)
+                        .withBuildAuthConfigs(auths)
+                        .exec(resultCallback)
+                        .awaitImageId();
+                if (imageId == null) {
+                    throw new AbortException("Built image id is null. Some error accured");
+                }
+    
+                // tag built image with tags
+                for (String tag : tagsToUse) {
+                    final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
+                    final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
+                    log("Tagging built image with " + reposTag.repos + ":" + commitTag);
+                    client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
+                }
+            } finally {
+                releaseClient(client);
             }
 
             return imageId;
@@ -382,8 +388,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                         super.onNext(item);
                     }
                 };
+                final DockerClient client = takeClient();
                 try {
-                    PushImageCmd cmd = getClient().pushImageCmd(identifier);
+                    PushImageCmd cmd = client.pushImageCmd(identifier);
 
                     int i = identifier.repository.name.indexOf('/');
                     String registry = i >= 0 ?
@@ -398,6 +405,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     // have some clue as to what to do as the exception gives no hint.
                     log("Exception pushing docker image. Check that the destination registry is running.");
                     throw ex;
+                } finally {
+                    releaseClient(client);
                 }
             }
         }

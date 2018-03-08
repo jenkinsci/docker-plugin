@@ -206,12 +206,20 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Connects to Docker.
-     *
+     * Connects to Docker. <em>NOTE:</em> This should not be used for any
+     * long-running operations as the client it returns is not protected from
+     * closure.
+     * 
+     * @deprecated Use {@link #getDockerApi()} and then
+     *             {@link DockerAPI#takeClient()} and
+     *             {@link DockerAPI#releaseClient(DockerClient)} instead.
      * @return Docker client.
      */
-    public synchronized DockerClient getClient() {
-        return dockerApi.getClient();
+    @Deprecated
+    public DockerClient getClient() {
+        final DockerClient client = dockerApi.takeClient();
+        dockerApi.releaseClient(client);
+        return client;
     }
 
     /**
@@ -520,7 +528,13 @@ public class DockerCloud extends Cloud {
         if (imageName != null) {
             labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_IMAGE, imageName);
         }
-        final List<?> containers = getClient().listContainersCmd().withLabelFilter(labelFilter).exec();
+        final List<?> containers;
+        final DockerClient client = dockerApi.takeClient();
+        try {
+            containers = client.listContainersCmd().withLabelFilter(labelFilter).exec();
+        } finally {
+            dockerApi.releaseClient(client);
+        }
         final int count = containers.size();
         return count;
     }
@@ -642,9 +656,14 @@ public class DockerCloud extends Cloud {
     }
 
     public boolean isTriton() {
-        Version remoteVersion = getClient().versionCmd().exec();
-
         if( _isTriton == null ) {
+            final Version remoteVersion;
+            final DockerClient client = dockerApi.takeClient();
+            try {
+                remoteVersion = client.versionCmd().exec();
+            } finally {
+                dockerApi.releaseClient(client);
+            }
             _isTriton = remoteVersion.getOperatingSystem().equals("solaris");
         }
         return _isTriton;

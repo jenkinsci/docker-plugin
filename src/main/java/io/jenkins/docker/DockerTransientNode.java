@@ -182,10 +182,11 @@ public class DockerTransientNode extends Slave {
 
         final String containerId = getContainerId();
         Computer.threadPoolForRemoting.submit(() -> {
+            final DockerAPI api;
             final DockerClient client;
             try {
-                final DockerAPI api = getDockerAPI();
-                client = api.getClient();
+                api = getDockerAPI();
+                client = api.takeClient();
             } catch (RuntimeException ex) {
                 logger.error("Unable to stop and remove container '" + containerId + "' for slave '" + name + "' due to exception:", ex);
                 return;
@@ -198,6 +199,7 @@ public class DockerTransientNode extends Slave {
                 logger.println("Stopped container '"+ containerId + "' for slave '" + name + "'.");
             } catch(NotFoundException e) {
                 logger.println("Can't stop container '" + containerId + "' for slave '" + name + "' as it does not exist.");
+                api.releaseClient(client);
                 return; // no point trying to remove the container if it's already gone.
             } catch (Exception ex) {
                 logger.error("Failed to stop container '" + containerId + "' for slave '" + name + "' due to exception:", ex);
@@ -213,6 +215,7 @@ public class DockerTransientNode extends Slave {
             } catch (Exception ex) {
                 logger.error("Failed to remove container '" + containerId + "' for slave '" + name + "' due to exception:", ex);
             }
+            api.releaseClient(client);
         });
 
         try {

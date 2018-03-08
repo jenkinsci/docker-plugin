@@ -26,6 +26,7 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.DescribableList;
+import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
@@ -35,6 +36,7 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +79,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     private transient /*almost final*/ Set<LabelAtom> labelSet;
 
     private @CheckForNull DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
-        
+
+    private int pullTimeout;
+
     private List<? extends NodeProperty<?>> nodeProperties = Collections.EMPTY_LIST;
 
 
@@ -274,6 +278,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public void setPullStrategy(DockerImagePullStrategy pullStrategy) {
         this.pullStrategy = pullStrategy;
     }
+
+    public int getPullTimeout() {
+        return pullTimeout;
+    }
+
+    @DataBoundSetter
+    public void setPullTimeout(int pullTimeout) {
+        this.pullTimeout = pullTimeout;
+    }
     
     public List<? extends NodeProperty<?>> getNodeProperties() {
         return Collections.unmodifiableList(nodeProperties);
@@ -376,17 +389,29 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     void pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
+        final String image = getFullImageId();
 
-        String image = getFullImageId();
-        final DockerClient client = api.getClient();
+        final boolean shouldPullImage;
+        final DockerClient clientForFastCommands = api.takeClient();
+        try {
+            shouldPullImage = pullStrategy.shouldPullImage(clientForFastCommands, image);
+        } finally {
+            api.releaseClient(clientForFastCommands);
+        }
+        if (shouldPullImage) {
+            actuallyPullImage(api, listener, image);
+        }
+    }
 
-        if (pullStrategy.shouldPullImage(client, image)) {
-            // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
-            LOGGER.info("Pulling image '{}'. This may take awhile...", image);
+    private void actuallyPullImage(DockerAPI api, TaskListener listener, String image) throws IOException, InterruptedException {
+        // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
+        LOGGER.info("Pulling image '{}'. This may take awhile...", image);
 
-            long startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
 
-            PullImageCmd cmd =  client.pullImageCmd(image);
+        final DockerClient clientForPullCommand = api.takeClient(pullTimeout);
+        try {
+            PullImageCmd cmd =  clientForPullCommand.pullImageCmd(image);
             final DockerRegistryEndpoint registry = getRegistry();
             DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
             cmd.exec(new PullImageResultCallback() {
@@ -395,28 +420,38 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                     listener.getLogger().println(item.getStatus());
                 }
             }).awaitCompletion();
-
-            try {
-                client.inspectImageCmd(image).exec();
-            } catch (NotFoundException e) {
-                throw new DockerClientException("Could not pull image: " + image, e);
-            }
-
-            long pullTime = System.currentTimeMillis() - startTime;
-            LOGGER.info("Finished pulling image '{}', took {} ms", image, pullTime);
+        } finally {
+            api.releaseClient(clientForPullCommand);
         }
 
+        final DockerClient clientForFastCommands = api.takeClient();
+        try {
+            clientForFastCommands.inspectImageCmd(image).exec();
+        } catch (NotFoundException e) {
+            throw new DockerClientException("Could not pull image: " + image, e);
+        } finally {
+            api.releaseClient(clientForFastCommands);
+        }
+
+        long pullTime = System.currentTimeMillis() - startTime;
+        LOGGER.info("Finished pulling image '{}', took {} ms", image, pullTime);
     }
 
     @Restricted(NoExternalUse.class)
     public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
-
-        final DockerComputerConnector connector = getConnector();
         pullImage(api, listener);
 
-        LOGGER.info("Trying to run container for {}", getImage());
+        final DockerClient client = api.takeClient();
+        try {
+            return doProvisionNode(api, client, listener);
+        } finally {
+            api.releaseClient(client);
+        }
+    }
 
-        final DockerClient client = api.getClient();
+    private DockerTransientNode doProvisionNode(DockerAPI api, DockerClient client, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
+        LOGGER.info("Trying to run container for {}", getImage());
+        final DockerComputerConnector connector = getConnector();
 
         final CreateContainerCmd cmd = client.createContainerCmd(getImage());
         fillContainerConfig(cmd);
@@ -467,7 +502,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -508,7 +542,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Extension
     public static final class DescriptorImpl extends Descriptor<DockerTemplate> {
-
         /**
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
          */
@@ -540,7 +573,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             return Jenkins.getInstance().getDescriptor(DockerOnceRetentionStrategy.class);
         }
 
-
+        public FormValidation doCheckPullTimeout(@QueryParameter String value) {
+            return FormValidation.validateNonNegativeInteger(value);
+        }
 
         @Override
         public String getDisplayName() {
