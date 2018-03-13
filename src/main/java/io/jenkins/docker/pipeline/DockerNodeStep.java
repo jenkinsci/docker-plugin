@@ -9,6 +9,7 @@ import hudson.model.Item;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
+import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -36,6 +37,8 @@ public class DockerNodeStep extends Step {
     private String image;
 
     private String remoteFs;
+
+    private DockerComputerConnector connector;
 
     @DataBoundConstructor
     public DockerNodeStep(String dockerHost, String image) {
@@ -69,9 +72,18 @@ public class DockerNodeStep extends Step {
         this.remoteFs = remoteFs;
     }
 
+    public DockerComputerConnector getConnector() {
+        return connector;
+    }
+
+    @DataBoundSetter
+    public void setConnector(DockerComputerConnector connector) {
+        this.connector = connector;
+    }
+
     @Override
     public StepExecution start(StepContext context) throws Exception {
-        return new DockerNodeStepExecution(context, dockerHost, credentialsId, image, remoteFs);
+        return new DockerNodeStepExecution(context, connector, dockerHost, credentialsId, image, remoteFs);
     }
 
     @Extension(optional = true)
