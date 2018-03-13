@@ -12,6 +12,7 @@ import hudson.model.TaskListener;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
+import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
 import jenkins.model.NodeListener;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -37,11 +38,13 @@ class DockerNodeStepExecution extends StepExecution {
     private final String credentialsId;
     private final String image;
     private final String remoteFs;
+    private final DockerComputerConnector connector;
     private transient volatile CompletableFuture<DockerTransientNode> task;
     private volatile String nodeName;
 
-    public DockerNodeStepExecution(StepContext context, String dockerHost, String credentialsId, String image, String remoteFs) {
+    public DockerNodeStepExecution(StepContext context, DockerComputerConnector connector, String dockerHost, String credentialsId, String image, String remoteFs) {
         super(context);
+        this.connector = connector != null ? connector : new DockerComputerAttachConnector();
         this.dockerHost = dockerHost;
         this.credentialsId = credentialsId;
         this.image = image;
@@ -75,7 +78,7 @@ class DockerNodeStepExecution extends StepExecution {
 
         final DockerTemplate t = new DockerTemplate(
                 new DockerTemplateBase(image),
-                new DockerComputerAttachConnector(),
+                connector,
                 uuid, remoteFs, "1");
 
         t.setMode(Node.Mode.EXCLUSIVE);
