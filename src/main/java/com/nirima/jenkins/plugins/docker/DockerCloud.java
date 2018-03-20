@@ -60,7 +60,9 @@ public class DockerCloud extends Cloud {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerCloud.class);
 
+    @CheckForNull
     private List<DockerTemplate> templates;
+    @CheckForNull
     private transient Map<Long, DockerTemplate> jobTemplates;
 
     @Deprecated
@@ -401,7 +403,7 @@ public class DockerCloud extends Cloud {
 
     @CheckForNull
     public DockerTemplate getTemplate(String template) {
-        for (DockerTemplate t : templates) {
+        for (DockerTemplate t : getTemplates()) {
             if (t.getImage().equals(template)) {
                 return t;
             }
@@ -426,6 +428,9 @@ public class DockerCloud extends Cloud {
      * Add a new template to the cloud
      */
     public synchronized void addTemplate(DockerTemplate t) {
+        if ( templates == null ) {
+            templates = new ArrayList<>();
+        }
         templates.add(t);
     }
 
@@ -460,9 +465,9 @@ public class DockerCloud extends Cloud {
      * @return Templates matched to requested label assuming slave Mode
      */
     public List<DockerTemplate> getTemplates(Label label) {
-        ArrayList<DockerTemplate> dockerTemplates = new ArrayList<>();
+        final List<DockerTemplate> dockerTemplates = new ArrayList<>();
 
-        for (DockerTemplate t : templates) {
+        for (DockerTemplate t : getTemplates()) {
             if (label == null && t.getMode() == Node.Mode.NORMAL) {
                 dockerTemplates.add(t);
             }
@@ -499,7 +504,9 @@ public class DockerCloud extends Cloud {
      * Remove Docker template
      */
     public synchronized void removeTemplate(DockerTemplate t) {
-        templates.remove(t);
+        if ( templates != null ) {
+            templates.remove(t);
+        }
     }
 
     /**
