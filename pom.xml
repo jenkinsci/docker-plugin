@@ -27,6 +27,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
+        <groovy.version>2.4.7</groovy.version>
         <jenkins.version>2.60.3</jenkins.version>
     </properties>
 
@@ -41,6 +42,18 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-java-api</artifactId>
             <version>3.0.14</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpcore</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>apache-httpcomponents-client-4-api</artifactId>
+            <version>4.5.3-2.0</version>
         </dependency>
 
         <dependency>
@@ -74,7 +87,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>2.13</version>
+            <version>2.14</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -111,10 +124,9 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>2.13</version>
+            <version>2.14</version>
             <optional>true</optional>
         </dependency>
-
 
         <dependency>
             <groupId>com.kohlschutter.junixsocket</groupId>
@@ -148,15 +160,11 @@
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-cps</artifactId>
-            <version>2.41</version>
-            <scope>test</scope>
-        </dependency>
+
+
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>jenkins-test-harness-tools</artifactId>
@@ -185,6 +193,16 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>structs</artifactId>
+                <version>1.9</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <plugins>
             <plugin>
@@ -207,7 +225,6 @@
                     <compatibleSinceVersion>0.17</compatibleSinceVersion>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 

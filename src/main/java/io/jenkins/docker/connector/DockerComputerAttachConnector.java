@@ -115,11 +115,9 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
                         .withAttachStderr(true)
                         .withTty(false)
                         .withCmd("java", "-jar", remoteFs + '/' + remoting.getName(), "-noReconnect", "-noKeepAlive", "-slaveLog", remoteFs + "/agent.log");
-    
                 if (StringUtils.isNotBlank(user)) {
                     cmd.withUser(user);
                 }
-    
                 final ExecCreateCmdResponse exec = cmd.exec();
                 execId = exec.getId();
             } finally {

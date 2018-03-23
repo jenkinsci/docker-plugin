@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" >
 
     <f:block>
-        <span class="info">Prerequisites:</span> Docker image must have <a href="https://www.openssh.com/">sshd</a> installed.
+        <span class="info">Prerequisites:</span> Docker image must have <a href="https://www.openssh.com/">sshd</a> and a JDK installed.
     </f:block>
 
     <f:dropdownDescriptorSelector  title="SSH key" field="sshKeyStrategy" />

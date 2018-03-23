@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
@@ -31,6 +32,7 @@ import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -63,7 +65,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     @Deprecated
     private transient DockerComputerLauncher launcher;
 
-    public String remoteFs = "/home/jenkins";
+    public String remoteFs;
 
     public final int instanceCap;
 
@@ -93,17 +95,26 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.instanceCap = 1;
     }
 
-    @DataBoundConstructor
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
                           DockerComputerConnector connector,
                           String labelString,
                           String remoteFs,
+                          String instanceCapStr) {
+        this(dockerTemplateBase, connector, labelString, instanceCapStr);
+        setRemoteFs(remoteFs);
+    }
+
+
+    @DataBoundConstructor
+    public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
+                          DockerComputerConnector connector,
+                          String labelString,
                           String instanceCapStr
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.connector = connector;
         this.labelString = Util.fixNull(labelString);
-        this.remoteFs = Strings.isNullOrEmpty(remoteFs) ? "/home/jenkins" : remoteFs;
+        this.remoteFs = remoteFs;
 
         if (Strings.isNullOrEmpty(instanceCapStr)) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -255,6 +266,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return remoteFs;
     }
 
+    @DataBoundSetter
+    public void setRemoteFs(String remoteFs) {
+        this.remoteFs = remoteFs;
+    }
+
     public String getInstanceCapStr() {
         if (instanceCap == Integer.MAX_VALUE) {
             return "";
@@ -287,7 +303,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public void setPullTimeout(int pullTimeout) {
         this.pullTimeout = pullTimeout;
     }
-    
+
     public List<? extends NodeProperty<?>> getNodeProperties() {
         return Collections.unmodifiableList(nodeProperties);
     }
@@ -388,58 +404,62 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
-    void pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
+    InspectImageResponse pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
         final String image = getFullImageId();
 
         final boolean shouldPullImage;
-        final DockerClient clientForFastCommands = api.takeClient();
+        final DockerClient clientForFastCommands1 = api.takeClient();
         try {
-            shouldPullImage = pullStrategy.shouldPullImage(clientForFastCommands, image);
+            shouldPullImage = pullStrategy.shouldPullImage(clientForFastCommands1, image);
         } finally {
-            api.releaseClient(clientForFastCommands);
+            api.releaseClient(clientForFastCommands1);
         }
         if (shouldPullImage) {
-            actuallyPullImage(api, listener, image);
+            // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
+            LOGGER.info("Pulling image '{}'. This may take awhile...", image);
+
+            long startTime = System.currentTimeMillis();
+
+            final DockerClient clientForPullCommand = api.takeClient(pullTimeout);
+            try {
+                PullImageCmd cmd =  clientForPullCommand.pullImageCmd(image);
+                final DockerRegistryEndpoint registry = getRegistry();
+                DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
+                cmd.exec(new PullImageResultCallback() {
+                    @Override
+                    public void onNext(PullResponseItem item) {
+                        listener.getLogger().println(item.getStatus());
+                    }
+                }).awaitCompletion();
+            } finally {
+                api.releaseClient(clientForPullCommand);
+            }
+
+            long pullTime = System.currentTimeMillis() - startTime;
+            LOGGER.info("Finished pulling image '{}', took {} ms", image, pullTime);
         }
-    }
 
-    private void actuallyPullImage(DockerAPI api, TaskListener listener, String image) throws IOException, InterruptedException {
-        // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
-        LOGGER.info("Pulling image '{}'. This may take awhile...", image);
-
-        long startTime = System.currentTimeMillis();
-
-        final DockerClient clientForPullCommand = api.takeClient(pullTimeout);
+        final InspectImageResponse result;
+        final DockerClient clientForFastCommands2 = api.takeClient();
         try {
-            PullImageCmd cmd =  clientForPullCommand.pullImageCmd(image);
-            final DockerRegistryEndpoint registry = getRegistry();
-            DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
-            cmd.exec(new PullImageResultCallback() {
-                @Override
-                public void onNext(PullResponseItem item) {
-                    listener.getLogger().println(item.getStatus());
-                }
-            }).awaitCompletion();
-        } finally {
-            api.releaseClient(clientForPullCommand);
-        }
-
-        final DockerClient clientForFastCommands = api.takeClient();
-        try {
-            clientForFastCommands.inspectImageCmd(image).exec();
+            result = clientForFastCommands2.inspectImageCmd(image).exec();
         } catch (NotFoundException e) {
             throw new DockerClientException("Could not pull image: " + image, e);
         } finally {
-            api.releaseClient(clientForFastCommands);
+            api.releaseClient(clientForFastCommands2);
         }
-
-        long pullTime = System.currentTimeMillis() - startTime;
-        LOGGER.info("Finished pulling image '{}', took {} ms", image, pullTime);
+        return result;
     }
 
     @Restricted(NoExternalUse.class)
     public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
-        pullImage(api, listener);
+        final InspectImageResponse image = pullImage(api, listener);
+        if (StringUtils.isBlank(remoteFs)) {
+            remoteFs = image.getContainerConfig().getWorkingDir();
+        }
+        if (StringUtils.isBlank(remoteFs)) {
+            remoteFs = "/";
+        }
 
         final DockerClient client = api.takeClient();
         try {
