@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.dockerjava.api.DockerClient;
@@ -14,6 +13,7 @@ import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.export.ExportedBean;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -42,16 +42,13 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
         this.cloudId = node.getCloudId();
         try {
             final InspectContainerResponse containerDetails;
-            final DockerClient client = dockerAPI.takeClient();
-            try {
+            try(final DockerClient client = dockerAPI.getClient()) {
                 containerDetails = client.inspectContainerCmd(containerId).exec();
-            } finally {
-                dockerAPI.releaseClient(client);
             }
             this.inspect = new ObjectMapper()
                 .enable(SerializationFeature.INDENT_OUTPUT)
                 .writeValueAsString(containerDetails);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             this.inspect = "Failed to capture container inspection data: "+e.getMessage();
         }
     }

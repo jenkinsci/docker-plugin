@@ -408,11 +408,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         final String image = getFullImageId();
 
         final boolean shouldPullImage;
-        final DockerClient clientForFastCommands1 = api.takeClient();
-        try {
-            shouldPullImage = pullStrategy.shouldPullImage(clientForFastCommands1, image);
-        } finally {
-            api.releaseClient(clientForFastCommands1);
+        try(final DockerClient client = api.getClient()) {
+            shouldPullImage = pullStrategy.shouldPullImage(client, image);
         }
         if (shouldPullImage) {
             // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
@@ -420,9 +417,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
             long startTime = System.currentTimeMillis();
 
-            final DockerClient clientForPullCommand = api.takeClient(pullTimeout);
-            try {
-                PullImageCmd cmd =  clientForPullCommand.pullImageCmd(image);
+            try(final DockerClient client = api.getClient(pullTimeout)) {
+                final PullImageCmd cmd =  client.pullImageCmd(image);
                 final DockerRegistryEndpoint registry = getRegistry();
                 DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
                 cmd.exec(new PullImageResultCallback() {
@@ -431,8 +427,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                         listener.getLogger().println(item.getStatus());
                     }
                 }).awaitCompletion();
-            } finally {
-                api.releaseClient(clientForPullCommand);
             }
 
             long pullTime = System.currentTimeMillis() - startTime;
@@ -440,13 +434,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         final InspectImageResponse result;
-        final DockerClient clientForFastCommands2 = api.takeClient();
-        try {
-            result = clientForFastCommands2.inspectImageCmd(image).exec();
+        try(final DockerClient client = api.getClient()) {
+            result = client.inspectImageCmd(image).exec();
         } catch (NotFoundException e) {
             throw new DockerClientException("Could not pull image: " + image, e);
-        } finally {
-            api.releaseClient(clientForFastCommands2);
         }
         return result;
     }
@@ -461,11 +452,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             remoteFs = "/";
         }
 
-        final DockerClient client = api.takeClient();
-        try {
+        try(final DockerClient client = api.getClient()) {
             return doProvisionNode(api, client, listener);
-        } finally {
-            api.releaseClient(client);
         }
     }
 

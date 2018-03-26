@@ -213,15 +213,23 @@ public class DockerCloud extends Cloud {
      * closure.
      * 
      * @deprecated Use {@link #getDockerApi()} and then
-     *             {@link DockerAPI#takeClient()} and
-     *             {@link DockerAPI#releaseClient(DockerClient)} instead.
+     *             {@link DockerAPI#getClient()} to get the client, followed by
+     *             a call to {@link DockerClient#close()}.
      * @return Docker client.
      */
     @Deprecated
     public DockerClient getClient() {
-        final DockerClient client = dockerApi.takeClient();
-        dockerApi.releaseClient(client);
-        return client;
+        try {
+            // get a client
+            final DockerClient client = dockerApi.getClient();
+            // now release it so it'll be cached for a duration but will be
+            // reaped when the cache duration expires without anyone having to
+            // call anything else to make this happen.
+            client.close();
+            return client;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     /**
@@ -536,11 +544,8 @@ public class DockerCloud extends Cloud {
             labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_IMAGE, imageName);
         }
         final List<?> containers;
-        final DockerClient client = dockerApi.takeClient();
-        try {
+        try(final DockerClient client = dockerApi.getClient()) {
             containers = client.listContainersCmd().withLabelFilter(labelFilter).exec();
-        } finally {
-            dockerApi.releaseClient(client);
         }
         final int count = containers.size();
         return count;
@@ -665,11 +670,10 @@ public class DockerCloud extends Cloud {
     public boolean isTriton() {
         if( _isTriton == null ) {
             final Version remoteVersion;
-            final DockerClient client = dockerApi.takeClient();
-            try {
+            try(final DockerClient client = dockerApi.getClient()) {
                 remoteVersion = client.versionCmd().exec();
-            } finally {
-                dockerApi.releaseClient(client);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
             }
             _isTriton = remoteVersion.getOperatingSystem().equals("solaris");
         }
@@ -710,7 +714,7 @@ public class DockerCloud extends Cloud {
     // unfortunately there's no common interface for Registry related Docker-java commands
 
     @Restricted(NoExternalUse.class)
-    public static void setRegistryAuthentication(PullImageCmd cmd, DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
+    public static void setRegistryAuthentication(PullImageCmd cmd, DockerRegistryEndpoint registry, ItemGroup context) {
         if (registry != null && registry.getCredentialsId() != null) {
             AuthConfig auth = getAuthConfig(registry, context);
             cmd.withAuthConfig(auth);
@@ -718,7 +722,7 @@ public class DockerCloud extends Cloud {
     }
 
     @Restricted(NoExternalUse.class)
-    public static void setRegistryAuthentication(PushImageCmd cmd, DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
+    public static void setRegistryAuthentication(PushImageCmd cmd, DockerRegistryEndpoint registry, ItemGroup context) {
         if (registry != null && registry.getCredentialsId() != null) {
             AuthConfig auth = getAuthConfig(registry, context);
             cmd.withAuthConfig(auth);
@@ -726,7 +730,7 @@ public class DockerCloud extends Cloud {
     }
 
     @Restricted(NoExternalUse.class)
-    public static AuthConfig getAuthConfig(DockerRegistryEndpoint registry, ItemGroup context) throws IOException {
+    public static AuthConfig getAuthConfig(DockerRegistryEndpoint registry, ItemGroup context) {
         AuthConfig auth = new AuthConfig();
 
         // we can't use DockerRegistryEndpoint#getToken as this one do check domainRequirement based on registry URL

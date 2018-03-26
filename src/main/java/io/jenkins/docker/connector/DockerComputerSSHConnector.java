@@ -198,14 +198,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 tar.closeArchiveEntry();
                 tar.close();
 
-                final DockerClient client = api.takeClient();
-                try (InputStream is = new ByteArrayInputStream(bos.toByteArray())) {
+                try (InputStream is = new ByteArrayInputStream(bos.toByteArray());
+                     DockerClient client = api.getClient()) {
                     client.copyArchiveToContainerCmd(containerId)
                             .withTarInputStream(is)
                             .withRemotePath("/root")
                             .exec();
-                } finally {
-                    api.releaseClient(client);
                 }
             }
         }

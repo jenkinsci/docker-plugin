@@ -116,22 +116,17 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         llog.println("Pulling image " + xImage);
 
         // need a client that will tolerate lengthy pauses for a docker pull
-        final DockerClient clientWithoutReadTimeout = dockerApi.takeClient(0);
-        try {
+        try(final DockerClient clientWithoutReadTimeout = dockerApi.getClient(0)) {
             executePullOnDocker(build, llog, xImage, clientWithoutReadTimeout);
-        } finally {
-            dockerApi.releaseClient(clientWithoutReadTimeout);
         }
-        final DockerClient clientForQuickOperations = dockerApi.takeClient();
-        try {
-            executeOnDocker(build, llog, xImage, xCommand, xHostname, clientForQuickOperations);
-        } finally {
-            dockerApi.releaseClient(clientForQuickOperations);
+        // but the remainder can use a normal client with the default timeout
+        try(final DockerClient client = dockerApi.getClient()) {
+            executeOnDocker(build, llog, xImage, xCommand, xHostname, client);
         }
     }
 
     private void executePullOnDocker(Run<?, ?> build, PrintStream llog, String xImage, DockerClient client)
-            throws DockerException, IOException {
+            throws DockerException {
         PullImageResultCallback resultCallback = new PullImageResultCallback() {
             @Override
             public void onNext(PullResponseItem item) {

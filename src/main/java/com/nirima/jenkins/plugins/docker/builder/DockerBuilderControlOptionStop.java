@@ -13,6 +13,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.PrintStream;
 
 /**
@@ -40,11 +41,10 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
 
         final DockerCloud cloud = getCloud(build, launcher);
         final DockerAPI dockerApi = cloud.getDockerApi();
-        final DockerClient client = dockerApi.takeClient();
-        try {
+        try(final DockerClient client = dockerApi.getClient()) {
             executeOnDocker(build, llog, client);
-        } finally {
-            dockerApi.releaseClient(client);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 

@@ -99,11 +99,8 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
 
         final String containerId = dockerNode.getContainerId();
         final DockerAPI dockerAPI = dockerNode.getDockerAPI();
-        final DockerClient client = dockerAPI.takeClient();
-        try {
+        try(final DockerClient client = dockerAPI.getClient()) {
             return perform(build, listener, containerId, dockerAPI, client);
-        } finally {
-            dockerAPI.releaseClient(client);
         }
     }
 

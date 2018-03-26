@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
@@ -14,6 +13,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.PrintStream;
 
 /**
@@ -44,11 +44,10 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
         final DockerCloud cloud = getCloud(build, launcher);
         final DockerTemplate template = cloud.getTemplate(templateId);
         final DockerAPI dockerApi = cloud.getDockerApi();
-        final DockerClient client = dockerApi.takeClient();
-        try {
+        try(final DockerClient client = dockerApi.getClient()) {
             executeOnDocker(build, llog, cloud, template, client);
-        } finally {
-            dockerApi.releaseClient(client);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 

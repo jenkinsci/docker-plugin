@@ -39,21 +39,19 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
 
     public Collection getImages(){
         final DockerAPI dockerApi = theCloud.getDockerApi();
-        final DockerClient client = dockerApi.takeClient();
-        try {
+        try(final DockerClient client = dockerApi.getClient()) {
             return client.listImagesCmd().exec();
-        } finally {
-            dockerApi.releaseClient(client);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
     public Collection getProcesses() {
         final DockerAPI dockerApi = theCloud.getDockerApi();
-        final DockerClient client = dockerApi.takeClient();
-        try {
+        try(final DockerClient client = dockerApi.getClient()) {
             return client.listContainersCmd().exec();
-        } finally {
-            dockerApi.releaseClient(client);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
@@ -73,11 +71,8 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
             IOException,
             InterruptedException {
         final DockerAPI dockerApi = theCloud.getDockerApi();
-        final DockerClient client = dockerApi.takeClient();
-        try {
+        try(final DockerClient client = dockerApi.getClient()) {
             client.stopContainerCmd(stopId).exec();
-        } finally {
-            dockerApi.releaseClient(client);
         }
         rsp.sendRedirect(".");
     }

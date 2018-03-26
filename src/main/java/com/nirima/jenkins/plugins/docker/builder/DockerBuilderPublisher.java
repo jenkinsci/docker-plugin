@@ -265,13 +265,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             return dockerApi;
         }
 
-        private DockerClient takeClient() {
+        private DockerClient getClientWithNoTimeout() {
             // use a connection without an activity timeout
-            return getDockerAPI().takeClient(0);
+            return getDockerAPI().getClient(0);
         }
 
-        private void releaseClient(DockerClient client) {
-            getDockerAPI().releaseClient(client);
+        private DockerClient getClient() {
+            // use a connection with an activity timeout
+            return getDockerAPI().getClient();
         }
 
         boolean run() throws IOException, InterruptedException {
@@ -313,14 +314,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             return true;
         }
 
-        private void cleanImages(String id) {
-            final DockerClient client = takeClient();
-            try {
+        private void cleanImages(String id) throws IOException {
+            try(final DockerClient client = getClient()) {
                 client.removeImageCmd(id)
                     .withForce(true)
                     .exec();
-            } finally {
-                releaseClient(client);
             }
         }
 
@@ -336,6 +334,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
 
             BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
+                @Override
                 public void onNext(BuildResponseItem item) {
                     String text = item.getStream();
                     if (text != null) {
@@ -344,9 +343,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     super.onNext(item);
                 }
             };
-            final DockerClient client = takeClient();
             final String imageId;
-            try {
+            try(final DockerClient client = getClientWithNoTimeout()) {
                 imageId = client.buildImageCmd(tar)
                         .withBuildAuthConfigs(auths)
                         .exec(resultCallback)
@@ -362,8 +360,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     log("Tagging built image with " + reposTag.repos + ":" + commitTag);
                     client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
                 }
-            } finally {
-                releaseClient(client);
             }
 
             return imageId;
@@ -373,11 +369,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             listener.getLogger().println(s);
         }
 
-
         private void pushImages() throws IOException {
             for (String tagToUse : tagsToUse) {
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {
+                    @Override
                     public void onNext(PushResponseItem item) {
                         if (item == null) {
                             // docker-java not happy if you pass it nulls.
@@ -388,8 +384,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                         super.onNext(item);
                     }
                 };
-                final DockerClient client = takeClient();
-                try {
+                try(final DockerClient client = getClientWithNoTimeout()) {
                     PushImageCmd cmd = client.pushImageCmd(identifier);
 
                     int i = identifier.repository.name.indexOf('/');
@@ -405,19 +400,16 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     // have some clue as to what to do as the exception gives no hint.
                     log("Exception pushing docker image. Check that the destination registry is running.");
                     throw ex;
-                } finally {
-                    releaseClient(client);
                 }
             }
         }
     }
 
     private static class DockerBuildCallable extends MasterToSlaveFileCallable<InputStream> {
-
+        @Override
         public InputStream invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
             return new RemoteInputStream(new Dockerfile(new File(f, "Dockerfile"), f).parse().buildDockerFolderTar(), RemoteInputStream.Flag.GREEDY);
         }
-
     }
 
     @Override
@@ -440,7 +432,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
     }
-
 
     private List<String> expandTags(hudson.model.Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) {
         List<String> eTags = new ArrayList<>(tags.size());
@@ -491,8 +482,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             return model;
         }
 
-
-
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
@@ -504,7 +493,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
     }
 
-
     private Object readResolve() {
         if (pushCredentialsId == null && registry != null) {
             pushCredentialsId = registry.getCredentialsId();
@@ -514,7 +502,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
         return this;
     }
-
 }
 
 

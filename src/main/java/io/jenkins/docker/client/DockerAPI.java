@@ -29,6 +29,7 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -122,13 +123,12 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
 
     public boolean isSwarm() {
         if (_isSwarm == null) {
-            final DockerClient client = takeClient();
-            try {
+            try(final DockerClient client = getClient()) {
                 Version remoteVersion = client.versionCmd().exec();
                 // Cache the return.
                 _isSwarm = remoteVersion.getVersion().startsWith("swarm");
-            } finally {
-                releaseClient(client);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
             }
         }
         return _isSwarm;
@@ -137,26 +137,27 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
     /**
      * Obtains a raw {@link DockerClient} pointing at our docker service
      * endpoint. You <em>MUST</em> ensure that you call
-     * {@link #releaseClient(DockerClient)} after you are finished with the
-     * {@link DockerClient}, otherwise we will leak resources.
+     * {@link Closeable#close()} on the returned instance after you are finished
+     * with it, otherwise we will leak resources.
      * <p>
      * Note: {@link DockerClient}s are cached and shared between threads, so
-     * taking and releasing is relatively cheap.
+     * taking and releasing is relatively cheap. They're not closed "for real"
+     * until they've been unused for some time.
      * </p>
      * 
      * @return A raw {@link DockerClient} pointing at our docker service
      *         endpoint.
      */
-    public DockerClient takeClient() {
-        return takeClient(readTimeout);
+    public DockerClient getClient() {
+        return getClient(readTimeout);
     }
 
     /**
-     * As {@link #takeClient()}, but overriding the default
+     * As {@link #getClient()}, but overriding the default
      * <code>readTimeout</code>. This is typically used when running
      * long-duration activities that can "go quiet" for a long period of time,
      * e.g. pulling a docker image from a registry or building a docker image.
-     * Most users should just call {@link #takeClient()} instead.
+     * Most users should just call {@link #getClient()} instead.
      * 
      * @param activityTimeoutInSeconds
      *            The activity timeout, in seconds. A value less than one means
@@ -164,33 +165,20 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
      * @return A raw {@link DockerClient} pointing at our docker service
      *         endpoint.
      */
-    public DockerClient takeClient(int activityTimeoutInSeconds) {
+    public DockerClient getClient(int activityTimeoutInSeconds) {
         return getOrMakeClient(dockerHost.getUri(), dockerHost.getCredentialsId(), activityTimeoutInSeconds,
                 connectTimeout);
     }
 
-    /**
-     * Returns the {@link DockerClient} to the resource pool. This <em>MUST</em>
-     * be called once for every call to {@link #takeClient()} or
-     * {@link #takeClient(int)}, otherwise we will leak resources.
-     * 
-     * @param client
-     *            The value previously returned by {@link #takeClient()} or
-     *            {@link #takeClient(int)}.
-     */
-    public void releaseClient(DockerClient client) {
-        ungetClient(client);
-    }
-
     /** Caches connections until they've been unused for 5 minutes */
-    private static final UsageTrackingCache<DockerClientParameters, DockerClient> CLIENT_CACHE;
+    private static final UsageTrackingCache<DockerClientParameters, SharableDockerClient> CLIENT_CACHE;
     static {
-        final UsageTrackingCache.ExpiryHandler<DockerClientParameters, DockerClient> expiryHandler;
-        expiryHandler = new UsageTrackingCache.ExpiryHandler<DockerClientParameters, DockerClient>() {
+        final UsageTrackingCache.ExpiryHandler<DockerClientParameters, SharableDockerClient> expiryHandler;
+        expiryHandler = new UsageTrackingCache.ExpiryHandler<DockerClientParameters, SharableDockerClient>() {
             @Override
-            public void entryDroppedFromCache(DockerClientParameters cacheKey, DockerClient client) {
+            public void entryDroppedFromCache(DockerClientParameters cacheKey, SharableDockerClient client) {
                 try {
-                    client.close();
+                    client.reallyClose();
                     LOGGER.info("Dropped connection {} to {}", client, cacheKey);
                 } catch (IOException ex) {
                     LOGGER.error("Dropped connection " + client + " to " + cacheKey + " but failed to close it:", ex);
@@ -207,7 +195,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? Integer.valueOf(connectTimeout * 1000) : null;
         final DockerClientParameters cacheKey = new DockerClientParameters(dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
         synchronized(CLIENT_CACHE) {
-            DockerClient client = CLIENT_CACHE.getAndIncrementUsage(cacheKey);
+            SharableDockerClient client = CLIENT_CACHE.getAndIncrementUsage(cacheKey);
             if ( client==null ) {
                 client = makeClient(dockerUri, credentialsId, readTimeoutInMillisecondsOrNull,
                         connectTimeoutInMillisecondsOrNull);
@@ -218,17 +206,40 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         }
     }
 
-    /** Tell the cache we no longer need the {@link DockerClient} and it can be thrown away if it remains unused. */
-    private static void ungetClient(DockerClient client) {
-        synchronized (CLIENT_CACHE) {
-            CLIENT_CACHE.decrementUsage(client);
+    /**
+     * A docker-client that, when {@link Closeable#close()} is called, merely
+     * decrements the usage count. It'll only get properly closed once it's
+     * purged from the cache.
+     */
+    private static class SharableDockerClient extends DelegatingDockerClient {
+
+        public SharableDockerClient(DockerClient delegate) {
+            super(delegate);
+        }
+
+        /**
+         * Tell the cache we no longer need the {@link DockerClient} and it can
+         * be thrown away if it remains unused.
+         */
+        @Override
+        public void close() {
+            synchronized (CLIENT_CACHE) {
+                CLIENT_CACHE.decrementUsage(this);
+            }
+        }
+
+        /**
+         * Really closes the underlying {@link DockerClient}.
+         */
+        public void reallyClose() throws IOException {
+            getDelegate().close();
         }
     }
 
     /** Creates a new {@link DockerClient} */
-    private static DockerClient makeClient(final String dockerUri, final String credentialsId,
+    private static SharableDockerClient makeClient(final String dockerUri, final String credentialsId,
             final Integer readTimeoutInMillisecondsOrNull, final Integer connectTimeoutInMillisecondsOrNull) {
-        return DockerClientBuilder.getInstance(
+        final DockerClient actualClient = DockerClientBuilder.getInstance(
             new DefaultDockerClientConfig.Builder()
                 .withDockerHost(dockerUri)
                 .withCustomSslConfig(toSSlConfig(credentialsId))
@@ -237,6 +248,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             .withReadTimeout(readTimeoutInMillisecondsOrNull)
             .withConnectTimeout(connectTimeoutInMillisecondsOrNull))
             .build();
+        final SharableDockerClient multiUsageClient = new SharableDockerClient(actualClient);
+        return multiUsageClient;
     }
 
     private static SSLConfig toSSlConfig(String credentialsId) {
@@ -333,16 +346,12 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             try {
                 final DockerServerEndpoint dsep = new DockerServerEndpoint(uri, credentialsId);
                 final DockerAPI dapi = new DockerAPI(dsep, connectTimeout, readTimeout, apiVersion, null);
-                final DockerClient dc = dapi.takeClient();
-                try {
+                try(final DockerClient dc = dapi.getClient()) {
                     final VersionCmd vc = dc.versionCmd();
                     final Version v = vc.exec();
                     final String actualVersion = v.getVersion();
                     final String actualApiVersion = v.getApiVersion();
                     return FormValidation.ok("Version = " + actualVersion + ", API Version = " + actualApiVersion);
-                } finally {
-                    // nobody else can see this DockerAPI instance, we must close it
-                    dapi.releaseClient(dc);
                 }
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());

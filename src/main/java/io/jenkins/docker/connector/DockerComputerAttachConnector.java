@@ -58,11 +58,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
 
     @Override
     public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
-        final DockerClient client = api.takeClient();
-        try {
+        try(final DockerClient client = api.getClient()) {
             injectRemotingJar(containerId, workdir, client);
-        } finally {
-            api.releaseClient(client);
         }
     }
 
@@ -107,8 +104,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
             logger.println("Connecting to docker container "+containerId);
 
             final String execId;
-            final DockerClient client = api.takeClient();
-            try {
+            try(final DockerClient client = api.getClient()) {
                 final ExecCreateCmd cmd = client.execCreateCmd(containerId)
                         .withAttachStdin(true)
                         .withAttachStdout(true)
@@ -120,8 +116,6 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
                 }
                 final ExecCreateCmdResponse exec = cmd.exec();
                 execId = exec.getId();
-            } finally {
-                api.releaseClient(client);
             }
 
             String js = "{ \"Detach\": false, \"Tty\": false }";
