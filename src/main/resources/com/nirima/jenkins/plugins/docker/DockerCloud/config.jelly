@@ -6,7 +6,9 @@
     </f:entry>
 
     <f:property field="dockerApi"/>
-    
+
+    <f:property field="disabled"/>
+
     <f:entry title="${%Expose DOCKER_HOST}" field="exposeDockerHost">
         <f:checkbox/>
     </f:entry>

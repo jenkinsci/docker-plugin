@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
@@ -103,6 +104,7 @@ public class DockerCloud extends Cloud {
      */
     private boolean exposeDockerHost;
 
+    private @CheckForNull DockerDisabled disabled;
 
     @DataBoundConstructor
     public DockerCloud(String name,
@@ -299,6 +301,9 @@ public class DockerCloud extends Cloud {
 
     @Override
     public synchronized Collection<NodeProvisioner.PlannedNode> provision(final Label label, final int numberOfExecutorsRequired) {
+        if( getDisabled().isDisabled() ) {
+            return Collections.emptyList();
+        }
         try {
             LOGGER.info("Asked to provision {} slave(s) for: {}", numberOfExecutorsRequired, label);
 
@@ -325,20 +330,13 @@ public class DockerCloud extends Cloud {
             while (remainingWorkload > 0 && !templates.isEmpty()) {
                 final DockerTemplate t = templates.get(0); // get first
 
-                LOGGER.info("Will provision '{}', for label: '{}', in cloud: '{}'",
-                        t.getImage(), label, getDisplayName());
-
-                try {
-                    if (!canAddProvisionedSlave(t)) {
-                        templates.remove(t);
-                        continue;
-                    }
-                } catch (Exception e) {
-                    LOGGER.warn("Bad template '{}' in cloud '{}': '{}'. Trying next template...",
-                            t.getImage(), getDisplayName(), e.getMessage(), e);
+                final boolean thereIsCapacityToProvisionFromThisTemplate = canAddProvisionedSlave(t);
+                if (!thereIsCapacityToProvisionFromThisTemplate) {
                     templates.remove(t);
                     continue;
                 }
+                LOGGER.info("Will provision '{}', for label: '{}', in cloud: '{}'",
+                        t.getImage(), label, getDisplayName());
 
                 final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
                 r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors()));
@@ -387,6 +385,9 @@ public class DockerCloud extends Cloud {
             return r;
         } catch (Exception e) {
             LOGGER.error("Exception while provisioning for label: '{}', cloud='{}'", label, getDisplayName(), e);
+            final DockerDisabled reasonForDisablement = getDisabled();
+            reasonForDisablement.disableBySystem("Cloud provisioning failure", TimeUnit.MINUTES.toMillis(5), e);
+            setDisabled(reasonForDisablement);
             return Collections.emptyList();
         }
     }
@@ -414,6 +415,9 @@ public class DockerCloud extends Cloud {
 
     @Override
     public boolean canProvision(Label label) {
+        if( getDisabled().isDisabled() ) {
+            return false;
+        }
         return getTemplate(label) != null;
     }
 
@@ -484,6 +488,9 @@ public class DockerCloud extends Cloud {
         final List<DockerTemplate> dockerTemplates = new ArrayList<>();
 
         for (DockerTemplate t : getTemplates()) {
+            if ( t.getDisabled().isDisabled() ) {
+                continue; // pretend it doesn't exist
+            }
             if (label == null && t.getMode() == Node.Mode.NORMAL) {
                 dockerTemplates.add(t);
             }
@@ -635,6 +642,7 @@ public class DockerCloud extends Cloud {
         sb.append(", dockerApi=").append(dockerApi);
         sb.append(", containerCap=").append(containerCap);
         sb.append(", exposeDockerHost=").append(exposeDockerHost);
+        sb.append(", disabled=").append(disabled);
         sb.append(", templates='").append(templates).append('\'');
         sb.append('}');
         return sb.toString();
@@ -649,6 +657,7 @@ public class DockerCloud extends Cloud {
         result = prime * result + containerCap;
         result = prime * result + ((templates == null) ? 0 : templates.hashCode());
         result = prime * result + (exposeDockerHost ? 1231 : 1237);
+        result = prime * result + getDisabled().hashCode();
         return result;
     }
 
@@ -664,6 +673,7 @@ public class DockerCloud extends Cloud {
         if (containerCap != that.containerCap) return false;
         if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
         if (exposeDockerHost != that.exposeDockerHost)return false;
+        if (!getDisabled().equals(that.getDisabled())) return false;
         return true;
     }
 
@@ -688,6 +698,15 @@ public class DockerCloud extends Cloud {
     @DataBoundSetter
     public void setExposeDockerHost(boolean exposeDockerHost) {
         this.exposeDockerHost = exposeDockerHost;
+    }
+
+    public DockerDisabled getDisabled() {
+        return disabled == null ? new DockerDisabled() : disabled;
+    }
+
+    @DataBoundSetter
+    public void setDisabled(DockerDisabled disabled) {
+        this.disabled = disabled;
     }
 
     public static List<DockerCloud> instances() {
