@@ -16,6 +16,7 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import io.jenkins.docker.client.DockerAPI;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -104,7 +105,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             throws DockerException, IOException {
         final PrintStream llog = listener.getLogger();
 
-        DockerClient client = getCloud(build,launcher).getClient();
+        final DockerCloud cloud = getCloud(build,launcher);
+        final DockerAPI dockerApi = cloud.getDockerApi();
 
         String xImage = expand(build, image);
         String xCommand = expand(build, dockerCommand);
@@ -113,8 +115,20 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         LOG.info("Pulling image {}", xImage);
         llog.println("Pulling image " + xImage);
 
+        // need a client that will tolerate lengthy pauses for a docker pull
+        try(final DockerClient clientWithoutReadTimeout = dockerApi.getClient(0)) {
+            executePullOnDocker(build, llog, xImage, clientWithoutReadTimeout);
+        }
+        // but the remainder can use a normal client with the default timeout
+        try(final DockerClient client = dockerApi.getClient()) {
+            executeOnDocker(build, llog, xImage, xCommand, xHostname, client);
+        }
+    }
 
+    private void executePullOnDocker(Run<?, ?> build, PrintStream llog, String xImage, DockerClient client)
+            throws DockerException {
         PullImageResultCallback resultCallback = new PullImageResultCallback() {
+            @Override
             public void onNext(PullResponseItem item) {
                 if (item.getStatus() != null && item.getProgress() == null) {
                     llog.print(item.getId() + ":" + item.getStatus());
@@ -131,12 +145,15 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         } catch (InterruptedException e) {
             throw new DockerClientException("Interrupted while pulling image", e);
         }
+    }
+
+    private void executeOnDocker(Run<?, ?> build, PrintStream llog, String xImage, String xCommand, String xHostname, DockerClient client)
+            throws DockerException {
         try {
             client.inspectImageCmd(xImage).exec();
         } catch (NotFoundException e) {
             throw new DockerClientException("Failed to pull image: " + image, e);
         }
-
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage, pullCredentialsId,
                 dnsString, network, xCommand,

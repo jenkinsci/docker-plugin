@@ -3,6 +3,7 @@ package io.jenkins.docker.connector;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -197,9 +198,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 tar.closeArchiveEntry();
                 tar.close();
 
-                try (InputStream is = new ByteArrayInputStream(bos.toByteArray())) {
-
-                    api.getClient().copyArchiveToContainerCmd(containerId)
+                try (InputStream is = new ByteArrayInputStream(bos.toByteArray());
+                     DockerClient client = api.getClient()) {
+                    client.copyArchiveToContainerCmd(containerId)
                             .withTarInputStream(is)
                             .withRemotePath("/root")
                             .exec();

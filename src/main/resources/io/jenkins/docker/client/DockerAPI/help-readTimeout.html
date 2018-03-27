@@ -2,10 +2,9 @@
     Timeout, in seconds, to apply when expecting data from the Docker API.
     0 means no time limit, but this is not recommended (if your docker API locks up, some aspects of Jenkins can also lock up).
     <p>
-    NOTE: This timeout applies to <em>all</em> docker API actions.
-    This includes docker pull requests (which can take some time to complete)
-    as well as
-    docker image builds (if it "goes quiet" for too long, your build will fail).
+    NOTE: This timeout does not apply to all docker API actions.
+    Docker pull requests (which can take some time to complete) have their own value specified in the template.
+    Docker image builds have no timeout at all (you with want a timeout, use an inactivity timeout on your build as a whole).
     <br/>
-    i.e. you probably want this set to a few minutes, rather than a few seconds.
+    i.e. you probably want this set to a few seconds, e.g. as long as it takes for your docker service to respond to a &quot;container start&quot; request.
 </div>

@@ -17,6 +17,7 @@ import hudson.model.BuildListener;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import io.jenkins.docker.DockerTransientNode;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 import jenkins.model.OptionalJobProperty;
 import org.apache.commons.lang.StringUtils;
@@ -97,8 +98,14 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
         DockerTransientNode dockerNode = (DockerTransientNode) node;
 
         final String containerId = dockerNode.getContainerId();
-        final DockerClient client = dockerNode.getDockerAPI().getClient();
-        final String dockerHost = dockerNode.getDockerAPI().getDockerHost().getUri();
+        final DockerAPI dockerAPI = dockerNode.getDockerAPI();
+        try(final DockerClient client = dockerAPI.getClient()) {
+            return perform(build, listener, containerId, dockerAPI, client);
+        }
+    }
+
+    private boolean perform(AbstractBuild<?, ?> build, BuildListener listener, String containerId, DockerAPI dockerAPI, DockerClient client) throws IOException {
+        final String dockerHost = dockerAPI.getDockerHost().getUri();
 
         // Commit
         String tag_image = client.commitCmd(containerId)

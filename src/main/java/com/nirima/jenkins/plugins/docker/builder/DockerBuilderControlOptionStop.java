@@ -3,14 +3,17 @@ package com.nirima.jenkins.plugins.docker.builder;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.NotModifiedException;
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import io.jenkins.docker.client.DockerAPI;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.PrintStream;
 
 /**
@@ -36,7 +39,17 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
         LOG.info("Stopping container " + containerId);
         llog.println("Stopping container " + containerId);
 
-        DockerClient client = getCloud(build, launcher).getClient();
+        final DockerCloud cloud = getCloud(build, launcher);
+        final DockerAPI dockerApi = cloud.getDockerApi();
+        try(final DockerClient client = dockerApi.getClient()) {
+            executeOnDocker(build, llog, client);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private void executeOnDocker(Run<?, ?> build, PrintStream llog, DockerClient client)
+            throws DockerException {
         try {
             client.stopContainerCmd(containerId).exec();
         } catch (NotModifiedException ex) {
@@ -59,6 +72,5 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
         public String getDisplayName() {
             return "Stop Container";
         }
-
     }
 }

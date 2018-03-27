@@ -1,6 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.DockerClient;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
@@ -9,10 +9,9 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.StaplerProxy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -28,8 +27,6 @@ import java.util.List;
 @Extension
 public class DockerManagement extends ManagementLink implements StaplerProxy, Describable<DockerManagement>, Saveable {
 
-    private static final Logger logger = LoggerFactory.getLogger(DockerManagement.class);
-
     @Override
     public String getIconFileName() {
         return com.nirima.jenkins.plugins.docker.utils.Consts.PLUGIN_IMAGES_URL + "/48x48/docker.png";
@@ -40,6 +37,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
         return "docker-plugin";
     }
 
+    @Override
     public String getDisplayName() {
         return Messages.DisplayName();
     }
@@ -54,10 +52,12 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
     }
 
 
+    @Override
     public DescriptorImpl getDescriptor() {
         return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
     }
 
+    @Override
     public void save() throws IOException {
 
     }
@@ -78,6 +78,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
             return new DockerManagementServer(serverName);
         }
 
+        @Override
         public Object getTarget() {
             Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             return this;
@@ -85,6 +86,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
         public Collection<String> getServerNames() {
             return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, String>() {
+                @Override
                 public String apply(@Nullable DockerCloud input) {
                     return input.getDisplayName();
                 }
@@ -104,7 +106,11 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
             public String getActiveHosts() {
                 try {
-                    List<Container> containers = cloud.getClient().listContainersCmd().exec();
+                    final DockerAPI dockerApi = cloud.getDockerApi();
+                    final List<?> containers;
+                    try(final DockerClient client = dockerApi.getClient()) {
+                        containers = client.listContainersCmd().exec();
+                    }
                     return "(" + containers.size() + ")";
                 } catch(Exception ex) {
                     return "Error";
@@ -115,6 +121,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
         public Collection<ServerDetail> getServers() {
             return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, ServerDetail>() {
+                @Override
                 public ServerDetail apply(@Nullable DockerCloud input) {
                     return new ServerDetail(input);
                 }

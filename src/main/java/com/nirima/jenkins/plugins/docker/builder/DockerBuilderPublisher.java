@@ -246,9 +246,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         private final DockerAPI dockerApi;
 
-        // Marshal the builder across the wire.
-        private transient DockerClient _client;
-
         final transient hudson.model.Run<?, ?> run;
 
         private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerCloud dockerCloud) {
@@ -262,19 +259,20 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         }
 
-//        public Run(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener, DockerCloud cloud) {
-//            this(run, launcher, listener,new FilePath(workspace, dockerFileDirectory), expandTags(run, launcher, listener), cloud);
-//        }
+        private DockerAPI getDockerAPI() {
+            Validate.notNull(dockerApi, "Could not get client because we could not find the cloud that the " +
+                    "project was built on. Was this build run on Docker?");
+            return dockerApi;
+        }
+
+        private DockerClient getClientWithNoTimeout() {
+            // use a connection without an activity timeout
+            return getDockerAPI().getClient(0);
+        }
 
         private DockerClient getClient() {
-            if (_client == null) {
-                Validate.notNull(dockerApi, "Could not get client because we could not find the cloud that the " +
-                        "project was built on. Was this build run on Docker?");
-
-                _client = dockerApi.getClient();
-            }
-
-            return _client;
+            // use a connection with an activity timeout
+            return getDockerAPI().getClient();
         }
 
         boolean run() throws IOException, InterruptedException {
@@ -316,10 +314,12 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             return true;
         }
 
-        private void cleanImages(String id) {
-            getClient().removeImageCmd(id)
+        private void cleanImages(String id) throws IOException {
+            try(final DockerClient client = getClient()) {
+                client.removeImageCmd(id)
                     .withForce(true)
                     .exec();
+            }
         }
 
         private String buildImage() throws IOException, InterruptedException {
@@ -328,13 +328,13 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             if (pullRegistry != null && pullRegistry.getCredentialsId() != null) {
                 auths.addConfig(DockerCloud.getAuthConfig(pullRegistry, run.getParent().getParent()));
             }
-            final DockerClient client = getClient();
 
             log("Docker Build: building image at path " + fpChild.getRemote());
             final InputStream tar = fpChild.act(new DockerBuildCallable());
 
 
             BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
+                @Override
                 public void onNext(BuildResponseItem item) {
                     String text = item.getStream();
                     if (text != null) {
@@ -343,21 +343,23 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     super.onNext(item);
                 }
             };
-            String imageId = client.buildImageCmd(tar)
-                    .withBuildAuthConfigs(auths)
-                    .exec(resultCallback)
-                    .awaitImageId();
-
-            if (imageId == null) {
-                throw new AbortException("Built image id is null. Some error accured");
-            }
-
-            // tag built image with tags
-            for (String tag : tagsToUse) {
-                final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
-                final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
-                log("Tagging built image with " + reposTag.repos + ":" + commitTag);
-                client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
+            final String imageId;
+            try(final DockerClient client = getClientWithNoTimeout()) {
+                imageId = client.buildImageCmd(tar)
+                        .withBuildAuthConfigs(auths)
+                        .exec(resultCallback)
+                        .awaitImageId();
+                if (imageId == null) {
+                    throw new AbortException("Built image id is null. Some error accured");
+                }
+    
+                // tag built image with tags
+                for (String tag : tagsToUse) {
+                    final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
+                    final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
+                    log("Tagging built image with " + reposTag.repos + ":" + commitTag);
+                    client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
+                }
             }
 
             return imageId;
@@ -367,11 +369,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             listener.getLogger().println(s);
         }
 
-
         private void pushImages() throws IOException {
             for (String tagToUse : tagsToUse) {
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
                 PushImageResultCallback resultCallback = new PushImageResultCallback() {
+                    @Override
                     public void onNext(PushResponseItem item) {
                         if (item == null) {
                             // docker-java not happy if you pass it nulls.
@@ -382,8 +384,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                         super.onNext(item);
                     }
                 };
-                try {
-                    PushImageCmd cmd = getClient().pushImageCmd(identifier);
+                try(final DockerClient client = getClientWithNoTimeout()) {
+                    PushImageCmd cmd = client.pushImageCmd(identifier);
 
                     int i = identifier.repository.name.indexOf('/');
                     String registry = i >= 0 ?
@@ -404,11 +406,10 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     }
 
     private static class DockerBuildCallable extends MasterToSlaveFileCallable<InputStream> {
-
+        @Override
         public InputStream invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
             return new RemoteInputStream(new Dockerfile(new File(f, "Dockerfile"), f).parse().buildDockerFolderTar(), RemoteInputStream.Flag.GREEDY);
         }
-
     }
 
     @Override
@@ -431,7 +432,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
     }
-
 
     private List<String> expandTags(hudson.model.Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) {
         List<String> eTags = new ArrayList<>(tags.size());
@@ -482,8 +482,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             return model;
         }
 
-
-
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
@@ -495,7 +493,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
     }
 
-
     private Object readResolve() {
         if (pushCredentialsId == null && registry != null) {
             pushCredentialsId = registry.getCredentialsId();
@@ -505,7 +502,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
         return this;
     }
-
 }
 
 

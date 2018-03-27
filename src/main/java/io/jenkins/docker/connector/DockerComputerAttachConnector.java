@@ -31,7 +31,6 @@ import java.net.Socket;
  */
 public class DockerComputerAttachConnector extends DockerComputerConnector implements Serializable {
 
-
     private String user;
 
     @DataBoundConstructor
@@ -59,8 +58,9 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
 
     @Override
     public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
-        final DockerClient client = api.getClient();
-        injectRemotingJar(containerId, workdir, client);
+        try(final DockerClient client = api.getClient()) {
+            injectRemotingJar(containerId, workdir, client);
+        }
     }
 
     @Override
@@ -72,15 +72,12 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         DockerComputerAttachConnector that = (DockerComputerAttachConnector) o;
-
         return user != null ? user.equals(that.user) : that.user == null;
     }
 
     @Extension(ordinal = 100) @Symbol("attach")
     public static class DescriptorImpl extends Descriptor<DockerComputerConnector> {
-
         @Override
         public String getDisplayName() {
             return "Attach Docker container";
@@ -101,24 +98,25 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
             this.remoteFs = remoteFs;
         }
 
+        @Override
         public void launch(final SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-            final DockerClient client = api.getClient();
-
             final PrintStream logger = computer.getListener().getLogger();
             logger.println("Connecting to docker container "+containerId);
 
-            final ExecCreateCmd cmd = client.execCreateCmd(containerId)
-                    .withAttachStdin(true)
-                    .withAttachStdout(true)
-                    .withAttachStderr(true)
-                    .withTty(false)
-                    .withCmd("java", "-jar", remoteFs + '/' + remoting.getName(), "-noReconnect", "-noKeepAlive", "-slaveLog", remoteFs + "/agent.log");
-
-            if (StringUtils.isNotBlank(user)) {
-                cmd.withUser(user);
+            final String execId;
+            try(final DockerClient client = api.getClient()) {
+                final ExecCreateCmd cmd = client.execCreateCmd(containerId)
+                        .withAttachStdin(true)
+                        .withAttachStdout(true)
+                        .withAttachStderr(true)
+                        .withTty(false)
+                        .withCmd("java", "-jar", remoteFs + '/' + remoting.getName(), "-noReconnect", "-noKeepAlive", "-slaveLog", remoteFs + "/agent.log");
+                if (StringUtils.isNotBlank(user)) {
+                    cmd.withUser(user);
+                }
+                final ExecCreateCmdResponse exec = cmd.exec();
+                execId = exec.getId();
             }
-
-            final ExecCreateCmdResponse exec = cmd.exec();
 
             String js = "{ \"Detach\": false, \"Tty\": false }";
 
@@ -128,7 +126,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
             final InputStream in = socket.getInputStream();
 
             final PrintWriter w = new PrintWriter(out);
-            w.println("POST /v1.32/exec/" + exec.getId() + "/start HTTP/1.1");
+            w.println("POST /v1.32/exec/" + execId + "/start HTTP/1.1");
             w.println("Host: docker.sock");
             w.println("Content-Type: application/json");
             w.println("Upgrade: tcp");
@@ -172,7 +170,5 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
             in.read(); // \n
             return s.toString();
         }
-
     }
-
 }

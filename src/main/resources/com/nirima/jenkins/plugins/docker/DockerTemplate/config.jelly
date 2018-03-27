@@ -31,6 +31,10 @@
         <f:enum>${it.description}</f:enum>
     </f:entry>
 
+    <f:entry title="${%Pull timeout}" field="pullTimeout">
+        <f:number default="300"/>
+    </f:entry>
+
     <f:entry title="Node Properties">
         <f:repeatableHeteroProperty field="nodeProperties" oneEach="true" hasHeader="true"
                                     addCaption="Add Node Property" deleteCaption="Delete Node Property"/>

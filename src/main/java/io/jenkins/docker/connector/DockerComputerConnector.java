@@ -89,8 +89,10 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     }
 
     public final ComputerLauncher createLauncher(final DockerAPI api, @Nonnull final String containerId, String workdir, TaskListener listener) throws IOException, InterruptedException {
-
-        InspectContainerResponse inspect = api.getClient().inspectContainerCmd(containerId).exec();
+        final InspectContainerResponse inspect;
+        try(final DockerClient client = api.getClient()) {
+            inspect = client.inspectContainerCmd(containerId).exec();
+        }
         final ComputerLauncher launcher = createLauncher(api, workdir, inspect, listener);
 
         final Boolean running = inspect.getState().getRunning();
@@ -100,11 +102,10 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
         }
 
         return new DelegatingComputerLauncher(launcher) {
-
             @Override
             public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-                try {
-                    InspectContainerResponse response = api.getClient().inspectContainerCmd(containerId).exec();
+                try(final DockerClient client = api.getClient()) {
+                    client.inspectContainerCmd(containerId).exec();
                 } catch (NotFoundException e) {
                     // Container has been removed
                     Queue.withLock( () -> {
@@ -123,6 +124,4 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * DockerAgentConnector so adequate setup did take place.
      */
     protected abstract ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
-
-
 }

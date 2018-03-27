@@ -182,16 +182,15 @@ public class DockerTransientNode extends Slave {
 
         final String containerId = getContainerId();
         Computer.threadPoolForRemoting.submit(() -> {
-            final DockerClient client;
+            final DockerAPI api;
             try {
-                final DockerAPI api = getDockerAPI();
-                client = api.getClient();
+                api = getDockerAPI();
             } catch (RuntimeException ex) {
                 logger.error("Unable to stop and remove container '" + containerId + "' for slave '" + name + "' due to exception:", ex);
                 return;
             }
 
-            try {
+            try(final DockerClient client = api.getClient()) {
                 client.stopContainerCmd(containerId)
                         .withTimeout(10)
                         .exec();
@@ -203,7 +202,7 @@ public class DockerTransientNode extends Slave {
                 logger.error("Failed to stop container '" + containerId + "' for slave '" + name + "' due to exception:", ex);
             }
 
-            try {
+            try(final DockerClient client = api.getClient()) {
                 client.removeContainerCmd(containerId)
                         .withRemoveVolumes(removeVolumes)
                         .exec();
