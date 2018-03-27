@@ -110,7 +110,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.dockerTemplateBase = dockerTemplateBase;
         this.connector = connector;
         this.labelString = Util.fixNull(labelString);
-        this.remoteFs = remoteFs;
 
         if (Strings.isNullOrEmpty(instanceCapStr)) {
             this.instanceCap = Integer.MAX_VALUE;
