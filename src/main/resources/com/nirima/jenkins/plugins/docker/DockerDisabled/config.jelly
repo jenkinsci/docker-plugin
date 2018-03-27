@@ -1,0 +1,24 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" >
+
+    <f:entry title="${%Enabled}" field="enabledByChoice">
+        <f:checkbox/>
+    </f:entry>
+
+    <f:invisibleEntry>
+        <f:checkbox field="disabledBySystem"/>
+    </f:invisibleEntry>
+    <f:invisibleEntry>
+        <f:textbox field="whenDisabledBySystemString" />
+    </f:invisibleEntry>
+    <f:invisibleEntry>
+        <f:textbox field="whenReEnableBySystemString" />
+    </f:invisibleEntry>
+    <f:invisibleEntry>
+        <f:textbox field="reasonWhyDisabledBySystem" />
+    </f:invisibleEntry>
+    <f:invisibleEntry>
+        <f:textbox field="exceptionWhenDisabledBySystemString" />
+    </f:invisibleEntry>
+
+</j:jelly>

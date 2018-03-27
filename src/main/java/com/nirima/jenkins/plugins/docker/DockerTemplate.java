@@ -51,6 +51,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 
 public class DockerTemplate implements Describable<DockerTemplate> {
@@ -86,6 +87,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private List<? extends NodeProperty<?>> nodeProperties = Collections.EMPTY_LIST;
 
+    private @CheckForNull DockerDisabled disabled;
 
     /**
      * fully default
@@ -311,7 +313,16 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
         this.nodeProperties = nodeProperties;
     }
-    
+
+    public DockerDisabled getDisabled() {
+        return disabled == null ? new DockerDisabled() : disabled;
+    }
+
+    @DataBoundSetter
+    public void setDisabled(DockerDisabled disabled) {
+        this.disabled = disabled;
+    }
+
     /**
      * Xstream ignores default field values, so set them explicitly
      */
@@ -389,6 +400,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 ", removeVolumes=" + removeVolumes +
                 ", pullStrategy=" + pullStrategy +
                 ", nodeProperties=" + nodeProperties +
+                ", disabled=" + disabled +
                 '}';
     }
 
@@ -443,16 +455,26 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Restricted(NoExternalUse.class)
     public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
-        final InspectImageResponse image = pullImage(api, listener);
-        if (StringUtils.isBlank(remoteFs)) {
-            remoteFs = image.getContainerConfig().getWorkingDir();
-        }
-        if (StringUtils.isBlank(remoteFs)) {
-            remoteFs = "/";
-        }
+        try {
+            final InspectImageResponse image = pullImage(api, listener);
+            if (StringUtils.isBlank(remoteFs)) {
+                remoteFs = image.getContainerConfig().getWorkingDir();
+            }
+            if (StringUtils.isBlank(remoteFs)) {
+                remoteFs = "/";
+            }
 
-        try(final DockerClient client = api.getClient()) {
-            return doProvisionNode(api, client, listener);
+            try(final DockerClient client = api.getClient()) {
+                return doProvisionNode(api, client, listener);
+            }
+        } catch (IOException | Descriptor.FormException | InterruptedException | RuntimeException ex) {
+            // if anything went wrong, disable ourselves for a while
+            final String reason = "Template provisioning failed.";
+            final long durationInMilliseconds = TimeUnit.MINUTES.toMillis(5);
+            final DockerDisabled reasonForDisablement = getDisabled();
+            reasonForDisablement.disableBySystem(reason, durationInMilliseconds, ex);
+            setDisabled(reasonForDisablement);
+            throw ex;
         }
     }
 
@@ -527,6 +549,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         if (!dockerTemplateBase.equals(template.dockerTemplateBase)) return false;
         if (!pullStrategy.equals(template.pullStrategy)) return false;
         if (!nodeProperties.equals(template.nodeProperties)) return false;
+        if (!getDisabled().equals(template.getDisabled())) return false;
         return dockerTemplateBase.equals(template.dockerTemplateBase);
     }
 
@@ -544,6 +567,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         result = 31 * result + labelSet.hashCode();
         result = 31 * result + pullStrategy.hashCode();
         result = 31 * result + nodeProperties.hashCode();
+        result = 31 * result + getDisabled().hashCode();
         return result;
     }
 

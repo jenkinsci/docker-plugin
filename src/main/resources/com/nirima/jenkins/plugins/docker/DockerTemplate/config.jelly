@@ -5,6 +5,8 @@
         <f:textbox />
     </f:entry>
 
+    <f:property field="disabled"/>
+
     <f:property field="dockerTemplateBase"/>
 
 
