@@ -231,11 +231,28 @@
     <profiles>
       <!-- Workaround to add new dependency for Jenkins Version 2.86+ as it's removed from Jenkins Core  -->
       <profile>
-        <id>jenkins_after_2_86</id>
+        <id>jenkins_2_89</id>
         <activation>
             <property>
                 <name>jenkins.version</name>
-                <value>2.89.1</value>
+                <value>2.89.4</value>
+            </property>
+        </activation>
+        <dependencies>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>command-launcher</artifactId>
+                <version>1.2</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+      </profile>
+      <profile>
+        <id>jenkins_2_107</id>
+        <activation>
+            <property>
+                <name>jenkins.version</name>
+                <value>2.107.1</value>
             </property>
         </activation>
         <dependencies>
