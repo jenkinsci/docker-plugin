@@ -1,6 +1,8 @@
 docker-plugin
 =============
 
+[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/docker-plugin/master)](https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/)
+
 Jenkins Cloud Plugin for Docker
 
 The aim of the docker plugin is to be able to use a docker host to
