@@ -115,6 +115,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     public Integer memoryLimit;
     public Integer memorySwap;
     public Integer cpuShares;
+    public Integer shmSize;
 
     public boolean privileged;
     public boolean tty;
@@ -150,6 +151,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               Integer memoryLimit,
                               Integer memorySwap,
                               Integer cpuShares,
+                              Integer shmSize,
                               String bindPorts,
                               boolean bindAllPorts,
                               boolean privileged,
@@ -169,6 +171,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setMemoryLimit(memoryLimit);
         setMemorySwap(memorySwap);
         setCpuShares(cpuShares);
+        setShmSize(shmSize);
         setBindPorts(bindPorts);
         setBindAllPorts(bindAllPorts);
         setPrivileged(privileged);
@@ -356,6 +359,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setCpuShares(Integer cpuShares) {
         this.cpuShares = cpuShares;
+    }
+
+    public Integer getShmSize() {
+        return shmSize;
+    }
+
+    @DataBoundSetter
+    public void setShmSize(Integer shmSize) {
+        this.shmSize = shmSize;
     }
 
     public boolean isPrivileged() {
@@ -568,6 +580,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.withExtraHosts(extraHosts.toArray(new String[extraHosts.size()]));
         }
 
+        if (shmSize != null && shmSize > 0) {
+            final Long shmSizeInByte = (long) shmSize * 1024 * 1024;
+            containerConfig.getHostConfig().withShmSize(shmSizeInByte);
+        }
+
         return containerConfig;
     }
 
@@ -620,6 +637,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", memoryLimit=").append(memoryLimit);
         sb.append(", memorySwap=").append(memorySwap);
         sb.append(", cpuShares=").append(cpuShares);
+        sb.append(", shmSize=").append(shmSize);
         sb.append(", privileged=").append(privileged);
         sb.append(", tty=").append(tty);
         sb.append(", macAddress='").append(macAddress).append('\'');
@@ -654,6 +672,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (memoryLimit != null ? !memoryLimit.equals(that.memoryLimit) : that.memoryLimit != null) return false;
         if (memorySwap != null ? !memorySwap.equals(that.memorySwap) : that.memorySwap != null) return false;
         if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
+        if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
         if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
         return extraHosts != null ? extraHosts.equals(that.extraHosts) : that.extraHosts == null;
     }
@@ -675,6 +694,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (memoryLimit != null ? memoryLimit.hashCode() : 0);
         result = 31 * result + (memorySwap != null ? memorySwap.hashCode() : 0);
         result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
+        result = 31 * result + (shmSize != null ? shmSize.hashCode() : 0);
         result = 31 * result + (privileged ? 1 : 0);
         result = 31 * result + (tty ? 1 : 0);
         result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
