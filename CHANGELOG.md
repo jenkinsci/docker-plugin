@@ -1,19 +1,34 @@
 # Changelog
 
-## 1.1.2
+## 1.1.4 (2018-04-19)
+* Automatically avoid using broken clouds/templates [#626](https://github.com/jenkinsci/docker-plugin/issues/626)
+* Improved "read timeout" handling and added template "pull timeout" [#624](https://github.com/jenkinsci/docker-plugin/issues/624)
+* Fix NPE when there are no templates in a cloud [#603](https://github.com/jenkinsci/docker-plugin/issues/603)
+* Improved cleanup of defunct containers when provisioning fails [#630](https://github.com/jenkinsci/docker-plugin/pull/630)
+* Fix but whereby retention "idleMinutes" can be zero when upgrading from earlier releases. [#623](https://github.com/jenkinsci/docker-plugin/pull/623)
+* Prevent over-provisioning [#622](https://github.com/jenkinsci/docker-plugin/pull/622)
+* Online help improvements.
+* :construction: More [JENKINS-48050](https://issues.jenkins-ci.org/browse/JENKINS-48050) enhancements [#636](https://github.com/jenkinsci/docker-plugin/pull/636)
+
+## 1.1.3 (2018-02-13)
+* :warning: Container cap now only counts containers our Jenkins started.  [#616](https://github.com/jenkinsci/docker-plugin/pull/616)
+* Fix test-connection fd leak [#615](https://github.com/jenkinsci/docker-plugin/issues/615)
+* :construction: Added docker cloud "read timeout" [#610](https://github.com/jenkinsci/docker-plugin/pull/610)
+* Improved JNLP support [#596](https://github.com/jenkinsci/docker-plugin/pull/596)
+* Improved SSH support [#598](https://github.com/jenkinsci/docker-plugin/pull/598)
+
+## 1.1.2 (2017-12-15)
 * Attach DockerBuildAction to the build to document container used to run the build
 * workaround inconsistent delays provisioning a new node when a job waits in queue.
-* 
 
-## 1.1.1
+## 1.1.1 (2017-12-11)
 
 Regression fix release
 * Fix SSH connector with standalone swarm
 * Restore multi-line control for container setting
 * fix configuration conversion from legacy DockerCloudRetentionStrategy 
 
-
-## 1.1
+## 1.1 (2017-12-05)
 
 * :warning: Require Jenkins 2.60+ and Java 8
 * :construction: Introduce experimental Pipeline support with `dockerNode` [JENKINS-48050](https://issues.jenkins-ci.org/browse/JENKINS-48050)
@@ -26,19 +41,18 @@ Regression fix release
 * fix `-tunnel` option for JNLP slaves
 * fix UI data-binding issues
 
-
-## 1.0.4
+## 1.0.4 (2017-10-27)
 
 * fix support for binded ports
 * fix SSH command Prefix / Suffix
 * fix JNLP agent provisionning
 * disable Matrix-autorisation node property [JENKINS-47697](https://issues.jenkins-ci.org/browse/JENKINS-47697)
 
-## 1.0.3
+## 1.0.3 (2017-10-25)
 
 * fix configuration lost when upgrading from 0.x to 1.0.2
 
-## 1.0.2
+## 1.0.2 (2017-10-20)
 
 * fix credential management to access a private docker registry
 * log in debug diagnostic information on created container
@@ -47,14 +61,14 @@ Regression fix release
 * wait for ssh service to be up before trying to connect
 * refactored launchers for extensibility and pipeline compatibility (reconnect slave after restart) 
 
-## 1.0.1
+## 1.0.1 (2017-10-17)
 
 * upgrade docker-java API client to 3.0.14
 * fix credential management to access a private docker registry
 * fix JNLP launcher for master with required authentication
 * option to disable SSH key injection (backward compatibility)
 
-## 1.0.0
+## 1.0.0 (2017-10-16)
 
 * fix missuse of obsolete serverUrl
 * removed some obsolete code
@@ -63,14 +77,14 @@ Regression fix release
 * minor UI fixes
 * fix registry authentication (username/password)
 
-## 0.18.0
+## 0.18.0 (2017-10-11)
 * Token Macro is actually a required plugin dependency
 * Template sections in cloud configuration is now collapsible
 * Fix a regression in SSH launcher
 * Fix swarm standalone pull status detection
 * Use non infinite default timeout
 
-## 0.17.0
+## 0.17.0 (2017-10-09)
 
 * Move to [docker-java](http://wiki.jenkins-ci.org/display/JENKINS/Docker+Java+API+Plugin) 3.0.13
 * Adopted [docker-commons](https://wiki.jenkins.io/display/JENKINS/Docker+Commons+Plugin) for docker API and registry credentials
@@ -78,14 +92,14 @@ Regression fix release
 * SSH launcher now inject dedicated ssh key pair
 * introduce experimental interactive launcher
 
-## 0.16.1,2
+## 0.16.1,2 (2016-09-13)
 
 * Move to docker-java 3.x (3.0.6 + fixes for SDC/Triton)
 * Re-instate setting API version as some versions of docker break compatibility
 * Allow setting of registry credentials (build, push, pull)
 * Documentation clarifications
 
-## 0.16.0
+## 0.16.0 (2015-11-26)
 
 * Workflow support for build steps (publish, start/stop containers)
 * Enable the JNLP slave support (Experimental). 
