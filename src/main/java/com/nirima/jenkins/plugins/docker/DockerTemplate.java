@@ -474,6 +474,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             final DockerDisabled reasonForDisablement = getDisabled();
             reasonForDisablement.disableBySystem(reason, durationInMilliseconds, ex);
             setDisabled(reasonForDisablement);
+            LOGGER.error("Disabling Docker template for 5 minutes due to {}", reasonForDisablement);
             throw ex;
         }
     }

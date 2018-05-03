@@ -390,6 +390,7 @@ public class DockerCloud extends Cloud {
             final DockerDisabled reasonForDisablement = getDisabled();
             reasonForDisablement.disableBySystem("Cloud provisioning failure", TimeUnit.MINUTES.toMillis(5), e);
             setDisabled(reasonForDisablement);
+            LOGGER.error("Disabling Docker cloud {} for 5 minutes due to {}", getDisplayName(), reasonForDisablement);
             return Collections.emptyList();
         }
     }
