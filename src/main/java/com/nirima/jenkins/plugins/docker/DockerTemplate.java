@@ -511,10 +511,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             node.setMode(mode);
             node.setLabelString(labelString);
             node.setRetentionStrategy(retentionStrategy);
-            try {
-                node.setNodeProperties(nodeProperties);
-            } catch (IOException e) {
-                LOGGER.error("Caught an IOException trying to set node properties for '" + uid + "' - Some properties may not be persisted to disk. ", e);
+            synchronized(api){
+                try {
+                    node.setNodeProperties(nodeProperties);
+                } catch (IOException e) {
+                    LOGGER.error("Caught an IOException trying to set node properties for '" + uid + "' - Some properties may not be persisted to disk. ", e);
+                }
             }
             node.setRemoveVolumes(removeVolumes);
             node.setDockerAPI(api);
