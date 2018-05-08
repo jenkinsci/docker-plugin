@@ -353,7 +353,9 @@ public class DockerCloud extends Cloud {
                             plannedNode.complete(slave);
 
                             // On provisioning completion, let's trigger NodeProvisioner
-                            Jenkins.getInstance().addNode(slave);
+                            synchronized(api){
+                                Jenkins.getInstance().addNode(slave);
+                            }
 
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
@@ -388,6 +390,7 @@ public class DockerCloud extends Cloud {
             final DockerDisabled reasonForDisablement = getDisabled();
             reasonForDisablement.disableBySystem("Cloud provisioning failure", TimeUnit.MINUTES.toMillis(5), e);
             setDisabled(reasonForDisablement);
+            LOGGER.error("Disabling Docker cloud {} for 5 minutes due to {}", getDisplayName(), reasonForDisablement);
             return Collections.emptyList();
         }
     }

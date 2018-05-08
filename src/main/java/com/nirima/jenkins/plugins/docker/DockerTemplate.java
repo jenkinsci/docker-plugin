@@ -478,6 +478,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             final DockerDisabled reasonForDisablement = getDisabled();
             reasonForDisablement.disableBySystem(reason, durationInMilliseconds, ex);
             setDisabled(reasonForDisablement);
+            LOGGER.error("Disabling Docker template for 5 minutes due to {}", reasonForDisablement);
             throw ex;
         }
     }
@@ -515,7 +516,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             node.setMode(mode);
             node.setLabelString(labelString);
             node.setRetentionStrategy(retentionStrategy);
-            node.setNodeProperties(nodeProperties);
+            synchronized(api){
+                try {
+                    node.setNodeProperties(nodeProperties);
+                } catch (IOException e) {
+                    LOGGER.error("Caught an IOException trying to set node properties for '" + uid + "' - Some properties may not be persisted to disk. ", e);
+                }
+            }
             node.setRemoveVolumes(removeVolumes);
             node.setDockerAPI(api);
             finallyRemoveTheContainer = false;
