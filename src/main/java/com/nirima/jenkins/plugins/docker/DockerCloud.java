@@ -351,10 +351,11 @@ public class DockerCloud extends Cloud {
                             slave = t.provisionNode(api, TaskListener.NULL);
                             slave.setCloudId(DockerCloud.this.name);
                             plannedNode.complete(slave);
-
-                            // On provisioning completion, let's trigger NodeProvisioner
-                            Jenkins.getInstance().addNode(slave);
-
+                            // Do NOT call Jenkins.getInstance().addNode(slave)
+                            // because the Jenkins-core cloud provisioning logic
+                            // that called us originally will do that for us
+                            // (now we've called plannedNode.complete) and, more
+                            // importantly, it'll do it safely.
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                     t, getDisplayName(), ex);

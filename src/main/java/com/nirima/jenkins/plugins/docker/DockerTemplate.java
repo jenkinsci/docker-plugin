@@ -511,7 +511,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             node.setMode(mode);
             node.setLabelString(labelString);
             node.setRetentionStrategy(retentionStrategy);
-            node.setNodeProperties(nodeProperties);
+            robustlySetNodeProperties(node, nodeProperties);
             node.setRemoveVolumes(removeVolumes);
             node.setDockerAPI(api);
             finallyRemoveTheContainer = false;
@@ -526,6 +526,47 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                     LOGGER.info("Unable to remove container '" + containerId + "' as it had already gone.");
                 } catch (Throwable ex) {
                     LOGGER.error("Unable to remove container '" + containerId + "' due to exception:", ex);
+                }
+            }
+        }
+    }
+
+    /**
+     * Workaround for JENKINS-51203. Retries setting node properties until we
+     * either give up or we succeed. If we give up, the exception thrown will be
+     * the last one encountered.
+     * 
+     * @param node
+     *            The node whose nodeProperties are to be set.
+     * @param nodeProperties
+     *            The nodeProperties to be set on the node.
+     * @throws IOException
+     *             if it all failed horribly every time we tried.
+     */
+    private static void robustlySetNodeProperties(DockerTransientNode node,
+            List<? extends NodeProperty<?>> nodeProperties) throws IOException {
+        if (nodeProperties == null || nodeProperties.isEmpty()) {
+            // no point calling setNodeProperties if we've got nothing to set.
+            return;
+        }
+        final int maxAttempts = 10;
+        for (int attempt = 1;; attempt++) {
+            try {
+                // setNodeProperties can fail at random
+                // It does so because it's persisting all Nodes,
+                // and if lots of threads all do this at once then they'll
+                // collide and fail.
+                node.setNodeProperties(nodeProperties);
+                return;
+            } catch (IOException | RuntimeException ex) {
+                if (attempt > maxAttempts) {
+                    throw ex;
+                }
+                final long delayInMilliseconds = 100L * attempt;
+                try {
+                    Thread.sleep(delayInMilliseconds);
+                } catch (InterruptedException e) {
+                    throw new IOException(e);
                 }
             }
         }
