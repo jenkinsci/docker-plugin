@@ -351,11 +351,10 @@ public class DockerCloud extends Cloud {
                             slave = t.provisionNode(api, TaskListener.NULL);
                             slave.setCloudId(DockerCloud.this.name);
                             plannedNode.complete(slave);
-                            // Do NOT call Jenkins.getInstance().addNode(slave)
-                            // because the Jenkins-core cloud provisioning logic
-                            // that called us originally will do that for us
-                            // (now we've called plannedNode.complete) and, more
-                            // importantly, it'll do it safely.
+
+                            // On provisioning completion, let's trigger NodeProvisioner
+                            robustlyAddNodeToJenkins(slave);
+
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                     t, getDisplayName(), ex);
@@ -393,6 +392,43 @@ public class DockerCloud extends Cloud {
         }
     }
 
+    /**
+     * Workaround for Jenkins core issue in Nodes.java. There's a line there
+     * saying "<i>TODO there is a theoretical race whereby the node instance is
+     * updated/removed after lock release</i>". When we're busy adding nodes
+     * this is not merely "theoretical"!
+     * 
+     * @see <a href=
+     *      "https://github.com/jenkinsci/jenkins/blob/d2276c3c9b16fd46a3912ab8d58c418e67d8ce3e/core/src/main/java/jenkins/model/Nodes.java#L141">
+     *      Nodes.java</a>
+     * 
+     * @param slave
+     *            The slave to be added to Jenkins
+     * @throws IOException
+     *             if it all failed horribly every time we tried.
+     */
+    private static void robustlyAddNodeToJenkins(DockerTransientNode slave) throws IOException {
+        // don't retry getInstance - fail immediately if that fails.
+        final Jenkins jenkins = Jenkins.getInstance();
+        final int maxAttempts = 10;
+        for (int attempt = 1;; attempt++) {
+            try {
+                // addNode can fail at random due to a race condition.
+                jenkins.addNode(slave);
+                return;
+            } catch (IOException | RuntimeException ex) {
+                if (attempt > maxAttempts) {
+                    throw ex;
+                }
+                final long delayInMilliseconds = 10L * attempt;
+                try {
+                    Thread.sleep(delayInMilliseconds);
+                } catch (InterruptedException e) {
+                    throw new IOException(e);
+                }
+            }
+        }
+    }
 
     /**
      * for publishers/builders. Simply runs container in docker cloud
