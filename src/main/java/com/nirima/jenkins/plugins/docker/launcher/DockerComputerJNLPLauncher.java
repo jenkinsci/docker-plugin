@@ -6,10 +6,11 @@ import io.jenkins.docker.connector.DockerComputerJNLPConnector;
 
 /**
  * JNLP launcher. Doesn't require open ports on docker host.
- * <p/>
+ * <p>
  * Steps:
  * - runs container with nop command
  * - as launch action executes jnlp connection to master
+ * </p>
  *
  * @author Kanstantsin Shautsou
  */
