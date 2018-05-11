@@ -581,7 +581,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         }
 
         if (shmSize != null && shmSize > 0) {
-            final Long shmSizeInByte = (long) shmSize * 1024 * 1024;
+            final Long shmSizeInByte = Long.valueOf(shmSize * 1024L * 1024L);
             containerConfig.getHostConfig().withShmSize(shmSizeInByte);
         }
 
@@ -595,7 +595,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * container we make, so that we can recognize our own containers later.
      */
     static String getJenkinsUrlForContainerLabel() {
-        final String rootUrl = Jenkins.getInstance().getRootUrl();
+        final Jenkins jenkins = Jenkins.getInstance();
+        final String rootUrl = jenkins == null ? null : jenkins.getRootUrl();
         return Util.fixNull(rootUrl);
     }
 

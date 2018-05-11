@@ -9,6 +9,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.client.DockerEnvUtils;
 import jenkins.model.Jenkins;
 import jenkins.slaves.JnlpSlaveAgentProtocol;
 import org.apache.commons.lang.StringUtils;
@@ -87,10 +88,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         cmd.withCmd(args.toArray(new String[args.size()]));
         String vmargs = jnlpLauncher.vmargs;
         if (StringUtils.isNotBlank(vmargs)) {
-            String[] env = cmd.getEnv();
-            List<String> cmdEnv = (env == null) ? new ArrayList<>(1) : new ArrayList<>(Arrays.asList(env));
-            cmdEnv.add("JAVA_OPT=" + vmargs.trim());
-            cmd.withEnv(cmdEnv);
+            DockerEnvUtils.addEnvToCmd("JAVA_OPT", vmargs.trim(), cmd);
         }
         if (StringUtils.isNotBlank(user)) {
             cmd.withUser(user);
