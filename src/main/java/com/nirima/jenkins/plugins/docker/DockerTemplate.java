@@ -236,12 +236,17 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
+        final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         final String templateName = getName();
         final String nodeName = calcUnusedNodeName(templateName);
-        final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         result.getLabels().put(CONTAINER_LABEL_TEMPLATE_NAME, templateName);
-        result.getLabels().put(CONTAINER_LABEL_NODE_NAME, nodeName);
+        setNodeNameInContainerConfig(result, nodeName);
         return result;
+    }
+
+    @Restricted(NoExternalUse.class) // public for tests only
+    public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName) {
+        containerConfig.getLabels().put(CONTAINER_LABEL_NODE_NAME, nodeName);
     }
 
     /**
