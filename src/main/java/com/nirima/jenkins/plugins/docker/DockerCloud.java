@@ -22,6 +22,7 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
+import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
@@ -34,6 +35,7 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +62,13 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 public class DockerCloud extends Cloud {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerCloud.class);
+
+    /**
+     * Default value for {@link #getEffectiveDisableDurationInMilliseconds()}
+     * used when {@link #disableDuration} is null.
+     */
+    @Restricted(NoExternalUse.class)
+    private static final int DISABLE_DURATION_DEFAULT_SECONDS = 300; // 5min
 
     @CheckForNull
     private List<DockerTemplate> templates;
@@ -97,6 +106,7 @@ public class DockerCloud extends Cloud {
      * Track the count per image name for images currently being
      * provisioned, but not necessarily reported yet by docker.
      */
+    @Restricted(NoExternalUse.class)
     static final Map<String, Map<String, Integer>> CONTAINERS_IN_PROGRESS = new HashMap<>();
 
     /**
@@ -105,6 +115,9 @@ public class DockerCloud extends Cloud {
     private boolean exposeDockerHost;
 
     private @CheckForNull DockerDisabled disabled;
+
+    /** Length of time, in seconds, that {@link #disabled} should auto-disable for if we error. */
+    private @CheckForNull Integer disableDuration;
 
     @DataBoundConstructor
     public DockerCloud(String name,
@@ -126,6 +139,7 @@ public class DockerCloud extends Cloud {
                        String version,
                        String dockerHostname) {
         this(name, new DockerAPI(dockerHost, connectTimeout, readTimeout, version, dockerHostname), templates);
+        setContainerCap(containerCap);
     }
 
     @Deprecated
@@ -385,9 +399,12 @@ public class DockerCloud extends Cloud {
             return r;
         } catch (Exception e) {
             LOGGER.error("Exception while provisioning for label: '{}', cloud='{}'", label, getDisplayName(), e);
-            final DockerDisabled reasonForDisablement = getDisabled();
-            reasonForDisablement.disableBySystem("Cloud provisioning failure", TimeUnit.MINUTES.toMillis(5), e);
-            setDisabled(reasonForDisablement);
+            final long milliseconds = getEffectiveDisableDurationInMilliseconds();
+            if (milliseconds > 0L) {
+                final DockerDisabled reasonForDisablement = getDisabled();
+                reasonForDisablement.disableBySystem("Cloud provisioning failure", milliseconds, e);
+                setDisabled(reasonForDisablement);
+            }
             return Collections.emptyList();
         }
     }
@@ -746,6 +763,36 @@ public class DockerCloud extends Cloud {
         this.disabled = disabled;
     }
 
+    @CheckForNull
+    public Integer getDisableDuration() {
+        if (disableDuration != null && disableDuration.intValue() < 0) {
+            return null; // negative is the same as unset = use default.
+        }
+        return disableDuration;
+    }
+
+    @DataBoundSetter
+    public void setDisableDuration(Integer disableDuration) {
+        this.disableDuration = disableDuration;
+    }
+
+    /**
+     * Calculates the duration (in milliseconds) we should stop for when an
+     * error happens. If the user has not configured a duration then the default
+     * of {@value #DISABLE_DURATION_DEFAULT_SECONDS} seconds will be used.
+     * 
+     * @return duration, in milliseconds, to be passed to
+     *         {@link DockerDisabled#disableBySystem(String, long, Throwable)}.
+     */
+    @Restricted(NoExternalUse.class)
+    long getEffectiveDisableDurationInMilliseconds() {
+        final Integer configuredDurationOrNull = getDisableDuration();
+        if (configuredDurationOrNull != null) {
+            return TimeUnit.SECONDS.toMillis(configuredDurationOrNull.intValue());
+        }
+        return TimeUnit.SECONDS.toMillis(DISABLE_DURATION_DEFAULT_SECONDS);
+    }
+
     public static List<DockerCloud> instances() {
         List<DockerCloud> instances = new ArrayList<>();
         for (Cloud cloud : Jenkins.getInstance().clouds) {
@@ -757,9 +804,35 @@ public class DockerCloud extends Cloud {
         return instances;
     }
 
+    @Restricted(NoExternalUse.class)
+    static DockerCloud findCloudForTemplate(final DockerTemplate template) {
+        for (DockerCloud cloud : instances()) {
+            if ( cloud.hasTemplate(template) ) {
+                return cloud;
+            }
+        }
+        return null;
+    }
+
+    private boolean hasTemplate(DockerTemplate template) {
+        if (getTemplates().contains(template)) {
+            return true;
+        }
+        if (getJobTemplates().containsValue(template)) {
+            return true;
+        }
+        return false;
+    }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
+        public FormValidation doCheckDisableDuration(@QueryParameter String value) {
+            if (value == null || value.isEmpty()) {
+                return FormValidation.warning("Default of " + DISABLE_DURATION_DEFAULT_SECONDS + " will be used.");
+            }
+            return FormValidation.validateNonNegativeInteger(value);
+        }
+
         @Override
         public String getDisplayName() {
             return "Docker";

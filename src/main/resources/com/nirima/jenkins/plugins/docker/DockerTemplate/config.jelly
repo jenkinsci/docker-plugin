@@ -7,6 +7,10 @@
 
     <f:property field="disabled"/>
 
+    <f:entry title="${%Name}" field="name">
+        <f:textbox />
+    </f:entry>
+
     <f:property field="dockerTemplateBase"/>
 
 
