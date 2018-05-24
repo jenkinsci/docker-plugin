@@ -5,17 +5,25 @@
         <f:textbox default="docker"/>
     </f:entry>
 
-    <f:property field="dockerApi"/>
+    <f:advanced title="${%Docker Cloud details}" align="left">
 
-    <f:property field="disabled"/>
+        <f:property field="dockerApi"/>
 
-    <f:entry title="${%Expose DOCKER_HOST}" field="exposeDockerHost">
-        <f:checkbox/>
-    </f:entry>
+        <f:property field="disabled"/>
 
-    <f:entry title="${%Container Cap}" field="containerCap">
-        <f:number default="100"/>
-    </f:entry>
+        <f:entry title="${%Error Duration}" field="errorDuration">
+            <f:number />
+        </f:entry>
+
+        <f:entry title="${%Expose DOCKER_HOST}" field="exposeDockerHost">
+            <f:checkbox/>
+        </f:entry>
+
+        <f:entry title="${%Container Cap}" field="containerCap">
+            <f:number default="100"/>
+        </f:entry>
+
+    </f:advanced>
 
     <f:advanced title="${%Docker Agent templates}" align="left">
         <f:entry title="${%Docker Agent templates}" description="${%List of Images to be launched as slaves}">

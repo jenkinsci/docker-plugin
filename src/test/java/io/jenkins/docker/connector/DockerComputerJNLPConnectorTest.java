@@ -1,9 +1,14 @@
 package io.jenkins.docker.connector;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.core.command.CreateContainerCmdImpl;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+
 import hudson.slaves.JNLPLauncher;
 import jenkins.model.JenkinsLocationConfiguration;
 import org.apache.commons.lang3.SystemUtils;
@@ -12,12 +17,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
 
@@ -50,38 +52,45 @@ public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest
 
     @Test
     public void testKeepingEvnInBeforeContainerCreated() throws IOException, InterruptedException {
+        // Given
+        final String env1 = "ENV1=val1";
+        final String vmargs = "-Dhttp.proxyPort=8080";
+        final DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector(new JNLPLauncher(null, vmargs));
 
-        String env1 = "ENV1=val1";
-        DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector(new JNLPLauncher(null, "-Dhttp.proxyPort=8080"));
+        final CreateContainerCmd createCmd = mock(CreateContainerCmd.class);
+        final Map<String, String> containerLabels = new TreeMap<>();
+        when(createCmd.getLabels()).thenReturn(containerLabels);
+        DockerTemplate.setNodeNameInContainerConfig(createCmd, "nodeName");
+        when(createCmd.getEnv()).thenReturn(new String[]{ env1 });
 
-        CreateContainerCmd createCmd = new CreateContainerCmdImpl(createContainerCmd -> null, "hello-world");
-        createCmd.withName("container-name").withEnv(env1);
+        // When
         connector.beforeContainerCreated(null, null, createCmd);
 
-        String[] env = createCmd.getEnv();
-        assertNotNull("Environment variables are expected", env);
-        assertEquals("Environment variables are expected", 2, env.length);
-
-        assertTrue("Original environment variable is not found", Arrays.asList(env).contains(env1));
-
+        // Then
+        verify(createCmd, times(1)).withEnv(new String[]{
+                env1,
+                "JAVA_OPT=" + vmargs
+        });
     }
 
     @Test
     public void testAddingVmargsInBeforeContainerCreated() throws IOException, InterruptedException {
+        // Given
+        final String vmargs = "-Dhttp.proxyPort=8080";
+        final DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector(new JNLPLauncher(null, vmargs));
 
-        String vmargs = "-Dhttp.proxyPort=8080";
-        DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector(new JNLPLauncher(null, vmargs));
+        final CreateContainerCmd createCmd = mock(CreateContainerCmd.class);
+        final Map<String, String> containerLabels = new TreeMap<>();
+        when(createCmd.getLabels()).thenReturn(containerLabels);
+        DockerTemplate.setNodeNameInContainerConfig(createCmd, "nodeName");
 
-        CreateContainerCmd createCmd = new CreateContainerCmdImpl(createContainerCmd -> null, "hello-world");
-        createCmd.withName("container-name");
+        // When
         connector.beforeContainerCreated(null, null, createCmd);
 
-        String[] env = createCmd.getEnv();
-        assertNotNull("Environment variable is expected", env);
-        assertEquals("Environment variable is expected", 1, env.length);
-
-        assertTrue("Original environment variable is not found", env[0].endsWith(vmargs));
-
+        // Then
+        verify(createCmd, times(1)).withEnv(new String[]{
+                "JAVA_OPT=" + vmargs
+        });
     }
 
 }

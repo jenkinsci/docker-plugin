@@ -21,8 +21,10 @@ public class DockerComputer extends SlaveComputer {
         super(node);
     }
 
+    @CheckForNull
     public DockerCloud getCloud() {
-        return getNode().getCloud();
+        final DockerTransientNode node = getNode();
+        return node == null ? null : node.getCloud();
     }
 
     @CheckForNull
@@ -31,12 +33,16 @@ public class DockerComputer extends SlaveComputer {
         return (DockerTransientNode) super.getNode();
     }
 
+    @CheckForNull
     public String getContainerId() {
-        return getNode().getContainerId();
+        final DockerTransientNode node = getNode();
+        return node == null ? null : node.getContainerId();
     }
 
+    @CheckForNull
     public String getCloudId() {
-        return getNode().getCloudId();
+        final DockerTransientNode node = getNode();
+        return node == null ? null : node.getCloudId();
     }
 
     @Override

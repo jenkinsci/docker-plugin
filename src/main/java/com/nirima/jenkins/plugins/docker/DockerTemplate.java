@@ -13,6 +13,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import com.nirima.jenkins.plugins.docker.utils.UniqueIdGenerator;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -51,11 +52,31 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 
 public class DockerTemplate implements Describable<DockerTemplate> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTemplate.class.getName());
+
+    private static final UniqueIdGenerator ID_GENERATOR = new UniqueIdGenerator(36);
+
+    /**
+     * Name of the Docker "label" that we'll put into every container we start,
+     * setting its value to our {@link #getName()}, so that we
+     * can recognize our own containers later.
+     */
+    @Restricted(NoExternalUse.class)
+    static String CONTAINER_LABEL_TEMPLATE_NAME = "JenkinsTemplateName";
+
+    /**
+     * Name of the Docker "label" that we'll put into every container we start,
+     * setting its value to our {@link Node#getNodeName()}, so that we
+     * can recognize our own containers later.
+     */
+    @Restricted(NoExternalUse.class)
+    static String CONTAINER_LABEL_NODE_NAME = "JenkinsNodeName";
+
+    /** Default value for {@link #getName()} if {@link #name} is null. */
+    private static final String DEFAULT_NAME = "docker";
 
     private int configVersion = 2;
 
@@ -88,6 +109,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     private List<? extends NodeProperty<?>> nodeProperties = Collections.EMPTY_LIST;
 
     private @CheckForNull DockerDisabled disabled;
+
+    private @CheckForNull String name;
 
     /**
      * fully default
@@ -213,7 +236,31 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
-        return dockerTemplateBase.fillContainerConfig(containerConfig);
+        final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
+        final String templateName = getName();
+        final String nodeName = calcUnusedNodeName(templateName);
+        result.getLabels().put(CONTAINER_LABEL_TEMPLATE_NAME, templateName);
+        setNodeNameInContainerConfig(result, nodeName);
+        return result;
+    }
+
+    @Restricted(NoExternalUse.class) // public for tests only
+    public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName) {
+        containerConfig.getLabels().put(CONTAINER_LABEL_NODE_NAME, nodeName);
+    }
+
+    /**
+     * Retrieves the {@link Node} name chosen by
+     * {@link #fillContainerConfig(CreateContainerCmd)}.
+     * 
+     * @param containerConfig
+     *            The {@link CreateContainerCmd} previously returned by
+     *            {@link #fillContainerConfig(CreateContainerCmd)}.
+     * @return The name that {@link Node#getNodeName()} should return for the
+     *         node for the container that will be created by this command.
+     */
+    public static String getNodeNameFromContainerConfig(CreateContainerCmd containerConfig) {
+        return containerConfig.getLabels().get(CONTAINER_LABEL_NODE_NAME);
     }
 
     // --
@@ -325,6 +372,28 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     @DataBoundSetter
     public void setDisabled(DockerDisabled disabled) {
         this.disabled = disabled;
+    }
+
+    @DataBoundSetter
+    public void setName(String name) {
+        // only store name if it isn't the default
+        if (name == null) {
+            this.name = null;
+        } else {
+            final String trimmedName = name.trim();
+            if (trimmedName.equals(DEFAULT_NAME) || trimmedName.isEmpty()) {
+                this.name = null;
+            } else {
+                this.name = trimmedName;
+            }
+        }
+    }
+
+    public String getName() {
+        if( name==null || name.trim().isEmpty()) {
+            return DEFAULT_NAME;
+        }
+        return name.trim();
     }
 
     /**
@@ -472,12 +541,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 return doProvisionNode(api, client, listener);
             }
         } catch (IOException | Descriptor.FormException | InterruptedException | RuntimeException ex) {
-            // if anything went wrong, disable ourselves for a while
-            final String reason = "Template provisioning failed.";
-            final long durationInMilliseconds = TimeUnit.MINUTES.toMillis(5);
-            final DockerDisabled reasonForDisablement = getDisabled();
-            reasonForDisablement.disableBySystem(reason, durationInMilliseconds, ex);
-            setDisabled(reasonForDisablement);
+            final DockerCloud ourCloud = DockerCloud.findCloudForTemplate(this);
+            final long milliseconds = ourCloud == null ? 0L : ourCloud.getEffectiveErrorDurationInMilliseconds();
+            if (milliseconds > 0L) {
+                // if anything went wrong, disable ourselves for a while
+                final String reason = "Template provisioning failed.";
+                final DockerDisabled reasonForDisablement = getDisabled();
+                reasonForDisablement.disableBySystem(reason, milliseconds, ex);
+                setDisabled(reasonForDisablement);
+            }
             throw ex;
         }
     }
@@ -489,19 +561,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         final CreateContainerCmd cmd = client.createContainerCmd(getImage());
         fillContainerConfig(cmd);
 
-        // Unique ID we use both as Node identifier and container Name
-        // See how DockerComputerJNLPConnector.beforeContainerCreated() is building the JNLP jar command
-        final String uid = Long.toHexString(System.nanoTime());
-        cmd.withName(uid);
-
         connector.beforeContainerCreated(api, remoteFs, cmd);
 
-        LOGGER.info("Trying to run container for node {} from image: {}", uid, getImage());
+        final String nodeName = getNodeNameFromContainerConfig(cmd);
+        LOGGER.info("Trying to run container for node {} from image: {}", nodeName, getImage());
         boolean finallyRemoveTheContainer = true;
         final String containerId = cmd.exec().getId();
         // if we get this far, we have created the container so,
         // if we fail to return the node, we need to ensure it's cleaned up.
-        LOGGER.info("Started container ID {} for node {} from image: {}", containerId, uid, getImage());
+        LOGGER.info("Started container ID {} for node {} from image: {}", containerId, nodeName, getImage());
 
         try {
             connector.beforeContainerStarted(api, remoteFs, containerId);
@@ -510,7 +578,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
             final ComputerLauncher launcher = connector.createLauncher(api, containerId, remoteFs, listener);
     
-            final DockerTransientNode node = new DockerTransientNode(uid, containerId, remoteFs, launcher);
+            final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, remoteFs, launcher);
             node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
             node.setMode(mode);
             node.setLabelString(labelString);
@@ -536,6 +604,30 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     /**
+     * Returns a node name for a new node that doesn't clash with any we've
+     * currently got.
+     * 
+     * @param The
+     *            template's {@link #getName()}. This is used as a prefix for
+     *            the node name.
+     * @return A unique unused node name suitable for use as a slave name for a
+     *         slave created from this template.
+     */
+    private static String calcUnusedNodeName(final String templateName) {
+        final Jenkins jenkins = Jenkins.getInstanceOrNull();
+        while (true) {
+            // make a should-be-unique ID
+            final String uniqueId = ID_GENERATOR.getUniqueId();
+            final String nodeName = templateName + '-' + uniqueId;
+            // now check it doesn't collide with any existing slaves that might
+            // have been made previously.
+            if (jenkins == null || jenkins.getNode(nodeName) == null) {
+                return nodeName;
+            }
+        }
+    }
+
+   /**
      * Workaround for JENKINS-51203. Retries setting node properties until we
      * either give up or we succeed. If we give up, the exception thrown will be
      * the last one encountered.

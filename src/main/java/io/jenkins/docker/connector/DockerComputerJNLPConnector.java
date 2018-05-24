@@ -2,12 +2,12 @@ package io.jenkins.docker.connector;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
-import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.client.DockerEnvUtils;
 import jenkins.model.Jenkins;
@@ -78,7 +78,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
             args.addAll(Arrays.asList("-tunnel", jnlpLauncher.tunnel));
         }
 
-        String nodeName = DockerTransientNode.nodeName(cmd.getName());
+        final String nodeName = DockerTemplate.getNodeNameFromContainerConfig(cmd);
 
         args.addAll(Arrays.asList(
                 "-url", StringUtils.isEmpty(jenkinsUrl) ? Jenkins.getInstance().getRootUrl() : jenkinsUrl,

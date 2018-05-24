@@ -1,0 +1,39 @@
+<div>
+    The duration (in seconds) for which the plugin will remember errors encountered during provisioning.
+    <ul>
+    <li>
+    If an error is encountered while provisioning a container from a Docker Template
+    then that template will be ignored for this duration,
+    allowing Jenkins' subsequent provisioning attempts to use other (hopefully working) templates
+    (potentially on other clouds, if configured).
+    </li>
+    <li>
+    If an error is encountered while communicating with the Docker service
+    that is not directly related to a specific Docker Template
+    (e.g. when asking the cloud how many containers it is running)
+    then the entire cloud will be ignored for this duration,
+    effectively taking out all templates within that cloud for this duration.
+    </li>
+    </ul>
+    General guidance:
+    <br>
+    High durations (e.g. minutes) work well where
+    there are multiple clouds/templates configured
+    (i.e. Jenkins is not limited to just one source of build executors),
+    allowing other cloud/templates to provide a means of running builds.
+    <br>
+    Medium durations (e.g. one minute) work well where
+    the Docker service serves more than one Jenkins server
+    as this will prevent Jenkins from &quot;spamming&quot; the shared Docker resource with failing requests.
+    <br>
+    A low (or zero) duration should only be used where
+    the Docker service is not shared,
+    not always reliable,
+    and
+    when there are no alternatives to the configured Docker Templates.
+    i.e. when Jenkins should simply re-try failing templates until they work.
+    <br>
+    <br>
+    Defaults to 300 (5 minutes) if not set (or set to an invalid value).
+    A value of zero disables this functionality (so that recent errors will not be taken into consideration when provisioning).
+</div>
