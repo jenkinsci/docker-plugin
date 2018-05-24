@@ -1,17 +1,17 @@
 <div>
-    The duration (in seconds) for which a cloud or template will be removed from service
-    in the event that a provisioning error is encountered:
+    The duration (in seconds) for which the plugin will remember errors encountered during provisioning.
     <ul>
     <li>
-    If an error is encountered while provisioning a container from a Docker Template,
-    that template will be ignored for this duration,
-    allowing Jenkins to try using other (hopefully working) templates
+    If an error is encountered while provisioning a container from a Docker Template
+    then that template will be ignored for this duration,
+    allowing Jenkins' subsequent provisioning attempts to use other (hopefully working) templates
     (potentially on other clouds, if configured).
     </li>
     <li>
     If an error is encountered while communicating with the Docker service
     that is not directly related to a specific Docker Template
-    then the cloud itself will be ignored for this duration,
+    (e.g. when asking the cloud how many containers it is running)
+    then the entire cloud will be ignored for this duration,
     effectively taking out all templates within that cloud for this duration.
     </li>
     </ul>
@@ -35,5 +35,5 @@
     <br>
     <br>
     Defaults to 300 (5 minutes) if not set (or set to an invalid value).
-    A value of zero results in no auto-disablement.
+    A value of zero disables this functionality (so that recent errors will not be taken into consideration when provisioning).
 </div>

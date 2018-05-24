@@ -542,7 +542,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             }
         } catch (IOException | Descriptor.FormException | InterruptedException | RuntimeException ex) {
             final DockerCloud ourCloud = DockerCloud.findCloudForTemplate(this);
-            final long milliseconds = ourCloud == null ? 0L : ourCloud.getEffectiveDisableDurationInMilliseconds();
+            final long milliseconds = ourCloud == null ? 0L : ourCloud.getEffectiveErrorDurationInMilliseconds();
             if (milliseconds > 0L) {
                 // if anything went wrong, disable ourselves for a while
                 final String reason = "Template provisioning failed.";

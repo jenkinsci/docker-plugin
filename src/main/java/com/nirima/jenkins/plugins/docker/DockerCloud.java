@@ -64,11 +64,11 @@ public class DockerCloud extends Cloud {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerCloud.class);
 
     /**
-     * Default value for {@link #getEffectiveDisableDurationInMilliseconds()}
-     * used when {@link #disableDuration} is null.
+     * Default value for {@link #getEffectiveErrorDurationInMilliseconds()}
+     * used when {@link #errorDuration} is null.
      */
     @Restricted(NoExternalUse.class)
-    private static final int DISABLE_DURATION_DEFAULT_SECONDS = 300; // 5min
+    private static final int ERROR_DURATION_DEFAULT_SECONDS = 300; // 5min
 
     @CheckForNull
     private List<DockerTemplate> templates;
@@ -116,8 +116,8 @@ public class DockerCloud extends Cloud {
 
     private @CheckForNull DockerDisabled disabled;
 
-    /** Length of time, in seconds, that {@link #disabled} should auto-disable for if we error. */
-    private @CheckForNull Integer disableDuration;
+    /** Length of time, in seconds, that {@link #disabled} should auto-disable for if we encounter an error. */
+    private @CheckForNull Integer errorDuration;
 
     @DataBoundConstructor
     public DockerCloud(String name,
@@ -399,7 +399,7 @@ public class DockerCloud extends Cloud {
             return r;
         } catch (Exception e) {
             LOGGER.error("Exception while provisioning for label: '{}', cloud='{}'", label, getDisplayName(), e);
-            final long milliseconds = getEffectiveDisableDurationInMilliseconds();
+            final long milliseconds = getEffectiveErrorDurationInMilliseconds();
             if (milliseconds > 0L) {
                 final DockerDisabled reasonForDisablement = getDisabled();
                 reasonForDisablement.disableBySystem("Cloud provisioning failure", milliseconds, e);
@@ -764,33 +764,33 @@ public class DockerCloud extends Cloud {
     }
 
     @CheckForNull
-    public Integer getDisableDuration() {
-        if (disableDuration != null && disableDuration.intValue() < 0) {
+    public Integer getErrorDuration() {
+        if (errorDuration != null && errorDuration.intValue() < 0) {
             return null; // negative is the same as unset = use default.
         }
-        return disableDuration;
+        return errorDuration;
     }
 
     @DataBoundSetter
-    public void setDisableDuration(Integer disableDuration) {
-        this.disableDuration = disableDuration;
+    public void setErrorDuration(Integer errorDuration) {
+        this.errorDuration = errorDuration;
     }
 
     /**
      * Calculates the duration (in milliseconds) we should stop for when an
      * error happens. If the user has not configured a duration then the default
-     * of {@value #DISABLE_DURATION_DEFAULT_SECONDS} seconds will be used.
+     * of {@value #ERROR_DURATION_DEFAULT_SECONDS} seconds will be used.
      * 
      * @return duration, in milliseconds, to be passed to
      *         {@link DockerDisabled#disableBySystem(String, long, Throwable)}.
      */
     @Restricted(NoExternalUse.class)
-    long getEffectiveDisableDurationInMilliseconds() {
-        final Integer configuredDurationOrNull = getDisableDuration();
+    long getEffectiveErrorDurationInMilliseconds() {
+        final Integer configuredDurationOrNull = getErrorDuration();
         if (configuredDurationOrNull != null) {
             return TimeUnit.SECONDS.toMillis(configuredDurationOrNull.intValue());
         }
-        return TimeUnit.SECONDS.toMillis(DISABLE_DURATION_DEFAULT_SECONDS);
+        return TimeUnit.SECONDS.toMillis(ERROR_DURATION_DEFAULT_SECONDS);
     }
 
     public static List<DockerCloud> instances() {
@@ -826,9 +826,9 @@ public class DockerCloud extends Cloud {
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
-        public FormValidation doCheckDisableDuration(@QueryParameter String value) {
+        public FormValidation doCheckErrorDuration(@QueryParameter String value) {
             if (value == null || value.isEmpty()) {
-                return FormValidation.warning("Default of " + DISABLE_DURATION_DEFAULT_SECONDS + " will be used.");
+                return FormValidation.ok("Default = %d", ERROR_DURATION_DEFAULT_SECONDS);
             }
             return FormValidation.validateNonNegativeInteger(value);
         }

@@ -11,7 +11,7 @@
 
         <f:property field="disabled"/>
 
-        <f:entry title="${%Disablement Duration}" field="disableDuration">
+        <f:entry title="${%Error Duration}" field="errorDuration">
             <f:number />
         </f:entry>
 
