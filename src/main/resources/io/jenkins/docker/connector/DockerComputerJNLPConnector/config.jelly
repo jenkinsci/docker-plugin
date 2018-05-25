@@ -14,5 +14,9 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="${%EntryPoint Arguments}" field="entryPointArgumentsString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:property field="jnlpLauncher"/>
 </j:jelly>
