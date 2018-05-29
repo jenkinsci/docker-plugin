@@ -2,7 +2,18 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
 
     <f:block>
-        <span class="info">Prerequisites:</span> Docker image must have <a href="https://go.java">Java</a> installed. Also entrypoint must be able to accept jenkins slave connection parameters. <a href="https://github.com/jenkinsci/docker-jnlp-slave">See jenkins/docker-jnlp-slave as an example</a>
+        <span class="info">Prerequisites:</span>
+        <ul>
+            <li>
+                Docker image must have <a href="https://go.java">Java</a> installed.
+            </li>
+            <li>
+                Entrypoint must be able to accept jenkins slave connection parameters.
+                See 
+                <a href="https://github.com/jenkinsci/docker-jnlp-slave">jenkins/docker-jnlp-slave</a>
+                as an example.
+            </li>
+        </ul>
     </f:block>
 
     <f:entry title="${%User}" field="user">
