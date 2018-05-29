@@ -2,7 +2,30 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" >
 
     <f:block>
-        <span class="info">Prerequisites:</span> Docker image must have <a href="https://www.openssh.com/">sshd</a> and a JDK installed.
+        <span class="info">Prerequisites:</span>
+        <ul>
+            <li>
+                The docker container's mapped SSH port,
+                typically a port on the docker host,
+                has to be accessible over network <em>from</em> the master.
+            </li>
+            <li>
+                Docker image must have
+                <a href="https://www.openssh.com/">sshd</a>
+                installed.
+            </li>
+            <li>
+                Docker image must have
+                <a href="https://go.java">Java</a>
+                installed.
+            </li>
+            <li>
+                Log in details configured as per
+                <a href="https://plugins.jenkins.io/ssh-slaves">ssh-slaves</a>
+                plugin.
+            </li>
+        </ul>
+
     </f:block>
 
     <f:dropdownDescriptorSelector  title="SSH key" field="sshKeyStrategy" />
