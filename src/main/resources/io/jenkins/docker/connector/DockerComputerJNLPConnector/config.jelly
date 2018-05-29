@@ -11,7 +11,7 @@
                 Docker image must have <a href="https://go.java">Java</a> installed.
             </li>
             <li>
-                Docker image must <em>either</em> have <tt>slave.jar</tt> pre-installed <em>or</em> have its entry point code download it.
+                Docker image must launch <tt>slave.jar</tt> by itself or using the ${%EntryPoint Arguments} below.
             </li>
         </ul>
     </f:block>
