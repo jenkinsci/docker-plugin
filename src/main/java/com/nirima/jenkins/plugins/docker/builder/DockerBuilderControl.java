@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
@@ -42,7 +43,15 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-            return true;
+            if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                return true;
+            }
+            for (DockerCloud it : DockerCloud.instances()) {
+                if (it.isActivatedForAllUsers()) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
@@ -54,10 +63,7 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
             DescriptorExtensionList controlOptionDescriptors = DockerBuilderControlOptionDescriptor.all();
             if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
                 Descriptor stopAllDescriptor = Jenkins.getInstance().getDescriptor(DockerBuilderControlOptionStopAll.class);
-                if (controlOptionDescriptors.contains(stopAllDescriptor)) {
-                    controlOptionDescriptors.remove(stopAllDescriptor);
-                }
-
+                controlOptionDescriptors.remove(stopAllDescriptor);
             }
             return controlOptionDescriptors;
         }
