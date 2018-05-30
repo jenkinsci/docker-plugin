@@ -7,6 +7,7 @@ import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -50,7 +51,15 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
         }
 
         public static DescriptorExtensionList<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor> getOptionList() {
-            return DockerBuilderControlOptionDescriptor.all();
+            DescriptorExtensionList controlOptionDescriptors = DockerBuilderControlOptionDescriptor.all();
+            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                Descriptor stopAllDescriptor = Jenkins.getInstance().getDescriptor(DockerBuilderControlOptionStopAll.class);
+                if (controlOptionDescriptors.contains(stopAllDescriptor)) {
+                    controlOptionDescriptors.remove(stopAllDescriptor);
+                }
+
+            }
+            return controlOptionDescriptors;
         }
     }
 }

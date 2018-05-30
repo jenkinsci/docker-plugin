@@ -52,7 +52,12 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
             ListBoxModel model = new ListBoxModel();
             model.add("Cloud this build is running on", "");
             for (Cloud cloud : DockerCloud.instances()) {
-                model.add(cloud.name);
+                if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                    model.add(cloud.name);
+                } else if ( ((DockerCloud) cloud).isActivatedForAllUsers()) {
+                    model.add(cloud.name);
+                }
+
             }
             return model;
         }

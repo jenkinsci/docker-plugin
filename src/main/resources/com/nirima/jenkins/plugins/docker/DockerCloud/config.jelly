@@ -17,6 +17,11 @@
         <f:number default="100"/>
     </f:entry>
 
+     <f:entry title="${%Activated for all users}" field="activatedForAllUsers">
+            <f:checkbox default="true"/>
+     </f:entry>
+
+
     <f:advanced title="${%Docker Agent templates}" align="left">
         <f:entry title="${%Docker Agent templates}" description="${%List of Images to be launched as slaves}">
             <f:repeatableProperty field="templates" header="Docker Agent templates" add="Add Docker Template">
