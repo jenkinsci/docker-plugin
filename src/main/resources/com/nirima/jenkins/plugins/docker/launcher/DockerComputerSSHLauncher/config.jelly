@@ -3,6 +3,7 @@
 
     <f:block>
         <span class="info">Prerequisites:</span> Docker image must have <a href="https://www.openssh.com/">sshd</a> installed.
+        And the agent container (address and random port) must be reachable from the master.
     </f:block>
 
     <f:entry field="useSSHKey" title="inject SSH key">
