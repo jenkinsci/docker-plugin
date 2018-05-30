@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>2.36</version>
+        <version>3.12</version>
     </parent>
 
     <groupId>io.jenkins.docker</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>1.1.5-SNAPSHOT</version>
+    <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -25,6 +25,8 @@
     </developers>
 
     <properties>
+        <revision>1.1.5</revision>
+        <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
         <groovy.version>2.4.7</groovy.version>
@@ -121,12 +123,6 @@
             <version>1.36</version>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-step-api</artifactId>
-            <version>2.14</version>
-            <optional>true</optional>
-        </dependency>
 
         <dependency>
             <groupId>com.kohlschutter.junixsocket</groupId>
@@ -183,12 +179,6 @@
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-basic-steps</artifactId>
             <version>2.6</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-job</artifactId>
-            <version>2.11.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -271,7 +261,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/docker-plugin</url>
-        <tag>HEAD</tag>
+        <tag>${scmTag}</tag>
     </scm>
 
     <repositories>
