@@ -21,6 +21,7 @@ import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
+import jenkins.model.Jenkins.CloudList;
 
 /**
  * Periodic job, which gets executed by Jenkins automatically, to ensure the
@@ -33,8 +34,6 @@ import jenkins.model.Jenkins;
 
 @Extension
 public class DockerContainerWatchdog extends AsyncPeriodicWork {
-    private TaskListener currentTaskListener;
-
     protected DockerContainerWatchdog(String name) {
         super(name);
     }
@@ -54,13 +53,36 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return RECURRENCE_PERIOD_IN_MS;
     }
     
+    /*
+     * Methods used for decloupling on unit testing
+     */
+    
+    
+    protected CloudList getAllClouds() {
+        return Jenkins.getInstance().clouds;
+    }
+    
+    protected List<Node> getAllNodes() {
+        return Jenkins.getInstance().getNodes();
+    }
+    
+    protected String getJenkinsInstanceId() {
+        return JenkinsUtils.getInstanceId();
+    }
+
+    
+    
+    /*
+     * Implementation of business logic
+     */
+    
     @Override
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
         LOGGER.info("Docker Container Watchdog has been triggered");
         
         this.loadNodeMap();
         
-        for (Cloud c : Jenkins.getInstance().clouds) {
+        for (Cloud c : this.getAllClouds()) {
             if (!(c instanceof DockerCloud)) {
                 continue;
             }
@@ -77,7 +99,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private void loadNodeMap() {
         this.nodeMap = new HashMap<>();
         
-        for (Node n : Jenkins.getInstance().getNodes()) {
+        for (Node n : this.getAllNodes()) {
             this.nodeMap.put(n.getNodeName(), n);
         }
         
@@ -143,7 +165,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          */
         Map<String, String> labelFilter = new HashMap<>();
         
-        labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID, JenkinsUtils.getInstanceId());
+        labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID, this.getJenkinsInstanceId());
         
         List<Container> containerList = client.listContainersCmd()
                 .withShowAll(true)
@@ -175,7 +197,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
         return result;
     }
-    
+
     private void checkForSuperfluousContainer(ContainerNodeNameMapping csm) {
         Collection<Container> allContainers = csm.getAllContainers();
         
