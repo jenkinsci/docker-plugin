@@ -134,7 +134,17 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         });
         Mockito.when(listContainerCmd.exec()).thenReturn(containerList);
         
-        Mockito.when(client.inspectContainerCmd(Mockito.anyString())).thenReturn(new MockedInspectContainerCmd(inspectFunction));
+        Mockito.when(client.inspectContainerCmd(Mockito.anyString())).thenAnswer(new Answer<InspectContainerCmd>() {
+
+            @Override
+            public InspectContainerCmd answer(InvocationOnMock invocation) throws Throwable {
+                String arg = invocation.getArgumentAt(0, String.class);
+                
+                MockedInspectContainerCmd result = new MockedInspectContainerCmd(inspectFunction);
+                return result.withContainerId(arg);
+            }
+            
+        });
         
         return result;
     }

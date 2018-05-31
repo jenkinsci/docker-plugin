@@ -70,8 +70,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return JenkinsUtils.getInstanceId();
     }
 
-    
-    
     /*
      * Implementation of business logic
      */
@@ -112,7 +110,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         try {
             ContainerNodeNameMapping csm = this.retrieveContainers(client);
             
-            this.checkForSuperfluousContainer(csm);
+            this.cleanupSuperfluousContainers(client, csm);
             
             this.checkForSuperfluousComputer(csm, dc);
         } finally {
@@ -198,7 +196,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return result;
     }
 
-    private void checkForSuperfluousContainer(ContainerNodeNameMapping csm) {
+    private void cleanupSuperfluousContainers(DockerClient client, ContainerNodeNameMapping csm) {
         Collection<Container> allContainers = csm.getAllContainers();
         
         for (Container container : allContainers) {
@@ -213,6 +211,15 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             // this is a container, which is missing a corresponding node with us
             LOGGER.info("Container {}, which is reported to be assigned to node {}, is no longer associated (slave might be gone already?)", container.getId(), nodeName);
             LOGGER.info("Container {}'s last status is {}; it was created on {}", container.getId(), container.getStatus(), container.getCreated());
+            
+            
+            /*
+             * During startup it may happen temporarily that a container exists, but the
+             * corresponding node isn't there yet.
+             * That is why we have to have a grace period for pulling up containers.
+             */
+            // TODO see comment above
+            client.removeContainerCmd(container.getId());
         }
     }
     
