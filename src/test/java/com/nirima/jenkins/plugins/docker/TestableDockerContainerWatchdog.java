@@ -169,11 +169,12 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         return result;
     }
     
-    public static Container createMockedContainer(String containerId, String status) {
+    public static Container createMockedContainer(String containerId, String status, long createdOn) {
         Container result = Mockito.mock(Container.class);
         
         Mockito.when(result.getId()).thenReturn(containerId);
         Mockito.when(result.getStatus()).thenReturn(status);
+        Mockito.when(result.getCreated()).thenReturn(createdOn);
         
         return result;
     }

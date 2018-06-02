@@ -1,6 +1,10 @@
 package com.nirima.jenkins.plugins.docker;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,7 +48,7 @@ public class DockerContainerWatchdogTest {
         List<Cloud> listOfCloud = new LinkedList<Cloud>();
         
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running");
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
         containerList.add(c);
         
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
@@ -80,7 +84,7 @@ public class DockerContainerWatchdogTest {
         List<Cloud> listOfCloud = new LinkedList<Cloud>();
         
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running");
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
         containerList.add(c);
         
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
@@ -115,7 +119,7 @@ public class DockerContainerWatchdogTest {
         List<Cloud> listOfCloud = new LinkedList<Cloud>();
         
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running");
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
         containerList.add(c);
         
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
@@ -157,9 +161,9 @@ public class DockerContainerWatchdogTest {
         List<Cloud> listOfCloud = new LinkedList<Cloud>();
         
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running");
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", 0L);
         containerList.add(c);
-        c = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running");
+        c = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running", 0L);
         containerList.add(c);
         
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
@@ -209,7 +213,7 @@ public class DockerContainerWatchdogTest {
         List<Cloud> listOfCloud = new LinkedList<Cloud>();
         
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running");
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
         containerList.add(c);
         
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
@@ -246,5 +250,56 @@ public class DockerContainerWatchdogTest {
         Mockito.verify(dockerTransientNode, Mockito.times(1)).terminate(LoggerFactory.getLogger(DockerContainerWatchdog.class));
         Mockito.verify(dockerTransientNode, Mockito.times(1)).setAcceptingTasks(false);
         Mockito.verify(dockerTransientNode, Mockito.times(0)).setAcceptingTasks(true);
+    }
+    
+    @Test
+    public void testContainerExistsButSlaveIsMissingTooEarly() throws IOException, InterruptedException, FormException {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+        
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1527970544000L), ZoneId.of("UTC"));
+        subject.setClock(clock);
+
+        final String nodeName = "unittest-12345";
+        final String containerId = UUID.randomUUID().toString();
+        
+        /* setup of cloud */
+        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        
+        List<Container> containerList = new LinkedList<Container>();
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", clock.instant().toEpochMilli() / 1000);
+        containerList.add(c);
+        
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
+            Map<String, String> labelMap = new HashMap<>();
+            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+            
+            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
+        });
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        listOfCloud.add(cloud);
+        
+        subject.setAllClouds(listOfCloud);
+
+        /* setup of nodes */
+        LinkedList<Node> allNodes = new LinkedList<Node>();
+        subject.setAllNodes(allNodes);
+
+        subject.runExecute();
+        
+        // shall not have called to remove it by force
+        Mockito.verify(dockerApi.getClient(), Mockito.times(0)).removeContainerCmd(containerId);
+        
+        // ... and shall not have called to remove it gracefully
+        List<DockerTransientNode> dtns = subject.getAllDockerTransientNodes();
+        Assert.assertEquals(0, dtns.size());
+        
+        // but, if we turn back time a little... 
+        subject.setClock(Clock.offset(clock, Duration.ofMinutes(5)));
+        
+        subject.runExecute();
+        
+        // ... then it should work
+        Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId);
     }
 }

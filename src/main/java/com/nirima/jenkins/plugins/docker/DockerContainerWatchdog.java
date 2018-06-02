@@ -1,11 +1,16 @@
 package com.nirima.jenkins.plugins.docker;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,16 +42,40 @@ import jenkins.model.Jenkins.CloudList;
 public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private static int terminateNodeNameCounter = 0;
     
+    private Clock clock;
+    
     protected DockerContainerWatchdog(String name) {
         super(name);
     }
 
     public DockerContainerWatchdog() {
         super("Docker Container Watchdog Asynchronouse Periodic Work");
+        this.clock = Clock.systemUTC();
     }
 
+    /**
+     * sets the internal clock of this class - only to be used in unit testing environment!
+     * @param clock the clock which shall be used from now on
+     */
+    @Restricted(NoExternalUse.class)
+    public void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
+    /**
+     * The recurrence period how often this task shall be run
+     */
     private static final long RECURRENCE_PERIOD_IN_MS = 5 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerContainerWatchdog.class);
+
+    /**
+     * The duration, which is permitted containers to start/run without having a slave attached.
+     * This is to prevent that the watchdog may be undesirably kill containers, which are just
+     * on the way to the be started.
+     * It automatically also is a "minimal lifetime" value for containers, before this watchdog
+     * is allowed to kill any container. 
+     */
+    private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_SLAVE_ATTACHED = Duration.ofSeconds(60);
     
     private HashMap<String, Node> nodeMap;
     
@@ -232,7 +261,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * corresponding node isn't there yet.
              * That is why we have to have a grace period for pulling up containers.
              */
-            // TODO see comment above
+            if (this.isStillTooYoung(container.getCreated()))
+                continue;
+            
             try {
                 this.terminateContainer(dc, container);
             } catch (Exception e) {
@@ -243,6 +274,15 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
     }
     
+    private boolean isStillTooYoung(Long created) {
+        Instant createdInstant = Instant.ofEpochSecond(created.longValue());
+        
+        Duration containerLifetime = Duration.between(createdInstant, this.clock.instant());
+        Duration untilMayBeCleanedUp = containerLifetime.minus(GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_SLAVE_ATTACHED);
+        
+        return untilMayBeCleanedUp.isNegative();
+    }
+
     private void checkForSuperfluousComputer(ContainerNodeNameMapping csm, DockerCloud cloud) {
         for (Node node : nodeMap.values()) {
             if (! (node instanceof DockerTransientNode)) {
