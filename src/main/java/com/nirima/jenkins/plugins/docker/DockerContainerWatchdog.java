@@ -78,6 +78,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_SLAVE_ATTACHED = Duration.ofSeconds(60);
     
     private HashMap<String, Node> nodeMap;
+    private ContainerNodeNameMapping csmMerged = new ContainerNodeNameMapping();
     
     @Override
     public long getRecurrencePeriod() {
@@ -106,6 +107,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return new DockerTransientNode(nodeName, containerId, remoteFs, null /* a little ugly, but we just want to terminate it */);
     }
 
+    protected void removeNode(DockerTransientNode dtn) throws IOException {
+        Jenkins.getInstance().removeNode(dtn);
+    }
 
     /*
      * Implementation of business logic
@@ -128,6 +132,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             this.checkCloud(dc);
         }
 
+        this.checkForSuperfluousComputer();
+        
         LOGGER.info("Docker Container Watchdog check has been completed");
     }
     
@@ -149,7 +155,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             
             this.cleanupSuperfluousContainers(client, csm, dc);
             
-            this.checkForSuperfluousComputer(csm, dc);
+            this.csmMerged = this.csmMerged.merge(csm);
         } finally {
             try {
                 client.close();
@@ -157,7 +163,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 LOGGER.warn("Failed to properly close a DockerClient instance; ignoring", e);
             }
         }
-        
     }
 
     private static class ContainerNodeNameMapping {
@@ -177,8 +182,28 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             return this.nodeNameContainerMap.get(nodeName);
         }
         
+        public Container getContainerById(String containerId) {
+            String nodeName = this.getNodeName(containerId);
+            if (nodeName == null)
+                return null;
+            
+            return this.getContainerByNodeName(nodeName);
+        }
+        
         public Collection<Container> getAllContainers() {
             return this.nodeNameContainerMap.values();
+        }
+        
+        public ContainerNodeNameMapping merge(ContainerNodeNameMapping other) {
+            ContainerNodeNameMapping result = new ContainerNodeNameMapping();
+            
+            result.containerIdNodeNameMap = new HashMap<>(this.containerIdNodeNameMap);
+            result.containerIdNodeNameMap.putAll(other.containerIdNodeNameMap);
+            
+            result.nodeNameContainerMap = new HashMap<>(this.nodeNameContainerMap);
+            result.nodeNameContainerMap.putAll(other.nodeNameContainerMap);
+            
+            return result;
         }
     }
     
@@ -283,30 +308,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return untilMayBeCleanedUp.isNegative();
     }
 
-    private void checkForSuperfluousComputer(ContainerNodeNameMapping csm, DockerCloud cloud) {
-        for (Node node : nodeMap.values()) {
-            if (! (node instanceof DockerTransientNode)) {
-                // this slave does not belong to us
-                continue;
-            }
-            
-            DockerTransientNode dcn = (DockerTransientNode) node;
-            if (!dcn.getCloud().equals(cloud)) {
-                // this node does not belong to us
-                continue;
-            }
-            
-            Container container = csm.getContainerByNodeName(dcn.getNodeName());
-            if (container != null) {
-                // the slave and the container still have a proper mapping => ok
-                continue;
-            }
-            
-            // the container is already gone for the slave, but the slave did not notice it yet properly
-            LOGGER.info("Slave {} reports to have container {} assigned to it, but the container does not exist on docker", dcn.getNodeName(), dcn.getContainerId());
-        }
-    }
-    
     private static class TerminationException extends Exception {
 
         /**
@@ -372,6 +373,35 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         LOGGER.info("Successfully terminated container {} consistently", containerId);
     }
 
-    
+    private void checkForSuperfluousComputer() {
+        for (Node node : nodeMap.values()) {
+            if (! (node instanceof DockerTransientNode)) {
+                // this slave does not belong to us
+                continue;
+            }
+            
+            DockerTransientNode dtn = (DockerTransientNode) node;
+            
+            Container container = this.csmMerged.getContainerById(dtn.getContainerId());
+            if (container != null) {
+                // the slave and the container still have a proper mapping => ok
+                continue;
+            }
+            
+            if (!dtn.getComputer().isOffline()) {
+                // the node is still running; we should not touch it.
+                continue;
+            }
+            
+            // the container is already gone for the slave, but the slave did not notice it yet properly
+            LOGGER.info("Slave {} reports to have container {} assigned to it, but the container does not exist on docker; cleaning it up", dtn.getNodeName(), dtn.getContainerId());
+
+            try {
+                this.removeNode(dtn);
+            } catch (IOException e) {
+                LOGGER.warn("Unable to remove orphaned DockerNode due to exception", e);
+            }
+        }
+    }
 
 }

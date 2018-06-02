@@ -25,6 +25,7 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.model.Descriptor.FormException;
 import hudson.slaves.Cloud;
+import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins.CloudList;
@@ -35,6 +36,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     private List<Node> allNodes;
     private List<Cloud> allClouds;
     private List<DockerTransientNode> allDTNs = new LinkedList<>();
+    private List<DockerTransientNode> nodesRemoved = new LinkedList<>();
     
     @Override
     protected CloudList getAllClouds() {
@@ -64,6 +66,11 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     }
 
     @Override
+    protected void removeNode(DockerTransientNode dtn) throws IOException {
+        this.nodesRemoved.add(dtn);
+    }
+
+    @Override
     protected String getJenkinsInstanceId() {
         return UNITTEST_JENKINS_ID;
     }
@@ -78,6 +85,10 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     
     public List<DockerTransientNode> getAllDockerTransientNodes() {
         return Collections.unmodifiableList(this.allDTNs);
+    }
+    
+    public List<DockerTransientNode> getAllRemovedNodes() {
+        return Collections.unmodifiableList(this.nodesRemoved);
     }
     
     public void runExecute() throws IOException, InterruptedException {
@@ -192,11 +203,16 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         return result;
     }
     
-    public static DockerTransientNode createMockedDockerTransientNode(String containerId, String nodeName, DockerCloud cloud) {
+    public static DockerTransientNode createMockedDockerTransientNode(String containerId, String nodeName, DockerCloud cloud, boolean offline) {
         DockerTransientNode result = Mockito.mock(DockerTransientNode.class);
         Mockito.when(result.getContainerId()).thenReturn(containerId);
         Mockito.when(result.getNodeName()).thenReturn(nodeName);
         Mockito.when(result.getCloud()).thenReturn(cloud);
+        
+        SlaveComputer sc = Mockito.mock(SlaveComputer.class);
+        Mockito.when(sc.isOffline()).thenReturn(offline);
+        
+        Mockito.when(result.getComputer()).thenReturn(sc);
         
         return result;
     }

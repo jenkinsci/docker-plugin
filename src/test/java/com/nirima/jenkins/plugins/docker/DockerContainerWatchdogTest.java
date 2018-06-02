@@ -65,7 +65,7 @@ public class DockerContainerWatchdogTest {
         /* setup of nodes */
         LinkedList<Node> allNodes = new LinkedList<Node>();
         
-        DockerTransientNode node = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud);
+        DockerTransientNode node = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud, false);
         allNodes.add(node);
         
         subject.setAllNodes(allNodes);
@@ -137,7 +137,7 @@ public class DockerContainerWatchdogTest {
         /* setup of nodes */
         LinkedList<Node> allNodes = new LinkedList<Node>();
         
-        Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(UUID.randomUUID().toString(), "unittest-other", cloud);
+        Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(UUID.randomUUID().toString(), "unittest-other", cloud, false);
         allNodes.add(n);
         
         subject.setAllNodes(allNodes);
@@ -301,5 +301,45 @@ public class DockerContainerWatchdogTest {
         
         // ... then it should work
         Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId);
+    }
+    
+    @Test
+    public void testSlaveExistsButNoContainer() throws IOException, InterruptedException, FormException {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+
+        final String nodeName = "unittest-78901";
+        final String containerId = UUID.randomUUID().toString();
+        
+        /* setup of cloud */
+        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        
+        List<Container> containerList = new LinkedList<Container>();
+        
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
+            Map<String, String> labelMap = new HashMap<>();
+            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+            
+            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
+        });
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        listOfCloud.add(cloud);
+        
+        subject.setAllClouds(listOfCloud);
+
+        /* setup of nodes */
+        LinkedList<Node> allNodes = new LinkedList<Node>();
+        
+        DockerTransientNode node = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud, true);
+        allNodes.add(node);
+        
+        subject.setAllNodes(allNodes);
+
+        subject.runExecute();
+        
+        List<DockerTransientNode> nodes = subject.getAllRemovedNodes();
+        Assert.assertEquals(1, nodes.size());
+        
+        DockerTransientNode removedNode = nodes.get(0);
+        Assert.assertEquals(node, removedNode);
     }
 }
