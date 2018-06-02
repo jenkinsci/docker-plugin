@@ -155,6 +155,8 @@ public class DockerContainerWatchdogTest {
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running");
         containerList.add(c);
+        c = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running");
+        containerList.add(c);
         
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
             Map<String, String> labelMap = new HashMap<>();
@@ -181,7 +183,14 @@ public class DockerContainerWatchdogTest {
 
         subject.runExecute();
         
-        Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId1);
-        Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId2);
+        Mockito.verify(dockerApi.getClient(), Mockito.times(2)).removeContainerCmd(containerId1);
+        Mockito.verify(dockerApi.getClient(), Mockito.times(2)).removeContainerCmd(containerId2);
+        /* NB: Why "Mockito.times(2)" here?
+         * keep in mind that the same containers are associated with the same DockerClient.
+         * Thus, the same containers also appear twice to our subject - and thus will send the termination
+         * requests twice.
+         * 
+         * Note that this is an acceptable real-life behavior, which is uncommon, though.
+         */
     }
 }
