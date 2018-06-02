@@ -163,6 +163,7 @@ public class DockerContainerWatchdogTest {
             } else if (cid.equals(containerId2)) {
                 labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName2);
             }
+            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittestTemplate");
             
             return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
         });

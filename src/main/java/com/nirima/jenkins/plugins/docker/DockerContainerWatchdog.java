@@ -18,7 +18,9 @@ import hudson.Extension;
 import hudson.model.AsyncPeriodicWork;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.model.Descriptor.FormException;
 import hudson.slaves.Cloud;
+import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
 import jenkins.model.Jenkins.CloudList;
@@ -34,6 +36,8 @@ import jenkins.model.Jenkins.CloudList;
 
 @Extension
 public class DockerContainerWatchdog extends AsyncPeriodicWork {
+    private static int terminateNodeNameCounter = 0;
+    
     protected DockerContainerWatchdog(String name) {
         super(name);
     }
@@ -69,6 +73,11 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     protected String getJenkinsInstanceId() {
         return JenkinsUtils.getInstanceId();
     }
+    
+    protected DockerTransientNode createDockerTransientNode(String nodeName, String containerId, String remoteFs) throws FormException, IOException {
+        return new DockerTransientNode(nodeName, containerId, remoteFs, null /* a little ugly, but we just want to terminate it */);
+    }
+
 
     /*
      * Implementation of business logic
@@ -110,7 +119,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         try {
             ContainerNodeNameMapping csm = this.retrieveContainers(client);
             
-            this.cleanupSuperfluousContainers(client, csm);
+            this.cleanupSuperfluousContainers(client, csm, dc);
             
             this.checkForSuperfluousComputer(csm, dc);
         } finally {
@@ -181,8 +190,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
             }
             
-            InspectContainerResponse icr = client.inspectContainerCmd(containerId).exec();
-            Map<String, String> containerLabels = icr.getConfig().getLabels();
+            
+            Map<String, String> containerLabels = getLabelsOfContainer(client, containerId);
             
             String containerNodeName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_NODE_NAME);
             if (containerNodeName == null) {
@@ -196,7 +205,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return result;
     }
 
-    private void cleanupSuperfluousContainers(DockerClient client, ContainerNodeNameMapping csm) {
+    private static Map<String, String> getLabelsOfContainer(DockerClient client, String containerId) {
+        // TODO may be called multiple times => may be cached to save performance
+        InspectContainerResponse icr = client.inspectContainerCmd(containerId).exec();
+        return icr.getConfig().getLabels();
+    }
+
+    private void cleanupSuperfluousContainers(DockerClient client, ContainerNodeNameMapping csm, DockerCloud dc) {
         Collection<Container> allContainers = csm.getAllContainers();
         
         for (Container container : allContainers) {
@@ -219,7 +234,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * That is why we have to have a grace period for pulling up containers.
              */
             // TODO see comment above
-            client.removeContainerCmd(container.getId());
+            try {
+                this.terminateContainer(dc, container);
+            } catch (Exception e) {
+                // Graceful termination failed; we need to use some force
+                LOGGER.warn("Graceful termination of Container {} failed; terminating directly via API - this may cause remnants to be left behind", container.getId(), e);
+                client.removeContainerCmd(container.getId());
+            }
         }
     }
     
@@ -246,6 +267,57 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.info("Slave {} reports to have container {} assigned to it, but the container does not exist on docker", dcn.getNodeName(), dcn.getContainerId());
         }
     }
+    
+    private static class TerminationException extends Exception {
 
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -7259431101547222511L;
+
+        public TerminationException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public TerminationException(String message) {
+            super(message);
+        }
+        
+    }
+
+    private void terminateContainer(DockerCloud dc, Container container) throws TerminationException {
+        String nodeName = String.format("terminateSlave-%d", terminateNodeNameCounter++);
+        String containerId = container.getId();
+        
+        DockerClient client = dc.getDockerApi().getClient();
+        Map<String, String> containerLabels = null;
+        try {
+            containerLabels = getLabelsOfContainer(client, containerId);
+        } finally {
+            try {
+                client.close();
+            } catch (IOException e) {
+                LOGGER.info("Unable to close Docker client while trying to gracefully terminate container", e);
+            }
+        }
+        String templateName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME);
+        DockerTemplate template = dc.getTemplate(templateName);
+        
+        if (template == null) {
+            throw new TerminationException(String.format("Template %s in DockerCloud %s does not exist", templateName, dc.toString()));
+        }
+        
+        DockerTransientNode dtn;
+        try {
+            dtn = this.createDockerTransientNode(nodeName, containerId, template.getRemoteFs());
+        } catch (FormException | IOException e) {
+            throw new TerminationException("Creating DockerTransientNode failed due to exception", e);
+        }
+        dtn.terminate(LOGGER);
+        
+        LOGGER.info("Successfully terminated container {} consistently", containerId);
+    }
+
+    
 
 }
