@@ -78,7 +78,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_SLAVE_ATTACHED = Duration.ofSeconds(60);
     
     private HashMap<String, Node> nodeMap;
-    private ContainerNodeNameMapping csmMerged = new ContainerNodeNameMapping();
+    private ContainerNodeNameMapping csmMerged;
     
     @Override
     public long getRecurrencePeriod() {
@@ -119,6 +119,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
         LOGGER.info("Docker Container Watchdog has been triggered");
         
+        this.csmMerged = new ContainerNodeNameMapping();
         this.loadNodeMap();
         
         for (Cloud c : this.getAllClouds()) {
