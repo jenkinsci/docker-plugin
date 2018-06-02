@@ -276,11 +276,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
             }
             
-            // this is a container, which is missing a corresponding node with us
-            LOGGER.info("Container {}, which is reported to be assigned to node {}, is no longer associated (slave might be gone already?)", container.getId(), nodeName);
-            LOGGER.info("Container {}'s last status is {}; it was created on {}", container.getId(), container.getStatus(), container.getCreated());
-            
-            
             /*
              * During startup it may happen temporarily that a container exists, but the
              * corresponding node isn't there yet.
@@ -288,6 +283,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              */
             if (this.isStillTooYoung(container.getCreated()))
                 continue;
+
+            // this is a container, which is missing a corresponding node with us
+            LOGGER.info("Container {}, which is reported to be assigned to node {}, is no longer associated (slave might be gone already?)", container.getId(), nodeName);
+            LOGGER.info("Container {}'s last status is {}; it was created on {}", container.getId(), container.getStatus(), container.getCreated());
             
             try {
                 this.terminateContainer(dc, container);
