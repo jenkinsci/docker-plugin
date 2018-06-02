@@ -35,6 +35,8 @@ public class DockerContainerWatchdogTest {
         subject.setAllClouds(cloudList);
         
         subject.runExecute();
+        
+        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
 
     @Test
@@ -71,6 +73,8 @@ public class DockerContainerWatchdogTest {
         subject.setAllNodes(allNodes);
 
         subject.runExecute();
+        
+        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
     
     @Test
@@ -106,6 +110,8 @@ public class DockerContainerWatchdogTest {
         subject.runExecute();
         
         Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId);
+        
+        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
     
     @Test
@@ -145,6 +151,8 @@ public class DockerContainerWatchdogTest {
         subject.runExecute();
         
         Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId);
+        
+        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
     
     @Test
@@ -200,6 +208,8 @@ public class DockerContainerWatchdogTest {
          * 
          * Note that this is an acceptable real-life behavior, which is uncommon, though.
          */
+        
+        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
     
     @Test
@@ -250,6 +260,8 @@ public class DockerContainerWatchdogTest {
         Mockito.verify(dockerTransientNode, Mockito.times(1)).terminate(LoggerFactory.getLogger(DockerContainerWatchdog.class));
         Mockito.verify(dockerTransientNode, Mockito.times(1)).setAcceptingTasks(false);
         Mockito.verify(dockerTransientNode, Mockito.times(0)).setAcceptingTasks(true);
+        
+        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
     
     @Test
@@ -301,6 +313,8 @@ public class DockerContainerWatchdogTest {
         
         // ... then it should work
         Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId);
+        
+        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
     
     @Test
