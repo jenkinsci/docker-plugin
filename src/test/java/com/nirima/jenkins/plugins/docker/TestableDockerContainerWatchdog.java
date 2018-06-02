@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -22,6 +23,7 @@ import com.github.dockerjava.api.model.ContainerConfig;
 
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.model.Descriptor.FormException;
 import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
@@ -32,6 +34,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     private static final String UNITTEST_JENKINS_ID = "f1b65f06-be3e-4dac-a760-b17e7592570f";
     private List<Node> allNodes;
     private List<Cloud> allClouds;
+    private List<DockerTransientNode> allDTNs = new LinkedList<>();
     
     @Override
     protected CloudList getAllClouds() {
@@ -48,6 +51,19 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     }
     
     @Override
+    protected DockerTransientNode createDockerTransientNode(String nodeName, String containerId, String remoteFs)
+            throws FormException, IOException {
+        
+        Assert.assertNotNull(nodeName);
+        Assert.assertNotNull(containerId);
+        DockerTransientNode dtn = Mockito.mock(DockerTransientNode.class);
+        
+        this.allDTNs.add(dtn);
+        
+        return dtn;
+    }
+
+    @Override
     protected String getJenkinsInstanceId() {
         return UNITTEST_JENKINS_ID;
     }
@@ -59,7 +75,11 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     public void setAllClouds(List<Cloud> allClouds) {
         this.allClouds = allClouds;
     }
-
+    
+    public List<DockerTransientNode> getAllDockerTransientNodes() {
+        return Collections.unmodifiableList(this.allDTNs);
+    }
+    
     public void runExecute() throws IOException, InterruptedException {
         TaskListener mockedListener = Mockito.mock(TaskListener.class);
         Mockito.when(mockedListener.getLogger()).thenReturn(System.out);

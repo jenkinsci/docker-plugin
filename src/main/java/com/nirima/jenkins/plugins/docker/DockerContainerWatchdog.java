@@ -20,7 +20,6 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.model.Descriptor.FormException;
 import hudson.slaves.Cloud;
-import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
 import jenkins.model.Jenkins.CloudList;
@@ -301,7 +300,15 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             }
         }
         String templateName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME);
-        DockerTemplate template = dc.getTemplate(templateName);
+        
+        // NB: dc.getTemplate(String) does not work here, as it compares images!
+        DockerTemplate template = null;
+        for (DockerTemplate dockerTemplate : dc.getTemplates()) {
+            if (dockerTemplate.getName().equals(templateName)) {
+                template = dockerTemplate;
+                break;
+            }
+        }
         
         if (template == null) {
             throw new TerminationException(String.format("Template %s in DockerCloud %s does not exist", templateName, dc.toString()));

@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.model.Container;
 
@@ -18,6 +19,7 @@ import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins.CloudList;
+import org.junit.Assert;
 
 public class DockerContainerWatchdogTest {
     @Test
@@ -84,6 +86,7 @@ public class DockerContainerWatchdogTest {
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
             Map<String, String> labelMap = new HashMap<>();
             labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
             
             return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
         });
@@ -118,6 +121,7 @@ public class DockerContainerWatchdogTest {
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
             Map<String, String> labelMap = new HashMap<>();
             labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
             
             return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
         });
@@ -192,5 +196,55 @@ public class DockerContainerWatchdogTest {
          * 
          * Note that this is an acceptable real-life behavior, which is uncommon, though.
          */
+    }
+    
+    @Test
+    public void testContainerExistsButSlaveIsMissingWithTemplate() throws IOException, InterruptedException, FormException {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+
+        final String nodeName = "unittest-12345";
+        final String containerId = UUID.randomUUID().toString();
+        
+        /* setup of cloud */
+        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        
+        List<Container> containerList = new LinkedList<Container>();
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running");
+        containerList.add(c);
+        
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
+            Map<String, String> labelMap = new HashMap<>();
+            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+            
+            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
+        });
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        listOfCloud.add(cloud);
+        
+        DockerTemplate template = Mockito.mock(DockerTemplate.class);
+        Mockito.when(template.getName()).thenReturn("unittesttemplate");
+        Mockito.when(template.isRemoveVolumes()).thenReturn(true);
+        cloud.addTemplate(template);
+        
+        subject.setAllClouds(listOfCloud);
+
+        /* setup of nodes */
+        LinkedList<Node> allNodes = new LinkedList<Node>();
+        subject.setAllNodes(allNodes);
+
+        subject.runExecute();
+        
+        Mockito.verify(dockerApi.getClient(), Mockito.times(0)).removeContainerCmd(containerId); // enforced termination shall not happen
+        Mockito.verify(template, Mockito.times(1)).isRemoveVolumes(); // value shall have been red
+        
+        List<DockerTransientNode> dtns = subject.getAllDockerTransientNodes();
+        Assert.assertEquals(1, dtns.size());
+        DockerTransientNode dockerTransientNode = dtns.get(0);
+        Assert.assertNotNull(dockerTransientNode);
+        
+        Mockito.verify(dockerTransientNode, Mockito.times(1)).terminate(LoggerFactory.getLogger(DockerContainerWatchdog.class));
+        Mockito.verify(dockerTransientNode, Mockito.times(1)).setAcceptingTasks(false);
+        Mockito.verify(dockerTransientNode, Mockito.times(0)).setAcceptingTasks(true);
     }
 }
