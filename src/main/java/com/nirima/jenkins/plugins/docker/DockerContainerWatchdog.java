@@ -65,7 +65,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     /**
      * The recurrence period how often this task shall be run
      */
-    private static final long RECURRENCE_PERIOD_IN_MS = 5 * 1000;
+    private static final long RECURRENCE_PERIOD_IN_MS = 5 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerContainerWatchdog.class);
 
     /**
