@@ -31,7 +31,7 @@ import jenkins.model.Jenkins.CloudList;
 
 /**
  * Periodic job, which gets executed by Jenkins automatically, to ensure the
- * consistency of the containers currently running on the docker and the slaves
+ * consistency of the containers currently running on the docker and the nodes
  * which are attached to this Jenkins instance.
  * 
  * @author eaglerainbow
@@ -69,13 +69,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerContainerWatchdog.class);
 
     /**
-     * The duration, which is permitted containers to start/run without having a slave attached.
+     * The duration, which is permitted containers to start/run without having a node attached.
      * This is to prevent that the watchdog may be undesirably kill containers, which are just
      * on the way to the be started.
      * It automatically also is a "minimal lifetime" value for containers, before this watchdog
      * is allowed to kill any container. 
      */
-    private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_SLAVE_ATTACHED = Duration.ofSeconds(60);
+    private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED = Duration.ofSeconds(60);
     
     private HashMap<String, Node> nodeMap;
     private ContainerNodeNameMapping csmMerged;
@@ -273,7 +273,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             
             Node node = this.nodeMap.get(nodeName);
             if (node != null) {
-                // the slave and the container still have a proper mapping => ok
+                // the node and the container still have a proper mapping => ok
                 continue;
             }
             
@@ -286,7 +286,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
 
             // this is a container, which is missing a corresponding node with us
-            LOGGER.info("Container {}, which is reported to be assigned to node {}, is no longer associated (slave might be gone already?)", container.getId(), nodeName);
+            LOGGER.info("Container {}, which is reported to be assigned to node {}, is no longer associated (node might be gone already?)", container.getId(), nodeName);
             LOGGER.info("Container {}'s last status is {}; it was created on {}", container.getId(), container.getStatus(), container.getCreated());
             
             try {
@@ -303,7 +303,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         Instant createdInstant = Instant.ofEpochSecond(created.longValue());
         
         Duration containerLifetime = Duration.between(createdInstant, this.clock.instant());
-        Duration untilMayBeCleanedUp = containerLifetime.minus(GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_SLAVE_ATTACHED);
+        Duration untilMayBeCleanedUp = containerLifetime.minus(GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED);
         
         return untilMayBeCleanedUp.isNegative();
     }
@@ -326,7 +326,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private void terminateContainer(DockerCloud dc, Container container) throws TerminationException {
-        String nodeName = String.format("terminateSlave-%d", terminateNodeNameCounter++);
+        String nodeName = String.format("terminateNode-%d", terminateNodeNameCounter++);
         String containerId = container.getId();
         
         DockerClient client = dc.getDockerApi().getClient();
@@ -376,7 +376,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private void checkForSuperfluousComputer() {
         for (Node node : nodeMap.values()) {
             if (! (node instanceof DockerTransientNode)) {
-                // this slave does not belong to us
+                // this node does not belong to us
                 continue;
             }
             
@@ -384,7 +384,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             
             Container container = this.csmMerged.getContainerById(dtn.getContainerId());
             if (container != null) {
-                // the slave and the container still have a proper mapping => ok
+                // the node and the container still have a proper mapping => ok
                 continue;
             }
             
@@ -393,8 +393,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
             }
             
-            // the container is already gone for the slave, but the slave did not notice it yet properly
-            LOGGER.info("Slave {} reports to have container {} assigned to it, but the container does not exist on docker; cleaning it up", dtn.getNodeName(), dtn.getContainerId());
+            // the container is already gone for the node, but the node did not notice it yet properly
+            LOGGER.info("Node {} reports to have container {} assigned to it, but the container does not exist on docker; cleaning it up", dtn.getNodeName(), dtn.getContainerId());
 
             try {
                 this.removeNode(dtn);
