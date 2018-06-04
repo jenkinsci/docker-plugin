@@ -44,10 +44,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     
     private Clock clock;
     
-    protected DockerContainerWatchdog(String name) {
-        super(name);
-    }
-
     public DockerContainerWatchdog() {
         super(String.format("%s Asynchronous Periodic Work", DockerContainerWatchdog.class.getSimpleName()));
         this.clock = Clock.systemUTC();
