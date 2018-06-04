@@ -128,7 +128,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             csmMerged = processCloud(dc, nodeMap, csmMerged);
         }
 
-        checkForSuperfluousComputer(nodeMap, csmMerged);
+        cleanUpSuperfluousComputer(nodeMap, csmMerged);
         
         LOGGER.info("Docker Container Watchdog check has been completed");
     }
@@ -151,7 +151,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         try (final DockerClient client = dockerApi.getClient()) {
             ContainerNodeNameMap csm = retrieveContainers(client);
             
-            cleanupSuperfluousContainers(client, nodeMap, csm, dc);
+            cleanUpSuperfluousContainers(client, nodeMap, csm, dc);
             
             csmMerged = csmMerged.merge(csm);
         } catch (IOException e) {
@@ -218,7 +218,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return icr.getConfig().getLabels();
     }
 
-    private void cleanupSuperfluousContainers(DockerClient client, Map<String, Node> nodeMap, ContainerNodeNameMap csm, DockerCloud dc) {
+    private void cleanUpSuperfluousContainers(DockerClient client, Map<String, Node> nodeMap, ContainerNodeNameMap csm, DockerCloud dc) {
         Collection<Container> allContainers = csm.getAllContainers();
         
         for (Container container : allContainers) {
@@ -344,7 +344,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         LOGGER.info("Successfully terminated container {} consistently", containerId);
     }
 
-    private void checkForSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged) {
+    private void cleanUpSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged) {
         for (Node node : nodeMap.values()) {
             if (! (node instanceof DockerTransientNode)) {
                 // this node does not belong to us
