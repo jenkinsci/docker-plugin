@@ -77,7 +77,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      */
     private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED = Duration.ofSeconds(60);
     
-    private HashMap<String, Node> nodeMap;
+    private Map<String, Node> nodeMap;
     private ContainerNodeNameMapping csmMerged;
     
     @Override
