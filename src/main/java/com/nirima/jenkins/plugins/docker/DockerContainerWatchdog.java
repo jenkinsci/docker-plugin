@@ -173,7 +173,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          * For example, Triton (which has an own implementation of the Docker API, and 
          * we are supporting this here with this plugin) will isolate the containers 
          * then between users.
-         * The common community edition of Docker does NOT isolate the containers then. 
+         * The common community edition of Docker does NOT isolate the containers. 
          * 
          * This means that we have to correlate each Container uniquely also the 
          * instance of DockerCloud manually.
