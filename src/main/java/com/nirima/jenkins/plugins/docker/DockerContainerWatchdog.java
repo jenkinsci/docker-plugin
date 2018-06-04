@@ -77,9 +77,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      */
     private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED = Duration.ofSeconds(60);
     
-    private Map<String, Node> nodeMap;
-    private ContainerNodeNameMapping csmMerged;
-    
     @Override
     public long getRecurrencePeriod() {
         // value is in ms.
@@ -119,8 +116,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
         LOGGER.info("Docker Container Watchdog has been triggered");
         
-        this.csmMerged = new ContainerNodeNameMapping();
-        this.loadNodeMap();
+        ContainerNodeNameMapping csmMerged = new ContainerNodeNameMapping();
+        Map<String, Node> nodeMap = loadNodeMap();
         
         for (Cloud c : this.getAllClouds()) {
             if (!(c instanceof DockerCloud)) {
@@ -130,33 +127,35 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
             listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
             
-            this.checkCloud(dc);
+            csmMerged = this.processCloud(dc, nodeMap, csmMerged);
         }
 
-        this.checkForSuperfluousComputer();
+        this.checkForSuperfluousComputer(nodeMap, csmMerged);
         
         LOGGER.info("Docker Container Watchdog check has been completed");
     }
     
-    private void loadNodeMap() {
-        this.nodeMap = new HashMap<>();
+    private Map<String, Node> loadNodeMap() {
+        Map<String, Node> nodeMap = new HashMap<>();
         
         for (Node n : this.getAllNodes()) {
-            this.nodeMap.put(n.getNodeName(), n);
+            nodeMap.put(n.getNodeName(), n);
         }
         
-        LOGGER.info("We currently have {} nodes assigned to this Jenkins instance, which we will check", this.nodeMap.size());
+        LOGGER.info("We currently have {} nodes assigned to this Jenkins instance, which we will check", nodeMap.size());
+        
+        return nodeMap;
     }
 
-    private void checkCloud(DockerCloud dc) {
+    private ContainerNodeNameMapping processCloud(DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMapping csmMerged) {
         DockerClient client = dc.getDockerApi().getClient();
         
         try {
             ContainerNodeNameMapping csm = this.retrieveContainers(client);
             
-            this.cleanupSuperfluousContainers(client, csm, dc);
+            this.cleanupSuperfluousContainers(client, nodeMap, csm, dc);
             
-            this.csmMerged = this.csmMerged.merge(csm);
+            csmMerged = csmMerged.merge(csm);
         } finally {
             try {
                 client.close();
@@ -164,6 +163,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 LOGGER.warn("Failed to properly close a DockerClient instance; ignoring", e);
             }
         }
+        
+        return csmMerged;
     }
 
     private static class ContainerNodeNameMapping {
@@ -265,13 +266,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return icr.getConfig().getLabels();
     }
 
-    private void cleanupSuperfluousContainers(DockerClient client, ContainerNodeNameMapping csm, DockerCloud dc) {
+    private void cleanupSuperfluousContainers(DockerClient client, Map<String, Node> nodeMap, ContainerNodeNameMapping csm, DockerCloud dc) {
         Collection<Container> allContainers = csm.getAllContainers();
         
         for (Container container : allContainers) {
             String nodeName = csm.getNodeName(container.getId());
             
-            Node node = this.nodeMap.get(nodeName);
+            Node node = nodeMap.get(nodeName);
             if (node != null) {
                 // the node and the container still have a proper mapping => ok
                 continue;
@@ -373,7 +374,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         LOGGER.info("Successfully terminated container {} consistently", containerId);
     }
 
-    private void checkForSuperfluousComputer() {
+    private void checkForSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMapping csmMerged) {
         for (Node node : nodeMap.values()) {
             if (! (node instanceof DockerTransientNode)) {
                 // this node does not belong to us
@@ -382,7 +383,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             
             DockerTransientNode dtn = (DockerTransientNode) node;
             
-            Container container = this.csmMerged.getContainerById(dtn.getContainerId());
+            Container container = csmMerged.getContainerById(dtn.getContainerId());
             if (container != null) {
                 // the node and the container still have a proper mapping => ok
                 continue;
