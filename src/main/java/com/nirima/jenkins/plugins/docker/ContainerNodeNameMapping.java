@@ -59,25 +59,16 @@ class ContainerNodeNameMapping {
     }
 
     /**
-     * retrieves the instance of a container based on the identifier of the
-     * container.
-     * 
-     * Note that as a side-effect to this method, the existence of mapping to a
-     * name of a node is verified.
+     * checks, if a given container identifier was registered previously.
      * 
      * @param containerId
-     *            the identifier of the container for which the instance of the
-     *            container shall be retrieved.
-     * @return the instance of the container for the specified identifier of the
-     *         container, or <code>null</code> in case no mapping for that
-     *         container was added.
+     *            the identifier of the container for which the registration shall be checked
+     * @return <code>true</code>, if the container identifier was registered before, <code>false</code> otherwise.
      */
-    public Container getContainerById(String containerId) {
+    public boolean isContainerIdRegistered(String containerId) {
         String nodeName = getNodeName(containerId);
-        if (nodeName == null)
-            return null;
-
-        return getContainerByNodeName(nodeName);
+        
+        return nodeName != null;
     }
 
     /**

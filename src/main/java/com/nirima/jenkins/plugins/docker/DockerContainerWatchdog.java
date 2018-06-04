@@ -353,9 +353,33 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             
             DockerTransientNode dtn = (DockerTransientNode) node;
             
-            Container container = csmMerged.getContainerById(dtn.getContainerId());
-            if (container != null) {
-                // the node and the container still have a proper mapping => ok
+            /*
+             * Important note!
+             * 
+             * We cannot be sure that DockerTransientNode really knows the right getCloudId() (or even 
+             * have the right getCloud() instance). This is due to the fact that the - for example - the 
+             * node might be left-over from a previous configuration, which no longer is valid (e.g. the
+             * slave was created with a DockerCloud configuration which did not work; that is why the admin
+             * deleted that DockerCloud configuration while still the node was running; to clean up the mess,
+             * he manually force-removed the containers from the docker instance). 
+             * 
+             * At the end, this means that we cannot verify strictly that the containerId stored with this
+             * node, really exists on (any of the) DockerCloud instances or not. 
+             * The only option is that, as long as we see "some container having an id like this" on "some of
+             * our DockerCloud instances", then we should be careful with it, and do not delete the node (yet).
+             * Even if the containerId originates from a collision, then we would just postpone the deletion
+             * of the node up to that point in time, when that container gets deleted from the DockerContainer
+             * instance (on the next recurrence of this watchdog, we then would detect that situation and the
+             * node gets deleted automatically, as no container with the appropriate identifier could be detected
+             * anymore). 
+             * 
+             * It is to be hoped that collision on container identifiers are happening rarely enough to such that
+             * we do not run into troubles here. Otherwise, still a larger set of broken nodes could pile up...
+             */
+            
+            boolean seenOnDockerInstance = csmMerged.isContainerIdRegistered(dtn.getContainerId());
+            if (seenOnDockerInstance) {
+                // the node and the container still might have a proper mapping => ignore
                 continue;
             }
             
