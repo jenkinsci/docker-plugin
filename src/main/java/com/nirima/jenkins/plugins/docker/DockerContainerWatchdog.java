@@ -328,7 +328,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         } catch (FormException | IOException e) {
             throw new TerminationException("Creating DockerTransientNode failed due to exception", e);
         }
-        dtn.setNodeDescription(String.format("Watchdog is terminating detached Container %s", containerId));
+        dtn.setNodeDescription(String.format("%s is terminating detached Container %s", DockerContainerWatchdog.class.getSimpleName(), containerId));
         dtn.setAcceptingTasks(false);
         dtn.setDockerAPI(dockerApi);
         dtn.setRemoveVolumes(template.isRemoveVolumes());
