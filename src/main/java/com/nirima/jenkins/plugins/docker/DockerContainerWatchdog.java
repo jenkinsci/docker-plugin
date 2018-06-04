@@ -24,6 +24,7 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.model.Descriptor.FormException;
 import hudson.slaves.Cloud;
+import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
@@ -359,7 +360,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
             }
             
-            if (!dtn.getComputer().isOffline()) {
+            SlaveComputer computer = dtn.getComputer();
+            if (computer == null) {
+                // Probably the node is being closed down right now, so we shouldn't touch it.
+                continue;
+            }
+            
+            if (!computer.isOffline()) {
                 // the node is still running; we should not touch it.
                 continue;
             }
