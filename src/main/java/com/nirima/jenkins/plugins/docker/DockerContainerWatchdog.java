@@ -119,7 +119,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         ContainerNodeNameMapping csmMerged = new ContainerNodeNameMapping();
         Map<String, Node> nodeMap = loadNodeMap();
         
-        for (Cloud c : this.getAllClouds()) {
+        for (Cloud c : getAllClouds()) {
             if (!(c instanceof DockerCloud)) {
                 continue;
             }
@@ -127,10 +127,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
             listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
             
-            csmMerged = this.processCloud(dc, nodeMap, csmMerged);
+            csmMerged = processCloud(dc, nodeMap, csmMerged);
         }
 
-        this.checkForSuperfluousComputer(nodeMap, csmMerged);
+        checkForSuperfluousComputer(nodeMap, csmMerged);
         
         LOGGER.info("Docker Container Watchdog check has been completed");
     }
@@ -138,7 +138,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private Map<String, Node> loadNodeMap() {
         Map<String, Node> nodeMap = new HashMap<>();
         
-        for (Node n : this.getAllNodes()) {
+        for (Node n : getAllNodes()) {
             nodeMap.put(n.getNodeName(), n);
         }
         
@@ -151,9 +151,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         DockerClient client = dc.getDockerApi().getClient();
         
         try {
-            ContainerNodeNameMapping csm = this.retrieveContainers(client);
+            ContainerNodeNameMapping csm = retrieveContainers(client);
             
-            this.cleanupSuperfluousContainers(client, nodeMap, csm, dc);
+            cleanupSuperfluousContainers(client, nodeMap, csm, dc);
             
             csmMerged = csmMerged.merge(csm);
         } finally {
@@ -172,37 +172,37 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         private HashMap<String, Container> nodeNameContainerMap = new HashMap<>();
         
         public void registerMapping(Container container, String nodeName) {
-            this.containerIdNodeNameMap.put(container.getId(), nodeName);
-            this.nodeNameContainerMap.put(nodeName, container);
+            containerIdNodeNameMap.put(container.getId(), nodeName);
+            nodeNameContainerMap.put(nodeName, container);
         }
 
         public String getNodeName(String containerId) {
-            return this.containerIdNodeNameMap.get(containerId);
+            return containerIdNodeNameMap.get(containerId);
         }
         
         public Container getContainerByNodeName(String nodeName) {
-            return this.nodeNameContainerMap.get(nodeName);
+            return nodeNameContainerMap.get(nodeName);
         }
         
         public Container getContainerById(String containerId) {
-            String nodeName = this.getNodeName(containerId);
+            String nodeName = getNodeName(containerId);
             if (nodeName == null)
                 return null;
             
-            return this.getContainerByNodeName(nodeName);
+            return getContainerByNodeName(nodeName);
         }
         
         public Collection<Container> getAllContainers() {
-            return this.nodeNameContainerMap.values();
+            return nodeNameContainerMap.values();
         }
         
         public ContainerNodeNameMapping merge(ContainerNodeNameMapping other) {
             ContainerNodeNameMapping result = new ContainerNodeNameMapping();
             
-            result.containerIdNodeNameMap = new HashMap<>(this.containerIdNodeNameMap);
+            result.containerIdNodeNameMap = new HashMap<>(containerIdNodeNameMap);
             result.containerIdNodeNameMap.putAll(other.containerIdNodeNameMap);
             
-            result.nodeNameContainerMap = new HashMap<>(this.nodeNameContainerMap);
+            result.nodeNameContainerMap = new HashMap<>(nodeNameContainerMap);
             result.nodeNameContainerMap.putAll(other.nodeNameContainerMap);
             
             return result;
@@ -227,7 +227,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          */
         Map<String, String> labelFilter = new HashMap<>();
         
-        labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID, this.getJenkinsInstanceId());
+        labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID, getJenkinsInstanceId());
         
         List<Container> containerList = client.listContainersCmd()
                 .withShowAll(true)
@@ -283,7 +283,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * corresponding node isn't there yet.
              * That is why we have to have a grace period for pulling up containers.
              */
-            if (this.isStillTooYoung(container.getCreated()))
+            if (isStillTooYoung(container.getCreated()))
                 continue;
 
             // this is a container, which is missing a corresponding node with us
@@ -291,7 +291,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.info("Container {}'s last status is {}; it was created on {}", container.getId(), container.getStatus(), container.getCreated());
             
             try {
-                this.terminateContainer(dc, container);
+                terminateContainer(dc, container);
             } catch (Exception e) {
                 // Graceful termination failed; we need to use some force
                 LOGGER.warn("Graceful termination of Container {} failed; terminating directly via API - this may cause remnants to be left behind", container.getId(), e);
@@ -303,7 +303,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private boolean isStillTooYoung(Long created) {
         Instant createdInstant = Instant.ofEpochSecond(created.longValue());
         
-        Duration containerLifetime = Duration.between(createdInstant, this.clock.instant());
+        Duration containerLifetime = Duration.between(createdInstant, clock.instant());
         Duration untilMayBeCleanedUp = containerLifetime.minus(GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED);
         
         return untilMayBeCleanedUp.isNegative();
@@ -358,7 +358,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
         DockerTransientNode dtn;
         try {
-            dtn = this.createDockerTransientNode(nodeName, containerId, template.getRemoteFs());
+            dtn = createDockerTransientNode(nodeName, containerId, template.getRemoteFs());
         } catch (FormException | IOException e) {
             throw new TerminationException("Creating DockerTransientNode failed due to exception", e);
         }
@@ -398,7 +398,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.info("Node {} reports to have container {} assigned to it, but the container does not exist on docker; cleaning it up", dtn.getNodeName(), dtn.getContainerId());
 
             try {
-                this.removeNode(dtn);
+                removeNode(dtn);
             } catch (IOException e) {
                 LOGGER.warn("Unable to remove orphaned DockerNode due to exception", e);
             }
