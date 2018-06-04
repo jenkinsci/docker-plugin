@@ -45,20 +45,6 @@ class ContainerNodeNameMapping {
     }
 
     /**
-     * retrieves an instance of a container based on the name of a node.
-     * 
-     * @param nodeName
-     *            the name of the node for which the container information shall
-     *            be retrieved.
-     * @return the instance of the container, which is associated to the name of
-     *         the node, or <code>null</code> in case no mappging was registered
-     *         for the name of the node.
-     */
-    public Container getContainerByNodeName(String nodeName) {
-        return nodeNameContainerMap.get(nodeName);
-    }
-
-    /**
      * checks, if a given container identifier was registered previously.
      * 
      * @param containerId
