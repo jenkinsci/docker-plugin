@@ -27,7 +27,6 @@ import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
-import jenkins.model.Jenkins.CloudList;
 
 /**
  * Periodic job, which gets executed by Jenkins automatically, to ensure the
