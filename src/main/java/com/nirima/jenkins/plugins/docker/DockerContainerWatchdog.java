@@ -25,6 +25,7 @@ import hudson.model.TaskListener;
 import hudson.model.Descriptor.FormException;
 import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
+import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 import jenkins.model.Jenkins.CloudList;
 
@@ -146,7 +147,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private ContainerNodeNameMapping processCloud(DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMapping csmMerged) {
-        DockerClient client = dc.getDockerApi().getClient();
+        DockerAPI dockerApi = dc.getDockerApi();
+        DockerClient client = dockerApi.getClient();
         
         try {
             ContainerNodeNameMapping csm = retrieveContainers(client);
