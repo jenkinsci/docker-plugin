@@ -162,48 +162,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return csmMerged;
     }
 
-    private static class ContainerNodeNameMapping {
-        private HashMap<String, String> containerIdNodeNameMap = new HashMap<>();
-        private HashMap<String, Container> nodeNameContainerMap = new HashMap<>();
-        
-        public void registerMapping(Container container, String nodeName) {
-            containerIdNodeNameMap.put(container.getId(), nodeName);
-            nodeNameContainerMap.put(nodeName, container);
-        }
-
-        public String getNodeName(String containerId) {
-            return containerIdNodeNameMap.get(containerId);
-        }
-        
-        public Container getContainerByNodeName(String nodeName) {
-            return nodeNameContainerMap.get(nodeName);
-        }
-        
-        public Container getContainerById(String containerId) {
-            String nodeName = getNodeName(containerId);
-            if (nodeName == null)
-                return null;
-            
-            return getContainerByNodeName(nodeName);
-        }
-        
-        public Collection<Container> getAllContainers() {
-            return nodeNameContainerMap.values();
-        }
-        
-        public ContainerNodeNameMapping merge(ContainerNodeNameMapping other) {
-            ContainerNodeNameMapping result = new ContainerNodeNameMapping();
-            
-            result.containerIdNodeNameMap = new HashMap<>(containerIdNodeNameMap);
-            result.containerIdNodeNameMap.putAll(other.containerIdNodeNameMap);
-            
-            result.nodeNameContainerMap = new HashMap<>(nodeNameContainerMap);
-            result.nodeNameContainerMap.putAll(other.nodeNameContainerMap);
-            
-            return result;
-        }
-    }
-    
     private ContainerNodeNameMapping retrieveContainers(DockerClient client) {
         /*
          * Warning!
