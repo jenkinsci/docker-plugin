@@ -243,11 +243,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.info("Container {}'s last status is {}; it was created on {}", container.getId(), container.getStatus(), container.getCreated());
             
             try {
-                terminateContainer(dc, container);
+                terminateContainer(dc, client, container);
             } catch (Exception e) {
                 // Graceful termination failed; we need to use some force
                 LOGGER.warn("Graceful termination of Container {} failed; terminating directly via API - this may cause remnants to be left behind", container.getId(), e);
-                client.removeContainerCmd(container.getId());
             }
         }
     }
@@ -261,6 +260,24 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return untilMayBeCleanedUp.isNegative();
     }
 
+    private void terminateContainer(DockerCloud dc, DockerClient client, Container container) {
+        boolean gracefulFailed = false;
+        try {
+            terminateContainerGracefully(dc, container);
+        } catch (TerminationException e) {
+            LOGGER.warn("Graceful termination of container {} failed with TerminationException", container.getId(), e);
+            gracefulFailed = true;
+        }
+        
+        if (gracefulFailed) {
+            try {
+                client.removeContainerCmd(container.getId()).withForce(true).exec();
+            } catch (RuntimeException e) {
+                LOGGER.warn("Forced termination of container {} failed with RuntimeException", container.getId(), e);
+            }
+        }
+    }
+    
     private static class TerminationException extends Exception {
 
         /**
@@ -278,7 +295,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
     }
 
-    private void terminateContainer(DockerCloud dc, Container container) throws TerminationException {
+    private void terminateContainerGracefully(DockerCloud dc, Container container) throws TerminationException {
         String nodeName = String.format("terminateNode-%d", terminateNodeNameCounter++);
         String containerId = container.getId();
         
@@ -318,7 +335,11 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         dtn.setMode(Node.Mode.EXCLUSIVE); // restrict usage as much as possible
         dtn.setNumExecutors(0);
         
-        dtn.terminate(LOGGER);
+        try {
+            dtn.terminate(LOGGER);
+        } catch (RuntimeException e) {
+            throw new TerminationException("Termining via DockerTransientNode failed due to exception", e);
+        }
         
         LOGGER.info("Successfully terminated container {} consistently", containerId);
     }
