@@ -1,20 +1,24 @@
 package com.nirima.jenkins.plugins.docker;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import com.github.dockerjava.api.model.Container;
 
 /**
- * A class which stores a two-way association between containers (their
+ * A class which stores a one-way association between containers (their
  * identifiers) and names of nodes.
  * 
  * @author eaglerainbow
  *
  */
-class ContainerNodeNameMapping {
-    private HashMap<String, String> containerIdNodeNameMap = new HashMap<>();
-    private HashMap<String, Container> nodeNameContainerMap = new HashMap<>();
+class ContainerNodeNameMap {
+    private Map<String, String> containerIdNodeNameMap = new HashMap<>();
+    private Set<Container> containerSet = new HashSet<>();
 
     /**
      * adds a new mapping between a container and its name of the node, which
@@ -27,7 +31,7 @@ class ContainerNodeNameMapping {
      */
     public void registerMapping(Container container, String nodeName) {
         containerIdNodeNameMap.put(container.getId(), nodeName);
-        nodeNameContainerMap.put(nodeName, container);
+        containerSet.add(container);
     }
 
     /**
@@ -52,9 +56,7 @@ class ContainerNodeNameMapping {
      * @return <code>true</code>, if the container identifier was registered before, <code>false</code> otherwise.
      */
     public boolean isContainerIdRegistered(String containerId) {
-        String nodeName = getNodeName(containerId);
-        
-        return nodeName != null;
+        return containerIdNodeNameMap.containsKey(containerId);
     }
 
     /**
@@ -65,7 +67,7 @@ class ContainerNodeNameMapping {
      *         registered in this mapping.
      */
     public Collection<Container> getAllContainers() {
-        return nodeNameContainerMap.values();
+        return Collections.unmodifiableSet(containerSet);
     }
 
     /**
@@ -78,16 +80,16 @@ class ContainerNodeNameMapping {
      *            The other instance of <code>ContainerNodeNameMapping</code>,
      *            which shall be merged with the current instance.
      * @return the new instance of <code>ContainerNodeNameMapping</code>, which
-     *         contains all mappings availalbe to both original instances.
+     *         contains all mappings available to both original instances.
      */
-    public ContainerNodeNameMapping merge(ContainerNodeNameMapping other) {
-        ContainerNodeNameMapping result = new ContainerNodeNameMapping();
+    public ContainerNodeNameMap merge(ContainerNodeNameMap other) {
+        ContainerNodeNameMap result = new ContainerNodeNameMap();
 
         result.containerIdNodeNameMap = new HashMap<>(containerIdNodeNameMap);
         result.containerIdNodeNameMap.putAll(other.containerIdNodeNameMap);
 
-        result.nodeNameContainerMap = new HashMap<>(nodeNameContainerMap);
-        result.nodeNameContainerMap.putAll(other.nodeNameContainerMap);
+        result.containerSet = new HashSet<>(containerSet);
+        result.containerSet.addAll(other.containerSet);
 
         return result;
     }

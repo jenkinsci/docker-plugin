@@ -114,7 +114,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
         LOGGER.info("Docker Container Watchdog has been triggered");
         
-        ContainerNodeNameMapping csmMerged = new ContainerNodeNameMapping();
+        ContainerNodeNameMap csmMerged = new ContainerNodeNameMap();
         Map<String, Node> nodeMap = loadNodeMap();
         
         for (Cloud c : getAllClouds()) {
@@ -145,11 +145,11 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return nodeMap;
     }
 
-    private ContainerNodeNameMapping processCloud(DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMapping csmMerged) {
+    private ContainerNodeNameMap processCloud(DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged) {
         DockerAPI dockerApi = dc.getDockerApi();
         
         try (final DockerClient client = dockerApi.getClient()) {
-            ContainerNodeNameMapping csm = retrieveContainers(client);
+            ContainerNodeNameMap csm = retrieveContainers(client);
             
             cleanupSuperfluousContainers(client, nodeMap, csm, dc);
             
@@ -161,7 +161,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return csmMerged;
     }
 
-    private ContainerNodeNameMapping retrieveContainers(DockerClient client) {
+    private ContainerNodeNameMap retrieveContainers(DockerClient client) {
         /*
          * Warning!
          * We have a DockerClient which is based on an associated DockerCloud.
@@ -186,7 +186,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 .withLabelFilter(labelFilter)
                 .exec();
         
-        ContainerNodeNameMapping result = new ContainerNodeNameMapping();
+        ContainerNodeNameMap result = new ContainerNodeNameMap();
 
         for (Container container : containerList) {
             String containerId = container.getId();
@@ -218,7 +218,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return icr.getConfig().getLabels();
     }
 
-    private void cleanupSuperfluousContainers(DockerClient client, Map<String, Node> nodeMap, ContainerNodeNameMapping csm, DockerCloud dc) {
+    private void cleanupSuperfluousContainers(DockerClient client, Map<String, Node> nodeMap, ContainerNodeNameMap csm, DockerCloud dc) {
         Collection<Container> allContainers = csm.getAllContainers();
         
         for (Container container : allContainers) {
@@ -344,7 +344,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         LOGGER.info("Successfully terminated container {} consistently", containerId);
     }
 
-    private void checkForSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMapping csmMerged) {
+    private void checkForSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged) {
         for (Node node : nodeMap.values()) {
             if (! (node instanceof DockerTransientNode)) {
                 // this node does not belong to us
