@@ -97,7 +97,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
     
     protected String getJenkinsInstanceId() {
-        return JenkinsUtils.getInstanceId();
+        return DockerTemplateBase.getJenkinsInstanceIdForContainerLabel();
     }
     
     protected DockerTransientNode createDockerTransientNode(String nodeName, String containerId, String remoteFs) throws FormException, IOException {
