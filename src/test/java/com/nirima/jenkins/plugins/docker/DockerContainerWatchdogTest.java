@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
@@ -19,11 +20,8 @@ import com.github.dockerjava.api.model.Container;
 
 import hudson.model.Node;
 import hudson.model.Descriptor.FormException;
-import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
-import jenkins.model.Jenkins.CloudList;
-import org.junit.Assert;
 
 public class DockerContainerWatchdogTest {
     @Test
@@ -31,8 +29,7 @@ public class DockerContainerWatchdogTest {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
         
         subject.setAllNodes(new LinkedList<Node>());
-        CloudList cloudList = new CloudList();
-        subject.setAllClouds(cloudList);
+        subject.setAllClouds(new LinkedList<DockerCloud>());
         
         subject.runExecute();
         
@@ -47,7 +44,7 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
         
         /* setup of cloud */
-        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
@@ -85,7 +82,7 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
         
         /* setup of cloud */
-        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
@@ -122,7 +119,7 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
         
         /* setup of cloud */
-        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
@@ -166,7 +163,7 @@ public class DockerContainerWatchdogTest {
         final String containerId2 = "12346f63-cce3-4188-82dc-451b444daa40";
         
         /* setup of cloud */
-        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", 0L);
@@ -220,7 +217,7 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
         
         /* setup of cloud */
-        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
@@ -275,7 +272,7 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
         
         /* setup of cloud */
-        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", clock.instant().toEpochMilli() / 1000);
@@ -325,7 +322,7 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
         
         /* setup of cloud */
-        List<Cloud> listOfCloud = new LinkedList<Cloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         List<Container> containerList = new LinkedList<Container>();
         

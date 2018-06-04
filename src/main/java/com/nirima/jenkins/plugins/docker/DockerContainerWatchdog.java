@@ -86,9 +86,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      * Methods used for decloupling on unit testing
      */
     
-    
-    protected CloudList getAllClouds() {
-        return Jenkins.getInstance().clouds;
+    protected List<DockerCloud> getAllClouds() {
+        return DockerCloud.instances();
     }
     
     protected List<Node> getAllNodes() {

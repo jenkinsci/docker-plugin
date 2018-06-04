@@ -24,27 +24,21 @@ import com.github.dockerjava.api.model.ContainerConfig;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.model.Descriptor.FormException;
-import hudson.slaves.Cloud;
 import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
-import jenkins.model.Jenkins.CloudList;
 
 public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
 
     private static final String UNITTEST_JENKINS_ID = "f1b65f06-be3e-4dac-a760-b17e7592570f";
     private List<Node> allNodes;
-    private List<Cloud> allClouds;
+    private List<DockerCloud> allClouds;
     private List<DockerTransientNode> allDTNs = new LinkedList<>();
     private List<DockerTransientNode> nodesRemoved = new LinkedList<>();
     
     @Override
-    protected CloudList getAllClouds() {
-        CloudList cloudList = Mockito.mock(CloudList.class);
-        
-        Mockito.when(cloudList.iterator()).thenReturn(Collections.unmodifiableList(this.allClouds).iterator());
-        
-        return cloudList;
+    protected List<DockerCloud> getAllClouds() {
+        return Collections.unmodifiableList(this.allClouds);
     }
 
     @Override
@@ -79,7 +73,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         this.allNodes = allNodes;
     }
 
-    public void setAllClouds(List<Cloud> allClouds) {
+    public void setAllClouds(List<DockerCloud> allClouds) {
         this.allClouds = allClouds;
     }
     
