@@ -148,20 +148,15 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
     private ContainerNodeNameMapping processCloud(DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMapping csmMerged) {
         DockerAPI dockerApi = dc.getDockerApi();
-        DockerClient client = dockerApi.getClient();
         
-        try {
+        try (final DockerClient client = dockerApi.getClient()) {
             ContainerNodeNameMapping csm = retrieveContainers(client);
             
             cleanupSuperfluousContainers(client, nodeMap, csm, dc);
             
             csmMerged = csmMerged.merge(csm);
-        } finally {
-            try {
-                client.close();
-            } catch (IOException e) {
-                LOGGER.warn("Failed to properly close a DockerClient instance; ignoring", e);
-            }
+        } catch (IOException e) {
+            LOGGER.warn("Failed to properly close a DockerClient instance; ignoring", e);
         }
         
         return csmMerged;
@@ -330,16 +325,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         String nodeName = String.format("terminateNode-%d", terminateNodeNameCounter++);
         String containerId = container.getId();
         
-        DockerClient client = dc.getDockerApi().getClient();
         Map<String, String> containerLabels = null;
-        try {
+        DockerAPI dockerApi = dc.getDockerApi();
+        
+        try (final DockerClient client = dockerApi.getClient()) {
             containerLabels = getLabelsOfContainer(client, containerId);
-        } finally {
-            try {
-                client.close();
-            } catch (IOException e) {
-                LOGGER.info("Unable to close Docker client while trying to gracefully terminate container", e);
-            }
+        } catch (IOException e) {
+            LOGGER.info("Unable to close Docker client while trying to gracefully terminate container", e);
         }
         String templateName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME);
         
@@ -364,7 +356,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
         dtn.setNodeDescription(String.format("Watchdog is terminating detached Container %s", containerId));
         dtn.setAcceptingTasks(false);
-        dtn.setDockerAPI(dc.getDockerApi());
+        dtn.setDockerAPI(dockerApi);
         dtn.setRemoveVolumes(template.isRemoveVolumes());
         dtn.setMode(Node.Mode.EXCLUSIVE); // restrict usage as much as possible
         dtn.setNumExecutors(0);
