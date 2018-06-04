@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
-import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
 import hudson.Extension;
 import hudson.model.AsyncPeriodicWork;
