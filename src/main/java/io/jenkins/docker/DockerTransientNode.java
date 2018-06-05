@@ -286,7 +286,7 @@ public class DockerTransientNode extends Slave {
      *         why).
      */
     @Restricted(NoExternalUse.class)
-    static boolean stopAndRemoveContainer(final DockerAPI api, final Logger logger, final String containerDescription,
+    public static boolean stopAndRemoveContainer(final DockerAPI api, final Logger logger, final String containerDescription,
             final boolean removeVolumes, final String containerId, final boolean containerAlreadyStopped) {
         final ILogger tl = createILoggerForSLF4JLogger(logger);
         final boolean containerState[] = stopAndRemoveContainer(api, tl, containerDescription, removeVolumes,

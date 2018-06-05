@@ -322,26 +322,22 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             throw new TerminationException(String.format("Template %s in DockerCloud %s does not exist", templateName, dc.toString()));
         }
         
-        DockerTransientNode dtn;
-        try {
-            dtn = createDockerTransientNode(nodeName, containerId, template.getRemoteFs());
-        } catch (FormException | IOException e) {
-            throw new TerminationException("Creating DockerTransientNode failed due to exception", e);
-        }
-        dtn.setNodeDescription(String.format("%s is terminating detached Container %s", DockerContainerWatchdog.class.getSimpleName(), containerId));
-        dtn.setAcceptingTasks(false);
-        dtn.setDockerAPI(dockerApi);
-        dtn.setRemoveVolumes(template.isRemoveVolumes());
-        dtn.setMode(Node.Mode.EXCLUSIVE); // restrict usage as much as possible
-        dtn.setNumExecutors(0);
-        
-        try {
-            dtn.terminate(LOGGER);
-        } catch (RuntimeException e) {
-            throw new TerminationException("Termining via DockerTransientNode failed due to exception", e);
+        boolean containerRunning = true;
+        if (container.getStatus().startsWith("Dead") 
+                || container.getStatus().startsWith("Exited")
+                || container.getStatus().startsWith("Created")) {
+            containerRunning = false;
         }
         
-        LOGGER.info("Successfully terminated container {} consistently", containerId);
+        // TODO properly derive removeVolumes
+        boolean success = DockerTransientNode.stopAndRemoveContainer(dockerApi, LOGGER, String.format("%s is terminating detached Container %s", DockerContainerWatchdog.class.getSimpleName(), containerId),
+                false, container.getId(), !containerRunning);
+        
+        if (success) {
+            LOGGER.info("Successfully terminated container {} consistently", containerId);
+        } else {
+            throw new TerminationException("Graceful termination failed; see logs for detials");
+        }
     }
 
     private void cleanUpSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged) {
