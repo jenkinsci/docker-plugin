@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
 import hudson.Extension;
 import hudson.model.AsyncPeriodicWork;
@@ -28,7 +29,6 @@ import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
-import jenkins.util.SystemProperties;
 
 /**
  * Periodic job, which gets executed by Jenkins automatically, to ensure the
@@ -65,7 +65,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     /**
      * The recurrence period how often this task shall be run
      */
-    private static final long RECURRENCE_PERIOD_IN_MS = SystemProperties.getLong(DockerContainerWatchdog.class.getName()+".recurrenceInSeconds", Long.valueOf(5*60))*1000L;
+    private static final long RECURRENCE_PERIOD_IN_MS = JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".recurrenceInSeconds", Long.valueOf(5*60))*1000L;
 
     /**
      * The duration, which is permitted containers to start/run without having a node attached.
@@ -74,7 +74,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      * It automatically also is a "minimal lifetime" value for containers, before this watchdog
      * is allowed to kill any container. 
      */
-    private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED = Duration.ofSeconds(SystemProperties.getLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L));
+    private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED = Duration.ofSeconds(JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L));
     
     @Override
     public long getRecurrencePeriod() {
