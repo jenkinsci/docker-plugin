@@ -14,7 +14,6 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.model.Container;
 
@@ -106,9 +105,11 @@ public class DockerContainerWatchdogTest {
 
         subject.runExecute();
         
-        Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId);
-        
         Assert.assertEquals(0, subject.getAllRemovedNodes().size());
+        
+        List<String> containersRemoved = subject.getContainersRemoved();
+        Assert.assertEquals(1, containersRemoved.size());
+        Assert.assertEquals(containerId, containersRemoved.get(0));
     }
     
     @Test
@@ -147,7 +148,9 @@ public class DockerContainerWatchdogTest {
 
         subject.runExecute();
         
-        Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId);
+        List<String> containersRemoved = subject.getContainersRemoved();
+        Assert.assertEquals(1, containersRemoved.size());
+        Assert.assertEquals(containerId, containersRemoved.get(0));
         
         Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
@@ -196,9 +199,25 @@ public class DockerContainerWatchdogTest {
 
         subject.runExecute();
         
-        Mockito.verify(dockerApi.getClient(), Mockito.times(2)).removeContainerCmd(containerId1);
-        Mockito.verify(dockerApi.getClient(), Mockito.times(2)).removeContainerCmd(containerId2);
-        /* NB: Why "Mockito.times(2)" here?
+        List<String> containersRemoved = subject.getContainersRemoved();
+        Assert.assertEquals(4, containersRemoved.size());
+        
+        int countContainer1 = 0;
+        int countContainer2 = 0;
+        for (String containerId : containersRemoved) {
+            if (containerId.equals(containerId1)) {
+                countContainer1++;
+            } else if (containerId.equals(containerId2)) {
+                countContainer2++;
+            } else {
+                Assert.fail("Unknown container identifier");
+            }
+        }
+        
+        Assert.assertEquals(2, countContainer1);
+        Assert.assertEquals(2, countContainer2);
+        
+        /* NB: Why 2 here?
          * keep in mind that the same containers are associated with the same DockerClient.
          * Thus, the same containers also appear twice to our subject - and thus will send the termination
          * requests twice.
@@ -247,18 +266,14 @@ public class DockerContainerWatchdogTest {
         subject.runExecute();
         
         Mockito.verify(dockerApi.getClient(), Mockito.times(0)).removeContainerCmd(containerId); // enforced termination shall not happen
-        Mockito.verify(template, Mockito.times(1)).isRemoveVolumes(); // value shall have been red
-        
-        List<DockerTransientNode> dtns = subject.getAllDockerTransientNodes();
-        Assert.assertEquals(1, dtns.size());
-        DockerTransientNode dockerTransientNode = dtns.get(0);
-        Assert.assertNotNull(dockerTransientNode);
-        
-        Mockito.verify(dockerTransientNode, Mockito.times(1)).terminate(LoggerFactory.getLogger(DockerContainerWatchdog.class));
-        Mockito.verify(dockerTransientNode, Mockito.times(1)).setAcceptingTasks(false);
-        Mockito.verify(dockerTransientNode, Mockito.times(0)).setAcceptingTasks(true);
+        Mockito.verify(template, Mockito.times(1)).isRemoveVolumes(); // value shall have been read
         
         Assert.assertEquals(0, subject.getAllRemovedNodes().size());
+        
+        List<String> containersRemoved = subject.getContainersRemoved();
+        Assert.assertEquals(1, containersRemoved.size());
+        
+        Assert.assertEquals(containerId, containersRemoved.get(0));
     }
     
     @Test
@@ -300,8 +315,7 @@ public class DockerContainerWatchdogTest {
         Mockito.verify(dockerApi.getClient(), Mockito.times(0)).removeContainerCmd(containerId);
         
         // ... and shall not have called to remove it gracefully
-        List<DockerTransientNode> dtns = subject.getAllDockerTransientNodes();
-        Assert.assertEquals(0, dtns.size());
+        Assert.assertEquals(0, subject.getContainersRemoved().size());
         
         // but, if we turn back time a little... 
         subject.setClock(Clock.offset(clock, Duration.ofMinutes(5)));
@@ -309,9 +323,9 @@ public class DockerContainerWatchdogTest {
         subject.runExecute();
         
         // ... then it should work
-        Mockito.verify(dockerApi.getClient(), Mockito.times(1)).removeContainerCmd(containerId);
-        
-        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
+        List<String> containersRemoved = subject.getContainersRemoved();
+        Assert.assertEquals(1, containersRemoved.size());
+        Assert.assertEquals(containerId, containersRemoved.get(0));
     }
     
     @Test

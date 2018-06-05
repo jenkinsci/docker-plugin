@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerCmd;
@@ -23,7 +24,6 @@ import com.github.dockerjava.api.model.ContainerConfig;
 
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.model.Descriptor.FormException;
 import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
@@ -33,40 +33,34 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     private static final String UNITTEST_JENKINS_ID = "f1b65f06-be3e-4dac-a760-b17e7592570f";
     private List<Node> allNodes;
     private List<DockerCloud> allClouds;
-    private List<DockerTransientNode> allDTNs = new LinkedList<>();
     private List<DockerTransientNode> nodesRemoved = new LinkedList<>();
+    private List<String> containersRemoved = new LinkedList<>();
     
     @Override
     protected List<DockerCloud> getAllClouds() {
-        return Collections.unmodifiableList(this.allClouds);
+        return Collections.unmodifiableList(allClouds);
     }
 
     @Override
     protected List<Node> getAllNodes() {
-        return this.allNodes;
+        return allNodes;
     }
     
     @Override
-    protected DockerTransientNode createDockerTransientNode(String nodeName, String containerId, String remoteFs)
-            throws FormException, IOException {
-        
-        Assert.assertNotNull(nodeName);
-        Assert.assertNotNull(containerId);
-        DockerTransientNode dtn = Mockito.mock(DockerTransientNode.class);
-        
-        this.allDTNs.add(dtn);
-        
-        return dtn;
-    }
-
-    @Override
     protected void removeNode(DockerTransientNode dtn) throws IOException {
-        this.nodesRemoved.add(dtn);
+        nodesRemoved.add(dtn);
     }
 
     @Override
     protected String getJenkinsInstanceId() {
         return UNITTEST_JENKINS_ID;
+    }
+
+    @Override
+    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description,
+            boolean removeVolumes, String containerId, boolean stop) {
+        containersRemoved.add(containerId);
+        return true;
     }
 
     public void setAllNodes(List<Node> allNodes) {
@@ -77,19 +71,19 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         this.allClouds = allClouds;
     }
     
-    public List<DockerTransientNode> getAllDockerTransientNodes() {
-        return Collections.unmodifiableList(this.allDTNs);
-    }
-    
     public List<DockerTransientNode> getAllRemovedNodes() {
-        return Collections.unmodifiableList(this.nodesRemoved);
+        return Collections.unmodifiableList(nodesRemoved);
     }
     
+    public List<String> getContainersRemoved() {
+        return Collections.unmodifiableList(containersRemoved);
+    }
+
     public void runExecute() throws IOException, InterruptedException {
         TaskListener mockedListener = Mockito.mock(TaskListener.class);
         Mockito.when(mockedListener.getLogger()).thenReturn(System.out);
         
-        this.execute(mockedListener);
+        execute(mockedListener);
     }
     
     private static class MockedInspectContainerCmd implements InspectContainerCmd {
@@ -108,7 +102,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
 
         @Override
         public String getContainerId() {
-            return this.getContainerId();
+            return getContainerId();
         }
 
         @Override
@@ -129,7 +123,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
 
         @Override
         public InspectContainerResponse exec() throws NotFoundException {
-            return this.inspectFunction.apply(this.containerId);
+            return inspectFunction.apply(containerId);
         }
         
     }

@@ -23,7 +23,6 @@ import hudson.Extension;
 import hudson.model.AsyncPeriodicWork;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.model.Descriptor.FormException;
 import hudson.slaves.Cloud;
 import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
@@ -41,8 +40,6 @@ import jenkins.model.Jenkins;
 
 @Extension
 public class DockerContainerWatchdog extends AsyncPeriodicWork {
-    private static int terminateNodeNameCounter = 0;
-    
     private Clock clock;
     
     public DockerContainerWatchdog() {
@@ -98,13 +95,15 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return DockerTemplateBase.getJenkinsInstanceIdForContainerLabel();
     }
     
-    protected DockerTransientNode createDockerTransientNode(String nodeName, String containerId, String remoteFs) throws FormException, IOException {
-        return new DockerTransientNode(nodeName, containerId, remoteFs, null /* a little ugly, but we just want to terminate it */);
-    }
-
     protected void removeNode(DockerTransientNode dtn) throws IOException {
         Jenkins.getInstance().removeNode(dtn);
     }
+    
+    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description, boolean removeVolumes, String containerId,
+            boolean stop) {
+        return DockerTransientNode.stopAndRemoveContainer(dockerApi, logger, description, removeVolumes, containerId, stop);
+    }
+
 
     /*
      * Implementation of business logic
@@ -296,7 +295,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private void terminateContainerGracefully(DockerCloud dc, Container container) throws TerminationException {
-        String nodeName = String.format("terminateNode-%d", terminateNodeNameCounter++);
         String containerId = container.getId();
         
         Map<String, String> containerLabels = null;
@@ -318,8 +316,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             }
         }
         
-        if (template == null) {
-            throw new TerminationException(String.format("Template %s in DockerCloud %s does not exist", templateName, dc.toString()));
+        boolean removeVolumes = false;
+        if (template != null) {
+            removeVolumes = template.isRemoveVolumes();
         }
         
         boolean containerRunning = true;
@@ -329,9 +328,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             containerRunning = false;
         }
         
-        // TODO properly derive removeVolumes
-        boolean success = DockerTransientNode.stopAndRemoveContainer(dockerApi, LOGGER, String.format("%s is terminating detached Container %s", DockerContainerWatchdog.class.getSimpleName(), containerId),
-                false, container.getId(), !containerRunning);
+        boolean success = stopAndRemoveContainer(dockerApi, LOGGER, String.format("%s is terminating detached Container %s", DockerContainerWatchdog.class.getSimpleName(), containerId),
+                removeVolumes, container.getId(), !containerRunning);
         
         if (success) {
             LOGGER.info("Successfully terminated container {} consistently", containerId);
