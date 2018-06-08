@@ -15,27 +15,35 @@ import jenkins.model.Jenkins;
  */
 public interface DockerContainerLabelKeys {
 
+    /**
+     * As requested by https://docs.docker.com/config/labels-custom-metadata/, keys of labels used
+     * in docker shall be prefixed by a namespace using the reverse DNS notation.
+     * All label keys of this plugin shall use this namespace as a prefix. 
+     * 
+     * Label keys defined in this interface already have this namespace prefixed.
+     */
+    static final String PLUGIN_LABEL_KEY_NAMESPACE = "com.nirima.jenkins.plugins.docker.";
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
      * setting its value to our {@link DockerTemplateBase#getJenkinsInstanceIdForContainerLabel()}, so that we
      * can recognize our own containers later.
      */
-    static final String JENKINS_INSTANCE_ID = "JenkinsId";
+    static final String JENKINS_INSTANCE_ID = PLUGIN_LABEL_KEY_NAMESPACE + "JenkinsId";
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
      * setting its value to our {@link Jenkins#getRootUrl()}, so that we
      * can recognize our own containers later.
      */
-    static final String JENKINS_URL = "JenkinsServerUrl";
+    static final String JENKINS_URL = PLUGIN_LABEL_KEY_NAMESPACE + "JenkinsServerUrl";
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
      * setting its value to our {@link #getImage()}, so that we
      * can recognize our own containers later.
      */
-    static final String CONTAINER_IMAGE = "JenkinsContainerImage";
+    static final String CONTAINER_IMAGE = PLUGIN_LABEL_KEY_NAMESPACE + "JenkinsContainerImage";
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
@@ -43,7 +51,7 @@ public interface DockerContainerLabelKeys {
      * can recognize our own containers later.
      */
     @Restricted(NoExternalUse.class) 
-    static final String NODE_NAME = "JenkinsNodeName";
+    static final String NODE_NAME = PLUGIN_LABEL_KEY_NAMESPACE + "JenkinsNodeName";
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
@@ -51,6 +59,6 @@ public interface DockerContainerLabelKeys {
      * can recognize our own containers later.
      */
     @Restricted(NoExternalUse.class) 
-    static final String TEMPLATE_NAME = "JenkinsTemplateName";
+    static final String TEMPLATE_NAME = PLUGIN_LABEL_KEY_NAMESPACE + "JenkinsTemplateName";
     
 }
