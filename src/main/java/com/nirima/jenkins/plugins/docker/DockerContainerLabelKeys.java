@@ -40,7 +40,7 @@ public interface DockerContainerLabelKeys {
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link #getImage()}, so that we
+     * setting its value to the value of {@link DockerTemplateBase#getImage()}, so that we
      * can recognize our own containers later.
      */
     static final String CONTAINER_IMAGE = PLUGIN_LABEL_KEY_NAMESPACE + "JenkinsContainerImage";
@@ -55,7 +55,7 @@ public interface DockerContainerLabelKeys {
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link #getName()}, so that we
+     * setting its value to the value of {@link DockerTemplate#getName()}, so that we
      * can recognize our own containers later.
      */
     @Restricted(NoExternalUse.class) 
