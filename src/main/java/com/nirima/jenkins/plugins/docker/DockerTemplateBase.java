@@ -483,9 +483,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         containerConfig.withPrivileged(privileged);
 
         Map<String,String> map = new HashMap<>();
-        map.put(DockerContainerLabelKeys.CONTAINER_LABEL_JENKINS_INSTANCE_ID, getJenkinsInstanceIdForContainerLabel());
-        map.put(DockerContainerLabelKeys.CONTAINER_LABEL_JENKINS_URL, getJenkinsUrlForContainerLabel());
-        map.put(DockerContainerLabelKeys.CONTAINER_LABEL_IMAGE, getImage());
+        map.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID, getJenkinsInstanceIdForContainerLabel());
+        map.put(DockerContainerLabelKeys.JENKINS_URL, getJenkinsUrlForContainerLabel());
+        map.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
 
         containerConfig.withLabels(map);
 
@@ -575,7 +575,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     /**
      * Calculates the value we use for the Docker label called
-     * {@link DockerContainerLabelKeys#CONTAINER_LABEL_JENKINS_URL} that we put into every
+     * {@link DockerContainerLabelKeys#JENKINS_URL} that we put into every
      * container we make, so that we can recognize our own containers later.
      */
     static String getJenkinsUrlForContainerLabel() {
@@ -586,7 +586,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     /**
      * Calculates the value we use for the Docker label called
-     * {@link DockerContainerLabelKeys#CONTAINER_LABEL_JENKINS_INSTANCE_ID} that we put into every
+     * {@link DockerContainerLabelKeys#JENKINS_INSTANCE_ID} that we put into every
      * container we make, so that we can recognize our own containers later.
      */
     static String getJenkinsInstanceIdForContainerLabel() {
