@@ -1,5 +1,27 @@
 package com.nirima.jenkins.plugins.docker;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang.StringUtils.trimToNull;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -17,6 +39,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import com.trilead.ssh2.Connection;
+
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -29,50 +52,11 @@ import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
  * Base for docker templates - does not include Jenkins items like labels.
  */
 public class DockerTemplateBase implements Describable<DockerTemplateBase>, Serializable {
-
-    /**
-     * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link #getJenkinsInstanceIdForContainerLabel()}, so that we
-     * can recognize our own containers later.
-     */
-    static String CONTAINER_LABEL_JENKINS_INSTANCE_ID = "JenkinsId";
-    /**
-     * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link Jenkins#getRootUrl()}, so that we
-     * can recognize our own containers later.
-     */
-    static String CONTAINER_LABEL_JENKINS_URL = "JenkinsServerUrl";
-    /**
-     * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link #getImage()}, so that we
-     * can recognize our own containers later.
-     */
-    static String CONTAINER_LABEL_IMAGE = "JenkinsContainerImage";
 
     private final String image;
 
@@ -499,9 +483,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         containerConfig.withPrivileged(privileged);
 
         Map<String,String> map = new HashMap<>();
-        map.put(CONTAINER_LABEL_JENKINS_INSTANCE_ID, getJenkinsInstanceIdForContainerLabel());
-        map.put(CONTAINER_LABEL_JENKINS_URL, getJenkinsUrlForContainerLabel());
-        map.put(CONTAINER_LABEL_IMAGE, getImage());
+        map.put(DockerContainerLabelKeys.CONTAINER_LABEL_JENKINS_INSTANCE_ID, getJenkinsInstanceIdForContainerLabel());
+        map.put(DockerContainerLabelKeys.CONTAINER_LABEL_JENKINS_URL, getJenkinsUrlForContainerLabel());
+        map.put(DockerContainerLabelKeys.CONTAINER_LABEL_IMAGE, getImage());
 
         containerConfig.withLabels(map);
 
@@ -591,7 +575,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     /**
      * Calculates the value we use for the Docker label called
-     * {@link #CONTAINER_LABEL_JENKINS_URL} that we put into every
+     * {@link DockerContainerLabelKeys#CONTAINER_LABEL_JENKINS_URL} that we put into every
      * container we make, so that we can recognize our own containers later.
      */
     static String getJenkinsUrlForContainerLabel() {
@@ -602,7 +586,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     /**
      * Calculates the value we use for the Docker label called
-     * {@link #CONTAINER_LABEL_JENKINS_INSTANCE_ID} that we put into every
+     * {@link DockerContainerLabelKeys#CONTAINER_LABEL_JENKINS_INSTANCE_ID} that we put into every
      * container we make, so that we can recognize our own containers later.
      */
     static String getJenkinsInstanceIdForContainerLabel() {
