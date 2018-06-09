@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
@@ -280,6 +279,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         } catch (TerminationException e) {
             LOGGER.warn("Graceful termination of container {} failed with TerminationException", container.getId(), e);
             gracefulFailed = true;
+        } catch (ContainerIsTaintedException e) {
+            LOGGER.warn("Container {} has been tempered with; skipping cleanup", container.getId(), e);
+            return;
         }
         
         if (gracefulFailed) {
@@ -307,33 +309,38 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
         
     }
+    
+    private static class ContainerIsTaintedException extends Exception {
 
-    private void terminateContainerGracefully(DockerCloud dc, Container container) throws TerminationException {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -8500246547989418166L;
+
+        public ContainerIsTaintedException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public ContainerIsTaintedException(String message) {
+            super(message);
+        }
+        
+    }
+
+    private void terminateContainerGracefully(DockerCloud dc, Container container) throws TerminationException, ContainerIsTaintedException {
         String containerId = container.getId();
         
         Map<String, String> containerLabels = container.getLabels();
         /* NB: Null-map cannot happen here, as otherwise the container 
          * would not have had the JenkinsId label, which is required for us to end up here.
          */
-        String templateName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME);
         
-        if (templateName == null) {
-            throw new TerminationException(String.format("Template label of container %s is missing; enforced cleanup required", containerId));
+        String removeVolumesString = containerLabels.get(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES);
+        if (removeVolumesString == null) {
+            throw new ContainerIsTaintedException("The removeVolumes label is missing; thus the container must have been "
+                    + "mangled unexpectedly; not cleaning up at all anymore, as another tool must have touched it");
         }
-        
-        // NB: dc.getTemplate(String) does not work here, as it compares images!
-        DockerTemplate template = null;
-        for (DockerTemplate dockerTemplate : dc.getTemplates()) {
-            if (dockerTemplate.getName().equals(templateName)) {
-                template = dockerTemplate;
-                break;
-            }
-        }
-        
-        boolean removeVolumes = false;
-        if (template != null) {
-            removeVolumes = template.isRemoveVolumes();
-        }
+        boolean removeVolumes = Boolean.parseBoolean(removeVolumesString);
         
         boolean containerRunning = true;
         if (container.getStatus().startsWith("Dead") 

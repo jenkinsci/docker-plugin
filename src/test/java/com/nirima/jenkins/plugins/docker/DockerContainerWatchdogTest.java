@@ -47,6 +47,7 @@ public class DockerContainerWatchdogTest {
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
@@ -84,6 +85,7 @@ public class DockerContainerWatchdogTest {
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
         labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
@@ -121,6 +123,7 @@ public class DockerContainerWatchdogTest {
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
         labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
 
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
@@ -167,7 +170,7 @@ public class DockerContainerWatchdogTest {
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName1);
         labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittestTemplate");
-
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
         
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", 0L, labelMap);
         containerList.add(c);
@@ -175,6 +178,7 @@ public class DockerContainerWatchdogTest {
         labelMap = new HashMap<>();
         labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName2);
         labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittestTemplate");
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
         
         c = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running", 0L, labelMap);
         containerList.add(c);
@@ -236,6 +240,7 @@ public class DockerContainerWatchdogTest {
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
         labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
@@ -259,7 +264,6 @@ public class DockerContainerWatchdogTest {
         subject.runExecute();
         
         Mockito.verify(dockerApi.getClient(), Mockito.times(0)).removeContainerCmd(containerId); // enforced termination shall not happen
-        Mockito.verify(template, Mockito.times(1)).isRemoveVolumes(); // value shall have been read
         
         Assert.assertEquals(0, subject.getAllRemovedNodes().size());
         
@@ -285,6 +289,7 @@ public class DockerContainerWatchdogTest {
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
         labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
 
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
@@ -317,6 +322,47 @@ public class DockerContainerWatchdogTest {
         List<String> containersRemoved = subject.getContainersRemoved();
         Assert.assertEquals(1, containersRemoved.size());
         Assert.assertEquals(containerId, containersRemoved.get(0));
+    }
+    
+    @Test
+    public void testContainerExistsButSlaveIsMissingRemoveVolumesLabelMissing() throws IOException, InterruptedException, FormException {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+
+        final String nodeName = "unittest-12345";
+        final String containerId = UUID.randomUUID().toString();
+        
+        /* setup of cloud */
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+        // NB The removeVolumes label is not set here
+
+        List<Container> containerList = new LinkedList<Container>();
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
+        containerList.add(c);
+        
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        listOfCloud.add(cloud);
+        
+        subject.setAllClouds(listOfCloud);
+
+        /* setup of nodes */
+        LinkedList<Node> allNodes = new LinkedList<Node>();
+        
+        Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(UUID.randomUUID().toString(), nodeName, cloud, false);
+        allNodes.add(n);
+        
+        subject.setAllNodes(allNodes);
+
+        subject.runExecute();
+        
+        List<String> containersRemoved = subject.getContainersRemoved();
+        Assert.assertEquals(0, containersRemoved.size());
+        
+        Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
     
     @Test

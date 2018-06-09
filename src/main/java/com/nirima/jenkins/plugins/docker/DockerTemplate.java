@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.CheckForNull;
@@ -78,6 +79,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     @Restricted(NoExternalUse.class)
     static String CONTAINER_LABEL_NODE_NAME = "JenkinsNodeName";
 
+    /**
+     * Name of the Docker "label" that we'll put into every container we start,
+     * setting its value to our {@link Node#isRemoveVolumes()}, so that we
+     * can recognize our own containers later.
+     */
+    @Restricted(NoExternalUse.class)
+    static String CONTAINER_LABEL_REMOVE_VOLUMES = "JenkinsRemoveVolumes";
+    
+    
     /** Default value for {@link #getName()} if {@link #name} is null. */
     private static final String DEFAULT_NAME = "docker";
 
@@ -241,9 +251,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         final String templateName = getName();
+        
+        Map<String, String> labels = result.getLabels();
+        labels.put(CONTAINER_LABEL_TEMPLATE_NAME, templateName);
+        labels.put(CONTAINER_LABEL_REMOVE_VOLUMES, Boolean.toString(this.isRemoveVolumes()));
+        
         final String nodeName = calcUnusedNodeName(templateName);
-        result.getLabels().put(CONTAINER_LABEL_TEMPLATE_NAME, templateName);
         setNodeNameInContainerConfig(result, nodeName);
+        
         return result;
     }
 
