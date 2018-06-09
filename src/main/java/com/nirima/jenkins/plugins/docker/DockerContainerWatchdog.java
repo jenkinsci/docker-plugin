@@ -212,8 +212,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
             }
             
-            
-            Map<String, String> containerLabels = getLabelsOfContainer(client, containerId);
+            Map<String, String> containerLabels = container.getLabels();
             
             String containerNodeName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_NODE_NAME);
             if (containerNodeName == null) {
@@ -225,12 +224,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
         
         return result;
-    }
-
-    private static Map<String, String> getLabelsOfContainer(DockerClient client, String containerId) {
-        // TODO may be called multiple times => may be cached to save performance
-        InspectContainerResponse icr = client.inspectContainerCmd(containerId).exec();
-        return icr.getConfig().getLabels();
     }
 
     private void cleanUpSuperfluousContainers(DockerClient client, Map<String, Node> nodeMap, ContainerNodeNameMap csm, DockerCloud dc) {
@@ -313,15 +306,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private void terminateContainerGracefully(DockerCloud dc, Container container) throws TerminationException {
         String containerId = container.getId();
         
-        Map<String, String> containerLabels = null;
-        DockerAPI dockerApi = dc.getDockerApi();
-        
-        try (final DockerClient client = dockerApi.getClient()) {
-            containerLabels = getLabelsOfContainer(client, containerId);
-        } catch (IOException e) {
-            LOGGER.info("Unable to close Docker client while trying to gracefully terminate container", e);
-        }
+        Map<String, String> containerLabels = container.getLabels();
         String templateName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME);
+        
+        if (templateName == null) {
+            throw new TerminationException(String.format("Template label of container %s is missing; enforced cleanup required", containerId));
+        }
         
         // NB: dc.getTemplate(String) does not work here, as it compares images!
         DockerTemplate template = null;
@@ -344,6 +334,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             containerRunning = false;
         }
         
+        DockerAPI dockerApi = dc.getDockerApi();
         boolean success = stopAndRemoveContainer(dockerApi, LOGGER, String.format("%s is terminating detached Container %s", DockerContainerWatchdog.class.getSimpleName(), containerId),
                 removeVolumes, container.getId(), !containerRunning);
         
