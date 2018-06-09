@@ -2,6 +2,7 @@
 
 ## 1.1.x [draft only!]
 * The label keys used for containers created have changed to ensure that they comply with [Docker's guidelines](https://docs.docker.com/config/labels-custom-metadata/) [#660](https://docs.docker.com/config/labels-custom-metadata/). Find below the mapping between the old label keys and the new one's in case you made use of them in foreign tools:
+
    | Old Label Key Identifier | New Label Key Identifier
    |--------------------------|-----------------------------------------------------------|
    | JenkinsId                | com.nirima.jenkins.plugins.docker.JenkinsId               |
