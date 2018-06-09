@@ -214,6 +214,11 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             
             Map<String, String> containerLabels = container.getLabels();
             
+            /* NB: Null-map cannot happen here, as otherwise the container 
+             * would not have had the JenkinsId label, which we just have 
+             * requested it to have (see "withLabelFilter")
+             */
+            
             String containerNodeName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_NODE_NAME);
             if (containerNodeName == null) {
                 LOGGER.warn("Container {} is said to be created by this Jenkins instance, but does not have any node name label assigned; manual cleanup is required for this", containerId);
@@ -307,6 +312,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         String containerId = container.getId();
         
         Map<String, String> containerLabels = container.getLabels();
+        /* NB: Null-map cannot happen here, as otherwise the container 
+         * would not have had the JenkinsId label, which is required for us to end up here.
+         */
         String templateName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME);
         
         if (templateName == null) {
