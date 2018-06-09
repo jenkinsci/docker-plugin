@@ -55,7 +55,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         this.clock = clock;
     }
 
-
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerContainerWatchdog.class);
 
     /**
