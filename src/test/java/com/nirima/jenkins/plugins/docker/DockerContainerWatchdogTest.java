@@ -44,17 +44,15 @@ public class DockerContainerWatchdogTest {
         
         /* setup of cloud */
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
         
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
         
-        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
-            Map<String, String> labelMap = new HashMap<>();
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-            
-            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
-        });
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
         DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
         listOfCloud.add(cloud);
         
@@ -83,17 +81,15 @@ public class DockerContainerWatchdogTest {
         /* setup of cloud */
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+        
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
         
-        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
-            Map<String, String> labelMap = new HashMap<>();
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
-            
-            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
-        });
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
         DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
         listOfCloud.add(cloud);
         
@@ -121,18 +117,16 @@ public class DockerContainerWatchdogTest {
         
         /* setup of cloud */
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
-        
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
         
-        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
-            Map<String, String> labelMap = new HashMap<>();
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
-            
-            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
-        });
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
         DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
         listOfCloud.add(cloud);
         
@@ -169,22 +163,23 @@ public class DockerContainerWatchdogTest {
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", 0L);
-        containerList.add(c);
-        c = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running", 0L);
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName1);
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittestTemplate");
+
+        
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", 0L, labelMap);
         containerList.add(c);
         
-        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
-            Map<String, String> labelMap = new HashMap<>();
-            if (cid.equals(containerId1)) {
-                labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName1);
-            } else if (cid.equals(containerId2)) {
-                labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName2);
-            }
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittestTemplate");
-            
-            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
-        });
+        labelMap = new HashMap<>();
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName2);
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittestTemplate");
+        
+        c = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running", 0L, labelMap);
+        containerList.add(c);
+        
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
         DockerCloud cloud1 = new DockerCloud("unittestcloud1", dockerApi, new LinkedList<DockerTemplate>());
         listOfCloud.add(cloud1);
 
@@ -237,18 +232,16 @@ public class DockerContainerWatchdogTest {
         
         /* setup of cloud */
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
         
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L);
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
         
-        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
-            Map<String, String> labelMap = new HashMap<>();
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
-            
-            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
-        });
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
         DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
         listOfCloud.add(cloud);
         
@@ -288,18 +281,16 @@ public class DockerContainerWatchdogTest {
         
         /* setup of cloud */
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
-        
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
+        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+
         List<Container> containerList = new LinkedList<Container>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", clock.instant().toEpochMilli() / 1000);
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
         containerList.add(c);
         
-        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
-            Map<String, String> labelMap = new HashMap<>();
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
-            
-            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
-        });
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
         DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
         listOfCloud.add(cloud);
         
@@ -337,15 +328,10 @@ public class DockerContainerWatchdogTest {
         
         /* setup of cloud */
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
-        
+
         List<Container> containerList = new LinkedList<Container>();
         
-        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList, cid -> {
-            Map<String, String> labelMap = new HashMap<>();
-            labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-            
-            return TestableDockerContainerWatchdog.createMockedInspectContainerResponse(cid, labelMap);
-        });
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
         DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
         listOfCloud.add(cloud);
         

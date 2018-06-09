@@ -5,9 +5,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.junit.Assert;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -15,12 +13,8 @@ import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.InspectContainerCmd;
-import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.ListContainersCmd;
-import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.ContainerConfig;
 
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -86,49 +80,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         execute(mockedListener);
     }
     
-    private static class MockedInspectContainerCmd implements InspectContainerCmd {
-
-        private String containerId;
-        private Function<String, InspectContainerResponse> inspectFunction;
-
-        public MockedInspectContainerCmd(Function<String, InspectContainerResponse> inspectFunction) {
-            this.inspectFunction = inspectFunction;
-        }
-        
-        @Override
-        public void close() {
-            // not necessary
-        }
-
-        @Override
-        public String getContainerId() {
-            return getContainerId();
-        }
-
-        @Override
-        public InspectContainerCmd withContainerId(String containerId) {
-            this.containerId = containerId;
-            return this;
-        }
-
-        @Override
-        public InspectContainerCmd withSize(Boolean showSize) {
-            throw new NotImplementedException();
-        }
-
-        @Override
-        public Boolean getSize() {
-            throw new NotImplementedException();
-        }
-
-        @Override
-        public InspectContainerResponse exec() throws NotFoundException {
-            return inspectFunction.apply(containerId);
-        }
-        
-    }
-    
-    public static DockerAPI createMockedDockerAPI(List<Container> containerList, Function<String, InspectContainerResponse> inspectFunction) {
+    public static DockerAPI createMockedDockerAPI(List<Container> containerList) {
         DockerAPI result = Mockito.mock(DockerAPI.class);
         
         DockerClient client = Mockito.mock(DockerClient.class);
@@ -153,40 +105,16 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         });
         Mockito.when(listContainerCmd.exec()).thenReturn(containerList);
         
-        Mockito.when(client.inspectContainerCmd(Mockito.anyString())).thenAnswer(new Answer<InspectContainerCmd>() {
-
-            @Override
-            public InspectContainerCmd answer(InvocationOnMock invocation) throws Throwable {
-                String arg = invocation.getArgumentAt(0, String.class);
-                
-                MockedInspectContainerCmd result = new MockedInspectContainerCmd(inspectFunction);
-                return result.withContainerId(arg);
-            }
-            
-        });
-        
         return result;
     }
     
-    public static Container createMockedContainer(String containerId, String status, long createdOn) {
+    public static Container createMockedContainer(String containerId, String status, long createdOn, Map<String, String> labels) {
         Container result = Mockito.mock(Container.class);
         
         Mockito.when(result.getId()).thenReturn(containerId);
         Mockito.when(result.getStatus()).thenReturn(status);
         Mockito.when(result.getCreated()).thenReturn(createdOn);
-        
-        return result;
-    }
-    
-    public static InspectContainerResponse createMockedInspectContainerResponse(String containerId, Map<String, String> labelMap) {
-        InspectContainerResponse result = Mockito.mock(InspectContainerResponse.class);
-        
-        Mockito.when(result.getId()).thenReturn(containerId);
-        
-        ContainerConfig config = Mockito.mock(ContainerConfig.class);
-        Mockito.when(result.getConfig()).thenReturn(config);
-        
-        Mockito.when(config.getLabels()).thenReturn(labelMap);
+        Mockito.when(result.getLabels()).thenReturn(labels);
         
         return result;
     }
