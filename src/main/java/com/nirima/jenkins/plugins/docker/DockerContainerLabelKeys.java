@@ -13,7 +13,7 @@ import jenkins.model.Jenkins;
  * @author eaglerainbow
  *
  */
-public interface DockerContainerLabelKeys {
+public final class DockerContainerLabelKeys {
 
     /**
      * As requested by https://docs.docker.com/config/labels-custom-metadata/, keys of labels used
@@ -22,7 +22,7 @@ public interface DockerContainerLabelKeys {
      * 
      * Label keys defined in this interface already have this namespace prefixed.
      */
-    static final String PLUGIN_LABEL_KEY_NAMESPACE = "com.nirima.jenkins.plugins.docker.";
+    private static final String PLUGIN_LABEL_KEY_NAMESPACE = "com.nirima.jenkins.plugins.docker.";
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
