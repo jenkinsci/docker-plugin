@@ -1,7 +1,5 @@
 package com.nirima.jenkins.plugins.docker;
 
-import org.kohsuke.stapler.QueryParameter;
-
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -19,7 +17,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import com.trilead.ssh2.Connection;
-
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;

@@ -14,7 +14,6 @@ import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import com.nirima.jenkins.plugins.docker.utils.UniqueIdGenerator;
-
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
