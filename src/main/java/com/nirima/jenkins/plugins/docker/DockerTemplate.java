@@ -65,29 +65,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     /**
      * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link #getName()}, so that we
-     * can recognize our own containers later.
-     */
-    @Restricted(NoExternalUse.class)
-    static String CONTAINER_LABEL_TEMPLATE_NAME = "JenkinsTemplateName";
-
-    /**
-     * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link Node#getNodeName()}, so that we
-     * can recognize our own containers later.
-     */
-    @Restricted(NoExternalUse.class)
-    static String CONTAINER_LABEL_NODE_NAME = "JenkinsNodeName";
-
-    /**
-     * Name of the Docker "label" that we'll put into every container we start,
      * setting its value to our {@link Node#isRemoveVolumes()}, so that we
      * can recognize our own containers later.
      */
     @Restricted(NoExternalUse.class)
     static String CONTAINER_LABEL_REMOVE_VOLUMES = "JenkinsRemoveVolumes";
-    
-    
+
     /** Default value for {@link #getName()} if {@link #name} is null. */
     private static final String DEFAULT_NAME = "docker";
 
@@ -253,8 +236,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         final String templateName = getName();
         
         Map<String, String> labels = result.getLabels();
-        labels.put(CONTAINER_LABEL_TEMPLATE_NAME, templateName);
         labels.put(CONTAINER_LABEL_REMOVE_VOLUMES, Boolean.toString(this.isRemoveVolumes()));
+        labels.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
         
         final String nodeName = calcUnusedNodeName(templateName);
         setNodeNameInContainerConfig(result, nodeName);
@@ -264,7 +247,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Restricted(NoExternalUse.class) // public for tests only
     public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName) {
-        containerConfig.getLabels().put(CONTAINER_LABEL_NODE_NAME, nodeName);
+        containerConfig.getLabels().put(DockerContainerLabelKeys.NODE_NAME, nodeName);
     }
 
     /**
@@ -278,7 +261,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      *         node for the container that will be created by this command.
      */
     public static String getNodeNameFromContainerConfig(CreateContainerCmd containerConfig) {
-        return containerConfig.getLabels().get(CONTAINER_LABEL_NODE_NAME);
+        return containerConfig.getLabels().get(DockerContainerLabelKeys.NODE_NAME);
     }
 
     // --

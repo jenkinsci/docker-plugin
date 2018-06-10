@@ -599,10 +599,10 @@ public class DockerCloud extends Cloud {
      */
     public int countContainersInDocker(final String imageName) throws Exception {
         final Map<String, String> labelFilter = new HashMap<>();
-        labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID,
+        labelFilter.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID,
                 DockerTemplateBase.getJenkinsInstanceIdForContainerLabel());
         if (imageName != null) {
-            labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_IMAGE, imageName);
+            labelFilter.put(DockerContainerLabelKeys.CONTAINER_IMAGE, imageName);
         }
         final List<?> containers;
         try(final DockerClient client = dockerApi.getClient()) {
