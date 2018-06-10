@@ -60,5 +60,13 @@ public final class DockerContainerLabelKeys {
      */
     @Restricted(NoExternalUse.class) 
     static final String TEMPLATE_NAME = PLUGIN_LABEL_KEY_NAMESPACE + "JenkinsTemplateName";
+
+    /**
+     * Name of the Docker "label" that we'll put into every container we start,
+     * setting its value to our {@link Node#isRemoveVolumes()}, so that we
+     * can recognize our own containers later.
+     */
+    @Restricted(NoExternalUse.class)
+    static final String REMOVE_VOLUMES = PLUGIN_LABEL_KEY_NAMESPACE + "JenkinsRemoveVolumes";
     
 }

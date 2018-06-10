@@ -192,7 +192,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          */
         Map<String, String> labelFilter = new HashMap<>();
         
-        labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID, getJenkinsInstanceId());
+        labelFilter.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID, getJenkinsInstanceId());
         
         List<Container> containerList = client.listContainersCmd()
                 .withShowAll(true)
@@ -217,7 +217,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * requested it to have (see "withLabelFilter")
              */
             
-            String containerNodeName = containerLabels.get(DockerTemplate.CONTAINER_LABEL_NODE_NAME);
+            String containerNodeName = containerLabels.get(DockerContainerLabelKeys.NODE_NAME);
             if (containerNodeName == null) {
                 LOGGER.warn("Container {} is said to be created by this Jenkins instance, but does not have any node name label assigned; manual cleanup is required for this", containerId);
                 continue;
@@ -334,7 +334,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          * would not have had the JenkinsId label, which is required for us to end up here.
          */
         
-        String removeVolumesString = containerLabels.get(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES);
+        String removeVolumesString = containerLabels.get(DockerContainerLabelKeys.REMOVE_VOLUMES);
         if (removeVolumesString == null) {
             throw new ContainerIsTaintedException("The removeVolumes label is missing; thus the container must have been "
                     + "mangled unexpectedly; not cleaning up at all anymore, as another tool must have touched it");

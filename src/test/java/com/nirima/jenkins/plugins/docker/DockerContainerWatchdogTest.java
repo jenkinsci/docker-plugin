@@ -46,8 +46,8 @@ public class DockerContainerWatchdogTest {
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
 
         Map<String, String> labelMap = new HashMap<>();
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
@@ -83,9 +83,9 @@ public class DockerContainerWatchdogTest {
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
         
         Map<String, String> labelMap = new HashMap<>();
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
@@ -121,9 +121,9 @@ public class DockerContainerWatchdogTest {
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
 
         Map<String, String> labelMap = new HashMap<>();
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
@@ -168,17 +168,17 @@ public class DockerContainerWatchdogTest {
         List<Container> containerList = new LinkedList<Container>();
 
         Map<String, String> labelMap = new HashMap<>();
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName1);
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittestTemplate");
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName1);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittestTemplate");
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
         
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", 0L, labelMap);
         containerList.add(c);
         
         labelMap = new HashMap<>();
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName2);
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittestTemplate");
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName2);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittestTemplate");
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
         
         c = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running", 0L, labelMap);
         containerList.add(c);
@@ -238,9 +238,9 @@ public class DockerContainerWatchdogTest {
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
 
         Map<String, String> labelMap = new HashMap<>();
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
         
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
@@ -287,9 +287,9 @@ public class DockerContainerWatchdogTest {
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
 
         Map<String, String> labelMap = new HashMap<>();
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_REMOVE_VOLUMES, "false");
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
         List<Container> containerList = new LinkedList<Container>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
@@ -335,8 +335,8 @@ public class DockerContainerWatchdogTest {
         List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
 
         Map<String, String> labelMap = new HashMap<>();
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_NODE_NAME, nodeName);
-        labelMap.put(DockerTemplate.CONTAINER_LABEL_TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
         // NB The removeVolumes label is not set here
 
         List<Container> containerList = new LinkedList<Container>();

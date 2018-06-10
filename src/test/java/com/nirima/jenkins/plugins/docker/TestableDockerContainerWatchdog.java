@@ -95,7 +95,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
             @Override
             public ListContainersCmd answer(InvocationOnMock invocation) throws Throwable {
                 Map<String, String> arg = (Map<String, String>) invocation.getArgumentAt(0, Map.class);
-                String jenkinsInstanceIdInFilter = arg.get(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID);
+                String jenkinsInstanceIdInFilter = arg.get(DockerContainerLabelKeys.JENKINS_INSTANCE_ID);
                 Assert.assertEquals(UNITTEST_JENKINS_ID, jenkinsInstanceIdInFilter);
                 
                 return listContainerCmd;
