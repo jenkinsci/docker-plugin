@@ -299,10 +299,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          */
         private static final long serialVersionUID = -7259431101547222511L;
 
-        public TerminationException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
         public TerminationException(String message) {
             super(message);
         }
@@ -315,10 +311,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          * 
          */
         private static final long serialVersionUID = -8500246547989418166L;
-
-        public ContainerIsTaintedException(String message, Throwable cause) {
-            super(message, cause);
-        }
 
         public ContainerIsTaintedException(String message) {
             super(message);
