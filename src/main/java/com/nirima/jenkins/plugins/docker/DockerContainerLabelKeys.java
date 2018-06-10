@@ -22,7 +22,7 @@ public final class DockerContainerLabelKeys {
      * 
      * Label keys defined in this interface already have this namespace prefixed.
      */
-    private static final String PLUGIN_LABEL_KEY_NAMESPACE = "com.nirima.jenkins.plugins.docker.";
+    private static final String PLUGIN_LABEL_KEY_NAMESPACE = DockerContainerLabelKeys.class.getPackage().getName()+".";
     
     /**
      * Name of the Docker "label" that we'll put into every container we start,
