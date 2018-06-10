@@ -49,6 +49,7 @@ import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.trimToNull;
+
 /**
  * Base for docker templates - does not include Jenkins items like labels.
  */
