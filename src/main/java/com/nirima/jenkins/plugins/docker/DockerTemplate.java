@@ -59,22 +59,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private static final UniqueIdGenerator ID_GENERATOR = new UniqueIdGenerator(36);
 
-    /**
-     * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link #getName()}, so that we
-     * can recognize our own containers later.
-     */
-    @Restricted(NoExternalUse.class)
-    static String CONTAINER_LABEL_TEMPLATE_NAME = "JenkinsTemplateName";
-
-    /**
-     * Name of the Docker "label" that we'll put into every container we start,
-     * setting its value to our {@link Node#getNodeName()}, so that we
-     * can recognize our own containers later.
-     */
-    @Restricted(NoExternalUse.class)
-    static String CONTAINER_LABEL_NODE_NAME = "JenkinsNodeName";
-
     /** Default value for {@link #getName()} if {@link #name} is null. */
     private static final String DEFAULT_NAME = "docker";
 
@@ -239,14 +223,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         final String templateName = getName();
         final String nodeName = calcUnusedNodeName(templateName);
-        result.getLabels().put(CONTAINER_LABEL_TEMPLATE_NAME, templateName);
+        result.getLabels().put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
         setNodeNameInContainerConfig(result, nodeName);
         return result;
     }
 
     @Restricted(NoExternalUse.class) // public for tests only
     public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName) {
-        containerConfig.getLabels().put(CONTAINER_LABEL_NODE_NAME, nodeName);
+        containerConfig.getLabels().put(DockerContainerLabelKeys.NODE_NAME, nodeName);
     }
 
     /**
@@ -260,7 +244,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      *         node for the container that will be created by this command.
      */
     public static String getNodeNameFromContainerConfig(CreateContainerCmd containerConfig) {
-        return containerConfig.getLabels().get(CONTAINER_LABEL_NODE_NAME);
+        return containerConfig.getLabels().get(DockerContainerLabelKeys.NODE_NAME);
     }
 
     // --
