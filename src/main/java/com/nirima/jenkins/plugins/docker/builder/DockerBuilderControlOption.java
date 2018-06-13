@@ -54,7 +54,7 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
             for (Cloud cloud : DockerCloud.instances()) {
                 if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
                     model.add(cloud.name);
-                } else if (cloud instanceof DockerCloud && ((DockerCloud) cloud).isActivatedForAllUsers()) {
+                } else if (cloud instanceof DockerCloud && ((DockerCloud) cloud).isAllowAccessForNonAdminUsers()) {
                     model.add(cloud.name);
                 }
 
