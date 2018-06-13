@@ -245,12 +245,15 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * corresponding node isn't there yet.
              * That is why we have to have a grace period for pulling up containers.
              */
-            if (isStillTooYoung(container.getCreated()))
+            if (isStillTooYoung(container.getCreated())) {
                 continue;
+            }
 
             // this is a container, which is missing a corresponding node with us
-            LOGGER.info("Container {}, which is reported to be assigned to node {}, is no longer associated (node might be gone already?)", container.getId(), nodeName);
-            LOGGER.info("Container {}'s last status is {}; it was created on {}", container.getId(), container.getStatus(), container.getCreated());
+            LOGGER.info("Container {}, which is reported to be assigned to node {}, "
+                    + "is no longer associated (node might be gone already?). "
+                    + "The container's last status is {}; it was created on {}", 
+                    container.getId(), nodeName, container.getStatus(), container.getCreated());
             
             try {
                 terminateContainer(dc, client, container);
@@ -275,10 +278,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         try {
             terminateContainerGracefully(dc, container);
         } catch (TerminationException e) {
-            LOGGER.warn("Graceful termination of container {} failed with TerminationException", container.getId(), e);
             gracefulFailed = true;
         } catch (ContainerIsTaintedException e) {
-            LOGGER.warn("Container {} has been tempered with; skipping cleanup", container.getId(), e);
+            LOGGER.warn("Container {} has been tampered with; skipping cleanup", container.getId(), e);
             return;
         }
         
@@ -293,9 +295,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     
     private static class TerminationException extends Exception {
 
-        /**
-         * 
-         */
         private static final long serialVersionUID = -7259431101547222511L;
 
         public TerminationException(String message) {
@@ -306,9 +305,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     
     private static class ContainerIsTaintedException extends Exception {
 
-        /**
-         * 
-         */
         private static final long serialVersionUID = -8500246547989418166L;
 
         public ContainerIsTaintedException(String message) {
