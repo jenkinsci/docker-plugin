@@ -17,8 +17,8 @@ import com.github.dockerjava.api.model.Container;
  *
  */
 class ContainerNodeNameMap {
-    private Map<String, String> containerIdNodeNameMap = new HashMap<>();
-    private Set<Container> containerSet = new HashSet<>();
+    private final Map<String, String> containerIdNodeNameMap = new HashMap<>();
+    private final Set<Container> containerSet = new HashSet<>();
 
     /**
      * adds a new mapping between a container and its name of the node, which
@@ -85,10 +85,10 @@ class ContainerNodeNameMap {
     public ContainerNodeNameMap merge(ContainerNodeNameMap other) {
         ContainerNodeNameMap result = new ContainerNodeNameMap();
 
-        result.containerIdNodeNameMap = new HashMap<>(containerIdNodeNameMap);
+        result.containerIdNodeNameMap.putAll(containerIdNodeNameMap);
         result.containerIdNodeNameMap.putAll(other.containerIdNodeNameMap);
 
-        result.containerSet = new HashSet<>(containerSet);
+        result.containerSet.addAll(containerSet);
         result.containerSet.addAll(other.containerSet);
 
         return result;
