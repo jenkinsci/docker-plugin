@@ -18,7 +18,6 @@ import org.mockito.Mockito;
 import com.github.dockerjava.api.model.Container;
 
 import hudson.model.Node;
-import hudson.model.Descriptor.FormException;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 
@@ -36,7 +35,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testSimpleEnvironmentNothingTodo() throws IOException, InterruptedException, FormException {
+    public void testSimpleEnvironmentNothingTodo() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -73,7 +72,7 @@ public class DockerContainerWatchdogTest {
     }
     
     @Test
-    public void testContainerExistsButSlaveIsMissing() throws IOException, InterruptedException, FormException {
+    public void testContainerExistsButSlaveIsMissing() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -111,7 +110,7 @@ public class DockerContainerWatchdogTest {
     }
     
     @Test
-    public void testContainerExistsButSlaveIsMissingWrongNodeNameIsIgnored() throws IOException, InterruptedException, FormException {
+    public void testContainerExistsButSlaveIsMissingWrongNodeNameIsIgnored() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -153,7 +152,7 @@ public class DockerContainerWatchdogTest {
     }
     
     @Test
-    public void testContainerExistsButSlaveIsMissingTwoClouds() throws IOException, InterruptedException, FormException {
+    public void testContainerExistsButSlaveIsMissingTwoClouds() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName1 = "unittest-12345";
@@ -228,7 +227,7 @@ public class DockerContainerWatchdogTest {
     }
     
     @Test
-    public void testContainerExistsButSlaveIsMissingWithTemplate() throws IOException, InterruptedException, FormException {
+    public void testContainerExistsButSlaveIsMissingWithTemplate() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -274,7 +273,7 @@ public class DockerContainerWatchdogTest {
     }
     
     @Test
-    public void testContainerExistsButSlaveIsMissingTooEarly() throws IOException, InterruptedException, FormException {
+    public void testContainerExistsButSlaveIsMissingTooEarly() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
         
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1527970544000L), ZoneId.of("UTC"));
@@ -325,7 +324,7 @@ public class DockerContainerWatchdogTest {
     }
     
     @Test
-    public void testContainerExistsButSlaveIsMissingRemoveVolumesLabelMissing() throws IOException, InterruptedException, FormException {
+    public void testContainerExistsButSlaveIsMissingRemoveVolumesLabelMissing() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -366,7 +365,7 @@ public class DockerContainerWatchdogTest {
     }
     
     @Test
-    public void testSlaveExistsButNoContainer() throws IOException, InterruptedException, FormException {
+    public void testSlaveExistsButNoContainer() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-78901";
