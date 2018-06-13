@@ -323,8 +323,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
         String removeVolumesString = containerLabels.get(DockerContainerLabelKeys.REMOVE_VOLUMES);
         if (removeVolumesString == null) {
-            throw new ContainerIsTaintedException("The removeVolumes label is missing; thus the container must have been "
-                    + "mangled unexpectedly; not cleaning up at all anymore, as another tool must have touched it");
+            throw new ContainerIsTaintedException(String.format("Container ID %s has no '%s' label; skipping.",
+                    container.getId(), DockerContainerLabelKeys.REMOVE_VOLUMES));
         }
         boolean removeVolumes = Boolean.parseBoolean(removeVolumesString);
         
@@ -336,13 +336,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
         
         DockerAPI dockerApi = dc.getDockerApi();
-        boolean success = stopAndRemoveContainer(dockerApi, LOGGER, String.format("%s is terminating detached Container %s", DockerContainerWatchdog.class.getSimpleName(), containerId),
+        boolean success = stopAndRemoveContainer(dockerApi, LOGGER, String.format("(orphaned container found by %s)", DockerContainerWatchdog.class.getSimpleName()),
                 removeVolumes, container.getId(), !containerRunning);
         
         if (success) {
-            LOGGER.info("Successfully terminated container {} consistently", containerId);
+            LOGGER.info("Successfully terminated orphaned container {}", containerId);
         } else {
-            throw new TerminationException("Graceful termination failed; see logs for detials");
+            throw new TerminationException("Graceful termination failed.");
         }
     }
 
