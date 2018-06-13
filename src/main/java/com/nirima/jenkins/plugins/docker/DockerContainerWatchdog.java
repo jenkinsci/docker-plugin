@@ -322,6 +322,19 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         /* NB: Null-map cannot happen here, as otherwise the container 
          * would not have had the JenkinsId label, which is required for us to end up here.
          */
+
+        /* 
+         * double-confirm that no node appeared in the meantime
+         * (A long time could have passed since our initial scanning; thus, 
+         * the situation could have changed in the meantime)
+         */
+        final String nodeName = containerLabels.get(DockerContainerLabelKeys.NODE_NAME);
+        if (nodeExistsBypassingCache(nodeName)) {
+            LOGGER.warn("Attempt to terminate container ID {} gracefully, but a node for it suddenly has appeared", container.getId());
+            throw new ContainerIsTaintedException(String.format("Node for container ID %s has appeared", container.getId()));
+        }
+        
+        containerLabels.get(DockerContainerLabelKeys.REMOVE_VOLUMES);
         
         String removeVolumesString = containerLabels.get(DockerContainerLabelKeys.REMOVE_VOLUMES);
         if (removeVolumesString == null) {
@@ -346,6 +359,19 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         } else {
             throw new TerminationException("Graceful termination failed.");
         }
+    }
+
+    private boolean nodeExistsBypassingCache(String nodeName) {
+        /* Note:
+         * we are using "getAllNodes()" here to prevent that
+         * we need yet another method to overwrite for our unit tests
+         */
+        for (Node node : getAllNodes()) {
+            if (nodeName.equals(node.getNodeName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void cleanUpSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged) {
