@@ -397,12 +397,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             }
             
             // the container is already gone for the node, but the node did not notice it yet properly
-            LOGGER.info("Node {} reports to have container {} assigned to it, but the container does not exist on docker; cleaning it up", dtn.getNodeName(), dtn.getContainerId());
+            LOGGER.info("{} has container ID {}, but the container does not exist in any docker cloud. Will remove node.", dtn, dtn.getContainerId());
 
             try {
                 removeNode(dtn);
             } catch (IOException e) {
-                LOGGER.warn("Unable to remove orphaned DockerNode due to exception", e);
+                LOGGER.warn(String.format("Failed to remove orphaned %s.", dtn), e);
             }
         }
     }
