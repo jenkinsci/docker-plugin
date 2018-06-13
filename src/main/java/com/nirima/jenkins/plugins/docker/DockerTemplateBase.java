@@ -1,27 +1,5 @@
 package com.nirima.jenkins.plugins.docker;
 
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.trimToNull;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -52,6 +30,28 @@ import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang.StringUtils.trimToNull;
+
 
 /**
  * Base for docker templates - does not include Jenkins items like labels.
