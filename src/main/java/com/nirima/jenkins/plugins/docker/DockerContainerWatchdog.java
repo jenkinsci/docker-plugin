@@ -112,6 +112,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         LOGGER.info("Docker Container Watchdog has been triggered");
         
         ContainerNodeNameMap csmMerged = new ContainerNodeNameMap();
+        
+        Instant snapshotInstance = this.clock.instant();
         Map<String, Node> nodeMap = loadNodeMap();
         
         for (Cloud c : getAllClouds()) {
@@ -122,7 +124,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
             listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
             
-            csmMerged = processCloud(dc, nodeMap, csmMerged);
+            csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
         }
 
         cleanUpSuperfluousComputer(nodeMap, csmMerged);
@@ -157,13 +159,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return nodeMap;
     }
 
-    private ContainerNodeNameMap processCloud(DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged) {
+    private ContainerNodeNameMap processCloud(DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged, Instant snapshotInstant) {
         DockerAPI dockerApi = dc.getDockerApi();
         
         try (final DockerClient client = dockerApi.getClient()) {
             ContainerNodeNameMap csm = retrieveContainers(client);
             
-            cleanUpSuperfluousContainers(client, nodeMap, csm, dc);
+            cleanUpSuperfluousContainers(client, nodeMap, csm, dc, snapshotInstant);
             
             csmMerged = csmMerged.merge(csm);
         } catch (IOException e) {
@@ -228,7 +230,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return result;
     }
 
-    private void cleanUpSuperfluousContainers(DockerClient client, Map<String, Node> nodeMap, ContainerNodeNameMap csm, DockerCloud dc) {
+    private void cleanUpSuperfluousContainers(DockerClient client, Map<String, Node> nodeMap, ContainerNodeNameMap csm, DockerCloud dc, Instant snapshotInstant) {
         Collection<Container> allContainers = csm.getAllContainers();
         
         for (Container container : allContainers) {
@@ -245,7 +247,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * corresponding node isn't there yet.
              * That is why we have to have a grace period for pulling up containers.
              */
-            if (isStillTooYoung(container.getCreated())) {
+            if (isStillTooYoung(container.getCreated(), snapshotInstant)) {
                 continue;
             }
 
@@ -264,10 +266,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
     }
     
-    private boolean isStillTooYoung(Long created) {
+    private boolean isStillTooYoung(Long created, Instant snapshotInstant) {
         Instant createdInstant = Instant.ofEpochSecond(created.longValue());
         
-        Duration containerLifetime = Duration.between(createdInstant, clock.instant());
+        Duration containerLifetime = Duration.between(createdInstant, snapshotInstant);
         Duration untilMayBeCleanedUp = containerLifetime.minus(GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED);
         
         return untilMayBeCleanedUp.isNegative();

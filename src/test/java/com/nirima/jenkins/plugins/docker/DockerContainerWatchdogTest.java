@@ -364,6 +364,70 @@ public class DockerContainerWatchdogTest {
         Assert.assertEquals(0, subject.getAllRemovedNodes().size());
     }
     
+    private static class RemovalTweakingTestableDockerContainerWatchdog extends TestableDockerContainerWatchdog {
+        private Clock currentTestClock;
+
+        public RemovalTweakingTestableDockerContainerWatchdog(Clock currentTestClock) {
+            super();
+            this.currentTestClock = currentTestClock;
+        }
+
+        @Override
+        protected void removeNode(DockerTransientNode dtn) throws IOException {
+            super.removeNode(dtn);
+            
+            currentTestClock = Clock.offset(currentTestClock, Duration.ofMinutes(10));
+            this.setClock(currentTestClock);
+        }
+        
+    }
+    
+    @Test
+    public void testContainersExistsSlowRemovalShallNotOverspill() throws IOException, InterruptedException {
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1527970544000L), ZoneId.of("UTC"));
+
+        TestableDockerContainerWatchdog subject = new RemovalTweakingTestableDockerContainerWatchdog(clock);
+        subject.setClock(clock);
+        
+
+        final String nodeName = "unittest-12345";
+        final String containerId1 = UUID.randomUUID().toString();
+        final String containerId2 = UUID.randomUUID().toString();
+        
+        /* setup of cloud */
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
+
+        List<Container> containerList = new LinkedList<Container>();
+        Container c1 = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
+        containerList.add(c1);
+
+        Container c2 = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
+        containerList.add(c2);
+        
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        listOfCloud.add(cloud);
+        
+        subject.setAllClouds(listOfCloud);
+
+        /* setup of nodes */
+        LinkedList<Node> allNodes = new LinkedList<Node>();
+        subject.setAllNodes(allNodes);
+
+        subject.runExecute();
+        
+        // shall not have called to remove it by force
+        Mockito.verify(dockerApi.getClient(), Mockito.times(0)).removeContainerCmd(containerId1);
+        
+        // ... and shall not have tried to remove neither the first nor the second
+        Assert.assertEquals(0, subject.getContainersRemoved().size());
+    }
+    
     @Test
     public void testSlaveExistsButNoContainer() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
