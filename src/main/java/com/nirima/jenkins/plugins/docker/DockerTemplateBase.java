@@ -17,7 +17,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import com.trilead.ssh2.Connection;
-
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -48,10 +47,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.trimToNull;
-
 
 /**
  * Base for docker templates - does not include Jenkins items like labels.
