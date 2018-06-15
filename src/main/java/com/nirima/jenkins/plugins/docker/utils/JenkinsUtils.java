@@ -169,4 +169,29 @@ public class JenkinsUtils {
         
         return longValue;
     }
+    
+    /**
+     * returns the Java system property specified by <code>key</code>. If that fails, a default value is returned instead.
+     * 
+     * In case the value of the system property cannot be parsed properly (e.g. an invalid identifier was passed), 
+     * the value <code>false</code> is returned.
+     * 
+     * To be replaced with jenkins.util.SystemProperties.getBoolean() once they lift their @Restricted(NoExternalUse.class)
+     * @param key the key of the system property to read.
+     * @param defaultValue the default value which shall be returned in case the property is not defined.
+     * @return the system property of <code>key</code>, or <code>defaultValue</code> in case the property is not defined.
+     */
+    @Restricted(NoExternalUse.class)
+    public static boolean getSystemPropertyBoolean(String key, boolean defaultValue) {
+        String value = getSystemPropertyString(key, null);
+        if (value == null) {
+            return defaultValue;
+        }
+        
+        boolean booleanValue = false;
+        booleanValue = Boolean.parseBoolean(value);
+        
+        return booleanValue;
+    }
+
 }
