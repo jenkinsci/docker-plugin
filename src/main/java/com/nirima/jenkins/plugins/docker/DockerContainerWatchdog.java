@@ -138,11 +138,11 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
         executionStatistics.executions++;
         
-        Instant start = Instant.now();
+        Instant start = clock.instant();
         try {
             ContainerNodeNameMap csmMerged = new ContainerNodeNameMap();
             
-            Instant snapshotInstance = this.clock.instant();
+            Instant snapshotInstance = clock.instant();
             Map<String, Node> nodeMap = loadNodeMap();
             
             try {
@@ -164,7 +164,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 return;
             }
         } finally {
-            Instant stop = Instant.now();
+            Instant stop = clock.instant();
             executionStatistics.overallRuntime += Duration.between(start, stop).toMillis();
         }
         
@@ -329,9 +329,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
         if (gracefulFailed) {
             try {
-                Instant start = Instant.now();
+                Instant start = clock.instant();
                 client.removeContainerCmd(container.getId()).withForce(true).exec();
-                Instant stop = Instant.now();
+                Instant stop = clock.instant();
                 executionStatistics.containersRemovedForce++;
                 executionStatistics.containersRemovedForceRuntimeSum += Duration.between(start, stop).toMillis();
             } catch (RuntimeException e) {
@@ -397,10 +397,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
         
         DockerAPI dockerApi = dc.getDockerApi();
-        Instant start = Instant.now();
+        Instant start = clock.instant();
         boolean success = stopAndRemoveContainer(dockerApi, LOGGER, String.format("(orphaned container found by %s)", DockerContainerWatchdog.class.getSimpleName()),
                 removeVolumes, container.getId(), !containerRunning);
-        Instant stop = Instant.now();
+        Instant stop = clock.instant();
         
         if (success) {
             executionStatistics.containersRemovedGracefully++;
@@ -490,7 +490,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private void checkForTimeout(Instant startedTimestamp) {
-        final Instant now = this.clock.instant();
+        final Instant now = clock.instant();
         Duration runtime = Duration.between(startedTimestamp, now);
         
         if (runtime.compareTo(PROCESSING_TIMEOUT_IN_MS) > 0) {
