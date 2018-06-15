@@ -14,6 +14,7 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
 
 import com.github.dockerjava.api.model.Container;
 
@@ -379,7 +380,17 @@ public class DockerContainerWatchdogTest {
             currentTestClock = Clock.offset(currentTestClock, Duration.ofMinutes(10));
             this.setClock(currentTestClock);
         }
-        
+
+        @Override
+        protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description,
+                boolean removeVolumes, String containerId, boolean stop) {
+            boolean result = super.stopAndRemoveContainer(dockerApi, logger, description, removeVolumes, containerId, stop);
+            
+            currentTestClock = Clock.offset(currentTestClock, Duration.ofMinutes(10));
+            this.setClock(currentTestClock);
+            
+            return result;
+        }
     }
     
     @Test
@@ -428,6 +439,7 @@ public class DockerContainerWatchdogTest {
         Assert.assertEquals(0, subject.getContainersRemoved().size());
     }
     
+    
     @Test
     public void testSlaveExistsButNoContainer() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
@@ -462,4 +474,45 @@ public class DockerContainerWatchdogTest {
         DockerTransientNode removedNode = nodes.get(0);
         Assert.assertEquals(node, removedNode);
     }
+    
+    @Test
+    public void testSlaveExistsButNoContainerCheckForTimeout() throws IOException, InterruptedException {
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1527970544000L), ZoneId.of("UTC"));
+        TestableDockerContainerWatchdog subject = new RemovalTweakingTestableDockerContainerWatchdog(clock);
+        subject.setClock(clock);
+
+        final String nodeName1 = "unittest-78901";
+        final String nodeName2 = "unittest-78902";
+        final String containerId = UUID.randomUUID().toString();
+        
+        /* setup of cloud */
+        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+
+        List<Container> containerList = new LinkedList<Container>();
+        
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        listOfCloud.add(cloud);
+        
+        subject.setAllClouds(listOfCloud);
+
+        /* setup of nodes */
+        LinkedList<Node> allNodes = new LinkedList<Node>();
+        
+        DockerTransientNode node1 = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName1, cloud, true);
+        allNodes.add(node1);
+        DockerTransientNode node2 = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName2, cloud, true);
+        allNodes.add(node2);
+        
+        subject.setAllNodes(allNodes);
+
+        subject.runExecute();
+        
+        List<DockerTransientNode> nodes = subject.getAllRemovedNodes();
+        Assert.assertEquals(1, nodes.size());
+        
+        DockerTransientNode removedNode = nodes.get(0);
+        Assert.assertEquals(node1, removedNode);
+    }
+
 }

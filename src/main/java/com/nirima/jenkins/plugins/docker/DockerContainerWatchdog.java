@@ -63,6 +63,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private static final long RECURRENCE_PERIOD_IN_MS = JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".recurrenceInSeconds", Long.valueOf(5*60))*1000L;
 
     /**
+     * The duration, which defines the maximal amount of time the watchdog is allowed to run 
+     * for a single execution.
+     * The processing will be stopped on next occasion, if this threshold is exceeded.
+     */
+    private static final Duration PROCESSING_TIMEOUT_IN_MS = Duration.ofMillis(RECURRENCE_PERIOD_IN_MS * 4 / 5);
+
+    /**
      * The duration, which is permitted containers to start/run without having a node attached.
      * This is to prevent that the watchdog may be undesirably kill containers, which are just
      * on the way to the be started.
@@ -107,6 +114,15 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      * Implementation of business logic
      */
     
+    private static class WatchdogProcessingTimeout extends Error {
+
+        private static final long serialVersionUID = 2162341066478288340L;
+
+        public WatchdogProcessingTimeout() {
+            super();
+        }
+    }
+    
     @Override
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
         if (!JenkinsUtils.getSystemPropertyBoolean(DockerContainerWatchdog.class.getName()+".enabled", true)) {
@@ -121,18 +137,23 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         Instant snapshotInstance = this.clock.instant();
         Map<String, Node> nodeMap = loadNodeMap();
         
-        for (Cloud c : getAllClouds()) {
-            if (!(c instanceof DockerCloud)) {
-                continue;
+        try {
+            for (Cloud c : getAllClouds()) {
+                if (!(c instanceof DockerCloud)) {
+                    continue;
+                }
+                DockerCloud dc = (DockerCloud) c;
+                LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
+                listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
+                
+                csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
             }
-            DockerCloud dc = (DockerCloud) c;
-            LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
-            listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
-            
-            csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
+    
+            cleanUpSuperfluousComputer(nodeMap, csmMerged, snapshotInstance);
+        } catch (WatchdogProcessingTimeout timeout) {
+            LOGGER.warn("Processing of cleanup watchdog took too long");
+            return;
         }
-
-        cleanUpSuperfluousComputer(nodeMap, csmMerged);
         
         LOGGER.info("Docker Container Watchdog check has been completed");
     }
@@ -256,6 +277,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
             }
 
+            this.checkForTimeout(snapshotInstant);
+            
             // this is a container, which is missing a corresponding node with us
             LOGGER.info("Container {}, which is reported to be assigned to node {}, "
                     + "is no longer associated (node might be gone already?). "
@@ -379,12 +402,14 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return false;
     }
 
-    private void cleanUpSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged) {
+    private void cleanUpSuperfluousComputer(Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged, Instant snapshotInstant) {
         for (Node node : nodeMap.values()) {
             if (! (node instanceof DockerTransientNode)) {
                 // this node does not belong to us
                 continue;
             }
+            
+            this.checkForTimeout(snapshotInstant);
             
             DockerTransientNode dtn = (DockerTransientNode) node;
             
@@ -440,4 +465,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
     }
 
+    private void checkForTimeout(Instant startedTimestamp) {
+        final Instant now = this.clock.instant();
+        Duration runtime = Duration.between(startedTimestamp, now);
+        
+        if (runtime.compareTo(PROCESSING_TIMEOUT_IN_MS) > 0) {
+            throw new WatchdogProcessingTimeout();
+        }
+    }
 }
