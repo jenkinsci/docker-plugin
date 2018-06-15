@@ -138,28 +138,34 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
         executionStatistics.executions++;
         
-        ContainerNodeNameMap csmMerged = new ContainerNodeNameMap();
-        
-        Instant snapshotInstance = this.clock.instant();
-        Map<String, Node> nodeMap = loadNodeMap();
-        
+        Instant start = Instant.now();
         try {
-            for (Cloud c : getAllClouds()) {
-                if (!(c instanceof DockerCloud)) {
-                    continue;
+            ContainerNodeNameMap csmMerged = new ContainerNodeNameMap();
+            
+            Instant snapshotInstance = this.clock.instant();
+            Map<String, Node> nodeMap = loadNodeMap();
+            
+            try {
+                for (Cloud c : getAllClouds()) {
+                    if (!(c instanceof DockerCloud)) {
+                        continue;
+                    }
+                    DockerCloud dc = (DockerCloud) c;
+                    LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
+                    listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
+                    
+                    csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
                 }
-                DockerCloud dc = (DockerCloud) c;
-                LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
-                listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
-                
-                csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
+        
+                cleanUpSuperfluousComputer(nodeMap, csmMerged, snapshotInstance);
+            } catch (WatchdogProcessingTimeout timeout) {
+                LOGGER.warn("Processing of cleanup watchdog took too long");
+                executionStatistics.processingTimeout++;
+                return;
             }
-    
-            cleanUpSuperfluousComputer(nodeMap, csmMerged, snapshotInstance);
-        } catch (WatchdogProcessingTimeout timeout) {
-            LOGGER.warn("Processing of cleanup watchdog took too long");
-            executionStatistics.processingTimeout++;
-            return;
+        } finally {
+            Instant stop = Instant.now();
+            executionStatistics.overallRuntime += Duration.between(start, stop).toMillis();
         }
         
         LOGGER.info("Docker Container Watchdog check has been completed");
@@ -502,6 +508,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         public long nodesRemoved;
         public long nodesRemovedFailed;
         public long processingTimeout;
+        public long overallRuntime;
     }
     
     private void logStatistics() {
@@ -514,7 +521,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 + "Nodes removed successfully: {}, "
                 + "Nodes removal failed: {}, "
                 + "Container removal average duration (gracefully): {} ms, "
-                + "Container removal average duration (force): {} ms",
+                + "Container removal average duration (force): {} ms, "
+                + "Average overall runtime of watchdog: {} ms",
                 executionStatistics.executions, 
                 executionStatistics.processingTimeout,
                 executionStatistics.containersRemovedGracefully,
@@ -523,7 +531,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 executionStatistics.nodesRemoved,
                 executionStatistics.nodesRemovedFailed,
                 executionStatistics.containersRemovedGracefully != 0 ? new Long(executionStatistics.containersRemovedGracefullyRuntimeSum / executionStatistics.containersRemovedGracefully).toString() : 0,
-                executionStatistics.containersRemovedForce != 0 ? new Long(executionStatistics.containersRemovedForceRuntimeSum / executionStatistics.containersRemovedForce).toString() : 0
+                executionStatistics.containersRemovedForce != 0 ? new Long(executionStatistics.containersRemovedForceRuntimeSum / executionStatistics.containersRemovedForce).toString() : 0,
+                executionStatistics.executions != 0 ? new Long(executionStatistics.overallRuntime / executionStatistics.executions).toString() : 0
                 );
     }
 }
