@@ -78,6 +78,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      */
     private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED = Duration.ofSeconds(JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L));
     
+    private static final Statistics executionStatistics = new Statistics();
+    
     @Override
     public long getRecurrencePeriod() {
         // value is in ms.
@@ -132,6 +134,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
         LOGGER.info("Docker Container Watchdog has been triggered");
         
+        logStatistics();
+        
+        executionStatistics.executions++;
+        
         ContainerNodeNameMap csmMerged = new ContainerNodeNameMap();
         
         Instant snapshotInstance = this.clock.instant();
@@ -152,6 +158,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             cleanUpSuperfluousComputer(nodeMap, csmMerged, snapshotInstance);
         } catch (WatchdogProcessingTimeout timeout) {
             LOGGER.warn("Processing of cleanup watchdog took too long");
+            executionStatistics.processingTimeout++;
             return;
         }
         
@@ -316,9 +323,14 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         
         if (gracefulFailed) {
             try {
+                Instant start = Instant.now();
                 client.removeContainerCmd(container.getId()).withForce(true).exec();
+                Instant stop = Instant.now();
+                executionStatistics.containersRemovedForce++;
+                executionStatistics.containersRemovedForceRuntimeSum += Duration.between(start, stop).toMillis();
             } catch (RuntimeException e) {
                 LOGGER.warn("Forced termination of container {} failed with RuntimeException", container.getId(), e);
+                executionStatistics.containersRemovedFailed++;
             }
         }
     }
@@ -379,10 +391,14 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
         
         DockerAPI dockerApi = dc.getDockerApi();
+        Instant start = Instant.now();
         boolean success = stopAndRemoveContainer(dockerApi, LOGGER, String.format("(orphaned container found by %s)", DockerContainerWatchdog.class.getSimpleName()),
                 removeVolumes, container.getId(), !containerRunning);
+        Instant stop = Instant.now();
         
         if (success) {
+            executionStatistics.containersRemovedGracefully++;
+            executionStatistics.containersRemovedGracefullyRuntimeSum += Duration.between(start, stop).toMillis();
             LOGGER.info("Successfully terminated orphaned container {}", containerId);
         } else {
             throw new TerminationException("Graceful termination failed.");
@@ -459,8 +475,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
             try {
                 removeNode(dtn);
+                executionStatistics.nodesRemoved++;
             } catch (IOException e) {
                 LOGGER.warn(String.format("Failed to remove orphaned %s.", dtn), e);
+                executionStatistics.nodesRemovedFailed++;
             }
         }
     }
@@ -472,5 +490,40 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         if (runtime.compareTo(PROCESSING_TIMEOUT_IN_MS) > 0) {
             throw new WatchdogProcessingTimeout();
         }
+    }
+    
+    private static class Statistics {
+        public long executions;
+        public long containersRemovedGracefully;
+        public long containersRemovedGracefullyRuntimeSum;
+        public long containersRemovedForce;
+        public long containersRemovedForceRuntimeSum;
+        public long containersRemovedFailed;
+        public long nodesRemoved;
+        public long nodesRemovedFailed;
+        public long processingTimeout;
+    }
+    
+    private void logStatistics() {
+        LOGGER.info("Watchdog Statistics: "
+                + "Number of overall executions: {}, "
+                + "Executions with processing timeout: {}, "
+                + "Containers removed gracefully: {}, "
+                + "Containers removed with force: {}, "
+                + "Containers removal failed: {}, "
+                + "Nodes removed successfully: {}, "
+                + "Nodes removal failed: {}, "
+                + "Container removal average duration (gracefully): {} ms, "
+                + "Container removal average duration (force): {} ms",
+                executionStatistics.executions, 
+                executionStatistics.processingTimeout,
+                executionStatistics.containersRemovedGracefully,
+                executionStatistics.containersRemovedForce,
+                executionStatistics.containersRemovedFailed,
+                executionStatistics.nodesRemoved,
+                executionStatistics.nodesRemovedFailed,
+                executionStatistics.containersRemovedGracefully != 0 ? new Long(executionStatistics.containersRemovedGracefullyRuntimeSum / executionStatistics.containersRemovedGracefully).toString() : 0,
+                executionStatistics.containersRemovedForce != 0 ? new Long(executionStatistics.containersRemovedForceRuntimeSum / executionStatistics.containersRemovedForce).toString() : 0
+                );
     }
 }
