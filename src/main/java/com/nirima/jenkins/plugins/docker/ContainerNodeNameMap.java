@@ -21,6 +21,12 @@ class ContainerNodeNameMap {
     private final Set<Container> containerSet = new HashSet<>();
 
     /**
+     * indicates that the list of containers is known to be incomplete
+     * (e.g. not all DockerClouds could be interrogated.
+     */
+    private boolean containerListIncomplete;
+
+    /**
      * adds a new mapping between a container and its name of the node, which
      * shall be persisted.
      * 
@@ -92,6 +98,22 @@ class ContainerNodeNameMap {
         result.containerSet.addAll(other.containerSet);
 
         return result;
+    }
+
+    /**
+     * checks if the container list is known to be incomplete
+     * @return <code>true</code> if the list is known to be incomplete; <code>false</code> otherwise.
+     */
+    public boolean isContainerListIncomplete() {
+        return containerListIncomplete;
+    }
+
+    /**
+     * sets the known state of completeness of container list
+     * @param containerListIncomplete the new state of completeness to set
+     */
+    public void setContainerListIncomplete(boolean containerListIncomplete) {
+        this.containerListIncomplete = containerListIncomplete;
     }
 }
 

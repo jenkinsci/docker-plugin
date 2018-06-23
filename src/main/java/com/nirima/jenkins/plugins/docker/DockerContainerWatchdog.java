@@ -147,7 +147,11 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                     csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
                 }
 
-                cleanUpSuperfluousComputer(nodeMap, csmMerged, snapshotInstance);
+                if (csmMerged.isContainerListIncomplete()) {
+                    LOGGER.info("Not checking the list of nodes, as list of containers is known to be incomplete");
+                } else {
+                    cleanUpSuperfluousComputer(nodeMap, csmMerged, snapshotInstance);
+                }
             } catch (WatchdogProcessingTimeout timeout) {
                 LOGGER.warn("Processing of cleanup watchdog took too long; current timeout value: {} ms, "
                         + "watchdog started on {}, ", PROCESSING_TIMEOUT_IN_MS, start.toString(), timeout);
@@ -194,7 +198,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         DockerAPI dockerApi = dc.getDockerApi();
 
         try (final DockerClient client = dockerApi.getClient()) {
-            ContainerNodeNameMap csm = retrieveContainers(client);
+            ContainerNodeNameMap csm = retrieveContainers(dc, client);
 
             DockerDisabled dcDisabled = dc.getDisabled();
             if (dcDisabled.isDisabled()) {
@@ -206,12 +210,23 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             csmMerged = csmMerged.merge(csm);
         } catch (IOException e) {
             LOGGER.warn("Failed to properly close a DockerClient instance; ignoring", e);
+        } catch (ContainersRetrievalException e) {
+            csmMerged.setContainerListIncomplete(true);
         }
 
         return csmMerged;
     }
 
-    private ContainerNodeNameMap retrieveContainers(DockerClient client) {
+    private class ContainersRetrievalException extends Exception {
+
+        private static final long serialVersionUID = -3370783213009509440L;
+
+        public ContainersRetrievalException(Throwable cause) {
+            super(cause);
+        }
+    }
+
+    private ContainerNodeNameMap retrieveContainers(DockerCloud dc, DockerClient client) throws ContainersRetrievalException {
         /*
          * Note:
          * There is no guarantee that each DockerCloud points to a different
@@ -231,10 +246,16 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
         labelFilter.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID, getJenkinsInstanceId());
 
-        List<Container> containerList = client.listContainersCmd()
-                .withShowAll(true)
-                .withLabelFilter(labelFilter)
-                .exec();
+        List<Container> containerList = null;
+        try {
+            containerList = client.listContainersCmd()
+                    .withShowAll(true)
+                    .withLabelFilter(labelFilter)
+                    .exec();
+        } catch (Exception e) {
+            LOGGER.warn("Unable to retrieve list of containers available on DockerCloud {}", dc, e);
+            throw new ContainersRetrievalException(e);
+        }
 
         ContainerNodeNameMap result = new ContainerNodeNameMap();
 
