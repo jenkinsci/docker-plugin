@@ -154,7 +154,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 }
             } catch (WatchdogProcessingTimeout timeout) {
                 LOGGER.warn("Processing of cleanup watchdog took too long; current timeout value: {} ms, "
-                        + "watchdog started on {}, ", PROCESSING_TIMEOUT_IN_MS, start.toString(), timeout);
+                        + "watchdog started on {}", PROCESSING_TIMEOUT_IN_MS, start.toString(), timeout);
                 executionStatistics.addProcessingTimeout();
                 executionStatistics.addOverallRuntime(Duration.between(start, clock.instant()).toMillis());
                 return;
