@@ -59,6 +59,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
     /**
      * The recurrence period how often this task shall be run
+     * 
+     * NB: Reading the property here statically is the right think to do,
+     * because getRecurrencePeriod() is required to return a constant (i.e.
+     * it may not change during runtime).
      */
     private static final long RECURRENCE_PERIOD_IN_MS = JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".recurrenceInSeconds", Long.valueOf(5*60))*1000L;
 
@@ -69,15 +73,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      */
     private static final Duration PROCESSING_TIMEOUT_IN_MS = Duration.ofMillis(RECURRENCE_PERIOD_IN_MS * 4 / 5);
 
-    /**
-     * The duration, which is permitted containers to start/run without having a node attached.
-     * This is to prevent that the watchdog may be undesirably kill containers, which are just
-     * on the way to the be started.
-     * It automatically also is a "minimal lifetime" value for containers, before this watchdog
-     * is allowed to kill any container. 
-     */
-    private static final Duration GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED = Duration.ofSeconds(JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L));
-    
     private static final Statistics executionStatistics = new Statistics();
     
     @Override
@@ -308,10 +303,21 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
     
     private boolean isStillTooYoung(Long created, Instant snapshotInstant) {
-        Instant createdInstant = Instant.ofEpochSecond(created.longValue());
+        final Instant createdInstant = Instant.ofEpochSecond(created.longValue());
         
-        Duration containerLifetime = Duration.between(createdInstant, snapshotInstant);
-        Duration untilMayBeCleanedUp = containerLifetime.minus(GRACE_DURATION_FOR_CONTAINERS_TO_START_WITHOUT_NODE_ATTACHED);
+        final Duration containerLifetime = Duration.between(createdInstant, snapshotInstant);
+        
+        /**
+         * We allow containers to have a grace duration, during which is permitted for them 
+         * to start/run without having a node attached.
+         * This is to prevent that the watchdog may be undesirably kill containers, which are just
+         * on the way to the be started.
+         * It automatically also is a "minimal lifetime" value for containers, before this watchdog
+         * is allowed to kill any container. 
+         */
+        final Duration graceDurationForContainers = Duration.ofSeconds(JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L));
+        
+        final Duration untilMayBeCleanedUp = containerLifetime.minus(graceDurationForContainers);
         
         return untilMayBeCleanedUp.isNegative();
     }
