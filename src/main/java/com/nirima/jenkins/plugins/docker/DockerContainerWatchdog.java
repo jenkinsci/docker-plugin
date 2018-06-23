@@ -43,7 +43,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
     public DockerContainerWatchdog() {
         super(String.format("%s Asynchronous Periodic Work", DockerContainerWatchdog.class.getSimpleName()));
-        this.clock = Clock.systemUTC();
+        clock = Clock.systemUTC();
     }
 
     /**
@@ -283,7 +283,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
             }
 
-            this.checkForTimeout(snapshotInstant);
+            checkForTimeout(snapshotInstant);
 
             // this is a container, which is missing a corresponding node with us
             LOGGER.info("Container {}, which is reported to be assigned to node {}, "
@@ -435,7 +435,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 continue;
             }
 
-            this.checkForTimeout(snapshotInstant);
+            checkForTimeout(snapshotInstant);
 
             DockerTransientNode dtn = (DockerTransientNode) node;
 
