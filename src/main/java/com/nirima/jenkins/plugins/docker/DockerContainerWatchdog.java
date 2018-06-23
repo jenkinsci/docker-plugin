@@ -196,7 +196,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         try (final DockerClient client = dockerApi.getClient()) {
             ContainerNodeNameMap csm = retrieveContainers(client);
 
-            cleanUpSuperfluousContainers(client, nodeMap, csm, dc, snapshotInstant);
+            DockerDisabled dcDisabled = dc.getDisabled();
+            if (dcDisabled.isDisabled()) {
+                LOGGER.info("Will not cleanup superfluous containers on DockerCloud {}, as it is disabled", dc.toString());
+            } else {
+                cleanUpSuperfluousContainers(client, nodeMap, csm, dc, snapshotInstant);
+            }
 
             csmMerged = csmMerged.merge(csm);
         } catch (IOException e) {
