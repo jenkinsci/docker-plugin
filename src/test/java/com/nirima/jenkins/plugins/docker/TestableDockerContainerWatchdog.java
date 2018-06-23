@@ -29,7 +29,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     private List<DockerCloud> allClouds;
     private List<DockerTransientNode> nodesRemoved = new LinkedList<>();
     private List<String> containersRemoved = new LinkedList<>();
-    
+
     @Override
     protected List<DockerCloud> getAllClouds() {
         return Collections.unmodifiableList(allClouds);
@@ -39,7 +39,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     protected List<Node> getAllNodes() {
         return allNodes;
     }
-    
+
     @Override
     protected void removeNode(DockerTransientNode dtn) throws IOException {
         nodesRemoved.add(dtn);
@@ -64,11 +64,11 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     public void setAllClouds(List<DockerCloud> allClouds) {
         this.allClouds = allClouds;
     }
-    
+
     public List<DockerTransientNode> getAllRemovedNodes() {
         return Collections.unmodifiableList(nodesRemoved);
     }
-    
+
     public List<String> getContainersRemoved() {
         return Collections.unmodifiableList(containersRemoved);
     }
@@ -76,19 +76,19 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     public void runExecute() throws IOException, InterruptedException {
         TaskListener mockedListener = Mockito.mock(TaskListener.class);
         Mockito.when(mockedListener.getLogger()).thenReturn(System.out);
-        
+
         execute(mockedListener);
     }
-    
+
     public static DockerAPI createMockedDockerAPI(List<Container> containerList) {
         DockerAPI result = Mockito.mock(DockerAPI.class);
-        
+
         DockerClient client = Mockito.mock(DockerClient.class);
         Mockito.when(result.getClient()).thenReturn(client);
-        
+
         ListContainersCmd listContainerCmd = Mockito.mock(ListContainersCmd.class);
         Mockito.when(client.listContainersCmd()).thenReturn(listContainerCmd);
-        
+
         Mockito.when(listContainerCmd.withShowAll(true)).thenReturn(listContainerCmd);
         Mockito.when(listContainerCmd.withLabelFilter(Mockito.anyMap())).thenAnswer( new Answer<ListContainersCmd>() {
 
@@ -97,39 +97,39 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
                 Map<String, String> arg = (Map<String, String>) invocation.getArgumentAt(0, Map.class);
                 String jenkinsInstanceIdInFilter = arg.get(DockerContainerLabelKeys.JENKINS_INSTANCE_ID);
                 Assert.assertEquals(UNITTEST_JENKINS_ID, jenkinsInstanceIdInFilter);
-                
+
                 return listContainerCmd;
             }
-            
-        
+
+
         });
         Mockito.when(listContainerCmd.exec()).thenReturn(containerList);
-        
+
         return result;
     }
-    
+
     public static Container createMockedContainer(String containerId, String status, long createdOn, Map<String, String> labels) {
         Container result = Mockito.mock(Container.class);
-        
+
         Mockito.when(result.getId()).thenReturn(containerId);
         Mockito.when(result.getStatus()).thenReturn(status);
         Mockito.when(result.getCreated()).thenReturn(createdOn);
         Mockito.when(result.getLabels()).thenReturn(labels);
-        
+
         return result;
     }
-    
+
     public static DockerTransientNode createMockedDockerTransientNode(String containerId, String nodeName, DockerCloud cloud, boolean offline) {
         DockerTransientNode result = Mockito.mock(DockerTransientNode.class);
         Mockito.when(result.getContainerId()).thenReturn(containerId);
         Mockito.when(result.getNodeName()).thenReturn(nodeName);
         Mockito.when(result.getCloud()).thenReturn(cloud);
-        
+
         SlaveComputer sc = Mockito.mock(SlaveComputer.class);
         Mockito.when(sc.isOffline()).thenReturn(offline);
-        
+
         Mockito.when(result.getComputer()).thenReturn(sc);
-        
+
         return result;
     }
 }
