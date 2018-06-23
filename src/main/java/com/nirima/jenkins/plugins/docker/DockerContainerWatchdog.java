@@ -141,11 +141,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             Map<String, Node> nodeMap = loadNodeMap();
 
             try {
-                for (Cloud c : getAllClouds()) {
-                    if (!(c instanceof DockerCloud)) {
-                        continue;
-                    }
-                    DockerCloud dc = (DockerCloud) c;
+                for (DockerCloud dc : getAllClouds()) {
                     LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
                     listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
 
