@@ -150,8 +150,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
                 cleanUpSuperfluousComputer(nodeMap, csmMerged, snapshotInstance);
             } catch (WatchdogProcessingTimeout timeout) {
-                LOGGER.warn("Processing of cleanup watchdog took too long");
+                LOGGER.warn("Processing of cleanup watchdog took too long; current timeout value: {} ms, "
+                        + "watchdog started on {}, ", PROCESSING_TIMEOUT_IN_MS, start.toString(), timeout);
                 executionStatistics.processingTimeout++;
+                executionStatistics.overallRuntime += Duration.between(start, clock.instant()).toMillis();
                 return;
             }
         } finally {
