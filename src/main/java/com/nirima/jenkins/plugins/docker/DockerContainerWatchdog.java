@@ -129,9 +129,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
         LOGGER.info("Docker Container Watchdog has been triggered");
 
-        logStatistics();
+        executionStatistics.writeStatisticsToLog();
 
-        executionStatistics.executions++;
+        executionStatistics.addExecution();
 
         Instant start = clock.instant();
         try {
@@ -152,13 +152,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             } catch (WatchdogProcessingTimeout timeout) {
                 LOGGER.warn("Processing of cleanup watchdog took too long; current timeout value: {} ms, "
                         + "watchdog started on {}, ", PROCESSING_TIMEOUT_IN_MS, start.toString(), timeout);
-                executionStatistics.processingTimeout++;
-                executionStatistics.overallRuntime += Duration.between(start, clock.instant()).toMillis();
+                executionStatistics.addProcessingTimeout();
+                executionStatistics.addOverallRuntime(Duration.between(start, clock.instant()).toMillis());
                 return;
             }
         } finally {
             Instant stop = clock.instant();
-            executionStatistics.overallRuntime += Duration.between(start, stop).toMillis();
+            executionStatistics.addOverallRuntime(Duration.between(start, stop).toMillis());
         }
 
         LOGGER.info("Docker Container Watchdog check has been completed");
@@ -336,11 +336,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 Instant start = clock.instant();
                 client.removeContainerCmd(container.getId()).withForce(true).exec();
                 Instant stop = clock.instant();
-                executionStatistics.containersRemovedForce++;
-                executionStatistics.containersRemovedForceRuntimeSum += Duration.between(start, stop).toMillis();
+                executionStatistics.addContainerRemovalForce(Duration.between(start, stop).toMillis());
             } catch (RuntimeException e) {
                 LOGGER.warn("Forced termination of container {} failed with RuntimeException", container.getId(), e);
-                executionStatistics.containersRemovedFailed++;
+                executionStatistics.addContainerRemovalFailed();
             }
         }
     }
@@ -407,8 +406,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         Instant stop = clock.instant();
 
         if (success) {
-            executionStatistics.containersRemovedGracefully++;
-            executionStatistics.containersRemovedGracefullyRuntimeSum += Duration.between(start, stop).toMillis();
+            executionStatistics.addContainerRemovalGracefully(Duration.between(start, stop).toMillis());
             LOGGER.info("Successfully terminated orphaned container {}", containerId);
         } else {
             throw new TerminationException("Graceful termination failed.");
@@ -485,10 +483,10 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
             try {
                 removeNode(dtn);
-                executionStatistics.nodesRemoved++;
+                executionStatistics.addNodeRemoved();
             } catch (IOException e) {
                 LOGGER.warn(String.format("Failed to remove orphaned %s.", dtn), e);
-                executionStatistics.nodesRemovedFailed++;
+                executionStatistics.addNodeRemovedFailed();
             }
         }
     }
@@ -502,41 +500,105 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
     }
 
+    /**
+     * class storing the internal statistics figures of the watchdog
+     *
+     */
     private static class Statistics {
-        public long executions;
-        public long containersRemovedGracefully;
-        public long containersRemovedGracefullyRuntimeSum;
-        public long containersRemovedForce;
-        public long containersRemovedForceRuntimeSum;
-        public long containersRemovedFailed;
-        public long nodesRemoved;
-        public long nodesRemovedFailed;
-        public long processingTimeout;
-        public long overallRuntime;
+        private long executions;
+        private long containersRemovedGracefully;
+        private long containersRemovedGracefullyRuntimeSum;
+        private long containersRemovedForce;
+        private long containersRemovedForceRuntimeSum;
+        private long containersRemovedFailed;
+        private long nodesRemoved;
+        private long nodesRemovedFailed;
+        private long processingTimeout;
+        private long overallRuntime;
+
+        public void writeStatisticsToLog() {
+            LOGGER.info("Watchdog Statistics: "
+                    + "Number of overall executions: {}, "
+                    + "Executions with processing timeout: {}, "
+                    + "Containers removed gracefully: {}, "
+                    + "Containers removed with force: {}, "
+                    + "Containers removal failed: {}, "
+                    + "Nodes removed successfully: {}, "
+                    + "Nodes removal failed: {}, "
+                    + "Container removal average duration (gracefully): {} ms, "
+                    + "Container removal average duration (force): {} ms, "
+                    + "Average overall runtime of watchdog: {} ms",
+                    executions, 
+                    processingTimeout,
+                    containersRemovedGracefully,
+                    containersRemovedForce,
+                    containersRemovedFailed,
+                    nodesRemoved,
+                    nodesRemovedFailed,
+                    getContainerRemovalAverageDurationGracefully(),
+                    getContainerRemovalAverageDurationForce(),
+                    getAverageAoverallRuntime()
+                    );
+        }
+
+        private void addExecution() {
+            executions++;
+        }
+
+        private void addContainerRemovalGracefully(long runtime) {
+            containersRemovedGracefully++;
+            containersRemovedGracefullyRuntimeSum += runtime;
+        }
+
+        private void addContainerRemovalForce(long runtime) {
+            containersRemovedForce++;
+            containersRemovedForceRuntimeSum += runtime;
+        }
+
+        private void addContainerRemovalFailed() {
+            containersRemovedFailed++;
+        }
+
+        private void addNodeRemoved() {
+            nodesRemoved++;
+        }
+
+        private void addNodeRemovedFailed() {
+            nodesRemovedFailed++;
+        }
+
+        private void addProcessingTimeout() {
+            processingTimeout++;
+        }
+
+        private void addOverallRuntime(long runtime) {
+            overallRuntime += runtime;
+        }
+
+        private String getAverageAoverallRuntime() {
+            if (executions == 0) {
+                return "0";
+            }
+
+            return new Long(overallRuntime / executions).toString();
+        }
+
+        private String getContainerRemovalAverageDurationForce() {
+            if (containersRemovedForce == 0) {
+                return "0";
+            }
+
+            return new Long(containersRemovedForceRuntimeSum / containersRemovedForce).toString();
+        }
+
+        private String getContainerRemovalAverageDurationGracefully() {
+            if (containersRemovedGracefully == 0) {
+                return "0";
+            }
+
+            return new Long(containersRemovedGracefullyRuntimeSum / containersRemovedGracefully).toString();
+        }
     }
 
-    private void logStatistics() {
-        LOGGER.info("Watchdog Statistics: "
-                + "Number of overall executions: {}, "
-                + "Executions with processing timeout: {}, "
-                + "Containers removed gracefully: {}, "
-                + "Containers removed with force: {}, "
-                + "Containers removal failed: {}, "
-                + "Nodes removed successfully: {}, "
-                + "Nodes removal failed: {}, "
-                + "Container removal average duration (gracefully): {} ms, "
-                + "Container removal average duration (force): {} ms, "
-                + "Average overall runtime of watchdog: {} ms",
-                executionStatistics.executions, 
-                executionStatistics.processingTimeout,
-                executionStatistics.containersRemovedGracefully,
-                executionStatistics.containersRemovedForce,
-                executionStatistics.containersRemovedFailed,
-                executionStatistics.nodesRemoved,
-                executionStatistics.nodesRemovedFailed,
-                executionStatistics.containersRemovedGracefully != 0 ? new Long(executionStatistics.containersRemovedGracefullyRuntimeSum / executionStatistics.containersRemovedGracefully).toString() : 0,
-                executionStatistics.containersRemovedForce != 0 ? new Long(executionStatistics.containersRemovedForceRuntimeSum / executionStatistics.containersRemovedForce).toString() : 0,
-                executionStatistics.executions != 0 ? new Long(executionStatistics.overallRuntime / executionStatistics.executions).toString() : 0
-                );
-    }
+
 }
