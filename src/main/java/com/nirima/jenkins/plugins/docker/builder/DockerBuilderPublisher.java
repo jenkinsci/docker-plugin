@@ -477,14 +477,26 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             ListBoxModel model = new ListBoxModel();
             model.add("Cloud this build is running on", "");
             for (Cloud cloud : DockerCloud.instances()) {
-                model.add(cloud.name);
+                if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                    model.add(cloud.name);
+                } else if (cloud instanceof DockerCloud && !((DockerCloud) cloud).isUnAccessibleForNonAdminUsers()) {
+                    model.add(cloud.name);
+                }
             }
             return model;
         }
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-            return true;
+            if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                return true;
+            }
+            for (DockerCloud it : DockerCloud.instances()) {
+                if (!it.isUnAccessibleForNonAdminUsers()) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override

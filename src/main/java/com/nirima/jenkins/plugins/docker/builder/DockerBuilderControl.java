@@ -47,7 +47,7 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
                 return true;
             }
             for (DockerCloud it : DockerCloud.instances()) {
-                if (it.isAllowAccessForNonAdminUsers()) {
+                if (!it.isUnAccessibleForNonAdminUsers()) {
                     return true;
                 }
             }

@@ -105,9 +105,9 @@ public class DockerCloud extends Cloud {
     private boolean exposeDockerHost;
 
     /**
-     * Indicates if on this docker cloud, any user can do any action on those containers
+     * Indicates if on this docker cloud, Non admin users can't configure some actions
      */
-    private boolean allowAccessForNonAdminUsers;
+    private boolean unAccessibleForNonAdminUsers;
 
     private @CheckForNull DockerDisabled disabled;
 
@@ -648,7 +648,7 @@ public class DockerCloud extends Cloud {
         sb.append(", containerCap=").append(containerCap);
         sb.append(", exposeDockerHost=").append(exposeDockerHost);
         sb.append(", disabled=").append(disabled);
-        sb.append(", allowAccessForNonAdminUsers=").append(allowAccessForNonAdminUsers);
+        sb.append(", unAccessibleForNonAdminUsers=").append(unAccessibleForNonAdminUsers);
         sb.append(", templates='").append(templates).append('\'');
         sb.append('}');
         return sb.toString();
@@ -663,7 +663,7 @@ public class DockerCloud extends Cloud {
         result = prime * result + containerCap;
         result = prime * result + ((templates == null) ? 0 : templates.hashCode());
         result = prime * result + (exposeDockerHost ? 1231 : 1237);
-        result = prime * result + (allowAccessForNonAdminUsers ? 1231 : 1237);
+        result = prime * result + (unAccessibleForNonAdminUsers ? 1231 : 1237);
         result = prime * result + getDisabled().hashCode();
         return result;
     }
@@ -680,7 +680,7 @@ public class DockerCloud extends Cloud {
         if (containerCap != that.containerCap) return false;
         if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
         if (exposeDockerHost != that.exposeDockerHost)return false;
-        if (allowAccessForNonAdminUsers != that.allowAccessForNonAdminUsers)return false;
+        if (unAccessibleForNonAdminUsers != that.unAccessibleForNonAdminUsers)return false;
         if (!getDisabled().equals(that.getDisabled())) return false;
         return true;
     }
@@ -728,13 +728,13 @@ public class DockerCloud extends Cloud {
         return instances;
     }
 
-    public boolean isAllowAccessForNonAdminUsers() {
-        return this.allowAccessForNonAdminUsers;
+    public boolean isUnAccessibleForNonAdminUsers() {
+        return this.unAccessibleForNonAdminUsers;
     }
 
     @DataBoundSetter
-    public void setAllowAccessForNonAdminUsers(boolean allowAccessForNonAdminUsers) {
-        this.allowAccessForNonAdminUsers = allowAccessForNonAdminUsers;
+    public void setUnAccessibleForNonAdminUsers(boolean unAccessibleForNonAdminUsers) {
+        this.unAccessibleForNonAdminUsers = unAccessibleForNonAdminUsers;
     }
 
 

@@ -17,7 +17,7 @@
         <f:number default="100"/>
     </f:entry>
 
-     <f:entry title="${%Allow access for non admin users}" field="allowAccessForNonAdminUsers">
+     <f:entry title="${%Forbid actions for non admin users}" field="unAccessibleForNonAdminUsers">
             <f:checkbox />
      </f:entry>
 
