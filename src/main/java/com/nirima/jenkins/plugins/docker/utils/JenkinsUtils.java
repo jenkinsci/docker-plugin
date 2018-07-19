@@ -137,7 +137,6 @@ public class JenkinsUtils {
         if (value == null) {
             return defaultValue;
         }
-
         return value;
     }
 
@@ -158,7 +157,6 @@ public class JenkinsUtils {
         if (value == null) {
             return defaultValue;
         }
-
         Long longValue = null;
         try {
             longValue = Long.decode(value);
@@ -166,7 +164,6 @@ public class JenkinsUtils {
             LOG.warn("System property {} is attempted to be read as type Long, but value '{}' cannot be parsed as a number", key, value, e);
             return defaultValue;
         }
-
         return longValue;
     }
 
@@ -187,10 +184,8 @@ public class JenkinsUtils {
         if (value == null) {
             return defaultValue;
         }
-
         boolean booleanValue = false;
         booleanValue = Boolean.parseBoolean(value);
-
         return booleanValue;
     }
 
