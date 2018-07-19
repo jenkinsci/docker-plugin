@@ -21,13 +21,13 @@ class ContainerNodeNameMap {
     private final Set<Container> containerSet = new HashSet<>();
 
     /**
-     * indicates that the list of containers is known to be incomplete
-     * (e.g. not all DockerClouds could be interrogated.
+     * Indicates that the list of containers is known to be incomplete.
+     * e.g. not all DockerClouds could be interrogated.
      */
     private boolean containerListIncomplete;
 
     /**
-     * adds a new mapping between a container and its name of the node, which
+     * Adds a new mapping between a container and its name of the node, which
      * shall be persisted.
      * 
      * @param container
@@ -41,7 +41,7 @@ class ContainerNodeNameMap {
     }
 
     /**
-     * retrieves a name of a node based on the identifier of a container.
+     * Retrieves a name of a node based on the identifier of a container.
      * 
      * @param containerId
      *            the container for which the name of the node shall be
@@ -55,7 +55,7 @@ class ContainerNodeNameMap {
     }
 
     /**
-     * checks, if a given container identifier was registered previously.
+     * Checks if a given container identifier was registered previously.
      * 
      * @param containerId
      *            the identifier of the container for which the registration shall be checked
@@ -66,7 +66,7 @@ class ContainerNodeNameMap {
     }
 
     /**
-     * retrieves a collection of containers, which contains all containers
+     * Retrieves a collection of containers which contains all containers
      * registered in this mapping.
      * 
      * @return a collection of containers, which contains all containers
@@ -77,9 +77,9 @@ class ContainerNodeNameMap {
     }
 
     /**
-     * merges the current instance with another instance of
+     * Merges the current instance with another instance of
      * <code>ContainerNodeNameMapping</code>, returning a new instance of
-     * <code>ContainerNodeNameMapping</code>, which contains the superset of all
+     * <code>ContainerNodeNameMapping</code> which contains the superset of all
      * mappings.
      * 
      * @param other
@@ -101,7 +101,7 @@ class ContainerNodeNameMap {
     }
 
     /**
-     * checks if the container list is known to be incomplete
+     * Checks if the container list is known to be incomplete.
      * @return <code>true</code> if the list is known to be incomplete; <code>false</code> otherwise.
      */
     public boolean isContainerListIncomplete() {
@@ -109,8 +109,8 @@ class ContainerNodeNameMap {
     }
 
     /**
-     * sets the known state of completeness of container list
-     * @param containerListIncomplete the new state of completeness to set
+     * Sets the known state of completeness of container list.
+     * @param containerListIncomplete the new state of completeness to set.
      */
     public void setContainerListIncomplete(boolean containerListIncomplete) {
         this.containerListIncomplete = containerListIncomplete;
