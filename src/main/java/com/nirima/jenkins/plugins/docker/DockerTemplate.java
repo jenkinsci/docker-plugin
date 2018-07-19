@@ -223,14 +223,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         final String templateName = getName();
-        
-        Map<String, String> labels = result.getLabels();
+        final Map<String, String> labels = result.getLabels();
         labels.put(DockerContainerLabelKeys.REMOVE_VOLUMES, Boolean.toString(isRemoveVolumes()));
         labels.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
-        
         final String nodeName = calcUnusedNodeName(templateName);
         setNodeNameInContainerConfig(result, nodeName);
-        
         return result;
     }
 
