@@ -28,14 +28,12 @@ import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 
 /**
- * Periodic job, which gets executed by Jenkins automatically, to ensure the
+ * Periodic job which gets executed by Jenkins automatically. Ensures the
  * consistency of the containers currently running on the docker and the nodes
  * which are attached to this Jenkins instance.
  * 
  * @author eaglerainbow
- *
  */
-
 @Extension
 public class DockerContainerWatchdog extends AsyncPeriodicWork {
     private Clock clock;
@@ -111,7 +109,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      */
 
     private static class WatchdogProcessingTimeout extends Error {
-
         private static final long serialVersionUID = 2162341066478288340L;
 
         public WatchdogProcessingTimeout() {
@@ -218,7 +215,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private class ContainersRetrievalException extends Exception {
-
         private static final long serialVersionUID = -3370783213009509440L;
 
         public ContainersRetrievalException(Throwable cause) {
@@ -370,23 +366,19 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private static class TerminationException extends Exception {
-
         private static final long serialVersionUID = -7259431101547222511L;
 
         public TerminationException(String message) {
             super(message);
         }
-
     }
 
     private static class ContainerIsTaintedException extends Exception {
-
         private static final long serialVersionUID = -8500246547989418166L;
 
         public ContainerIsTaintedException(String message) {
             super(message);
         }
-
     }
 
     private void terminateContainerGracefully(DockerCloud dc, Container container) throws TerminationException, ContainerIsTaintedException {
@@ -526,8 +518,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     /**
-     * class storing the internal statistics figures of the watchdog
-     *
+     * Stores the internal statistics.
      */
     private static class Statistics {
         private long executions;
@@ -604,7 +595,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             if (executions == 0) {
                 return "0";
             }
-
             return new Long(overallRuntime / executions).toString();
         }
 
@@ -612,7 +602,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             if (containersRemovedForce == 0) {
                 return "0";
             }
-
             return new Long(containersRemovedForceRuntimeSum / containersRemovedForce).toString();
         }
 
@@ -620,10 +609,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             if (containersRemovedGracefully == 0) {
                 return "0";
             }
-
             return new Long(containersRemovedGracefullyRuntimeSum / containersRemovedGracefully).toString();
         }
     }
-
-
 }
