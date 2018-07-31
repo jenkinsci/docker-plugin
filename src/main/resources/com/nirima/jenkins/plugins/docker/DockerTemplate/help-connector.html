@@ -1,0 +1,31 @@
+<div>
+
+    <p>For all connection methods, Jenkins will start by triggering a <code>docker run</code>.
+        Then, after this step, there will optionally be more steps to establish the connection.
+        There is currently three alternative ways to connect your Jenkins master
+        to the dynamically provisioned Docker agents.
+    </p>
+
+    <p>There are different pros and cons for each connection method. Depending on your environment, choose the one matching your needs. More detailed
+        prerequisites are provided once you select a given method.</p>
+
+    <dl>
+        <dt>Attach Docker container</dt>
+        <dd>This method runs a container, then connects to it using <code>docker exec</code>,
+            all by using the Docker API.
+            The agent does not need to be able to reach the master through the network layers
+            to communicate ; all will go through Docker API.
+        </dd>
+
+        <dt>Connect with JNLP</dt>
+        <dd>The container will only be passed an initial <code>docker run</code> command with the right secret.
+        And the remoting agent will establish the connection with the master through the network.
+        Hence, the agent must be able to access the master through its address and port.</dd>
+
+        <dt>Connect with SSH</dt>
+        <dd>The specified image is expected to run an SSH server.
+            Then, it will treat that computer like it usually does for any SSH connected agent:
+            the master will log into it, copy the remoting agent, then start it.
+        </dd>
+    </dl>
+</div>

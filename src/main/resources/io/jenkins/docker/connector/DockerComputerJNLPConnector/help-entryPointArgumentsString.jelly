@@ -1,0 +1,53 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+  <div>
+    <p>
+      Arguments to be passed to the container's entry point.
+    </p>
+    <p>
+      <b>NOTE:</b>
+      This field is a multi-line string.
+      Each (non-empty) line defines a seperate argument.
+      If you require more than one argument
+      (e.g. copying one of the examples below)
+      then you will need to expand the field,
+      otherwise you'll end up with one long line instead of multiple lines.
+    </p>
+    <p>
+      Limited variable substitution (using $${VARIABLE_NAME} syntax) is carried out on the configured strings prior to starting the container.
+      In addition to any globally configured environment variables, the variables that can be used here are:
+      <dl>
+        <j:forEach var="entry" items="${app.getDescriptor('io.jenkins.docker.connector.DockerComputerJNLPConnector').entryPointArgumentVariables}">
+          <dt><tt>${entry.name}</tt></dt>
+          <dd>${entry.description}</dd>
+        </j:forEach>
+      </dl>
+    </p>
+    <p>
+      For example, if you are using a custom container that has
+      <tt>java</tt>
+      and
+      <tt>wget</tt>
+      installed but does not have
+      <tt>slave.jar</tt>
+      pre-installed then you could use the following instead:
+      <blockquote>
+        <tt>sh</tt><br/>
+        <tt>-c</tt><br/>
+        <tt>wget $${JENKINS_URL}jnlpJars/slave.jar &amp;&amp; java -jar slave.jar -jnlpUrl $${JENKINS_URL}computer/$${NODE_NAME}/slave-agent.jnlp -secret $${JNLP_SECRET}</tt><br/>
+      </blockquote>
+    </p>
+    <p>
+      If this field is left blank then it defaults to arguments
+      suitable for the standard
+      Jenkins JNLP Agent Docker image, 
+      <a href="https://github.com/jenkinsci/docker-jnlp-slave">jenkins/jnlp-slave</a>,
+      which are:
+      <blockquote>
+        <j:forEach var="entry" items="${app.getDescriptor('io.jenkins.docker.connector.DockerComputerJNLPConnector').defaultEntryPointArguments}">
+          <tt>${entry}</tt><br/>
+        </j:forEach>
+      </blockquote>
+    </p>
+  </div>
+</j:jelly>

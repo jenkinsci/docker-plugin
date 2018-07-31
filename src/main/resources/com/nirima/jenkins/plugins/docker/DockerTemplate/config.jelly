@@ -7,6 +7,10 @@
 
     <f:property field="disabled"/>
 
+    <f:entry title="${%Name}" field="name">
+        <f:textbox />
+    </f:entry>
+
     <f:property field="dockerTemplateBase"/>
 
 
@@ -14,7 +18,7 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="${%Remote Filing System Root}" field="remoteFs">
+    <f:entry title="${%Remote File System Root}" field="remoteFs">
         <f:textbox/>
     </f:entry>
 

@@ -171,8 +171,8 @@ import io.netty.util.concurrent.DefaultThreadFactory;
  *
  * To use it just pass an instance via {@link DockerClientImpl#withDockerCmdExecFactory(DockerCmdExecFactory)}
  *
- * @see https://docs.docker.com/engine/reference/api/docker_remote_api_v1.21/#attach-to-a-container
- * @see https://docs.docker.com/engine/reference/api/docker_remote_api_v1.21/#exec-start
+ * @see <a href="https://docs.docker.com/engine/reference/api/docker_remote_api_v1.21/#attach-to-a-container">attach-to-a-container</a>
+ * @see <a href="https://docs.docker.com/engine/reference/api/docker_remote_api_v1.21/#exec-start">exec-start</a>
  *
  *
  * @author Marcus Linke

@@ -15,6 +15,8 @@ import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,17 +86,19 @@ public class JenkinsUtils {
 
         Collection clouds = Collections2.filter(Jenkins.getInstance().clouds,
                 new Predicate<Cloud>() {
+                    @Override
                     public boolean apply(@Nullable Cloud input) {
                         return input instanceof DockerCloud;
                     }
                 });
 
-        return (Collection<DockerCloud>)clouds;
+        return clouds;
     }
 
     public static DockerCloud getServer(final String serverName) {
 
         return Iterables.find(getServers(), new Predicate<DockerCloud>() {
+            @Override
             public boolean apply(@Nullable DockerCloud input) {
                 return serverName.equals(input.getDisplayName());
             }
@@ -112,5 +116,10 @@ public class JenkinsUtils {
             _id = "";
         }
         return _id;
+    }
+
+    @Restricted(NoExternalUse.class)
+    public static void setTestInstanceId(final String id) {
+        _id = id;
     }
 }

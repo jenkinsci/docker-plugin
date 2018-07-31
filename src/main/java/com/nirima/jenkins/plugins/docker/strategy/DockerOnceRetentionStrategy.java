@@ -25,9 +25,10 @@ import static hudson.util.TimeUnit2.MINUTES;
 /**
  * Mix of {@link org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy} (1.3) and {@link CloudRetentionStrategy}
  * that allows configure it parameters and has Descriptor.
- * <p/>
+ * <p>
  * Retention strategy that allows a cloud slave to run only a single build before disconnecting.
  * A {@link ContinuableExecutable} does not trigger termination.
+ * </p>
  */
 public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerComputer> implements ExecutorListener {
 

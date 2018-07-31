@@ -18,7 +18,6 @@ import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
-import hudson.util.Messages;
 
 /**
  * Records that the user has disabled something "until further notice", or the
@@ -181,7 +180,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
                     html.append(Util.escape(reason));
                     if (!exception.isEmpty()) {
                         html.append(" <a href='#' class='showDetails'>");
-                        html.append(Messages.FormValidation_Error_Details());
+                        html.append(Messages.ShowDetails());
                         html.append("</a><pre style='display:none'>");
                         html.append(Util.escape(exception));
                         html.append("</pre>");

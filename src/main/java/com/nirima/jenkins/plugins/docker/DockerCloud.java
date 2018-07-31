@@ -22,6 +22,7 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
+import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
@@ -34,6 +35,7 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +62,13 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 public class DockerCloud extends Cloud {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerCloud.class);
+
+    /**
+     * Default value for {@link #getEffectiveErrorDurationInMilliseconds()}
+     * used when {@link #errorDuration} is null.
+     */
+    @Restricted(NoExternalUse.class)
+    private static final int ERROR_DURATION_DEFAULT_SECONDS = 300; // 5min
 
     @CheckForNull
     private List<DockerTemplate> templates;
@@ -97,6 +106,7 @@ public class DockerCloud extends Cloud {
      * Track the count per image name for images currently being
      * provisioned, but not necessarily reported yet by docker.
      */
+    @Restricted(NoExternalUse.class)
     static final Map<String, Map<String, Integer>> CONTAINERS_IN_PROGRESS = new HashMap<>();
 
     /**
@@ -110,6 +120,9 @@ public class DockerCloud extends Cloud {
     private boolean unAccessibleForNonAdminUsers;
 
     private @CheckForNull DockerDisabled disabled;
+
+    /** Length of time, in seconds, that {@link #disabled} should auto-disable for if we encounter an error. */
+    private @CheckForNull Integer errorDuration;
 
     @DataBoundConstructor
     public DockerCloud(String name,
@@ -131,6 +144,7 @@ public class DockerCloud extends Cloud {
                        String version,
                        String dockerHostname) {
         this(name, new DockerAPI(dockerHost, connectTimeout, readTimeout, version, dockerHostname), templates);
+        setContainerCap(containerCap);
     }
 
     @Deprecated
@@ -358,7 +372,7 @@ public class DockerCloud extends Cloud {
                             plannedNode.complete(slave);
 
                             // On provisioning completion, let's trigger NodeProvisioner
-                            Jenkins.getInstance().addNode(slave);
+                            robustlyAddNodeToJenkins(slave);
 
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
@@ -390,13 +404,53 @@ public class DockerCloud extends Cloud {
             return r;
         } catch (Exception e) {
             LOGGER.error("Exception while provisioning for label: '{}', cloud='{}'", label, getDisplayName(), e);
-            final DockerDisabled reasonForDisablement = getDisabled();
-            reasonForDisablement.disableBySystem("Cloud provisioning failure", TimeUnit.MINUTES.toMillis(5), e);
-            setDisabled(reasonForDisablement);
+            final long milliseconds = getEffectiveErrorDurationInMilliseconds();
+            if (milliseconds > 0L) {
+                final DockerDisabled reasonForDisablement = getDisabled();
+                reasonForDisablement.disableBySystem("Cloud provisioning failure", milliseconds, e);
+                setDisabled(reasonForDisablement);
+            }
             return Collections.emptyList();
         }
     }
 
+    /**
+     * Workaround for Jenkins core issue in Nodes.java. There's a line there
+     * saying "<i>TODO there is a theoretical race whereby the node instance is
+     * updated/removed after lock release</i>". When we're busy adding nodes
+     * this is not merely "theoretical"!
+     * 
+     * @see <a href=
+     *      "https://github.com/jenkinsci/jenkins/blob/d2276c3c9b16fd46a3912ab8d58c418e67d8ce3e/core/src/main/java/jenkins/model/Nodes.java#L141">
+     *      Nodes.java</a>
+     * 
+     * @param slave
+     *            The slave to be added to Jenkins
+     * @throws IOException
+     *             if it all failed horribly every time we tried.
+     */
+    private static void robustlyAddNodeToJenkins(DockerTransientNode slave) throws IOException {
+        // don't retry getInstance - fail immediately if that fails.
+        final Jenkins jenkins = Jenkins.getInstance();
+        final int maxAttempts = 10;
+        for (int attempt = 1;; attempt++) {
+            try {
+                // addNode can fail at random due to a race condition.
+                jenkins.addNode(slave);
+                return;
+            } catch (IOException | RuntimeException ex) {
+                if (attempt > maxAttempts) {
+                    throw ex;
+                }
+                final long delayInMilliseconds = 10L * attempt;
+                try {
+                    Thread.sleep(delayInMilliseconds);
+                } catch (InterruptedException e) {
+                    throw new IOException(e);
+                }
+            }
+        }
+    }
 
     /**
      * for publishers/builders. Simply runs container in docker cloud
@@ -550,10 +604,10 @@ public class DockerCloud extends Cloud {
      */
     public int countContainersInDocker(final String imageName) throws Exception {
         final Map<String, String> labelFilter = new HashMap<>();
-        labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_JENKINS_INSTANCE_ID,
+        labelFilter.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID,
                 DockerTemplateBase.getJenkinsInstanceIdForContainerLabel());
         if (imageName != null) {
-            labelFilter.put(DockerTemplateBase.CONTAINER_LABEL_IMAGE, imageName);
+            labelFilter.put(DockerContainerLabelKeys.CONTAINER_IMAGE, imageName);
         }
         final List<?> containers;
         try(final DockerClient client = dockerApi.getClient()) {
@@ -717,6 +771,36 @@ public class DockerCloud extends Cloud {
         this.disabled = disabled;
     }
 
+    @CheckForNull
+    public Integer getErrorDuration() {
+        if (errorDuration != null && errorDuration.intValue() < 0) {
+            return null; // negative is the same as unset = use default.
+        }
+        return errorDuration;
+    }
+
+    @DataBoundSetter
+    public void setErrorDuration(Integer errorDuration) {
+        this.errorDuration = errorDuration;
+    }
+
+    /**
+     * Calculates the duration (in milliseconds) we should stop for when an
+     * error happens. If the user has not configured a duration then the default
+     * of {@value #ERROR_DURATION_DEFAULT_SECONDS} seconds will be used.
+     * 
+     * @return duration, in milliseconds, to be passed to
+     *         {@link DockerDisabled#disableBySystem(String, long, Throwable)}.
+     */
+    @Restricted(NoExternalUse.class)
+    long getEffectiveErrorDurationInMilliseconds() {
+        final Integer configuredDurationOrNull = getErrorDuration();
+        if (configuredDurationOrNull != null) {
+            return TimeUnit.SECONDS.toMillis(configuredDurationOrNull.intValue());
+        }
+        return TimeUnit.SECONDS.toMillis(ERROR_DURATION_DEFAULT_SECONDS);
+    }
+
     public static List<DockerCloud> instances() {
         List<DockerCloud> instances = new ArrayList<>();
         for (Cloud cloud : Jenkins.getInstance().clouds) {
@@ -737,9 +821,35 @@ public class DockerCloud extends Cloud {
         this.unAccessibleForNonAdminUsers = unAccessibleForNonAdminUsers;
     }
 
+    @Restricted(NoExternalUse.class)
+    static DockerCloud findCloudForTemplate(final DockerTemplate template) {
+        for (DockerCloud cloud : instances()) {
+            if ( cloud.hasTemplate(template) ) {
+                return cloud;
+            }
+        }
+        return null;
+    }
+
+    private boolean hasTemplate(DockerTemplate template) {
+        if (getTemplates().contains(template)) {
+            return true;
+        }
+        if (getJobTemplates().containsValue(template)) {
+            return true;
+        }
+        return false;
+    }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
+        public FormValidation doCheckErrorDuration(@QueryParameter String value) {
+            if (value == null || value.isEmpty()) {
+                return FormValidation.ok("Default = %d", ERROR_DURATION_DEFAULT_SECONDS);
+            }
+            return FormValidation.validateNonNegativeInteger(value);
+        }
+
         @Override
         public String getDisplayName() {
             return "Docker";
