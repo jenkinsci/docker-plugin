@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.Assert;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -85,7 +86,11 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
 
         DockerClient client = Mockito.mock(DockerClient.class);
         Mockito.when(result.getClient()).thenReturn(client);
-
+        
+        DockerServerEndpoint dockerServerEndpoint = Mockito.mock(DockerServerEndpoint.class);
+        Mockito.when(dockerServerEndpoint.getUri()).thenReturn("tcp://mocked-docker-host:2375");
+        Mockito.when(result.getDockerHost()).thenReturn(dockerServerEndpoint);
+        
         ListContainersCmd listContainerCmd = Mockito.mock(ListContainersCmd.class);
         Mockito.when(client.listContainersCmd()).thenReturn(listContainerCmd);
 
