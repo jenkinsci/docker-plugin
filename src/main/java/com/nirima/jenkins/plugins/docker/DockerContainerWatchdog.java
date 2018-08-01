@@ -138,7 +138,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
             try {
                 for (DockerCloud dc : getAllClouds()) {
-                    LOGGER.info("Checking Docker Cloud '{}'", dc.getDisplayName());
+                    LOGGER.info("Checking Docker Cloud {} at {}", dc.getDisplayName(), dc.getDockerApi().getDockerHost().getUri());
                     listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
 
                     csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
@@ -206,7 +206,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
             csmMerged = csmMerged.merge(csm);
         } catch (IOException e) {
-            LOGGER.warn("Failed to properly close a DockerClient instance; ignoring", e);
+            LOGGER.warn("Failed to properly close a DockerClient instance after reading the list of containers and cleaning them up; ignoring", e);
         } catch (ContainersRetrievalException e) {
             csmMerged.setContainerListIncomplete(true);
         }
@@ -254,7 +254,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                         .withLabelFilter(labelFilter)
                         .exec();
             } catch (Exception e) {
-                LOGGER.warn("Unable to retrieve list of containers available on DockerCloud [name={}, dockerURI={}]", dc.getDisplayName(), dc.getDockerApi().getDockerHost().getUri(), e);
+                LOGGER.warn("Unable to retrieve list of containers available on DockerCloud [name={}, dockerURI={}] while reading list of containers (showAll=true, labelFilters={})", dc.getDisplayName(), dc.getDockerApi().getDockerHost().getUri(), labelFilter.toString(), e);
                 throw new ContainersRetrievalException(e);
             }
 
@@ -509,7 +509,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 removeNode(dtn);
                 executionStatistics.addNodeRemoved();
             } catch (IOException e) {
-                LOGGER.warn("Failed to remove orphaned {}", dtn.toString(), e);
+                LOGGER.warn("Failed to remove orphaned node {}", dtn.toString(), e);
                 executionStatistics.addNodeRemovedFailed();
             }
         }
