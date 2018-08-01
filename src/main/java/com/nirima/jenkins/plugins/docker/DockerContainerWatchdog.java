@@ -199,7 +199,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
             DockerDisabled dcDisabled = dc.getDisabled();
             if (dcDisabled.isDisabled()) {
-                LOGGER.info("Will not cleanup superfluous containers on DockerCloud [name={}, dockerHostname={}], as it is disabled", dc.getDisplayName(), dc.getDockerApi().getHostname());
+                LOGGER.info("Will not cleanup superfluous containers on DockerCloud [name={}, dockerURI={}], as it is disabled", dc.getDisplayName(), dc.getDockerApi().getDockerHost().getUri());
             } else {
                 cleanUpSuperfluousContainers(client, nodeMap, csm, dc, snapshotInstant);
             }
@@ -254,7 +254,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                         .withLabelFilter(labelFilter)
                         .exec();
             } catch (Exception e) {
-                LOGGER.warn("Unable to retrieve list of containers available on DockerCloud [name={}, dockerHostname={}]", dc.getDisplayName(), dc.getDockerApi().getHostname(), e);
+                LOGGER.warn("Unable to retrieve list of containers available on DockerCloud [name={}, dockerURI={}]", dc.getDisplayName(), dc.getDockerApi().getDockerHost().getUri(), e);
                 throw new ContainersRetrievalException(e);
             }
 
