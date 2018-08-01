@@ -242,42 +242,49 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
         labelFilter.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID, getJenkinsInstanceId());
 
-        List<Container> containerList = null;
-        try {
-            containerList = client.listContainersCmd()
-                    .withShowAll(true)
-                    .withLabelFilter(labelFilter)
-                    .exec();
-        } catch (Exception e) {
-            LOGGER.warn("Unable to retrieve list of containers available on DockerCloud [name={}, dockerHostname={}]", dc.getDisplayName(), dc.getDockerApi().getHostname(), e);
-            throw new ContainersRetrievalException(e);
-        }
-
         ContainerNodeNameMap result = new ContainerNodeNameMap();
 
-        for (Container container : containerList) {
-            String containerId = container.getId();
-            String status = container.getStatus();
+        Instant start = clock.instant();
 
-            if (status == null) {
-                LOGGER.warn("Container {} has a null-status and thus cannot be checked; ignoring container", containerId);
-                continue;
+        try {
+            List<Container> containerList = null;
+            try {
+                containerList = client.listContainersCmd()
+                        .withShowAll(true)
+                        .withLabelFilter(labelFilter)
+                        .exec();
+            } catch (Exception e) {
+                LOGGER.warn("Unable to retrieve list of containers available on DockerCloud [name={}, dockerHostname={}]", dc.getDisplayName(), dc.getDockerApi().getHostname(), e);
+                throw new ContainersRetrievalException(e);
             }
 
-            Map<String, String> containerLabels = container.getLabels();
+            for (Container container : containerList) {
+                String containerId = container.getId();
+                String status = container.getStatus();
 
-            /* NB: Null-map cannot happen here, as otherwise the container 
-             * would not have had the JenkinsId label, which we just have 
-             * requested it to have (see "withLabelFilter")
-             */
+                if (status == null) {
+                    LOGGER.warn("Container {} has a null-status and thus cannot be checked; ignoring container", containerId);
+                    continue;
+                }
 
-            String containerNodeName = containerLabels.get(DockerContainerLabelKeys.NODE_NAME);
-            if (containerNodeName == null) {
-                LOGGER.warn("Container {} is said to be created by this Jenkins instance, but does not have any node name label assigned; manual cleanup is required for this", containerId);
-                continue;
+                Map<String, String> containerLabels = container.getLabels();
+
+                /* NB: Null-map cannot happen here, as otherwise the container 
+                 * would not have had the JenkinsId label, which we just have 
+                 * requested it to have (see "withLabelFilter")
+                 */
+
+                String containerNodeName = containerLabels.get(DockerContainerLabelKeys.NODE_NAME);
+                if (containerNodeName == null) {
+                    LOGGER.warn("Container {} is said to be created by this Jenkins instance, but does not have any node name label assigned; manual cleanup is required for this", containerId);
+                    continue;
+                }
+
+                result.registerMapping(container, containerNodeName);
             }
-
-            result.registerMapping(container, containerNodeName);
+        } finally {
+            Instant stop = clock.instant();
+            executionStatistics.addRetrieveContainerRuntime(Duration.between(start, stop).toMillis());
         }
 
         return result;
@@ -531,6 +538,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         private long nodesRemovedFailed;
         private long processingTimeout;
         private long overallRuntime;
+        private long retrieveContainersRuntime;
+        private long retrieveContainersCalls;
 
         public void writeStatisticsToLog() {
             LOGGER.info("Watchdog Statistics: "
@@ -543,7 +552,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                     + "Nodes removal failed: {}, "
                     + "Container removal average duration (gracefully): {} ms, "
                     + "Container removal average duration (force): {} ms, "
-                    + "Average overall runtime of watchdog: {} ms",
+                    + "Average overall runtime of watchdog: {} ms, "
+                    + "Average runtime of container retrieval: {} ms",
                     executions, 
                     processingTimeout,
                     containersRemovedGracefully,
@@ -553,7 +563,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                     nodesRemovedFailed,
                     getContainerRemovalAverageDurationGracefully(),
                     getContainerRemovalAverageDurationForce(),
-                    getAverageAoverallRuntime()
+                    getAverageAoverallRuntime(),
+                    getAverageRetrieveContainerRuntime()
                     );
         }
 
@@ -590,6 +601,11 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         private void addOverallRuntime(long runtime) {
             overallRuntime += runtime;
         }
+        
+        private void addRetrieveContainerRuntime(long runtime) {
+            retrieveContainersRuntime += runtime;
+            retrieveContainersCalls++;
+        }
 
         private String getAverageAoverallRuntime() {
             if (executions == 0) {
@@ -610,6 +626,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                 return "0";
             }
             return new Long(containersRemovedGracefullyRuntimeSum / containersRemovedGracefully).toString();
+        }
+        
+        private String getAverageRetrieveContainerRuntime() {
+            if (retrieveContainersCalls == 0) {
+                return "0";
+            }
+            return new Long(retrieveContainersRuntime / retrieveContainersCalls).toString();
         }
     }
 }
