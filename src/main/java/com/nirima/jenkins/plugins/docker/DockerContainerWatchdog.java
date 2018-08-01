@@ -563,7 +563,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                     nodesRemovedFailed,
                     getContainerRemovalAverageDurationGracefully(),
                     getContainerRemovalAverageDurationForce(),
-                    getAverageAoverallRuntime(),
+                    getAverageOverallRuntime(),
                     getAverageRetrieveContainerRuntime()
                     );
         }
@@ -607,7 +607,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             retrieveContainersCalls++;
         }
 
-        private String getAverageAoverallRuntime() {
+        private String getAverageOverallRuntime() {
             if (executions == 0) {
                 return "0";
             }
