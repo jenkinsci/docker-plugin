@@ -10,7 +10,7 @@
 
     <groupId>io.jenkins.docker</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>1.1.5</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -261,7 +261,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/docker-plugin</url>
-        <tag>${scmTag}</tag>
+        <tag>docker-plugin-1.1.5</tag>
     </scm>
 
     <repositories>
