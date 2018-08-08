@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.5 (TBD)
+* :warning: Docker container labels now follow [docker recommendations](https://docs.docker.com/config/labels-custom-metadata/) [#660](https://github.com/jenkinsci/docker-plugin/pull/660)
+* Fix JAVA_OPT env var when using JNLP [#642](https://github.com/jenkinsci/docker-plugin/issues/642)
+* Fix ugly NPE in log [#603](https://github.com/jenkinsci/docker-plugin/issues/603)
+* Enhancement: Shared memory size [#467](https://github.com/jenkinsci/docker-plugin/issues/467)
+* Enhancement: JNLP custom entry points [#654](https://github.com/jenkinsci/docker-plugin/issues/654), fixes [#635](https://github.com/jenkinsci/docker-plugin/issues/635)
+* Enhancement: Docker container/node garbage collection [#658](https://github.com/jenkinsci/docker-plugin/pull/658)
+* Enhancement: Robustness and configurability enhancements [#644](https://github.com/jenkinsci/docker-plugin/issues/644), [#651](https://github.com/jenkinsci/docker-plugin/issues/651)
+
 ## 1.1.4 (2018-04-19)
 * Automatically avoid using broken clouds/templates [#626](https://github.com/jenkinsci/docker-plugin/issues/626)
 * Improved "read timeout" handling and added template "pull timeout" [#624](https://github.com/jenkinsci/docker-plugin/issues/624)
