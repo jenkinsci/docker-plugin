@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.5 (TBD)
+## 1.1.5 (2018-08-08)
 * :warning: Docker container labels now follow [docker recommendations](https://docs.docker.com/config/labels-custom-metadata/) [#660](https://github.com/jenkinsci/docker-plugin/pull/660)
 * Fix JAVA_OPT env var when using JNLP [#642](https://github.com/jenkinsci/docker-plugin/issues/642)
 * Fix ugly NPE in log [#603](https://github.com/jenkinsci/docker-plugin/issues/603)
