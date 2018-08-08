@@ -51,6 +51,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -222,8 +223,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         final String templateName = getName();
+        final Map<String, String> labels = result.getLabels();
+        labels.put(DockerContainerLabelKeys.REMOVE_VOLUMES, Boolean.toString(isRemoveVolumes()));
+        labels.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
         final String nodeName = calcUnusedNodeName(templateName);
-        result.getLabels().put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
         setNodeNameInContainerConfig(result, nodeName);
         return result;
     }
