@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
@@ -7,6 +8,7 @@ import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -41,7 +43,15 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-            return true;
+            if (Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                return true;
+            }
+            for (DockerCloud it : DockerCloud.instances()) {
+                if (!it.isUnAccessibleForNonAdminUsers()) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
@@ -50,7 +60,12 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
         }
 
         public static DescriptorExtensionList<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor> getOptionList() {
-            return DockerBuilderControlOptionDescriptor.all();
+            DescriptorExtensionList controlOptionDescriptors = DockerBuilderControlOptionDescriptor.all();
+            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                Descriptor stopAllDescriptor = Jenkins.getInstance().getDescriptor(DockerBuilderControlOptionStopAll.class);
+                controlOptionDescriptors.remove(stopAllDescriptor);
+            }
+            return controlOptionDescriptors;
         }
     }
 }

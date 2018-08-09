@@ -25,6 +25,11 @@
 
     </f:advanced>
 
+     <f:entry title="${%Forbid actions for non admin users}" field="unAccessibleForNonAdminUsers">
+            <f:checkbox />
+     </f:entry>
+
+
     <f:advanced title="${%Docker Agent templates}" align="left">
         <f:entry title="${%Docker Agent templates}" description="${%List of Images to be launched as slaves}">
             <f:repeatableProperty field="templates" header="Docker Agent templates" add="Add Docker Template">

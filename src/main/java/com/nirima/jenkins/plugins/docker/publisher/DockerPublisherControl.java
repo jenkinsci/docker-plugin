@@ -9,6 +9,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -55,6 +56,9 @@ public class DockerPublisherControl extends Recorder implements Serializable {
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                return false;
+            }
             return true;
         }
 
