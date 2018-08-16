@@ -70,6 +70,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     public DockerComputerSSHConnector(SSHKeyStrategy sshKeyStrategy) {
         this.sshKeyStrategy = sshKeyStrategy;
         this.port = 22;
+        this.maxNumRetries = 30;
+        this.retryWaitTime = 2;
     }
 
     public SSHKeyStrategy getSshKeyStrategy() {
