@@ -5,12 +5,13 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.12</version>
+        <version>3.19</version>
+        <relativePath/>
     </parent>
 
     <groupId>io.jenkins.docker</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>1.1.6-SNAPSHOT</version>
+    <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -25,7 +26,7 @@
     </developers>
 
     <properties>
-        <revision>1.1.5</revision>
+        <revision>1.1.6</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
