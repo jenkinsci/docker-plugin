@@ -1,20 +1,20 @@
 package io.jenkins.docker.pipeline;
 
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Util;
-import hudson.console.PlainTextConsoleOutputStream;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.model.Jenkins;
-import jenkins.model.NodeListener;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
@@ -23,11 +23,9 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 
 import javax.annotation.Nonnull;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -83,7 +81,12 @@ class DockerNodeStepExecution extends StepExecution {
 
         t.setMode(Node.Mode.EXCLUSIVE);
 
-        final DockerAPI api = new DockerAPI(new DockerServerEndpoint(dockerHost, credentialsId));
+        final DockerAPI api;
+        if (dockerHost == null && credentialsId == null) {
+            api = defaultApi();
+        } else {
+            api = new DockerAPI(new DockerServerEndpoint(dockerHost, credentialsId));
+        }
 
         DockerTransientNode node;
         Computer computer = null;
@@ -112,6 +115,15 @@ class DockerNodeStepExecution extends StepExecution {
             return null;
         }
         return node;
+    }
+
+    private static DockerAPI defaultApi() {
+        for (Cloud cloud : Jenkins.get().clouds) {
+            if (cloud instanceof DockerCloud) {
+                return ((DockerCloud) cloud).getDockerApi();
+            }
+        }
+        throw new IllegalStateException("Must either specify dockerHost/credentialsId, or define at least one Docker cloud");
     }
 
 

@@ -25,6 +25,7 @@
 package io.jenkins.docker.pipeline;
 
 import com.google.common.collect.ImmutableSet;
+import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.FilePath;
 import hudson.model.DownloadService;
 import hudson.model.Node;
@@ -34,6 +35,7 @@ import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.tasks.Maven;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.InstallSourceProperty;
+import io.jenkins.docker.client.DockerAPI;
 import org.apache.commons.lang3.SystemUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -60,6 +62,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.Set;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 
 public class DockerNodeStepTest {
 
@@ -211,6 +214,18 @@ public class DockerNodeStepTest {
                 story.j.assertLogContains("SECOND: WHICH_AGENT=|second|", r);
                 story.j.assertLogContains("DOCKER: WHICH_AGENT=||", r);
             }
+        });
+    }
+
+    @Test
+    public void defaults() {
+        story.then(r -> {
+            r.jenkins.clouds.add(new DockerCloud("whatever", new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)), Collections.emptyList()));
+            WorkflowJob j = r.createProject(WorkflowJob.class, "p");
+            j.setDefinition(new CpsFlowDefinition("dockerNode('openjdk:8') {\n" +
+                    "  sh 'java -version && touch stuff && ls -la'\n" +
+                    "}\n", true));
+            r.buildAndAssertSuccess(j);
         });
     }
 

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.model.Computer;
 import hudson.model.Item;
 import hudson.model.Node;
@@ -36,18 +37,22 @@ public class DockerNodeStep extends Step {
 
     private String image;
 
-    private String remoteFs;
+    private String remoteFs = "/tmp";
 
     private DockerComputerConnector connector;
 
     @DataBoundConstructor
-    public DockerNodeStep(String dockerHost, String image) {
-        this.dockerHost = dockerHost;
+    public DockerNodeStep(String image) {
         this.image = image;
     }
 
     public String getDockerHost() {
         return dockerHost;
+    }
+
+    @DataBoundSetter
+    public void setDockerHost(String dockerHost) {
+        this.dockerHost = Util.fixEmpty(dockerHost);
     }
 
     public String getCredentialsId() {
@@ -56,7 +61,7 @@ public class DockerNodeStep extends Step {
 
     @DataBoundSetter
     public void setCredentialsId(String credentialsId) {
-        this.credentialsId = credentialsId;
+        this.credentialsId = Util.fixEmpty(credentialsId);
     }
 
     public String getImage() {
