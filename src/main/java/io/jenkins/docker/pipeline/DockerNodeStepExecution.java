@@ -118,7 +118,7 @@ class DockerNodeStepExecution extends StepExecution {
     }
 
     private static DockerAPI defaultApi() {
-        for (Cloud cloud : Jenkins.get().clouds) {
+        for (Cloud cloud : Jenkins.getInstance().clouds) {
             if (cloud instanceof DockerCloud) {
                 return ((DockerCloud) cloud).getDockerApi();
             }
