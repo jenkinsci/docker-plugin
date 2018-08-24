@@ -74,14 +74,14 @@ public class DockerNodeStep extends Step {
 
     @DataBoundSetter
     public void setRemoteFs(String remoteFs) {
-        this.remoteFs = remoteFs;
+        this.remoteFs = Util.fixEmpty(remoteFs);
     }
 
     public DockerComputerConnector getConnector() {
         return connector;
     }
 
-    @DataBoundSetter
+    @DataBoundSetter // TODO this is not mentioned in config.jelly
     public void setConnector(DockerComputerConnector connector) {
         this.connector = connector;
     }
