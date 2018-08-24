@@ -47,6 +47,7 @@ import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import static org.junit.Assert.*;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -63,6 +64,8 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.Set;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
+import org.jenkinsci.plugins.structs.describable.DescribableModel;
+import org.jenkinsci.plugins.structs.describable.UninstantiatedDescribable;
 
 public class DockerNodeStepTest {
 
@@ -220,11 +223,18 @@ public class DockerNodeStepTest {
     @Test
     public void defaults() {
         story.then(r -> {
+            DockerNodeStep s = new DockerNodeStep("foo");
+            s.setCredentialsId("");
+            s.setDockerHost("");
+            s.setRemoteFs("");
+            UninstantiatedDescribable uninstantiated = new DescribableModel<>(DockerNodeStep.class).uninstantiate2(s);
+            assertEquals(uninstantiated.toString(), Collections.singleton("image"), uninstantiated.getArguments().keySet());
             r.jenkins.clouds.add(new DockerCloud("whatever", new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)), Collections.emptyList()));
             WorkflowJob j = r.createProject(WorkflowJob.class, "p");
-            j.setDefinition(new CpsFlowDefinition("dockerNode('openjdk:8') {\n" +
-                    "  sh 'java -version && touch stuff && ls -la'\n" +
-                    "}\n", true));
+            j.setDefinition(new CpsFlowDefinition(
+                "dockerNode('openjdk:8') {\n" +
+                "  sh 'java -version && whoami && pwd && touch stuff && ls -lat . ..'\n" +
+                "}\n", true));
             r.buildAndAssertSuccess(j);
         });
     }
