@@ -75,7 +75,7 @@ class DockerNodeStepExecution extends StepExecution {
         final String uuid = UUID.randomUUID().toString();
 
         final DockerTemplate t = new DockerTemplate(
-                new DockerTemplateBase(image),
+                new DockerTemplateBase(image), // TODO call .setPullCredentialsId and also add option to .setRegistryUrl or similar
                 connector,
                 uuid, remoteFs, "1");
 
