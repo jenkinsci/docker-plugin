@@ -5,11 +5,11 @@
     <f:textbox/>
   </f:entry>
 
-  <f:entry title="Agent root directory" field="remoteFs">
-    <f:textbox default="/tmp"/>
-  </f:entry>
-
   <f:advanced>
+
+      <f:entry title="Agent root directory" field="remoteFs">
+          <f:textbox/>
+      </f:entry>
 
       <f:entry title="Docker Host" field="dockerHost">
         <f:textbox/>

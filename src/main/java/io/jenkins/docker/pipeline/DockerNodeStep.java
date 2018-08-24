@@ -37,7 +37,7 @@ public class DockerNodeStep extends Step {
 
     private String image;
 
-    private String remoteFs = "/tmp";
+    private String remoteFs;
 
     private DockerComputerConnector connector;
 
