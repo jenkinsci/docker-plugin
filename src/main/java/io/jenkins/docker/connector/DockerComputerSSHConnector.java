@@ -70,6 +70,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     public DockerComputerSSHConnector(SSHKeyStrategy sshKeyStrategy) {
         this.sshKeyStrategy = sshKeyStrategy;
         this.port = 22;
+        this.maxNumRetries = 30;
+        this.retryWaitTime = 2;
     }
 
     public SSHKeyStrategy getSshKeyStrategy() {
@@ -225,10 +227,10 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         // TODO we could (also) have a more generic mechanism relying on healthcheck (inspect State.Health.Status)
         final PortUtils.ConnectionCheck connectionCheck =
                 PortUtils.connectionCheck( address )
-                        .withRetries( 30 )
-                        .withEveryRetryWaitFor( 2, TimeUnit.SECONDS );
+                        .withRetries( maxNumRetries )
+                        .withEveryRetryWaitFor( retryWaitTime, TimeUnit.SECONDS );
         if (!connectionCheck.execute() || !connectionCheck.useSSH().execute()) {
-            throw new IOException("SSH service didn't started after 60s.");
+            throw new IOException("SSH service didn't start after " + retryWaitTime*maxNumRetries + "s.");
         }
 
         return sshKeyStrategy.getSSHLauncher(address, this);
