@@ -17,6 +17,8 @@ public class DockerTemplateTest {
     Integer memoryLimit = 1024;
     Integer memorySwap = 1280;
     Integer cpuShares = 1000;
+    Integer cpuPeriod = 100000;
+    Integer cpuQuota = -1;
     Integer shmSize = 1002;
     String prefixStartSlaveCmd = "prefixStartSlaveCmd";
     String suffixStartSlaveCmd = " suffixStartSlaveCmd";
@@ -40,7 +42,7 @@ public class DockerTemplateTest {
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, null, dnsString, network,
                 dockerCommand, volumesString, volumesString, environmentsString,
-                hostname, memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
+                hostname, memoryLimit, memorySwap, cpuShares, cpuPeriod, cpuQuota, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
 
         return new DockerTemplate(dockerTemplateBase, null, labelString, remoteFs, instanceCapStr);
     }

@@ -50,6 +50,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final Integer memoryLimit;
     public final Integer memorySwap;
     public final Integer cpuShares;
+    public final Integer cpuPeriod;
+    public final Integer cpuQuota;
     public final Integer shmSize;
     public final boolean bindAllPorts;
     public final String macAddress;
@@ -69,6 +71,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             Integer memoryLimit,
             Integer memorySwap,
             Integer cpuShares,
+            Integer cpuPeriod,
+            Integer cpuQuota,
             Integer shmSize,
             String bindPorts,
             boolean bindAllPorts,
@@ -91,6 +95,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.memoryLimit = memoryLimit;
         this.memorySwap = memorySwap;
         this.cpuShares = cpuShares;
+        this.cpuPeriod = cpuPeriod;
+        this.cpuQuota = cpuQuota;
         this.shmSize = shmSize;
         this.bindAllPorts = bindAllPorts;
         this.macAddress = macAddress;
@@ -161,7 +167,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         DockerTemplateBase template = new DockerSimpleTemplate(xImage, pullCredentialsId,
                 dnsString, network, xCommand,
                 volumesString, volumesFrom, environmentsString, xHostname,
-                memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
+                memoryLimit, memorySwap, cpuShares, cpuPeriod, cpuQuota, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
 
         LOG.info("Starting container for image {}", xImage);
         llog.println("Starting container for image " + xImage);
