@@ -38,6 +38,10 @@
       <f:expandableTextbox />
     </f:entry>
 
+    <f:entry title="${%Devices}" field="devicesString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:entry title="${%Environment}" field="environmentsString">
       <f:expandableTextbox />
     </f:entry>
