@@ -9,6 +9,7 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
+import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -86,6 +87,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * Every String is volumeFrom specification
      */
     public String[] volumesFrom2;
+
+    /**
+     * Every String is a device to be mapped
+     */
+    public String[] devices;
 
     @CheckForNull
     public String[] environment;
@@ -285,6 +291,21 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setVolumesFromString(String volumesFromString) {
         setVolumesFrom2(splitAndFilterEmpty(volumesFromString, "\n"));
+    }
+
+    @CheckForNull
+    public String[] getDevices() {
+        return filterStringArray(devices);
+    }
+
+    public String getDevicesString() {
+        if (devices == null) return null;
+        return Joiner.on("\n").join(devices);
+    }
+
+    @DataBoundSetter
+    public void setDevicesString(String devicesString) {
+        this.devices = splitAndFilterEmpty(devicesString, "\n");
     }
 
     public String getEnvironmentsString() {
@@ -544,6 +565,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             }
 
             containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
+        }
+
+        if (getDevices().length > 0) {
+            ArrayList<Device> devices = new ArrayList<>();
+            for (String deviceStr : getDevices()) {
+                devices.add(Device.parse(deviceStr));
+            }
+
+            containerConfig.withDevices(devices);
         }
 
         containerConfig.withTty(tty);
