@@ -3,18 +3,13 @@ package io.jenkins.docker.connector;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.exception.NotFoundException;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.thoughtworks.xstream.InitializationException;
 import hudson.model.AbstractDescribableImpl;
-import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.Which;
 import hudson.slaves.ComputerLauncher;
-import hudson.slaves.DelegatingComputerLauncher;
-import hudson.slaves.SlaveComputer;
-import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,22 +96,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
             throw new IOException("Container is not running.");
         }
 
-        return new DelegatingComputerLauncher(launcher) {
-            @Override
-            public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-                try(final DockerClient client = api.getClient()) {
-                    client.inspectContainerCmd(containerId).exec();
-                } catch (NotFoundException e) {
-                    // Container has been removed
-                    Queue.withLock( () -> {
-                        DockerTransientNode node = (DockerTransientNode) computer.getNode();
-                        node.terminate(listener);
-                    });
-                    return;
-                }
-                super.launch(computer, listener);
-            }
-        };
+        return new DockerDelegatingComputerLauncher(launcher, api, containerId);
     }
 
     /**
@@ -124,4 +104,5 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * DockerAgentConnector so adequate setup did take place.
      */
     protected abstract ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
+
 }
