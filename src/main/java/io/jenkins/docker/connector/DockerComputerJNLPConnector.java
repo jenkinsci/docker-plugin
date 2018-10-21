@@ -128,7 +128,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         private final String name;
         private final String description;
 
-        private ArgumentVariables(String name, String description) {
+        ArgumentVariables(String name, String description) {
             this.name = name;
             this.description = description;
         }
