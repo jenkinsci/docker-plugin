@@ -186,7 +186,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (s == null) {
             return new String[0];
         }
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
             result.add(o);
         }
@@ -194,7 +194,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public static List<String> splitAndFilterEmptyList(String s, String separator) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
             result.add(o);
         }

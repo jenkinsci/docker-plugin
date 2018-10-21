@@ -185,7 +185,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public static List<String> filterStringToList(String str) {
         if (str == null) return Collections.<String>emptyList();
 
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         for (String o : Splitter.on("\n").omitEmptyStrings().trimResults().split(str)) {
             result.add(o);
         }

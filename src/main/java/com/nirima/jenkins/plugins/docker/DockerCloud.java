@@ -570,7 +570,7 @@ public class DockerCloud extends Cloud {
      */
     private Map<Long, DockerTemplate> getJobTemplates() {
         if (jobTemplates == null) {
-            jobTemplates = new HashMap<Long, DockerTemplate>();
+            jobTemplates = new HashMap<>();
         }
 
         return jobTemplates;

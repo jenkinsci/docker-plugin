@@ -27,8 +27,8 @@ public class DockerContainerWatchdogTest {
     public void testEmptyEnvironment() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
-        subject.setAllNodes(new LinkedList<Node>());
-        subject.setAllClouds(new LinkedList<DockerCloud>());
+        subject.setAllNodes(new LinkedList<>());
+        subject.setAllClouds(new LinkedList<>());
 
         subject.runExecute();
 
@@ -43,24 +43,24 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
         labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
 
         DockerTransientNode node = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud, false);
         allNodes.add(node);
@@ -80,25 +80,25 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
         labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
         labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
         subject.setAllNodes(allNodes);
 
         subject.runExecute();
@@ -118,25 +118,25 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
         labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
         labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
 
         Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(UUID.randomUUID().toString(), "unittest-other", cloud, false);
         allNodes.add(n);
@@ -163,9 +163,9 @@ public class DockerContainerWatchdogTest {
         final String containerId2 = "12346f63-cce3-4188-82dc-451b444daa40";
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName1);
@@ -184,16 +184,16 @@ public class DockerContainerWatchdogTest {
         containerList.add(c);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud1 = new DockerCloud("unittestcloud1", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud1 = new DockerCloud("unittestcloud1", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud1);
 
-        DockerCloud cloud2 = new DockerCloud("unittestcloud2", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud2 = new DockerCloud("unittestcloud2", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud2);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
         subject.setAllNodes(allNodes);
 
         subject.runExecute();
@@ -235,19 +235,19 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
         labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
         labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         DockerTemplate template = Mockito.mock(DockerTemplate.class);
@@ -258,7 +258,7 @@ public class DockerContainerWatchdogTest {
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
         subject.setAllNodes(allNodes);
 
         subject.runExecute();
@@ -284,25 +284,25 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
         labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
         labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
         containerList.add(c);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
         subject.setAllNodes(allNodes);
 
         subject.runExecute();
@@ -332,25 +332,25 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
         labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
         // NB The removeVolumes label is not set here
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
         Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", 0L, labelMap);
         containerList.add(c);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
 
         Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(UUID.randomUUID().toString(), nodeName, cloud, false);
         allNodes.add(n);
@@ -406,14 +406,14 @@ public class DockerContainerWatchdogTest {
         final String containerId2 = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
         Map<String, String> labelMap = new HashMap<>();
         labelMap.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
         labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
         labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
         Container c1 = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
         containerList.add(c1);
 
@@ -421,13 +421,13 @@ public class DockerContainerWatchdogTest {
         containerList.add(c2);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
         subject.setAllNodes(allNodes);
 
         subject.runExecute();
@@ -448,18 +448,18 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
 
         DockerTransientNode node = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud, true);
         allNodes.add(node);
@@ -486,18 +486,18 @@ public class DockerContainerWatchdogTest {
         final String containerId = UUID.randomUUID().toString();
 
         /* setup of cloud */
-        List<DockerCloud> listOfCloud = new LinkedList<DockerCloud>();
+        List<DockerCloud> listOfCloud = new LinkedList<>();
 
-        List<Container> containerList = new LinkedList<Container>();
+        List<Container> containerList = new LinkedList<>();
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
-        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<DockerTemplate>());
+        DockerCloud cloud = new DockerCloud("unittestcloud", dockerApi, new LinkedList<>());
         listOfCloud.add(cloud);
 
         subject.setAllClouds(listOfCloud);
 
         /* setup of nodes */
-        LinkedList<Node> allNodes = new LinkedList<Node>();
+        LinkedList<Node> allNodes = new LinkedList<>();
 
         DockerTransientNode node1 = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName1, cloud, true);
         allNodes.add(node1);
