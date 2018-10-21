@@ -350,7 +350,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                         .exec(resultCallback)
                         .awaitImageId();
                 if (imageId == null) {
-                    throw new AbortException("Built image id is null. Some error accured");
+                    throw new AbortException("Built image id is null. Some error occured");
                 }
     
                 // tag built image with tags

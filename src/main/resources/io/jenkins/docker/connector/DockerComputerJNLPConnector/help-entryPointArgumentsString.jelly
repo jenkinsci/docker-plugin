@@ -7,7 +7,7 @@
     <p>
       <b>NOTE:</b>
       This field is a multi-line string.
-      Each (non-empty) line defines a seperate argument.
+      Each (non-empty) line defines a separate argument.
       If you require more than one argument
       (e.g. copying one of the examples below)
       then you will need to expand the field,
