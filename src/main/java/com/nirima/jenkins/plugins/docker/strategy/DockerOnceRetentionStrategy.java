@@ -20,7 +20,7 @@ import javax.annotation.Nonnull;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static hudson.util.TimeUnit2.MINUTES;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * Mix of {@link org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy} (1.3) and {@link CloudRetentionStrategy}
