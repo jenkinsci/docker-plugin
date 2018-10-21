@@ -61,7 +61,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      * because getRecurrencePeriod() is required to return a constant (i.e.
      * it may not change during runtime).
      */
-    private static final long RECURRENCE_PERIOD_IN_MS = JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".recurrenceInSeconds", Long.valueOf(5*60))*1000L;
+    private static final long RECURRENCE_PERIOD_IN_MS = JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".recurrenceInSeconds", 5L * 60L) * 1000L;
 
     /**
      * The duration, which defines the maximal amount of time the watchdog is allowed to run 
