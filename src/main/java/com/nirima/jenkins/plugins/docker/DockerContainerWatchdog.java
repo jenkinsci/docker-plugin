@@ -333,7 +333,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
         final Duration containerLifetime = Duration.between(createdInstant, snapshotInstant);
 
-        /**
+        /*
          * We allow containers to have a grace duration, during which is permitted for them 
          * to start/run without having a node attached.
          * This is to prevent that the watchdog may be undesirably kill containers, which are just

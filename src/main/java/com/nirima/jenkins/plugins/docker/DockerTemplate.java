@@ -594,8 +594,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Returns a node name for a new node that doesn't clash with any we've
      * currently got.
      * 
-     * @param The
-     *            template's {@link #getName()}. This is used as a prefix for
+     * @param templateName
+     *            The template's {@link #getName()}. This is used as a prefix for
      *            the node name.
      * @return A unique unused node name suitable for use as a slave name for a
      *         slave created from this template.
