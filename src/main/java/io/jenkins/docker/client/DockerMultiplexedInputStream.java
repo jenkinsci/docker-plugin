@@ -55,9 +55,10 @@ public class DockerMultiplexedInputStream extends InputStream {
                     int received = 0;
                     while (received < size) {
                         int i = multiplexed.read(payload, received, size - received);
+                        if (i < 0) break; // EOF
                         received += i;
                     }
-                    System.err.println(new String(payload, StandardCharsets.UTF_8));
+                    System.err.println(new String(payload, 0, received, StandardCharsets.UTF_8));
                     break;
                 default:
                     throw new IOException("Unexpected application/vnd.docker.raw-stream frame type " + header);
