@@ -38,12 +38,12 @@ public class DockerMultiplexedInputStream extends InputStream {
     private void readInternal() throws IOException {
         while (next == 0) {
             byte[] header = new byte[8];
-            int i = multiplexed.read(header);
-            if (i < 0) return; // EOF
-
-            if (i != 8)
-                throw new IOException("Expected 8 bytes application/vnd.docker.raw-stream header, got " + i);
-
+            int todo = 8;
+            while (todo > 0) {
+                int i = multiplexed.read(header, 8-todo, todo);
+                if (i < 0) return; // EOF
+                todo -= i;
+            }
             int size = ((header[4] & 0xff) << 24) + ((header[5] & 0xff) << 16) + ((header[6] & 0xff) << 8) + (header[7] & 0xff);
             switch (header[0]) {
                 case 1: // STDOUT
@@ -54,7 +54,7 @@ public class DockerMultiplexedInputStream extends InputStream {
                     byte[] payload = new byte[size];
                     int received = 0;
                     while (received < size) {
-                        i = multiplexed.read(payload, received, size - received);
+                        int i = multiplexed.read(payload, received, size - received);
                         received += i;
                     }
                     System.err.println(new String(payload, StandardCharsets.UTF_8));
