@@ -61,7 +61,7 @@ public class DockerSlave extends Slave {
         // Tag it with the jenkins name
         addJenkinsAction(tag_image);
 
-        // SHould we add additional tags?
+        // Should we add additional tags?
         try {
             String tagToken = getAdditionalTag(listener);
 
@@ -122,7 +122,7 @@ public class DockerSlave extends Slave {
             if (!Strings.isNullOrEmpty(tagToken))
                 tagToken = TokenMacro.expandAll((AbstractBuild) theRun, listener, tagToken);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "can't expand macroses", e);
+            LOGGER.log(Level.WARNING, "can't expand macros", e);
         }
         return tagToken;
     }

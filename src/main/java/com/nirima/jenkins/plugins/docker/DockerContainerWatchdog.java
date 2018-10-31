@@ -61,7 +61,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      * because getRecurrencePeriod() is required to return a constant (i.e.
      * it may not change during runtime).
      */
-    private static final long RECURRENCE_PERIOD_IN_MS = JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".recurrenceInSeconds", Long.valueOf(5*60))*1000L;
+    private static final long RECURRENCE_PERIOD_IN_MS = JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".recurrenceInSeconds", 5L * 60L) * 1000L;
 
     /**
      * The duration, which defines the maximal amount of time the watchdog is allowed to run 
@@ -333,7 +333,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
         final Duration containerLifetime = Duration.between(createdInstant, snapshotInstant);
 
-        /**
+        /*
          * We allow containers to have a grace duration, during which is permitted for them 
          * to start/run without having a node attached.
          * This is to prevent that the watchdog may be undesirably kill containers, which are just

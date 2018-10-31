@@ -1,4 +1,4 @@
-package com.nirima.jenkins.plugins.docker.DockerPluginConfiguration;
+package com.nirima.jenkins.plugins.docker.DockerPluginConfiguration
 
 def f=namespace(lib.FormTagLib)
 
@@ -9,6 +9,6 @@ f.section(title:"Docker Plugin") {
     }
 
     f.entry(title: _("Registry Credentials")) {
-        f.repeatableHeteroProperty( field: "registryList", addCaption:"Add Registry", deleteCaption:"Remove Registry");
+        f.repeatableHeteroProperty( field: "registryList", addCaption:"Add Registry", deleteCaption:"Remove Registry")
     }
 }

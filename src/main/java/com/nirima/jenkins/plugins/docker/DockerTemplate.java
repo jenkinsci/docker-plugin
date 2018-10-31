@@ -594,8 +594,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Returns a node name for a new node that doesn't clash with any we've
      * currently got.
      * 
-     * @param The
-     *            template's {@link #getName()}. This is used as a prefix for
+     * @param templateName
+     *            The template's {@link #getName()}. This is used as a prefix for
      *            the node name.
      * @return A unique unused node name suitable for use as a slave name for a
      *         slave created from this template.
@@ -703,7 +703,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         public List<NodePropertyDescriptor> getNodePropertiesDescriptors() {
 
             // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
-            List<NodePropertyDescriptor> result = new ArrayList<NodePropertyDescriptor>();
+            List<NodePropertyDescriptor> result = new ArrayList<>();
             Collection<NodePropertyDescriptor> list =
                     (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
             for (NodePropertyDescriptor npd : DescriptorVisibilityFilter.applyType(DockerTransientNode.class, list)) {

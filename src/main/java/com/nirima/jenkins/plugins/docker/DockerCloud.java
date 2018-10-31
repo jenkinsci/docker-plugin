@@ -272,11 +272,10 @@ public class DockerCloud extends Cloud {
                 CONTAINERS_IN_PROGRESS.put(cloudId, mapForThisCloud);
             }
             final Integer oldValue = mapForThisCloud.get(templateId);
-            final int oldNumber = oldValue == null ? 0 : oldValue.intValue();
+            final int oldNumber = oldValue == null ? 0 : oldValue;
             final int newNumber = oldNumber + adjustment;
             if (newNumber != 0) {
-                final Integer newValue = Integer.valueOf(newNumber);
-                mapForThisCloud.put(templateId, newValue);
+                mapForThisCloud.put(templateId, newNumber);
             } else {
                 mapForThisCloud.remove(templateId);
                 if (mapForThisCloud.isEmpty()) {
@@ -294,7 +293,7 @@ public class DockerCloud extends Cloud {
             final Integer templateInProgressOrNull = allInProgressOrNull == null
                     ? null
                     : allInProgressOrNull.get(templateId);
-            final int templateInProgress = templateInProgressOrNull == null ? 0 : templateInProgressOrNull.intValue();
+            final int templateInProgress = templateInProgressOrNull == null ? 0 : templateInProgressOrNull;
             return templateInProgress;
         }
     }
@@ -571,7 +570,7 @@ public class DockerCloud extends Cloud {
      */
     private Map<Long, DockerTemplate> getJobTemplates() {
         if (jobTemplates == null) {
-            jobTemplates = new HashMap<Long, DockerTemplate>();
+            jobTemplates = new HashMap<>();
         }
 
         return jobTemplates;
@@ -765,7 +764,7 @@ public class DockerCloud extends Cloud {
 
     @CheckForNull
     public Integer getErrorDuration() {
-        if (errorDuration != null && errorDuration.intValue() < 0) {
+        if (errorDuration != null && errorDuration < 0) {
             return null; // negative is the same as unset = use default.
         }
         return errorDuration;
@@ -788,7 +787,7 @@ public class DockerCloud extends Cloud {
     long getEffectiveErrorDurationInMilliseconds() {
         final Integer configuredDurationOrNull = getErrorDuration();
         if (configuredDurationOrNull != null) {
-            return TimeUnit.SECONDS.toMillis(configuredDurationOrNull.intValue());
+            return TimeUnit.SECONDS.toMillis(configuredDurationOrNull);
         }
         return TimeUnit.SECONDS.toMillis(ERROR_DURATION_DEFAULT_SECONDS);
     }

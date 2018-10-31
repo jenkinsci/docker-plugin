@@ -191,8 +191,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
     /** Obtains a {@link DockerClient} from the cache, or makes one and puts it in the cache, implicitly telling the cache we need it. */
     private static DockerClient getOrMakeClient(final String dockerUri, final String credentialsId,
             final int readTimeout, final int connectTimeout) {
-        final Integer readTimeoutInMillisecondsOrNull = readTimeout > 0 ? Integer.valueOf(readTimeout * 1000) : null;
-        final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? Integer.valueOf(connectTimeout * 1000) : null;
+        final Integer readTimeoutInMillisecondsOrNull = readTimeout > 0 ? readTimeout * 1000 : null;
+        final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? connectTimeout * 1000 : null;
         final DockerClientParameters cacheKey = new DockerClientParameters(dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
         synchronized(CLIENT_CACHE) {
             SharableDockerClient client = CLIENT_CACHE.getAndIncrementUsage(cacheKey);

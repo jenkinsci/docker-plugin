@@ -52,7 +52,7 @@ public class DockerCloudTest {
         store.addCredentials(Domain.global(), rc);
 
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase("image", "pullCredentialsId", "dnsStirng", "network",
+                new DockerTemplateBase("image", "pullCredentialsId", "dnsString", "network",
                         "dockerCommand", "volumesString", "volumesFroString", "environmentString",
                         "hostname", 128, 256, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString"),
                 new DockerComputerAttachConnector("jenkins"),
