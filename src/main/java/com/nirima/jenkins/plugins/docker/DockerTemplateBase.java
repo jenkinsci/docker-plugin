@@ -5,11 +5,7 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Volume;
-import com.github.dockerjava.api.model.VolumesFrom;
-import com.github.dockerjava.api.model.Device;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -40,7 +36,12 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -113,6 +114,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @CheckForNull
     private List<String> extraHosts;
 
+    @CheckForNull
+    private List<Capability> capabilitiesToAdd;
+
+    @CheckForNull
+    private List<Capability> capabilitiesToDrop;
+
+    @CheckForNull
+    public List<String> securityOpts;
+
     @DataBoundConstructor
     public DockerTemplateBase(String image) {
         if (image == null) {
@@ -144,7 +154,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               boolean privileged,
                               boolean tty,
                               String macAddress,
-                              String extraHostsString
+                              String extraHostsString,
+                              String capabilitiesToAddString,
+                              String capabilitiesToDropString,
+                              String securityOptsString
     ) {
         this(image);
         setPullCredentialsId(pullCredentialsId);
@@ -165,6 +178,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setTty(tty);
         setMacAddress(macAddress);
         setExtraHostsString(extraHostsString);
+        setCapabilitiesToAddString(capabilitiesToAddString);
+        setCapabilitiesToDropString(capabilitiesToDropString);
+        setSecurityOptsString(securityOptsString);
     }
 
     protected Object readResolve() {
@@ -197,6 +213,14 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         List<String> result = new ArrayList<>();
         for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
             result.add(o);
+        }
+        return result;
+    }
+
+    public static List<Capability> splitAndFilterEmptyCapabilityList(String s, String separator) {
+        List<Capability> result = new ArrayList<>();
+        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
+            result.add(Capability.valueOf(o));
         }
         return result;
     }
@@ -414,6 +438,49 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").join(extraHosts);
     }
 
+    @DataBoundSetter
+    public void setCapabilitiesToAddString(String capabilitiesToAddString) {
+        setCapabilitiesToAdd(isEmpty(capabilitiesToAddString) ?
+                Collections.EMPTY_LIST :
+                splitAndFilterEmptyCapabilityList(capabilitiesToAddString, "\n"));
+    }
+
+    public String getCapabilitiesToAddString() {
+        if (capabilitiesToAdd == null) {
+            return "";
+        }
+        return Joiner.on("\n").join(capabilitiesToAdd);
+    }
+
+    @DataBoundSetter
+    public void setCapabilitiesToDropString(String capabilitiesToDropString) {
+        setCapabilitiesToDrop(isEmpty(capabilitiesToDropString) ?
+                Collections.EMPTY_LIST :
+                splitAndFilterEmptyCapabilityList(capabilitiesToDropString, "\n"));
+    }
+
+    public String getCapabilitiesToDropString() {
+        if (capabilitiesToDrop == null) {
+            return "";
+        }
+        return Joiner.on("\n").join(capabilitiesToDrop);
+    }
+
+    @DataBoundSetter
+    public void setSecurityOptsString(String securityOptsString) {
+        setSecurityOpts(isEmpty(securityOptsString) ?
+                Collections.EMPTY_LIST :
+                splitAndFilterEmptyList(securityOptsString, "\n"));
+    }
+
+    public String getSecurityOptsString() {
+        if (securityOpts == null) {
+            return "";
+        }
+        return Joiner.on("\n").join(securityOpts);
+    }
+
+
     // -- UI binding End
 
 
@@ -450,7 +517,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.extraHosts = extraHosts;
     }
 
-
     public String getDisplayName() {
         return "Image of " + getImage();
     }
@@ -482,6 +548,33 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                         return PortBinding.parse(s);
                     }
                 });
+    }
+
+    @CheckForNull
+    public List<Capability> getCapabilitiesToAdd() {
+        return capabilitiesToAdd;
+    }
+
+    public void setCapabilitiesToAdd(List<Capability> capabilitiesToAdd) {
+        this.capabilitiesToAdd = capabilitiesToAdd;
+    }
+
+    @CheckForNull
+    public List<Capability> getCapabilitiesToDrop() {
+        return capabilitiesToDrop;
+    }
+
+    public void setCapabilitiesToDrop(List<Capability> capabilitiesToDrop) {
+        this.capabilitiesToDrop = capabilitiesToDrop;
+    }
+
+    @CheckForNull
+    public List<String> getSecurityOpts() {
+        return securityOpts;
+    }
+
+    public void setSecurityOpts(List<String> securityOpts) {
+        this.securityOpts = securityOpts;
     }
 
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
@@ -596,6 +689,43 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.getHostConfig().withShmSize(shmSizeInByte);
         }
 
+        final List<Capability> capabilitiesToAdd = getCapabilitiesToAdd();
+        if (CollectionUtils.isNotEmpty(capabilitiesToAdd)) {
+            containerConfig.withCapAdd(capabilitiesToAdd);
+        }
+
+        final List<Capability> capabilitiesToDrop = getCapabilitiesToDrop();
+        if (CollectionUtils.isNotEmpty(capabilitiesToDrop)) {
+            containerConfig.withCapDrop(capabilitiesToDrop);
+        }
+
+        final List<String> securityOpts = getSecurityOpts();
+        if (CollectionUtils.isNotEmpty(securityOpts)) {
+            List<String> res = new ArrayList<>();
+            for (String securityOpt : securityOpts) {
+                // Seccomp : file or direct input
+                if (securityOpt.startsWith("seccomp")) {
+                    String attr = securityOpt.split("=")[1];
+                    Path pathAttr = Paths.get(attr);
+                    if (Files.exists(pathAttr)) {
+                        try {
+                            String content = new String(Files.readAllBytes(pathAttr), StandardCharsets.UTF_8);
+                            res.add("seccomp=" + content
+                                    .replace("\r", "")
+                                    .replace("\n", "")
+                                    .replace(" ", "")
+                            );
+                            continue;
+                        } catch (IOException e) {
+                            // TODO
+                        }
+                    }
+                }
+                res.add(securityOpt);
+            }
+            containerConfig.getHostConfig().withSecurityOpts(res);
+        }
+
         return containerConfig;
     }
 
@@ -654,6 +784,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", tty=").append(tty);
         sb.append(", macAddress='").append(macAddress).append('\'');
         sb.append(", extraHosts=").append(extraHosts);
+        sb.append(", capabilitiesToAdd=").append(capabilitiesToAdd);
+        sb.append(", capabilitiesToDrop=").append(capabilitiesToDrop);
+        sb.append(", securityOpts=").append(securityOpts);
         sb.append('}');
         return sb.toString();
     }
@@ -686,6 +819,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
         if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
         if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
+        if (capabilitiesToAdd != null ? !capabilitiesToAdd.equals(that.capabilitiesToAdd) : that.capabilitiesToAdd != null) return false;
+        if (capabilitiesToDrop != null ? !capabilitiesToDrop.equals(that.capabilitiesToDrop) : that.capabilitiesToDrop != null) return false;
+        if (securityOpts != null ? !securityOpts.equals(that.securityOpts) : that.securityOpts != null) return false;
         return extraHosts != null ? extraHosts.equals(that.extraHosts) : that.extraHosts == null;
     }
 
@@ -711,6 +847,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (tty ? 1 : 0);
         result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
         result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
+        result = 31 * result + (capabilitiesToAdd != null ? capabilitiesToAdd.hashCode() : 0);
+        result = 31 * result + (capabilitiesToDrop != null ? capabilitiesToDrop.hashCode() : 0);
+        result = 31 * result + (securityOpts != null ? securityOpts.hashCode() : 0);
         return result;
     }
 

@@ -6,6 +6,7 @@ import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -214,6 +215,31 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public String getExtraHostsString() {
         return dockerTemplateBase.getExtraHostsString();
+    }
+
+    @CheckForNull
+    public List<Capability> getCapabilitiesToAdd() {
+        return dockerTemplateBase.getCapabilitiesToAdd();
+    }
+
+    public String getCapabilitiesToAddString() {
+        return dockerTemplateBase.getCapabilitiesToAddString();
+    }
+
+    @CheckForNull
+    public List<Capability> getCapabilitiesToDrop() {
+        return dockerTemplateBase.getCapabilitiesToDrop();
+    }
+
+    public String getCapabilitiesToDropString() {
+        return dockerTemplateBase.getCapabilitiesToDropString();
+    }
+
+    @CheckForNull
+    public List<String> getSecurityOpts() { return dockerTemplateBase.getSecurityOpts(); }
+
+    public String getSecurityOptsString() {
+        return dockerTemplateBase.getSecurityOptsString();
     }
 
     public DockerRegistryEndpoint getRegistry() {
@@ -593,7 +619,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     /**
      * Returns a node name for a new node that doesn't clash with any we've
      * currently got.
-     * 
+     *
      * @param templateName
      *            The template's {@link #getName()}. This is used as a prefix for
      *            the node name.

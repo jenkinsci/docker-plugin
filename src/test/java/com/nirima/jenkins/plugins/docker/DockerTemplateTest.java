@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import static org.junit.Assert.*;
 
+import com.github.dockerjava.api.model.Capability;
 import org.junit.Test;
 
 public class DockerTemplateTest {
@@ -35,12 +36,16 @@ public class DockerTemplateTest {
     boolean tty = false;
     String macAddress = "92:d0:c6:0a:29:33";
     String extraHostsString = "extraHostsString";
+    String capabilitiesToAddString = "CHOWN";
+    String capabilitiesToDropString = "NET_ADMIN";
+    String securityOpts = "seccomp=unconfined";
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, null, dnsString, network,
                 dockerCommand, volumesString, volumesString, environmentsString,
-                hostname, memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
+                hostname, memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress,
+                extraHostsString, capabilitiesToAddString, capabilitiesToDropString, securityOpts);
 
         return new DockerTemplate(dockerTemplateBase, null, labelString, remoteFs, instanceCapStr);
     }
@@ -69,6 +74,9 @@ public class DockerTemplateTest {
         assertTrue("Error, wrong memorySwap", 1280 == instance.getDockerTemplateBase().memorySwap);
         assertTrue("Error, wrong cpuShares", 1000 == instance.getDockerTemplateBase().cpuShares);
         assertTrue("Error, wrong shmSize", 1002 == instance.getDockerTemplateBase().shmSize);
+
+        assertTrue("Error, wrong capAdd", instance.getDockerTemplateBase().getCapabilitiesToAdd().contains(Capability.CHOWN));
+        assertTrue("Error, wrong capDrop", instance.getDockerTemplateBase().getCapabilitiesToDrop().contains(Capability.NET_ADMIN));
     }
 
 }

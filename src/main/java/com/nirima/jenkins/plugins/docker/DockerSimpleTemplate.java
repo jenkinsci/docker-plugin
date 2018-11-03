@@ -29,7 +29,10 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                                 boolean privileged,
                                 boolean tty,
                                 String macAddress,
-                                String extraHostsString) {
+                                String extraHostsString,
+                                String capabilitiesToAddString,
+                                String capabilitiesToDropString,
+                                String security) {
         super(image,
                 pullCredentialsId,
                 dnsString,
@@ -48,7 +51,10 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
                 privileged,
                 tty,
                 macAddress,
-                extraHostsString);
+                extraHostsString,
+                capabilitiesToAddString,
+                capabilitiesToDropString,
+                security);
     }
 
     @Override

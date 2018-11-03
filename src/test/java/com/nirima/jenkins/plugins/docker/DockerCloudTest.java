@@ -54,7 +54,8 @@ public class DockerCloudTest {
         final DockerTemplate template = new DockerTemplate(
                 new DockerTemplateBase("image", "pullCredentialsId", "dnsString", "network",
                         "dockerCommand", "volumesString", "volumesFroString", "environmentString",
-                        "hostname", 128, 256, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString"),
+                        "hostname", 128, 256, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString",
+                        "SYS_ADMIN", "CHOWN", "seccomp=unconfined"),
                 new DockerComputerAttachConnector("jenkins"),
                 "labelString", "remoteFs", "10");
         template.setPullStrategy(DockerImagePullStrategy.PULL_NEVER);
