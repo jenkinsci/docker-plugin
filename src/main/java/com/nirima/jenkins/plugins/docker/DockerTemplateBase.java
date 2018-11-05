@@ -115,10 +115,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     private List<String> extraHosts;
 
     @CheckForNull
-    private List<Capability> capabilitiesToAdd;
+    private List<String> capabilitiesToAdd;
 
     @CheckForNull
-    private List<Capability> capabilitiesToDrop;
+    private List<String> capabilitiesToDrop;
 
     @CheckForNull
     public List<String> securityOpts;
@@ -213,14 +213,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         List<String> result = new ArrayList<>();
         for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
             result.add(o);
-        }
-        return result;
-    }
-
-    public static List<Capability> splitAndFilterEmptyCapabilityList(String s, String separator) {
-        List<Capability> result = new ArrayList<>();
-        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
-            result.add(Capability.valueOf(o));
         }
         return result;
     }
@@ -442,7 +434,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     public void setCapabilitiesToAddString(String capabilitiesToAddString) {
         setCapabilitiesToAdd(isEmpty(capabilitiesToAddString) ?
                 Collections.EMPTY_LIST :
-                splitAndFilterEmptyCapabilityList(capabilitiesToAddString, "\n"));
+                splitAndFilterEmptyList(capabilitiesToAddString, "\n"));
     }
 
     public String getCapabilitiesToAddString() {
@@ -456,7 +448,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     public void setCapabilitiesToDropString(String capabilitiesToDropString) {
         setCapabilitiesToDrop(isEmpty(capabilitiesToDropString) ?
                 Collections.EMPTY_LIST :
-                splitAndFilterEmptyCapabilityList(capabilitiesToDropString, "\n"));
+                splitAndFilterEmptyList(capabilitiesToDropString, "\n"));
     }
 
     public String getCapabilitiesToDropString() {
@@ -551,20 +543,20 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     @CheckForNull
-    public List<Capability> getCapabilitiesToAdd() {
+    public List<String> getCapabilitiesToAdd() {
         return capabilitiesToAdd;
     }
 
-    public void setCapabilitiesToAdd(List<Capability> capabilitiesToAdd) {
+    public void setCapabilitiesToAdd(List<String> capabilitiesToAdd) {
         this.capabilitiesToAdd = capabilitiesToAdd;
     }
 
     @CheckForNull
-    public List<Capability> getCapabilitiesToDrop() {
+    public List<String> getCapabilitiesToDrop() {
         return capabilitiesToDrop;
     }
 
-    public void setCapabilitiesToDrop(List<Capability> capabilitiesToDrop) {
+    public void setCapabilitiesToDrop(List<String> capabilitiesToDrop) {
         this.capabilitiesToDrop = capabilitiesToDrop;
     }
 
@@ -689,44 +681,60 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.getHostConfig().withShmSize(shmSizeInByte);
         }
 
-        final List<Capability> capabilitiesToAdd = getCapabilitiesToAdd();
+        final List<String> capabilitiesToAdd = getCapabilitiesToAdd();
         if (CollectionUtils.isNotEmpty(capabilitiesToAdd)) {
-            containerConfig.withCapAdd(capabilitiesToAdd);
+            containerConfig.withCapAdd(toCapabilities(capabilitiesToAdd));
         }
 
-        final List<Capability> capabilitiesToDrop = getCapabilitiesToDrop();
+        final List<String> capabilitiesToDrop = getCapabilitiesToDrop();
         if (CollectionUtils.isNotEmpty(capabilitiesToDrop)) {
-            containerConfig.withCapDrop(capabilitiesToDrop);
+            containerConfig.withCapDrop(toCapabilities(capabilitiesToDrop));
         }
 
         final List<String> securityOpts = getSecurityOpts();
         if (CollectionUtils.isNotEmpty(securityOpts)) {
-            List<String> res = new ArrayList<>();
-            for (String securityOpt : securityOpts) {
-                // Seccomp : file or direct input
-                if (securityOpt.startsWith("seccomp")) {
-                    String attr = securityOpt.split("=")[1];
-                    Path pathAttr = Paths.get(attr);
-                    if (Files.exists(pathAttr)) {
-                        try {
-                            String content = new String(Files.readAllBytes(pathAttr), StandardCharsets.UTF_8);
-                            res.add("seccomp=" + content
-                                    .replace("\r", "")
-                                    .replace("\n", "")
-                                    .replace(" ", "")
-                            );
-                            continue;
-                        } catch (IOException e) {
-                            // TODO
-                        }
-                    }
-                }
-                res.add(securityOpt);
-            }
-            containerConfig.getHostConfig().withSecurityOpts(res);
+            containerConfig.getHostConfig().withSecurityOpts(toSecurityOpts(securityOpts));
         }
 
         return containerConfig;
+    }
+
+    private List<Capability> toCapabilities(List<String> capabilitiesString) {
+        List<Capability> res = new ArrayList<>();
+        for(String capability : capabilitiesString) {
+            try {
+                res.add(Capability.valueOf(capability));
+            } catch(IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid capability name : " + capability);
+            }
+        }
+        return res;
+    }
+
+    private List<String> toSecurityOpts(List<String> securityOpts) {
+        List<String> res = new ArrayList<>();
+        for (String securityOpt : securityOpts) {
+            // Seccomp : file or direct input
+            if (securityOpt.startsWith("seccomp")) {
+                String attr = securityOpt.split("=")[1];
+                Path pathAttr = Paths.get(attr);
+                if (Files.exists(pathAttr)) {
+                    try {
+                        String content = new String(Files.readAllBytes(pathAttr), StandardCharsets.UTF_8);
+                        res.add("seccomp=" + content
+                                .replace("\r", "")
+                                .replace("\n", "")
+                                .replace(" ", "")
+                        );
+                        continue;
+                    } catch (IOException e) {
+                        // TODO
+                    }
+                }
+            }
+            res.add(securityOpt);
+        }
+        return res;
     }
 
 
@@ -903,10 +911,31 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             final List<String> extraHosts = splitAndFilterEmptyList(extraHostsString, "\n");
             for (String extraHost : extraHosts) {
                 if (extraHost.trim().split(":").length < 2) {
-                    return FormValidation.error("Wrong extraHost {}", extraHost);
+                    return FormValidation.error("Wrong extraHost : %s", extraHost);
                 }
             }
 
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckCapabilitiesToAddString(@QueryParameter String capabilitiesToAddString) {
+            return doCheckCapabilitiesString(capabilitiesToAddString);
+
+        }
+
+        public FormValidation doCheckCapabilitiesToDropString(@QueryParameter String capabilitiesToDropString) {
+            return doCheckCapabilitiesString(capabilitiesToDropString);
+        }
+
+        private FormValidation doCheckCapabilitiesString(String capabilitiesString) {
+            final List<String> capabilities = splitAndFilterEmptyList(capabilitiesString, "\n");
+            for (String capability : capabilities) {
+                try {
+                    Capability.valueOf(capability);
+                } catch(IllegalArgumentException e) {
+                    return FormValidation.error("Wrong capability : %s", capability);
+                }
+            }
             return FormValidation.ok();
         }
 

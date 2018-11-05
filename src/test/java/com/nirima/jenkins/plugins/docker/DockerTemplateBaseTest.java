@@ -48,7 +48,7 @@ public class DockerTemplateBaseTest {
     }
 
     private static void testFillContainerShmSize(final String imageName, final Integer shmSizeToSet,
-            final boolean shmSizeIsExpectedToBeSet, final Long expectedShmSizeSet) {
+                                                 final boolean shmSizeIsExpectedToBeSet, final Long expectedShmSizeSet) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
         final HostConfig mockHostConfig = mock(HostConfig.class);
@@ -78,7 +78,7 @@ public class DockerTemplateBaseTest {
     }
 
     private static void testFillContainerEnvironmentVariable(final String imageName,
-            final String environmentStringToSet, final boolean envsIsExpectedToBeSet, final String... expectedEnvsSet) {
+                                                             final String environmentStringToSet, final boolean envsIsExpectedToBeSet, final String... expectedEnvsSet) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
@@ -99,7 +99,7 @@ public class DockerTemplateBaseTest {
 
     @Test
     public void fillContainerConfigGivenSecurityOptions() {
-        testFillContainerSecurityOpts("null",null, false,
+        testFillContainerSecurityOpts("null", null, false,
                 null);
         String seccompSecurityOptUnconfined = "seccomp=unconfined";
         testFillContainerSecurityOpts("unconfined", Arrays.asList(seccompSecurityOptUnconfined), true,
@@ -114,7 +114,7 @@ public class DockerTemplateBaseTest {
     }
 
     private static void testFillContainerSecurityOpts(final String imageName, final List<String> securityOptsToSet,
-                                                 final boolean securityOptsIsExpectedToBeSet, final List<String> expectedSecurityOpts) {
+                                                      final boolean securityOptsIsExpectedToBeSet, final List<String> expectedSecurityOpts) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
         final HostConfig mockHostConfig = mock(HostConfig.class);
@@ -135,15 +135,22 @@ public class DockerTemplateBaseTest {
 
     @Test
     public void fillContainerConfigGivenCapabilitiesToAdd() {
-        testFillContainerCapabilitiesToAdd("null",null, false,
+        testFillContainerCapabilitiesToAdd("null", null, false,
                 null);
+        String toAddInString = "AUDIT_CONTROL";
         Capability toAdd = Capability.AUDIT_CONTROL;
-        testFillContainerCapabilitiesToAdd("toAdd", Arrays.asList(toAdd), true,
+        testFillContainerCapabilitiesToAdd("toAdd", Arrays.asList(toAddInString), true,
                 Arrays.asList(toAdd));
     }
 
-    private static void testFillContainerCapabilitiesToAdd(final String imageName, final List<Capability> capabilitiesToSet,
-                                                      final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
+    @Test(expected = IllegalArgumentException.class)
+    public void fillContainerConfigGivenCapabilitiesToAddWithException() {
+        testFillContainerCapabilitiesToAdd("not existing", Arrays.asList("DUMMY"), false,
+                null);
+    }
+
+    private static void testFillContainerCapabilitiesToAdd(final String imageName, final List<String> capabilitiesToSet,
+                                                           final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
@@ -162,15 +169,22 @@ public class DockerTemplateBaseTest {
 
     @Test
     public void fillContainerConfigGivenCapabilitiesToDrop() {
-        testFillContainerCapabilitiesToDrop("null",null, false,
+        testFillContainerCapabilitiesToDrop("null", null, false,
                 null);
+        String toDropInString = "AUDIT_CONTROL";
         Capability toDrop = Capability.AUDIT_CONTROL;
-        testFillContainerCapabilitiesToDrop("toDrop", Arrays.asList(toDrop), true,
+        testFillContainerCapabilitiesToDrop("toDrop", Arrays.asList(toDropInString), true,
                 Arrays.asList(toDrop));
     }
 
-    private static void testFillContainerCapabilitiesToDrop(final String imageName, final List<Capability> capabilitiesToSet,
-                                                           final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
+    @Test(expected = IllegalArgumentException.class)
+    public void fillContainerConfigGivenCapabilitiesToDropWithException() {
+        testFillContainerCapabilitiesToDrop("not existing", Arrays.asList("DUMMY"), false,
+                null);
+    }
+
+    private static void testFillContainerCapabilitiesToDrop(final String imageName, final List<String> capabilitiesToSet,
+                                                            final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);

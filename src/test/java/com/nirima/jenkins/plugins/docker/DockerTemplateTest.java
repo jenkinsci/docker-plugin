@@ -75,8 +75,8 @@ public class DockerTemplateTest {
         assertTrue("Error, wrong cpuShares", 1000 == instance.getDockerTemplateBase().cpuShares);
         assertTrue("Error, wrong shmSize", 1002 == instance.getDockerTemplateBase().shmSize);
 
-        assertTrue("Error, wrong capAdd", instance.getDockerTemplateBase().getCapabilitiesToAdd().contains(Capability.CHOWN));
-        assertTrue("Error, wrong capDrop", instance.getDockerTemplateBase().getCapabilitiesToDrop().contains(Capability.NET_ADMIN));
+        assertTrue("Error, wrong capAdd", instance.getDockerTemplateBase().getCapabilitiesToAdd().contains("CHOWN"));
+        assertTrue("Error, wrong capDrop", instance.getDockerTemplateBase().getCapabilitiesToDrop().contains("NET_ADMIN"));
     }
 
 }

@@ -218,7 +218,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @CheckForNull
-    public List<Capability> getCapabilitiesToAdd() {
+    public List<String> getCapabilitiesToAdd() {
         return dockerTemplateBase.getCapabilitiesToAdd();
     }
 
@@ -227,7 +227,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @CheckForNull
-    public List<Capability> getCapabilitiesToDrop() {
+    public List<String> getCapabilitiesToDrop() {
         return dockerTemplateBase.getCapabilitiesToDrop();
     }
 
