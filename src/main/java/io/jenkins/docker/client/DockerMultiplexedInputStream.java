@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * De-multiplex an <code>application/vnd.docker.raw-stream</code> as described on
  * <a href="https://docs.docker.com/engine/api/v1.32/#operation/ContainerAttach">Docker API documentation</a>
@@ -14,6 +17,8 @@ public class DockerMultiplexedInputStream extends InputStream {
 
     private final InputStream multiplexed;
     int next;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerMultiplexedInputStream.class);
 
     public DockerMultiplexedInputStream(InputStream in) {
         multiplexed = in;
@@ -50,7 +55,7 @@ public class DockerMultiplexedInputStream extends InputStream {
                     next = size;
                     break;
                 case 2: // STDERR
-                    // not expected. Read payload and dump on stderr for diagnostic
+                    // not expected. Read payload and log it for diagnostic
                     byte[] payload = new byte[size];
                     int received = 0;
                     while (received < size) {
@@ -58,7 +63,8 @@ public class DockerMultiplexedInputStream extends InputStream {
                         if (i < 0) break; // EOF
                         received += i;
                     }
-                    System.err.println(new String(payload, 0, received, StandardCharsets.UTF_8));
+                    LOGGER.warn("Unexpected data on container stderr: {}",
+                                new String(payload, 0, received, StandardCharsets.UTF_8));
                     break;
                 default:
                     throw new IOException("Unexpected application/vnd.docker.raw-stream frame type " + header);
