@@ -138,7 +138,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
             try {
                 for (DockerCloud dc : getAllClouds()) {
-                    LOGGER.info("Checking Docker Cloud {} at {}", dc.getDisplayName(), dc.getDockerApi().getDockerHost().getUri());
+                    String uri = dc.getDockerApi().getDockerHost().getUri();
+                    if (uri == null) {
+                        LOGGER.info("Skipping unconfigured Docker Cloud {}", dc.getDisplayName());
+                        continue; // currently declines to default it, contrary to getUri Javadoc
+                    }
+
+                    LOGGER.info("Checking Docker Cloud {} at {}", dc.getDisplayName(), uri);
                     listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
 
                     csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
