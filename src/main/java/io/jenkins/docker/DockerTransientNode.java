@@ -1,6 +1,7 @@
 package io.jenkins.docker;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
@@ -247,6 +248,9 @@ public class DockerTransientNode extends Slave {
             }
         } catch (NotFoundException e) {
             logger.println("Container '" + containerId + "' already gone " + containerDescription + ".");
+            containerNowRemoved = true;
+        } catch (ConflictException e) {
+            logger.println("Container '" + containerId + "' removal already in progress.");
             containerNowRemoved = true;
         } catch (Exception ex) {
             logger.error("Failed to remove container '" + containerId + "' " + containerDescription + " due to exception:", ex);
