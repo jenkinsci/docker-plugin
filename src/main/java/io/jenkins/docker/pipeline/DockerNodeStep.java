@@ -39,6 +39,8 @@ public class DockerNodeStep extends Step {
 
     private String remoteFs;
 
+    private Boolean privileged;
+
     private DockerComputerConnector connector;
 
     @DataBoundConstructor
@@ -77,6 +79,15 @@ public class DockerNodeStep extends Step {
         this.remoteFs = Util.fixEmpty(remoteFs);
     }
 
+    public Boolean getPrivileged() {
+        return privileged;
+    }
+
+    @DataBoundSetter
+    public void setPrivileged(Boolean privileged) {
+        this.privileged = privileged;
+    }
+
     public DockerComputerConnector getConnector() {
         return connector;
     }
@@ -88,7 +99,7 @@ public class DockerNodeStep extends Step {
 
     @Override
     public StepExecution start(StepContext context) throws Exception {
-        return new DockerNodeStepExecution(context, connector, dockerHost, credentialsId, image, remoteFs);
+        return new DockerNodeStepExecution(context, connector, dockerHost, credentialsId, image, remoteFs, privileged);
     }
 
     @Extension(optional = true)

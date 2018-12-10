@@ -19,6 +19,11 @@
         <c:select/>
       </f:entry>
 
+    <f:entry title="Run container privileged" field="privileged">
+      <f:checkbox />
+      <span class="warning">at your own risk</span>
+    </f:entry> 
+
   </f:advanced>
 
 </j:jelly>
