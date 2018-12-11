@@ -90,7 +90,7 @@ public class DockerNodeStepTest {
             @Override
             public void evaluate() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "simpleProvision");
-                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins', privileged: false) {\n" +
                         "  sh 'echo \"hello there\"'\n" +
                         "}\n", true));
                 WorkflowRun r = story.j.buildAndAssertSuccess(j);
@@ -106,7 +106,7 @@ public class DockerNodeStepTest {
             public void evaluate() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "withinNode");
                 j.setDefinition(new CpsFlowDefinition("node {\n" +
-                        "  dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                        "  dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins', privileged: false) {\n" +
                         "    sh 'echo \"hello there\"'\n" +
                         "  }\n" +
                         "}\n", true));
@@ -133,7 +133,7 @@ public class DockerNodeStepTest {
                 Maven.MavenInstallation mvnInst = new Maven.MavenInstallation("myMaven", null, Collections.singletonList(mvnIsp));
                 story.j.jenkins.getDescriptorByType(Maven.DescriptorImpl.class).setInstallations(mvnInst);
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "toolInstall");
-                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins', privileged: false) {\n" +
                         "  def mvnHome = tool id: 'maven', name: 'myMaven'\n" +
                         "  assert fileExists(mvnHome + '/bin/mvn')\n" +
                         "}\n", true));
@@ -149,7 +149,7 @@ public class DockerNodeStepTest {
             @Override
             public void evaluate() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "changeDir");
-                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins', privileged: false) {\n" +
                         "  echo \"dir is '${pwd()}'\"\n" +
                         "  dir('subdir') {\n" +
                         "    echo \"dir now is '${pwd()}'\"\n" +
@@ -169,7 +169,7 @@ public class DockerNodeStepTest {
             @Override
             public void evaluate() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "deleteDir");
-                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins', privileged: false) {\n" +
                         "  sh 'mkdir -p subdir'\n" +
                         "  assert fileExists('subdir')\n" +
                         "  dir('subdir') {\n" +
@@ -205,7 +205,7 @@ public class DockerNodeStepTest {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "nodeWithinDockerNode");
                 j.setDefinition(new CpsFlowDefinition("node('first-agent') {\n" +
                         "  sh 'echo \"FIRST: WHICH_AGENT=|$WHICH_AGENT|\"'\n" +
-                        "  dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                        "  dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins', privileged: false) {\n" +
                         "    sh 'echo \"DOCKER: WHICH_AGENT=|$WHICH_AGENT|\"'\n" +
                         "    node('other-agent') {\n" +
                         "      sh 'echo \"SECOND: WHICH_AGENT=|$WHICH_AGENT|\"'\n" +
@@ -246,7 +246,7 @@ public class DockerNodeStepTest {
             @Override
             public void evaluate() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "pathModification");
-                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins', privileged: false) {\n" +
                         "  echo \"Original PATH: ${env.PATH}\"\n" +
                         "  def origPath = env.PATH\n" +
                         "  pathModifier('/some/fake/path') {\n" +
