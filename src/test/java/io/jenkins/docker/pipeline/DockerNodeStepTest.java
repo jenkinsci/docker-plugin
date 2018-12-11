@@ -227,6 +227,7 @@ public class DockerNodeStepTest {
             s.setCredentialsId("");
             s.setDockerHost("");
             s.setRemoteFs("");
+            s.setPrivileged(false);
             UninstantiatedDescribable uninstantiated = new DescribableModel<>(DockerNodeStep.class).uninstantiate2(s);
             assertEquals(uninstantiated.toString(), Collections.singleton("image"), uninstantiated.getArguments().keySet());
             r.jenkins.clouds.add(new DockerCloud("whatever", new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)), Collections.emptyList()));

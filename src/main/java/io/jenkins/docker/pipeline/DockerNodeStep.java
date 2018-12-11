@@ -46,6 +46,7 @@ public class DockerNodeStep extends Step {
     @DataBoundConstructor
     public DockerNodeStep(String image) {
         this.image = image;
+        this.privileged = false;
     }
 
     public String getDockerHost() {
