@@ -11,4 +11,4 @@ that slave.
 
 More documentation available on the Jenkins wiki:
 
-https://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin
+https://plugins.jenkins.io/docker-plugin
