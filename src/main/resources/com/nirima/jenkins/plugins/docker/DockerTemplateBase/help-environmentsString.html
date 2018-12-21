@@ -1,0 +1,28 @@
+<div>
+    <p>
+    Zero or more environment variables that are set within the docker container.
+    This is a multi-line text field.
+    Each line must be of the form key=value and specify one variable name and its value.
+    </p>
+    <p>
+    Note that quotes are not interpreted.
+    <br/>
+    e.g. <textarea readonly="true" rows="1" cols="10" class="setting-input">foo="bar"</textarea> will result in the quotes being part of foo's value.
+    </p>
+    <p>
+    Note also that whitespace is easily broken.
+    Editing this field this without first expanding the box to its multi-line form
+    will cause any whitespace within a line to be turned into end of line codes,
+    breaking up the line and thus changing its meaning.
+    <br/>
+    e.g. The single setting:
+    <br/>
+    &nbsp;<textarea readonly="true" rows="1" cols="60" class="setting-input">JENKINS_SLAVE_SSH_PUBKEY=ssh-rsa MyPubKey jenkins@hostname&#10;</textarea>
+    <br/>
+    can be (accidentally) turned into three separate settings:
+    <br/>
+    &nbsp;<textarea readonly="true" rows="3" cols="60" class="setting-input">JENKINS_SLAVE_SSH_PUBKEY=ssh-rsa&#10;MyPubKey&#10;jenkins@hostname&#10;</textarea>
+    <br/>
+    thus preventing the configuration from working as was intended.
+    </p>
+</div>
