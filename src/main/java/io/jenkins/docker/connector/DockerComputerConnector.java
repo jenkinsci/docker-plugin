@@ -91,9 +91,9 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
         final ComputerLauncher launcher = createLauncher(api, workdir, inspect, listener);
 
         final Boolean running = inspect.getState().getRunning();
-        if (Boolean.FALSE.equals(running)) {
-            listener.error("Container {} is not running. {}", containerId, inspect.getState().getStatus());
-            throw new IOException("Container is not running.");
+        if (Boolean.TRUE.equals(running)) {
+            listener.error("Container {} is already running. {}", containerId, inspect.getState().getStatus());
+            throw new IOException("Container is already running.");
         }
 
         return new DockerDelegatingComputerLauncher(launcher, api, containerId);

@@ -25,6 +25,7 @@ import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.connector.DockerComputerConnector;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Base64;
@@ -363,11 +364,19 @@ public class DockerCloud extends Cloud {
                             final DockerAPI api = DockerCloud.this.getDockerApi();
                             slave = t.provisionNode(api, TaskListener.NULL);
                             slave.setCloudId(DockerCloud.this.name);
-                            plannedNode.complete(slave);
 
                             // On provisioning completion, let's trigger NodeProvisioner
                             robustlyAddNodeToJenkins(slave);
 
+                            final DockerComputerConnector connector=t.getConnector();
+                            final String containerId = slave.getContainerId();
+                            final String remoteFs = slave.getRemoteFS();
+
+                            connector.beforeContainerStarted(api, remoteFs, containerId);
+                            api.getClient().startContainerCmd(containerId).exec();
+                            connector.afterContainerStarted(api, remoteFs, containerId);
+
+                            plannedNode.complete(slave);
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                     t, getDisplayName(), ex);
