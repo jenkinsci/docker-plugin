@@ -1,5 +1,7 @@
 <div>
-    <strong>Deprecated</strong> you should configure template with memory/cpu constraints, so docker infrastructure can manage resource consumption.
-    <p>Maximal number of instances of this template to run, or empty for unlimited.</p>
-    <p>Note that also those containers (using the same image) are counted which have <b>not</b> been started by Jenkins.</p>
+    <p>The maximum number of containers, based on this template, that this provider is allowed to run in total.</p>
+    <p>Note that containers which have <b>not</b> been created by Jenkins are not included in this total.</p>
+    <p>A negative value, or zero, or 2147483647 all mean "no limit" is imposed on the this template,
+    although the overall cloud instance limit (if any) will still apply.</p>
+    <p><strong>Deprecated</strong> you should configure template with memory/cpu constraints, so docker infrastructure can manage resource consumption.</p>
 </div>
