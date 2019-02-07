@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.6 (TBD)
+* Enhancement: Incrementals CI builds [#680](https://github.com/jenkinsci/docker-plugin/issues/680)
+* Fix SSH retry count and wait config from being ignored [#677](https://github.com/jenkinsci/docker-plugin/issues/677), [#717](https://github.com/jenkinsci/docker-plugin/issues/717)
+* Enhancement: Make it easier to run dockerNode [#679](https://github.com/jenkinsci/docker-plugin/issues/679)
+* Enhancement: Add devices flag support [#685](https://github.com/jenkinsci/docker-plugin/issues/685), [#686](https://github.com/jenkinsci/docker-plugin/issues/686)
+* Convert DockerComputerConnector$1 to non anymous class [JENKINS-53785](https://issues.jenkins-ci.org/browse/JENKINS-53785), [#688](https://github.com/jenkinsci/docker-plugin/issues/688)
+* Fix DockerMultiplexedInputStream [#693](https://github.com/jenkinsci/docker-plugin/issues/693)
+* Fix ugly exception in log [JENKINS-48460](https://issues.jenkins-ci.org/browse/JENKINS-48460), [#700](https://github.com/jenkinsci/docker-plugin/issues/700)
+* Fix ugly exception when removing a container that was already being removed [#702](https://github.com/jenkinsci/docker-plugin/issues/702)
+* Enhancement: Cloud/Template help improvements [#711](https://github.com/jenkinsci/docker-plugin/issues/711)
+
 ## 1.1.5 (2018-08-08)
 * :warning: Docker container labels now follow [docker recommendations](https://docs.docker.com/config/labels-custom-metadata/) [#660](https://github.com/jenkinsci/docker-plugin/pull/660)
 * Fix JAVA_OPT env var when using JNLP [#642](https://github.com/jenkinsci/docker-plugin/issues/642)
