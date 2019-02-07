@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.6 (TBD)
+## 1.1.6 (2019-02-07)
 * Enhancement: Incrementals CI builds [#680](https://github.com/jenkinsci/docker-plugin/issues/680)
 * Fix SSH retry count and wait config from being ignored [#677](https://github.com/jenkinsci/docker-plugin/issues/677), [#717](https://github.com/jenkinsci/docker-plugin/issues/717)
 * Enhancement: Make it easier to run dockerNode [#679](https://github.com/jenkinsci/docker-plugin/issues/679)
