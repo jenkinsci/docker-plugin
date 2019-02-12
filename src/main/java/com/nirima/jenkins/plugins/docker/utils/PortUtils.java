@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static com.google.common.base.Preconditions.checkState;
@@ -65,6 +67,11 @@ public class PortUtils {
             try (Socket ignored = new Socket(host, port)) {
                 return true;
             } catch (IOException e) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream(); 
+                e.printStackTrace(new PrintStream(out));
+                String str = new String(out.toByteArray());
+                LOGGER.warn("This is a message from AppIDMan opening the socket didn't work because of: ");
+                LOGGER.warn(str);
                 return false;
             }
         }
