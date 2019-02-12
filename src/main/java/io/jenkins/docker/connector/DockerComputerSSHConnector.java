@@ -279,7 +279,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
         String host = getExternalIP(api, ir, networkSettings, sshBindings);
 
-        return new InetSocketAddress(host, port);
+        return new InetSocketAddress("127.0.0.1", port);
     }
 
     private String getExternalIP(DockerAPI api, InspectContainerResponse ir, NetworkSettings networkSettings,
