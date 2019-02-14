@@ -41,7 +41,7 @@ public class PortUtils {
         private long retryDelay = (long) SECONDS.toMillis(2);
 
         private ConnectionCheck(String host, int port) {
-            this.host = "127.0.0.1";//host;
+            this.host = host;
             this.port = port;
         }
 

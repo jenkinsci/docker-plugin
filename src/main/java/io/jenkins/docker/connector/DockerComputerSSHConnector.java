@@ -109,7 +109,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     public String getJavaPath() {
         return javaPath;
     }
-
+ 
     @DataBoundSetter
     public void setJavaPath(String javaPath) {
         this.javaPath = javaPath;
@@ -279,7 +279,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
         String host = getExternalIP(api, ir, networkSettings, sshBindings);
 
-        return new InetSocketAddress("127.0.0.1", port);
+        return new InetSocketAddress(host, port);
     }
 
     private String getExternalIP(DockerAPI api, InspectContainerResponse ir, NetworkSettings networkSettings,
@@ -311,7 +311,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         final URI uri = URI.create(api.getDockerHost().getUri());
         if(uri.getScheme().equals("unix")) {
             // Communicating with unix domain socket. so we assume localhost
-            return "0.0.0.0";
+            return "127.0.0.1";
         }
         return uri.getHost();
     }
