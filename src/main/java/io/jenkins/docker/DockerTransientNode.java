@@ -7,6 +7,7 @@ import com.github.dockerjava.api.exception.NotModifiedException;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerOfflineCause;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Slave;
@@ -311,6 +312,21 @@ public class DockerTransientNode extends Slave {
         }
 
         return (DockerCloud) cloud;
+    }
+
+    @Extension
+    public static final class DockerTransientNodeDescriptor extends SlaveDescriptor {
+
+        @Override
+        public String getDisplayName() {
+            return "Docker Agent";
+        }
+
+        @Override
+        public boolean isInstantiable() {
+            return false;
+        }
+
     }
 
 }
