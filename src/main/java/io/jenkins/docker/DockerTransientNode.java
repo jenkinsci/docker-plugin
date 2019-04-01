@@ -326,7 +326,5 @@ public class DockerTransientNode extends Slave {
         public boolean isInstantiable() {
             return false;
         }
-
     }
-
 }
