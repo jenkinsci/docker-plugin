@@ -6,6 +6,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerOfflineCause;
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.model.Computer;
@@ -39,6 +40,8 @@ public class DockerTransientNode extends Slave {
     private transient DockerAPI dockerAPI;
 
     private boolean removeVolumes;
+    
+    private int stopTimeout = DockerTemplate.DEFAULT_STOP_TIMEOUT;
 
     private String cloudId;
 
@@ -94,6 +97,14 @@ public class DockerTransientNode extends Slave {
 
     public void setRemoveVolumes(boolean removeVolumes) {
         this.removeVolumes = removeVolumes;
+    }
+    
+    public int getStopTimeout() {
+    	return this.stopTimeout;
+    }
+    
+    public void setStopTimeout(int timeout) {
+    	this.stopTimeout = timeout;
     }
 
     public String getCloudId() {
@@ -194,7 +205,8 @@ public class DockerTransientNode extends Slave {
                     logger.error("Unable to stop and remove container '" + containerId + "' for node '" + name + "' due to exception:", ex);
                     return;
                 }
-                final boolean newValues[] = stopAndRemoveContainer(api, logger, "for node '" + name + "'", removeVolumes, containerId, containerStopped);
+                final boolean newValues[] = stopAndRemoveContainer(api, logger, "for node '" + name + "'",
+                    removeVolumes, stopTimeout, containerId, containerStopped);
                 containerStopped = newValues[0];
                 containerRemoved = newValues[1];
             }
@@ -215,7 +227,7 @@ public class DockerTransientNode extends Slave {
      *         second is true if the container no longer exists.
      */
     private static boolean[] stopAndRemoveContainer(final DockerAPI api, final ILogger logger,
-            final String containerDescription, final boolean removeVolumes, final String containerId,
+            final String containerDescription, final boolean removeVolumes, int stopTimeout, final String containerId,
             final boolean containerAlreadyStopped) {
         boolean containerNowStopped = containerAlreadyStopped;
         boolean containerNowRemoved = false;
@@ -223,7 +235,7 @@ public class DockerTransientNode extends Slave {
         try(final DockerClient client = api.getClient()) {
             if( !containerNowStopped ) {
                 client.stopContainerCmd(containerId)
-                        .withTimeout(10)
+                        .withTimeout(stopTimeout > 0 ? stopTimeout : DockerTemplate.DEFAULT_STOP_TIMEOUT)
                         .exec();
                 containerNowStopped = true;
                 logger.println("Stopped container '"+ containerId + "' " + containerDescription + ".");
@@ -294,8 +306,8 @@ public class DockerTransientNode extends Slave {
     public static boolean stopAndRemoveContainer(final DockerAPI api, final Logger logger, final String containerDescription,
             final boolean removeVolumes, final String containerId, final boolean containerAlreadyStopped) {
         final ILogger tl = createILoggerForSLF4JLogger(logger);
-        final boolean containerState[] = stopAndRemoveContainer(api, tl, containerDescription, removeVolumes,
-                containerId, containerAlreadyStopped);
+		final boolean containerState[] = stopAndRemoveContainer(api, tl, containerDescription, removeVolumes,
+				DockerTemplate.DEFAULT_STOP_TIMEOUT, containerId, containerAlreadyStopped);
         return containerState[1];
     }
 

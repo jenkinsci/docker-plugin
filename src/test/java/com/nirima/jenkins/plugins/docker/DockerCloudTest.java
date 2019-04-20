@@ -60,6 +60,7 @@ public class DockerCloudTest {
         template.setPullStrategy(DockerImagePullStrategy.PULL_NEVER);
         template.setMode(Node.Mode.NORMAL);
         template.setRemoveVolumes(true);
+        template.setStopTimeout(42);
         template.setRetentionStrategy(new DockerOnceRetentionStrategy(33));
 
         DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")),
