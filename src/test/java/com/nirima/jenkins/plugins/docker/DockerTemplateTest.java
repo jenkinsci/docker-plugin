@@ -85,12 +85,11 @@ public class DockerTemplateTest {
         Mockito.when(createCmd.getLabels()).thenReturn(labels);
 
         String nodeNameValue = "nodeName";
-        DockerTemplate.setNodeNameInContainerConfig(createCmd, nodeNameValue);
+        DockerTemplate.setNodeNameInContainerConfig(createCmd, nodeNameValue, false);
 
         String nodeName = DockerContainerLabelKeys.NODE_NAME;
         Assert.assertTrue(String.format("Label %s should have been set to DockerTemplate", nodeName), createCmd.getLabels().containsKey(nodeName));
         Assert.assertEquals("Label value has not been set correctly.", nodeNameValue, createCmd.getLabels().get(nodeName));
-        // By default it is false
         Mockito.verify(createCmd, Mockito.times(0)).withName(nodeNameValue);
     }
 
@@ -107,7 +106,6 @@ public class DockerTemplateTest {
         String nodeName = DockerContainerLabelKeys.NODE_NAME;
         Assert.assertTrue(String.format("Label %s should have been set to DockerTemplate", nodeName), createCmd.getLabels().containsKey(nodeName));
         Assert.assertEquals("Label value has not been set correctly.", nodeNameValue, createCmd.getLabels().get(nodeName));
-        // By default it is false
         Mockito.verify(createCmd, Mockito.times(1)).withName(nodeNameValue);
     }
 

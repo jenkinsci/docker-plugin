@@ -60,7 +60,7 @@ public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest
         final CreateContainerCmd createCmd = mock(CreateContainerCmd.class);
         final Map<String, String> containerLabels = new TreeMap<>();
         when(createCmd.getLabels()).thenReturn(containerLabels);
-        DockerTemplate.setNodeNameInContainerConfig(createCmd, "nodeName");
+        DockerTemplate.setNodeNameInContainerConfig(createCmd, "nodeName", false);
         when(createCmd.getEnv()).thenReturn(new String[]{ env1 });
 
         // When
@@ -82,7 +82,7 @@ public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest
         final CreateContainerCmd createCmd = mock(CreateContainerCmd.class);
         final Map<String, String> containerLabels = new TreeMap<>();
         when(createCmd.getLabels()).thenReturn(containerLabels);
-        DockerTemplate.setNodeNameInContainerConfig(createCmd, "nodeName");
+        DockerTemplate.setNodeNameInContainerConfig(createCmd, "nodeName", false);
 
         // When
         connector.beforeContainerCreated(null, null, createCmd);

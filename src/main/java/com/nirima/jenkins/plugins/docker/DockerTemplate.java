@@ -236,12 +236,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @Restricted(NoExternalUse.class) // public for tests only
-    public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName) {
-        setNodeNameInContainerConfig(containerConfig, nodeName, false);
-    }
-
-    @Restricted(NoExternalUse.class) // public for tests only
-        public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName, boolean useAsName) {
+    public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName,
+                                                    boolean useAsName) {
         containerConfig.getLabels().put(DockerContainerLabelKeys.NODE_NAME, nodeName);
         if (useAsName) {
             containerConfig.withName(nodeName);
