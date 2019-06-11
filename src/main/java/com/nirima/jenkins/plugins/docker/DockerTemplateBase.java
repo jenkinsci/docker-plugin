@@ -113,6 +113,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @CheckForNull
     private List<String> extraHosts;
 
+    public boolean usingNodeNameAsContainerName;
+
     @DataBoundConstructor
     public DockerTemplateBase(String image) {
         if (image == null) {
@@ -412,6 +414,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             return "";
         }
         return Joiner.on("\n").join(extraHosts);
+    }
+
+    public boolean isUsingNodeNameAsContainerName() {
+        return usingNodeNameAsContainerName;
+    }
+
+    @DataBoundSetter
+    public void setUsingNodeNameAsContainerName(boolean usingNodeNameAsContainerName) {
+        this.usingNodeNameAsContainerName = usingNodeNameAsContainerName;
     }
 
     // -- UI binding End

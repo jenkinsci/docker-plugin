@@ -220,6 +220,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase.getRegistry();
     }
 
+    public boolean isUsingNodeNameAsContainerName() {
+        return dockerTemplateBase.isUsingNodeNameAsContainerName();
+    }
+
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         final String templateName = getName();
@@ -227,13 +231,21 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         labels.put(DockerContainerLabelKeys.REMOVE_VOLUMES, Boolean.toString(isRemoveVolumes()));
         labels.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
         final String nodeName = calcUnusedNodeName(templateName);
-        setNodeNameInContainerConfig(result, nodeName);
+        setNodeNameInContainerConfig(result, nodeName, this.isUsingNodeNameAsContainerName());
         return result;
     }
 
     @Restricted(NoExternalUse.class) // public for tests only
     public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName) {
+        setNodeNameInContainerConfig(containerConfig, nodeName, false);
+    }
+
+    @Restricted(NoExternalUse.class) // public for tests only
+        public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName, boolean useAsName) {
         containerConfig.getLabels().put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        if (useAsName) {
+            containerConfig.withName(nodeName);
+        }
     }
 
     /**

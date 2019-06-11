@@ -2,7 +2,13 @@ package com.nirima.jenkins.plugins.docker;
 
 import static org.junit.Assert.*;
 
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DockerTemplateTest {
     String image = "image";
@@ -69,6 +75,40 @@ public class DockerTemplateTest {
         assertTrue("Error, wrong memorySwap", 1280 == instance.getDockerTemplateBase().memorySwap);
         assertTrue("Error, wrong cpuShares", 1000 == instance.getDockerTemplateBase().cpuShares);
         assertTrue("Error, wrong shmSize", 1002 == instance.getDockerTemplateBase().shmSize);
+    }
+
+    @Test
+    public void testSetNodeNameInContainerConfigWithoutUsingNodeNameAsContainerName() {
+        CreateContainerCmd createCmd = Mockito.mock(CreateContainerCmd.class);
+
+        Map<String, String> labels = new HashMap<>();
+        Mockito.when(createCmd.getLabels()).thenReturn(labels);
+
+        String nodeNameValue = "nodeName";
+        DockerTemplate.setNodeNameInContainerConfig(createCmd, nodeNameValue);
+
+        String nodeName = DockerContainerLabelKeys.NODE_NAME;
+        Assert.assertTrue(String.format("Label %s should have been set to DockerTemplate", nodeName), createCmd.getLabels().containsKey(nodeName));
+        Assert.assertEquals("Label value has not been set correctly.", nodeNameValue, createCmd.getLabels().get(nodeName));
+        // By default it is false
+        Mockito.verify(createCmd, Mockito.times(0)).withName(nodeNameValue);
+    }
+
+    @Test
+    public void testSetNodeNameInContainerConfigWithUsingNodeNameAsContainerName() {
+        CreateContainerCmd createCmd = Mockito.mock(CreateContainerCmd.class);
+
+        Map<String, String> labels = new HashMap<>();
+        Mockito.when(createCmd.getLabels()).thenReturn(labels);
+
+        String nodeNameValue = "nodeName";
+        DockerTemplate.setNodeNameInContainerConfig(createCmd, nodeNameValue, true);
+
+        String nodeName = DockerContainerLabelKeys.NODE_NAME;
+        Assert.assertTrue(String.format("Label %s should have been set to DockerTemplate", nodeName), createCmd.getLabels().containsKey(nodeName));
+        Assert.assertEquals("Label value has not been set correctly.", nodeNameValue, createCmd.getLabels().get(nodeName));
+        // By default it is false
+        Mockito.verify(createCmd, Mockito.times(1)).withName(nodeNameValue);
     }
 
 }
