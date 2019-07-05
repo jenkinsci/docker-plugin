@@ -138,7 +138,7 @@ public class DockerCloud extends Cloud {
                        int readTimeout,
                        String version,
                        String dockerHostname) {
-        this(name, new DockerAPI(dockerHost, connectTimeout, readTimeout, version, dockerHostname), templates);
+        this(name, new DockerAPI(dockerHost, connectTimeout, readTimeout, version, dockerHostname, null), templates);
         setContainerCap(containerCap);
     }
 
@@ -682,7 +682,7 @@ public class DockerCloud extends Cloud {
             dockerHost = new DockerServerEndpoint(serverUrl, credentialsId);
         }
         if (dockerApi == null) {
-            dockerApi = new DockerAPI(dockerHost, connectTimeout, readTimeout, version, dockerHostname);
+            dockerApi = new DockerAPI(dockerHost, connectTimeout, readTimeout, version, dockerHostname, null);
         }
 
         return this;

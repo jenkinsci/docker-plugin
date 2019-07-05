@@ -19,6 +19,10 @@
         <f:entry title="${%Docker Hostname or IP address}" field="hostname">
             <f:textbox/>
         </f:entry>
+
+        <f:entry title="${%Hostname to bind SSH}" field="sshBindHostname">
+            <f:textbox/>
+        </f:entry>
     </f:advanced>
 
     <!-- we can't pass dockerhost here, need to "flatmap" it's attributes -->

@@ -63,6 +63,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
 
     private String hostname;
 
+    private String sshBindHostname;
+
     /**
      * Is this host actually a swarm?
      */
@@ -73,12 +75,13 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         this.dockerHost = dockerHost;
     }
 
-    public DockerAPI(DockerServerEndpoint dockerHost, int connectTimeout, int readTimeout, String apiVersion, String hostname) {
+    public DockerAPI(DockerServerEndpoint dockerHost, int connectTimeout, int readTimeout, String apiVersion, String hostname, String sshBindHostname) {
         this.dockerHost = dockerHost;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
         this.apiVersion = apiVersion;
         this.hostname = hostname;
+        this.sshBindHostname = sshBindHostname;
     }
 
     public DockerServerEndpoint getDockerHost() {
@@ -119,6 +122,15 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
     @DataBoundSetter
     public void setHostname(String hostname) {
         this.hostname = trimToNull(hostname);
+    }
+
+    public String getSshBindHostname() {
+        return sshBindHostname;
+    }
+
+    @DataBoundSetter
+    public void setSshBindHostname(String sshBindHostname) {
+        this.sshBindHostname = trimToNull(sshBindHostname);
     }
 
     public boolean isSwarm() {
@@ -302,6 +314,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         if (dockerHost != null ? !dockerHost.equals(dockerAPI.dockerHost) : dockerAPI.dockerHost != null) return false;
         if (apiVersion != null ? !apiVersion.equals(dockerAPI.apiVersion) : dockerAPI.apiVersion != null) return false;
         if (hostname != null ? !hostname.equals(dockerAPI.hostname) : dockerAPI.hostname != null) return false;
+        if (sshBindHostname != null ? !sshBindHostname.equals(dockerAPI.sshBindHostname) : dockerAPI.sshBindHostname != null) return false;
         return true;
     }
 
@@ -312,6 +325,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         result = 31 * result + readTimeout;
         result = 31 * result + (apiVersion != null ? apiVersion.hashCode() : 0);
         result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
+        result = 31 * result + (sshBindHostname != null ? sshBindHostname.hashCode() : 0);
         return result;
     }
 
@@ -345,7 +359,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         ) {
             try {
                 final DockerServerEndpoint dsep = new DockerServerEndpoint(uri, credentialsId);
-                final DockerAPI dapi = new DockerAPI(dsep, connectTimeout, readTimeout, apiVersion, null);
+                final DockerAPI dapi = new DockerAPI(dsep, connectTimeout, readTimeout, apiVersion, null, null);
                 try(final DockerClient dc = dapi.getClient()) {
                     final VersionCmd vc = dc.versionCmd();
                     final Version v = vc.exec();
