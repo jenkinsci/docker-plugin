@@ -1,9 +1,5 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserListBoxModel;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.PortBinding;
@@ -17,16 +13,11 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
-import com.trilead.ssh2.Connection;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Item;
-import hudson.model.ItemGroup;
-import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.security.ACL;
-import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
@@ -742,9 +733,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             } catch (Throwable t) {
                 return FormValidation.error(t.getMessage());
             }
-
             return FormValidation.ok();
-
         }
 
         public FormValidation doCheckVolumesFromString(@QueryParameter String volumesFromString) {
@@ -756,7 +745,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             } catch (Throwable t) {
                 return FormValidation.error(t.getMessage());
             }
-
             return FormValidation.ok();
         }
 
@@ -767,34 +755,14 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                     return FormValidation.error("Wrong extraHost {}", extraHost);
                 }
             }
-
             return FormValidation.ok();
         }
 
-
-        public ListBoxModel doFillPullCredentialsIdItems(@AncestorInPath Item item) {
+        public ListBoxModel doFillPullCredentialsIdItems(@AncestorInPath Item context) {
             final DockerRegistryEndpoint.DescriptorImpl descriptor =
                     (DockerRegistryEndpoint.DescriptorImpl)
                             Jenkins.getInstance().getDescriptorOrDie(DockerRegistryEndpoint.class);
-            return descriptor.doFillCredentialsIdItems(item);
-        }
-
-
-        public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-
-            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
-            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
-                return new ListBoxModel();
-            }
-
-            return new SSHUserListBoxModel().withMatching(
-                    SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(
-                            StandardUsernameCredentials.class,
-                            context,
-                            ACL.SYSTEM,
-                            SSHLauncher.SSH_SCHEME)
-            );
+            return descriptor.doFillCredentialsIdItems(context);
         }
 
         @Override
@@ -802,5 +770,4 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             return "Docker template base";
         }
     }
-
 }

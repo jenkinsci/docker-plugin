@@ -106,7 +106,7 @@ public class DockerNodeStep extends Step {
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item, @QueryParameter String uri) {
-            DockerServerEndpoint.DescriptorImpl descriptor = (DockerServerEndpoint.DescriptorImpl) Jenkins.getInstance().getDescriptor(DockerServerEndpoint.class);
+            DockerServerEndpoint.DescriptorImpl descriptor = (DockerServerEndpoint.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(DockerServerEndpoint.class);
             return descriptor.doFillCredentialsIdItems(item, uri);
         }
 

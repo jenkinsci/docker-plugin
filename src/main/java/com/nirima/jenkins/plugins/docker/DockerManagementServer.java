@@ -11,19 +11,21 @@ import jenkins.model.Jenkins;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 /**
  * Created by magnayn on 22/02/2014.
  */
-public class DockerManagementServer  implements Describable<DockerManagementServer> {
+public class DockerManagementServer implements Describable<DockerManagementServer> {
     final String name;
     final DockerCloud theCloud;
 
+    @Override
     public Descriptor<DockerManagementServer> getDescriptor() {
         return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
     }
@@ -38,6 +40,9 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
     }
 
     public Collection getImages(){
+        if ( !Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER) ) {
+            return Collections.emptyList();
+        }
         final DockerAPI dockerApi = theCloud.getDockerApi();
         try(final DockerClient client = dockerApi.getClient()) {
             return client.listImagesCmd().exec();
@@ -47,6 +52,9 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
     }
 
     public Collection getProcesses() {
+        if ( !Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER) ) {
+            return Collections.emptyList();
+        }
         final DockerAPI dockerApi = theCloud.getDockerApi();
         try(final DockerClient client = dockerApi.getClient()) {
             return client.listContainersCmd().exec();
@@ -67,9 +75,9 @@ public class DockerManagementServer  implements Describable<DockerManagementServ
         return Consts.PLUGIN_JS_URL + jsName;
     }
 
-    public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest req, StaplerResponse rsp) throws ServletException,
-            IOException,
-            InterruptedException {
+    @RequirePOST
+    public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest req, StaplerResponse rsp) throws IOException {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         final DockerAPI dockerApi = theCloud.getDockerApi();
         try(final DockerClient client = dockerApi.getClient()) {
             client.stopContainerCmd(stopId).exec();
