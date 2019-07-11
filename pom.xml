@@ -26,7 +26,7 @@
     </developers>
 
     <properties>
-        <revision>1.1.7</revision>
+        <revision>1.1.8</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>

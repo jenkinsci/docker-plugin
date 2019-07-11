@@ -1,8 +1,10 @@
 package io.jenkins.docker.connector;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
@@ -10,17 +12,18 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
-import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
+import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.signature.RSAKeyAlgorithm;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import hudson.model.ItemGroup;
+import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
 import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
+import hudson.security.ACL;
 import hudson.slaves.ComputerLauncher;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.client.DockerAPI;
@@ -33,6 +36,7 @@ import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -419,8 +424,28 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 return "Use configured SSH credentials";
             }
 
-            public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-                return DockerTemplateBase.DescriptorImpl.doFillCredentialsIdItems(context);
+            public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String credentialsId) {
+                if ( !hasPermission(context)) {
+                    return new StandardUsernameListBoxModel()
+                            .includeCurrentValue(credentialsId);
+                }
+                // Functionally the same as SSHLauncher's descriptor method, but without
+                // filtering by host/port as we don't/can't know those yet.
+                return new StandardUsernameListBoxModel()
+                        .includeMatchingAs(
+                                ACL.SYSTEM,
+                                context,
+                                StandardUsernameCredentials.class,
+                                Collections.emptyList(),
+                                SSHAuthenticator.matcher(Connection.class))
+                        .includeCurrentValue(credentialsId);
+            }
+
+            private boolean hasPermission(Item context) {
+                if (context != null) {
+                    return context.hasPermission(Item.CONFIGURE);
+                }
+                return Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER);
             }
         }
     }
