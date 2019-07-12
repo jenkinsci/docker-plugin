@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.7 (2019-07-11)
+* Security fixes [SECURITY-1010 and SECURITY-1400](https://jenkins.io/security/advisory/2019-07-11/).
+
 ## 1.1.6 (2019-02-07)
 * Enhancement: Incrementals CI builds [#680](https://github.com/jenkinsci/docker-plugin/issues/680)
 * Fix SSH retry count and wait config from being ignored [#677](https://github.com/jenkinsci/docker-plugin/issues/677), [#717](https://github.com/jenkinsci/docker-plugin/issues/717)
