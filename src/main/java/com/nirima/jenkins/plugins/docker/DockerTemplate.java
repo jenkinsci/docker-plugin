@@ -551,6 +551,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         connector.beforeContainerCreated(api, remoteFs, cmd);
 
         final String nodeName = getNodeNameFromContainerConfig(cmd);
+        LOGGER.info("Trying to run container for node {} from image: {}", nodeName, getImage());
         boolean finallyRemoveTheContainer = true;
         final String containerId = cmd.exec().getId();
         // if we get this far, we have created the container so,
