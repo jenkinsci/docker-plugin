@@ -104,6 +104,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @CheckForNull
     private List<String> extraHosts;
 
+    @CheckForNull
+    private List<String> securityOpts;
+
     @DataBoundConstructor
     public DockerTemplateBase(String image) {
         if (image == null) {
@@ -405,6 +408,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").join(extraHosts);
     }
 
+    public String getSecurityOptsString() {
+        if (securityOpts == null) return null;
+        return Joiner.on("\n").join(securityOpts);
+    }
+
+    @DataBoundSetter
+    public void setSecurityOptsString(String securityOpts) {
+        this.securityOpts = splitAndFilterEmptyList(securityOpts, "\n");
+    }
+
     // -- UI binding End
 
 
@@ -642,6 +655,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", cpuShares=").append(cpuShares);
         sb.append(", shmSize=").append(shmSize);
         sb.append(", privileged=").append(privileged);
+        sb.append(", securityOpts=").append(securityOpts);
         sb.append(", tty=").append(tty);
         sb.append(", macAddress='").append(macAddress).append('\'');
         sb.append(", extraHosts=").append(extraHosts);
@@ -677,6 +691,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
         if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
         if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
+        if (securityOpts != null ? !securityOpts.equals(that.securityOpts) : that.securityOpts != null) return false;
         return extraHosts != null ? extraHosts.equals(that.extraHosts) : that.extraHosts == null;
     }
 
@@ -699,6 +714,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
         result = 31 * result + (shmSize != null ? shmSize.hashCode() : 0);
         result = 31 * result + (privileged ? 1 : 0);
+        result = 31 * result + (securityOpts != null ? securityOpts.hashCode() : 0);
         result = 31 * result + (tty ? 1 : 0);
         result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
         result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
