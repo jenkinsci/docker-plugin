@@ -414,7 +414,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public String getSecurityOptsString() {
-        if (securityOpts == null) return null;
+        if (securityOpts == null) {
+            return "";
+        }
         return Joiner.on("\n").join(securityOpts);
     }
 
