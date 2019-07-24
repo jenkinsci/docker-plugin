@@ -408,6 +408,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").join(extraHosts);
     }
 
+    @CheckForNull
+    public List<String> getSecurityOpts() {
+        return this.securityOpts;
+    }
+
     public String getSecurityOptsString() {
         if (securityOpts == null) return null;
         return Joiner.on("\n").join(securityOpts);
@@ -598,6 +603,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (shmSize != null && shmSize > 0) {
             final Long shmSizeInByte = shmSize * 1024L * 1024L;
             containerConfig.getHostConfig().withShmSize(shmSizeInByte);
+        }
+
+        final List<String> securityOptions = getSecurityOpts();
+        if (CollectionUtils.isNotEmpty(securityOptions)) {
+            containerConfig.getHostConfig().withSecurityOpts( securityOptions );
         }
 
         return containerConfig;
