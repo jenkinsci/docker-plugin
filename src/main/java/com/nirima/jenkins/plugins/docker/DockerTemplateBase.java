@@ -780,7 +780,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             final List<String> extraHosts = splitAndFilterEmptyList(extraHostsString, "\n");
             for (String extraHost : extraHosts) {
                 if (extraHost.trim().split(":").length < 2) {
-                    return FormValidation.error("Wrong extraHost {}", extraHost);
+                    return FormValidation.error("Wrong extraHost format: '%s'", extraHost);
                 }
             }
             return FormValidation.ok();
@@ -790,7 +790,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             final List<String> securityOpts = splitAndFilterEmptyList(securityOptsString, "\n");
             for (String securityOpt : securityOpts) {
                 if (securityOpt.trim().split("=").length < 2) {
-                    return FormValidation.error("Wrong security option: {}", securityOpt);
+                    return FormValidation.error("Wrong security option format: '%s'", securityOpt);
                 }
             }
             return FormValidation.ok();
