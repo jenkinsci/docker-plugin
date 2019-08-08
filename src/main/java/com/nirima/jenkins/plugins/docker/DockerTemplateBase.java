@@ -414,15 +414,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public String getSecurityOptsString() {
-        if (securityOpts == null) {
-            return "";
-        }
+        if (securityOpts == null) return null;
         return Joiner.on("\n").join(securityOpts);
     }
 
     @DataBoundSetter
     public void setSecurityOptsString(String securityOpts) {
-        this.securityOpts = splitAndFilterEmptyList(securityOpts, "\n");
+        this.securityOpts = isEmpty(securityOpts) ?
+                        Collections.emptyList() :
+                        splitAndFilterEmptyList(securityOpts, "\n");
     }
 
     // -- UI binding End
@@ -781,6 +781,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String extraHost : extraHosts) {
                 if (extraHost.trim().split(":").length < 2) {
                     return FormValidation.error("Wrong extraHost {}", extraHost);
+                }
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckSecurityOptsString(@QueryParameter String securityOptsString) {
+            final List<String> securityOpts = splitAndFilterEmptyList(securityOptsString, "\n");
+            for (String securityOpt : securityOpts) {
+                if (securityOpt.trim().split("=").length < 2) {
+                    return FormValidation.error("Wrong security option: {}", securityOpt);
                 }
             }
             return FormValidation.ok();
