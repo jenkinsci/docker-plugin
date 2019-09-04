@@ -87,6 +87,10 @@
       <f:expandableTextbox />
     </f:entry>
 
+    <f:entry title="${%Extra Docker Labels}" field="extraDockerLabelsString">
+      <f:expandableTextbox />
+    </f:entry>
+
     </f:nested>
   </f:advanced>
 
