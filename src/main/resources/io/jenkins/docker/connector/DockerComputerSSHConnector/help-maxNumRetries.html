@@ -1,1 +1,9 @@
-The number of attempts to connect to the newly-spun Docker container
+The number of times that attempts to connect to the newly-spun Docker container will be retried before the operation is abandoned.
+<p>
+Note: That this field applies first to checks that the SSH port is open for new TCP connections, and secondly to checks that the SSH service that owns the TCP port is accepting SSH connections.
+<br/>
+e.g. a value of 3 would mean that
+(up to) 4 attempts (1 initial attempt plus 3 retries) would be made to check the availability of the TCP port,
+followed by
+(up to) 4 attempts (1 initial attempt plus 3 retries) to check the availability of the SSH service itself.
+</p>
