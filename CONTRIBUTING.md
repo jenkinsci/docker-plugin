@@ -43,7 +43,7 @@ Please do not do both in the same PR or it makes life difficult for anyone else 
   Any changes you make must fit in with the existing style that is prevalent within the area in which you are working.
   i.e. code in the same style that the existing method/class/package uses.
   * If you can't tolerate inconsistencies, submit a cosmetic PR that applies the formatting/whitespace/non-functional changes that you want made.
-  * If in doubt, use 4 spaces for indentation, avoid using tabs, avoid trailing whitespace and make sure every file ends with a newline.
+  * If in doubt, use 4 spaces for indentation, avoid using tabs, avoid trailing whitespace, use unix end-of-line codes (LF, not CR/LF), and make sure every file ends with a newline.
 - Unit tests:
   * Any new functionality must be unit tested.
   * PRs that add unit-tests for existing functionality will be very welcome too.
@@ -55,8 +55,9 @@ Please do not do both in the same PR or it makes life difficult for anyone else 
   * Don't give findbugs anything new to complain about.
   * Don't give the compiler/IDEs anything new to warn about.
 - Preserve existing functionality by default:
-  * Make sure that existing users don't find that their functionality has changed after they've upgraded from an old version of the plugin to a version of the plugin that contains your changes.
-  * When adding new functionality, make sure the defaults are unchanged so that nobody finds new, unexpected, things happening after upgrading.
+  * Where possible, ensure that existing users don't find that their functionality has changed after they've upgraded from an old version of the plugin to a version of the plugin that contains your changes.
+  * When adding new functionality, try to keep the defaults are unchanged so that nobody finds new, unexpected, things happening after upgrading.
+  * Ensure any breaking changes are well documented in the PR description.
 - Configuration data changes:
   * If the PR adds a new field to an existing (or new) data structure, make sure you've written good help text for it that explains what it's for, why it's useful, and an example.
   Implement corresponding `doCheck` methods to provide validation when users are entering this data from the WebUI.
