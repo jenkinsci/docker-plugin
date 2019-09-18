@@ -1,12 +1,12 @@
 # General
 
 - First, and most importantly, make sure you're in the right place.
-There's more than one docker plugin on Jenkins and raising an issue for one plugin in the issues for another just wastes everyone's time (including yours).
+There's more than one docker plugin on Jenkins and raising an issue about one plugin in the issues area for another plugin causes a lot of confusion.
 See the [README.md](README.md) file for details.
 - Be helpful and make no demands.
-  * This code is Free Open-Source Software - if you're not paying me then it's not "my job" to make it "work for you".
+  * This code is Free Open-Source Software - nobody is obliged to make things work for you *but* you have legal permission to fix things yourself.
   * If you're reporting and fixing an issue yourself then you only need to explain what problem you're fixing in enough detail that the maintainer(s) can understand why your changes are in the public interest.
-  * If you're relying on someone else to fix a problem then you need to make it as easy as possible for others to fix it for you, and you need to test any fixes provided.
+  * If you're relying on someone else to fix a problem then you should to make it as easy as possible for others to fix it for you, and you should test any fixes provided.
 
 # Creating new issue
 
@@ -15,7 +15,7 @@ See the [README.md](README.md) file for details.
   * How is this failing?
   * What should happen instead?
 - Provide step-by-step instructions for how to reproduce the issue.
-  * Try to avoid relying on custom docker images or for the repro case.  Ideally, reproduce with a `jenkins/(ssh-slave|jnlp-slave|slave)` image with a dumb freestyle job, as that makes life easier for everyone.
+  * Try to avoid relying on custom docker images or for the repro case. Ideally, reproduce with a `jenkins/(ssh-slave|jnlp-slave|slave)` image with a dumb freestyle job, as that makes life easier for everyone.
 - Specify the Jenkins core version you're seeing the issue with, along with a full list of installed plugins with versions.
 - Check `Manage Jenkins` -> `Manage Old Data` for out of date configuration data and provide this info.
 - Check and provide errors from system jenkins.log and errors from `Manage Jenkins` -> `System Log`.
