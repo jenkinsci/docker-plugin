@@ -2,7 +2,7 @@
 
 - First, and most importantly, make sure you're in the right place.
 There's more than one docker plugin on Jenkins and raising an issue for one plugin in the issues for another just wastes everyone's time (including yours).
-See the README.md file for details.
+See the [README.md](README.md) file for details.
 - Be helpful and make no demands.
   * This code is Free Open-Source Software - if you're not paying me then it's not "my job" to make it "work for you".
   * If you're reporting and fixing an issue yourself then you only need to explain what problem you're fixing in enough detail that the maintainer(s) can understand why your changes are in the public interest.
