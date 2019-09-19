@@ -1,5 +1,4 @@
-docker-plugin
-=============
+# Docker plugin for Jenkins
 
 [![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/docker-plugin/master)](https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/)
 
@@ -22,4 +21,5 @@ and Jenkins can then run docker containers to provide Jenkins (slave) Nodes on w
 
 More documentation available on the Jenkins wiki: https://plugins.jenkins.io/docker-plugin
 
-Note: There is more than one docker plugin for Jenkins and if you are using Jenkins [pipeline / workflow / Jenkinsfile](https://jenkins.io/doc/book/pipeline/docker/) builds with code including terms like `docker.withDockerRegistry` or `docker.image` etc as provided by the [`docker-workflow`](https://plugins.jenkins.io/docker-workflow) plugin then _this is not the repository you are looking for_.
+Note: There is more than one docker plugin for Jenkins.
+e.g. if you are using Jenkins [pipeline / workflow / Jenkinsfile](https://jenkins.io/doc/book/pipeline/docker/) builds with code including terms like `docker.withDockerRegistry` or `docker.image` etc then you're using the [`docker-workflow`](https://plugins.jenkins.io/docker-workflow) plugin and should probably go to its repository instead of this one.

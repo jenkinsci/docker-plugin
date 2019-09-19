@@ -19,32 +19,41 @@
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
     <licenses>
         <license>
-            <name>The MIT license</name>
-            <url>https://www.opensource.org/licenses/mit</url>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
             <distribution>repo</distribution>
         </license>
      </licenses>
 
     <developers>
-        <!--
-        Previous maintainers "hall of fame":
-        <developer> 2014-2016
+        <developer>
             <id>magnayn</id>
             <name>Nigel Magnay</name>
+            <roles>
+                <role>maintainer (retired)</role>
+            </roles>
         </developer>
-        <developer> 2015
+        <developer>
             <id>KostyaSha</id>
             <name>Kanstantsin Shautsou</name>
             <timezone>UTC+3</timezone>
+            <roles>
+                <role>maintainer (retired)</role>
+            </roles>
         </developer>
-        <developer> 2017-2018
+        <developer>
             <id>ndeloof</id>
             <name>Nicolas De Loof</name>
+            <roles>
+                <role>maintainer (retired)</role>
+            </roles>
         </developer>
-        -->
-        <developer> <!-- 2018... -->
+        <developer>
             <id>pjdarton</id>
             <name>Peter Darton</name>
+            <roles>
+                <role>maintainer</role>
+            </roles>
         </developer>
     </developers>
 
