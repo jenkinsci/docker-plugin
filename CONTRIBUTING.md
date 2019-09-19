@@ -2,7 +2,7 @@
 
 - First, and most importantly, make sure you're in the right place.
 There's more than one docker plugin for Jenkins and raising an issue about one plugin in the issues area for another plugin causes a lot of confusion.
-See the [README.md](README.md) file for details.
+See the [README](README.md) file for details.
 - Please do not use the issue tracker to ask questions.
 This facility is for reporting (and fixing) bugs in the code.
 If you're not 100% sure it's a bug in the code then please seek help elsewhere.
@@ -17,8 +17,9 @@ The [plugin's wiki page](https://wiki.jenkins.io/display/JENKINS/Docker+Plugin) 
 
 # Legal conditions
 
-- Any contributions (code, information etc) submitted will be subject to the same license as the rest of the code. No new restrictions/conditions are permitted.
-- As a contributor, you MUST have the legal right to grant permission for the contribution to be used under these conditions.
+- Any contributions (code, information etc) submitted will be subject to the same [license](LICENSE) as the rest of the code.
+No new restrictions/conditions are permitted.
+- As a contributor, you MUST have the legal right to grant permission for your contribution to be used under these conditions.
 
 # Reporting a new issue
 
