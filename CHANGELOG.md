@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.8 (TBD - not released yet)
+## 1.1.8 (2019-09-24)
 * Enhancement: Improve JCasC support [#726](https://github.com/jenkinsci/docker-plugin/pull/726)
 * Enhancement: Allow extra docker labels on containers [#747](https://github.com/jenkinsci/docker-plugin/pull/747)
 * Fix NodeProperties handling [#748](https://github.com/jenkinsci/docker-plugin/pull/748)
