@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.8 (2019-09-24)
+* Enhancement: Improve JCasC support [#726](https://github.com/jenkinsci/docker-plugin/pull/726)
+* Enhancement: Allow extra docker labels on containers [#747](https://github.com/jenkinsci/docker-plugin/pull/747)
+* Fix NodeProperties handling [#748](https://github.com/jenkinsci/docker-plugin/pull/748)
+* Fix handling of "retries" field [#718](https://github.com/jenkinsci/docker-plugin/pull/718)
+* Made it clearer that the plugin is under MIT license [#749](https://github.com/jenkinsci/docker-plugin/pull/749)
+
 ## 1.1.7 (2019-07-11)
 * Security fixes [SECURITY-1010 and SECURITY-1400](https://jenkins.io/security/advisory/2019-07-11/).
 

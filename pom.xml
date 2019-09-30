@@ -17,16 +17,48 @@
     <name>Docker plugin</name>
     <description>Provide Cloud Provisioning and other Docker features</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
-    
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+     </licenses>
+
     <developers>
+        <developer>
+            <id>magnayn</id>
+            <name>Nigel Magnay</name>
+            <roles>
+                <role>maintainer (retired)</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>KostyaSha</id>
+            <name>Kanstantsin Shautsou</name>
+            <timezone>UTC+3</timezone>
+            <roles>
+                <role>maintainer (retired)</role>
+            </roles>
+        </developer>
         <developer>
             <id>ndeloof</id>
             <name>Nicolas De Loof</name>
+            <roles>
+                <role>maintainer (retired)</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>pjdarton</id>
+            <name>Peter Darton</name>
+            <roles>
+                <role>maintainer</role>
+            </roles>
         </developer>
     </developers>
 
     <properties>
-        <revision>1.1.8</revision>
+        <revision>1.1.9</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
@@ -160,8 +192,6 @@
             <version>3.0.0</version>
         </dependency>
 
-
-
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>jenkins-test-harness-tools</artifactId>
@@ -201,13 +231,13 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <configuration>
                     <failOnError>false</failOnError>     <!-- FIXME need to review findbugs errors -->
-                </configuration>                 
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <failOnError>false</failOnError>
-                </configuration>                 
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
@@ -257,7 +287,6 @@
       </profile>
     </profiles>
 
-
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
@@ -268,15 +297,14 @@
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
+            <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
+            <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
-
 
 </project>

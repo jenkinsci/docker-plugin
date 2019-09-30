@@ -1,11 +1,36 @@
 package com.nirima.jenkins.plugins.docker;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang.StringUtils.trimToNull;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
-import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -13,6 +38,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
+
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -21,26 +47,6 @@ import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
  * Base for docker templates - does not include Jenkins items like labels.
@@ -106,6 +112,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @CheckForNull
     private List<String> securityOpts;
+
+    @CheckForNull
+    private Map<String, String> extraDockerLabels;
 
     @DataBoundConstructor
     public DockerTemplateBase(String image) {
@@ -191,6 +200,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         List<String> result = new ArrayList<>();
         for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
             result.add(o);
+        }
+        return result;
+    }
+
+    private static Map<String, String> splitAndFilterEmptyMap(String s, String separator) {
+        Map<String, String> result = new LinkedHashMap<>();
+        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
+            String[] parts = o.trim().split("=", 2);
+            if (parts.length == 2)
+                result.put(parts[0].trim(), parts[1].trim());
         }
         return result;
     }
@@ -425,6 +444,20 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                         splitAndFilterEmptyList(securityOpts, "\n");
     }
 
+    @DataBoundSetter
+    public void setExtraDockerLabelsString(String extraDockerLabelsString) {
+        setExtraDockerLabels(isEmpty(extraDockerLabelsString) ?
+                Collections.EMPTY_MAP :
+                splitAndFilterEmptyMap(extraDockerLabelsString, "\n"));
+    }
+
+    public String getExtraDockerLabelsString() {
+        if (extraDockerLabels == null) {
+            return "";
+        }
+        return Joiner.on("\n").withKeyValueSeparator("=").join(extraDockerLabels);
+    }
+
     // -- UI binding End
 
 
@@ -461,6 +494,14 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.extraHosts = extraHosts;
     }
 
+    @Nonnull
+    public Map<String, String> getExtraDockerLabels() {
+        return extraDockerLabels == null ? Collections.EMPTY_MAP : extraDockerLabels;
+    }
+
+    public void setExtraDockerLabels(Map<String, String> extraDockerLabels) {
+        this.extraDockerLabels = MapUtils.isEmpty(extraDockerLabels) ? null : extraDockerLabels;
+    }
 
     public String getDisplayName() {
         return "Image of " + getImage();
@@ -512,6 +553,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         containerConfig.withPrivileged(privileged);
 
         Map<String,String> map = new HashMap<>();
+        map.putAll(getExtraDockerLabels());
         map.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID, getJenkinsInstanceIdForContainerLabel());
         map.put(DockerContainerLabelKeys.JENKINS_URL, getJenkinsUrlForContainerLabel());
         map.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
@@ -671,6 +713,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", tty=").append(tty);
         sb.append(", macAddress='").append(macAddress).append('\'');
         sb.append(", extraHosts=").append(extraHosts);
+        sb.append(", extraDockerLabels=").append(extraDockerLabels);
         sb.append('}');
         return sb.toString();
     }
@@ -704,7 +747,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
         if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
         if (securityOpts != null ? !securityOpts.equals(that.securityOpts) : that.securityOpts != null) return false;
-        return extraHosts != null ? extraHosts.equals(that.extraHosts) : that.extraHosts == null;
+        if (extraHosts != null ? !extraHosts.equals(that.extraHosts) : that.extraHosts != null) return false;
+        if (extraDockerLabels != null ? !extraDockerLabels.equals(that.extraDockerLabels) : that.extraDockerLabels != null) return false;
+        return true;
     }
 
     @Override
@@ -730,6 +775,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (tty ? 1 : 0);
         result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
         result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
+        result = 31 * result + (extraDockerLabels != null ? extraDockerLabels.hashCode() : 0);
         return result;
     }
 
@@ -791,6 +837,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String securityOpt : securityOpts) {
                 if (securityOpt.trim().split("=").length < 2) {
                     return FormValidation.error("Wrong security option format: '%s'", securityOpt);
+                }
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckExtraDockerLabelsString(@QueryParameter String extraDockerLabelsString) {
+            final List<String> extraDockerLabels = splitAndFilterEmptyList(extraDockerLabelsString, "\n");
+            for (String extraDockerLabel : extraDockerLabels) {
+                if (extraDockerLabel.trim().split("=").length < 2) {
+                    return FormValidation.error("Invalid extraDockerLabel \"%s\" will be ignored", extraDockerLabel);
                 }
             }
             return FormValidation.ok();
