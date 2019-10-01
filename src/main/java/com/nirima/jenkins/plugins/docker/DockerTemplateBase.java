@@ -427,21 +427,23 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").join(extraHosts);
     }
 
-    @CheckForNull
+    @Nullable
     public List<String> getSecurityOpts() {
         return this.securityOpts;
     }
 
+    @Nullable
     public String getSecurityOptsString() {
-        if (securityOpts == null) return null;
-        return Joiner.on("\n").join(securityOpts);
+        return securityOpts == null ? null : Joiner.on("\n").join(securityOpts);
+    }
+
+    public void setSecurityOpts( List<String> securityOpts ) {
+        this.securityOpts = securityOpts;
     }
 
     @DataBoundSetter
     public void setSecurityOptsString(String securityOpts) {
-        this.securityOpts = isEmpty(securityOpts) ?
-                        Collections.emptyList() :
-                        splitAndFilterEmptyList(securityOpts, "\n");
+        setSecurityOpts( isEmpty(securityOpts) ? null : splitAndFilterEmptyList(securityOpts, "\n") );
     }
 
     @DataBoundSetter
@@ -835,9 +837,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         public FormValidation doCheckSecurityOptsString(@QueryParameter String securityOptsString) {
             final List<String> securityOpts = splitAndFilterEmptyList(securityOptsString, "\n");
             for (String securityOpt : securityOpts) {
-                if (securityOpt.trim().split("=").length < 2) {
-                    return FormValidation.error("Wrong security option format: '%s'", securityOpt);
+                if ( !( securityOpt.trim().split("=").length == 2 || securityOpt.trim().startsWith( "no-new-privileges" ) ) ) {
+                    return FormValidation.warning("Security option may be incorrect. Please double check syntax: '%s'", securityOpt);
                 }
+
             }
             return FormValidation.ok();
         }
