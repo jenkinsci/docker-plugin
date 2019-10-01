@@ -76,19 +76,24 @@ public class PortUtilsTest {
     @Test
     public void shouldWaitIfPortAvailableButNotSshUntilTimeout() throws Exception {
         // Given
-        // e.g. try, delay, try, delay, try = 3 tries, 2 delays.
-        final long minExpectedTime = RETRY_COUNT * DELAY;
-        final long maxExpectedTime = (RETRY_COUNT + 1) * DELAY - 1;
+        final int retries = 3;
+        final int waitBetweenTries = DELAY / 2;
+        final int sshWaitDuringTry = DELAY / 3;
+        // e.g. try, delay, try, delay, try, delay, try = 4 tries, 3 delays.
+        final long minExpectedTime = sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry + waitBetweenTries
+                + sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry;
+        final long maxExpectedTime = minExpectedTime + waitBetweenTries - 1;
 
         // When
         final long before = currentTimeMillis();
-        final boolean actual = PortUtils.connectionCheck(server.host(), server.port()).withRetries(RETRY_COUNT)
-                .withEveryRetryWaitFor(DELAY, MILLISECONDS).useSSH().execute();
+        final boolean actual = PortUtils.connectionCheck(server.host(), server.port()).withRetries(retries)
+                .withEveryRetryWaitFor(waitBetweenTries, MILLISECONDS).useSSH()
+                .withSSHTimeout(sshWaitDuringTry, MILLISECONDS).execute();
         final long after = currentTimeMillis();
         final long actualDuration = after - before;
 
         // Then
-        assertThat(actual, equalTo(false));
+        assertThat("Port is connectible", actual, equalTo(false));
         assertThat("Should wait for timeout", actualDuration,
                 allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
@@ -130,32 +135,6 @@ public class PortUtilsTest {
 
         // Then
         assertThat("Used port should be connectible", actual, equalTo(true));
-        assertThat("Should wait then retry", actualDuration,
-                allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
-    }
-
-    @Test
-    public void checkSSHwillRetryOpenButFailingSSHPort() throws Exception {
-        // Given
-        final int retries = 4;
-        final int waitBetweenTries = DELAY / 2;
-        final int sshWaitDuringTry = DELAY / 3;
-        // e.g. try, delay, try, delay, try, delay, try, delay, try = 5 tries, 4 delays.
-        // expecting port to become available during the second delay.
-        final long minExpectedTime = sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry;
-        final long maxExpectedTime = minExpectedTime + waitBetweenTries - 1;
-        final PortUtils.ConnectionCheck cc = PortUtils.connectionCheck(server.host(), server.port()).withRetries(retries)
-                .withEveryRetryWaitFor(waitBetweenTries, MILLISECONDS);
-        final PortUtils.ConnectionCheckSSH instance = new PortUtils.ConnectionCheckSSH(cc).withSSHTimeout(sshWaitDuringTry, MILLISECONDS);
-
-        // When
-        final long before = currentTimeMillis();
-        final boolean actual = instance.execute();
-        final long after = currentTimeMillis();
-        final long actualDuration = after - before;
-
-        // Then
-        assertThat("Used port should be connectible", actual, equalTo(false));
         assertThat("Should wait then retry", actualDuration,
                 allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
