@@ -157,7 +157,7 @@ public class PortUtils {
         public boolean execute() throws InterruptedException {
             checkState(parent.execute(), "Port %s is not opened to connect to", parent.port);
 
-            final int retries = Math.min(0, parent.retries);
+            final int retries = Math.max(0, parent.retries);
             final long retryDelay = parent.retryDelay;
             final int totalTriesIntended = retries + 1;
             int thisTryNumber;
@@ -172,16 +172,16 @@ public class PortUtils {
         }
 
         private boolean executeOnce(final int thisTryNumber, final int totalTriesIntended) {
-            final Connection connection = new Connection(parent.host, parent.port);
+            final Connection sshConnection = new Connection(parent.host, parent.port);
             try {
-                connection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
+                sshConnection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
                 LOGGER.info("SSH port is open on {}:{}", parent.host, parent.port);
                 return true;
             } catch (IOException e) {
                 LOGGER.error("Failed to connect to {}:{} (try {}/{}) - {}", parent.host, parent.port, thisTryNumber, totalTriesIntended, e.getMessage());
                 return false;
             } finally {
-                connection.close();
+                sshConnection.close();
             }
         }
     }

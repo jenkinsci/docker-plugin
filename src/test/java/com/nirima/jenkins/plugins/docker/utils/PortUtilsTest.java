@@ -7,7 +7,6 @@ import org.junit.rules.ExternalResource;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -15,10 +14,8 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.allOf;
 
@@ -28,7 +25,7 @@ import static org.hamcrest.Matchers.allOf;
 public class PortUtilsTest {
     /** number of tries minus 1 */
     public static final int RETRY_COUNT = 2;
-    /** milliseconds */
+    /** 1 second in milliseconds */
     public static final int DELAY = (int) SECONDS.toMillis(1);
 
     @Rule
@@ -40,13 +37,13 @@ public class PortUtilsTest {
     @Test
     public void shouldConnectToServerSuccessfully() throws Exception {
         assertThat("Server is up and should connect",
-                PortUtils.connectionCheck(server.host(), server.port()).executeOnce(), is(true));
+                PortUtils.connectionCheck(server.host(), server.port()).executeOnce(), equalTo(true));
     }
 
     @Test
     public void shouldNotConnectToUnusedPort() throws Exception {
         assertThat("Unused port should not be connectible", PortUtils.connectionCheck("localhost", 0).executeOnce(),
-                is(false));
+                equalTo(false));
     }
 
     @Test
@@ -64,7 +61,7 @@ public class PortUtilsTest {
         final long actualDuration = after - before;
 
         // Then
-        assertThat("Unused port should not be connectible", actual, is(false));
+        assertThat("Unused port should not be connectible", actual, equalTo(false));
         assertThat("Should wait for timeout", actualDuration,
                 allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
@@ -79,19 +76,24 @@ public class PortUtilsTest {
     @Test
     public void shouldWaitIfPortAvailableButNotSshUntilTimeout() throws Exception {
         // Given
-        // e.g. try, delay, try, delay, try = 3 tries, 2 delays.
-        final long minExpectedTime = RETRY_COUNT * DELAY;
-        final long maxExpectedTime = (RETRY_COUNT + 1) * DELAY - 1;
+        final int retries = 3;
+        final int waitBetweenTries = DELAY / 2;
+        final int sshWaitDuringTry = DELAY / 3;
+        // e.g. try, delay, try, delay, try, delay, try = 4 tries, 3 delays.
+        final long minExpectedTime = sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry + waitBetweenTries
+                + sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry;
+        final long maxExpectedTime = minExpectedTime + waitBetweenTries - 1;
 
         // When
         final long before = currentTimeMillis();
-        final boolean actual = PortUtils.connectionCheck(server.host(), server.port()).withRetries(RETRY_COUNT)
-                .withEveryRetryWaitFor(DELAY, MILLISECONDS).useSSH().execute();
+        final boolean actual = PortUtils.connectionCheck(server.host(), server.port()).withRetries(retries)
+                .withEveryRetryWaitFor(waitBetweenTries, MILLISECONDS).useSSH()
+                .withSSHTimeout(sshWaitDuringTry, MILLISECONDS).execute();
         final long after = currentTimeMillis();
         final long actualDuration = after - before;
 
         // Then
-        assertThat(actual, is(false));
+        assertThat("Port is connectible", actual, equalTo(false));
         assertThat("Should wait for timeout", actualDuration,
                 allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
@@ -109,7 +111,7 @@ public class PortUtilsTest {
         final long actualDuration = after - before;
 
         // Then
-        assertThat("Used port should be connectible", actual, is(true));
+        assertThat("Used port should be connectible", actual, equalTo(true));
         assertThat("Should not wait", actualDuration, lessThanOrEqualTo(maxExpectedTime));
     }
 
@@ -132,7 +134,7 @@ public class PortUtilsTest {
         final long actualDuration = after - before;
 
         // Then
-        assertThat("Used port should be connectible", actual, is(true));
+        assertThat("Used port should be connectible", actual, equalTo(true));
         assertThat("Should wait then retry", actualDuration,
                 allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
