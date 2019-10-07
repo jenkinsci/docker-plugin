@@ -426,7 +426,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @CheckForNull
     public List<String> getSecurityOpts() {
-        return this.securityOpts;
+        return securityOpts;
     }
 
     @CheckForNull
