@@ -427,12 +427,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").join(extraHosts);
     }
 
-    @Nullable
+    @CheckForNull
     public List<String> getSecurityOpts() {
         return this.securityOpts;
     }
 
-    @Nullable
+    @CheckForNull
     public String getSecurityOptsString() {
         return securityOpts == null ? null : Joiner.on("\n").join(securityOpts);
     }
