@@ -837,7 +837,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                 if ( !( securityOpt.trim().split("=").length == 2 || securityOpt.trim().startsWith( "no-new-privileges" ) ) ) {
                     return FormValidation.warning("Security option may be incorrect. Please double check syntax: '%s'", securityOpt);
                 }
-
             }
             return FormValidation.ok();
         }
