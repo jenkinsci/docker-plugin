@@ -245,6 +245,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         // Wait until sshd has started
         // TODO we could (also) have a more generic mechanism relying on healthcheck (inspect State.Health.Status)
         final PortUtils.ConnectionCheck connectionCheck = PortUtils.connectionCheck( address );
+        PortUtils.ConnectionCheckSSH connectionCheckSSH = connectionCheck.useSSH();
         final Integer maxNumRetriesOrNull = getMaxNumRetries();
         if ( maxNumRetriesOrNull!=null ) {
             connectionCheck.withRetries( maxNumRetriesOrNull );
@@ -253,8 +254,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         if ( retryWaitTimeOrNull!=null ) {
             connectionCheck.withEveryRetryWaitFor( retryWaitTimeOrNull, TimeUnit.SECONDS );
         }
+        final Integer launchTimeoutSeconds = getLaunchTimeoutSeconds();
+        if( launchTimeoutSeconds != null) {
+            connectionCheckSSH = connectionCheckSSH.withSSHTimeout(launchTimeoutSeconds, TimeUnit.SECONDS);
+        }
         final long timestampBeforeConnectionCheck = System.nanoTime();
-        if (!connectionCheck.execute() || !connectionCheck.useSSH().execute()) {
+        if (!connectionCheck.execute() || !connectionCheckSSH.execute()) {
             final long timestampAfterConnectionCheckEnded = System.nanoTime();
             final long nanosecondsElapsed = timestampAfterConnectionCheckEnded - timestampBeforeConnectionCheck;
             final long secondsElapsed = TimeUnit.NANOSECONDS.toSeconds(nanosecondsElapsed);
