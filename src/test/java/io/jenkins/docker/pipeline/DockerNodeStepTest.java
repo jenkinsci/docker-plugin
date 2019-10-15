@@ -259,6 +259,22 @@ public class DockerNodeStepTest {
         });
     }
 
+    @Test
+    public void dockerBuilderPublisher() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "dockerBuilderPublisher");
+                j.setDefinition(new CpsFlowDefinition("dockerNode(dockerHost: 'unix:///var/run/docker.sock', image: 'jenkins/slave', remoteFs: '/home/jenkins') {\n" +
+                        "  writeFile(file: 'Dockerfile', text: 'FROM jenkins/slave')\n" +
+                        "  step([$class: 'DockerBuilderPublisher', dockerFileDirectory: ''])\n" +
+                        "}\n", true));
+                WorkflowRun r = story.j.buildAndAssertSuccess(j);
+                story.j.assertLogContains("Successfully built", r);
+            }
+        });
+    }
+
     public static class PathModifierStep extends Step {
         private String element;
 
