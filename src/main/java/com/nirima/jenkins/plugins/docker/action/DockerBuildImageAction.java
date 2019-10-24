@@ -29,17 +29,24 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
     public final boolean cleanupWithJenkinsJobDelete;
     public final boolean pushOnSuccess;
 
+    public final boolean noCache;
+    public final boolean pull;
+
     @Deprecated
     public DockerBuildImageAction(String containerHost,
                                   String containerId,
                                   String taggedId,
                                   boolean cleanupWithJenkinsJobDelete,
-                                  boolean pushOnSuccess) {
+                                  boolean pushOnSuccess,
+                                  final boolean noCache,
+                                  final boolean pull) {
         this.containerHost = containerHost;
         this.containerId = containerId;
         this.taggedId = taggedId;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
         this.pushOnSuccess = pushOnSuccess;
+        this.noCache = noCache;
+        this.pull = pull;
         this.tags = null;
     }
 
@@ -47,9 +54,13 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
                                   String containerId,
                                   List<String> tags,
                                   boolean cleanupWithJenkinsJobDelete,
-                                  boolean pushOnSuccess) {
+                                  boolean pushOnSuccess,
+                                  final boolean noCache,
+                                  final boolean pull) {
         this.containerHost = containerHost;
         this.containerId = containerId;
+        this.noCache = noCache;
+        this.pull = pull;
         this.taggedId = null;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
         this.pushOnSuccess = pushOnSuccess;

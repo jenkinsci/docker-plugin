@@ -127,6 +127,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public final String cloud;
 
+    public final boolean noCache;
+    public final boolean pull;
+
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
                                   DockerRegistryEndpoint fromRegistry,
@@ -135,9 +138,13 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                                   boolean pushOnSuccess,
                                   String pushCredentialsId,
                                   boolean cleanImages,
-                                  boolean cleanupWithJenkinsJobDelete) {
+                                  boolean cleanupWithJenkinsJobDelete,
+                                  final boolean noCache,
+                                  final boolean pull) {
         this.dockerFileDirectory = dockerFileDirectory;
         this.fromRegistry = fromRegistry;
+        this.noCache = noCache;
+        this.pull = pull;
         setTagsString(tagsString);
         this.tag = null;
         this.cloud = cloud;
@@ -288,7 +295,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             log("Docker Build Response : " + imageId);
 
             // Add an action to the build
-            run.addAction(new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
+            run.addAction(new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull));
             run.save();
 
             if (pushOnSuccess) {
@@ -346,6 +353,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             final String imageId;
             try(final DockerClient client = getClientWithNoTimeout()) {
                 imageId = client.buildImageCmd(tar)
+                        .withNoCache(noCache)
+                        .withPull(pull)
                         .withBuildAuthConfigs(auths)
                         .exec(resultCallback)
                         .awaitImageId();
