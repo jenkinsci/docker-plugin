@@ -10,7 +10,7 @@
             <li>
                 Entrypoint must be able to accept jenkins slave connection parameters.
                 See 
-                <a href="https://github.com/jenkinsci/docker-jnlp-slave">jenkins/docker-jnlp-slave</a>
+                <a href="https://github.com/jenkinsci/docker-jnlp-slave">jenkins/jnlp-slave</a>
                 as an example.
             </li>
         </ul>
