@@ -38,8 +38,8 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
                                   String taggedId,
                                   boolean cleanupWithJenkinsJobDelete,
                                   boolean pushOnSuccess,
-                                  final boolean noCache,
-                                  final boolean pull) {
+                                  boolean noCache,
+                                  boolean pull) {
         this.containerHost = containerHost;
         this.containerId = containerId;
         this.taggedId = taggedId;

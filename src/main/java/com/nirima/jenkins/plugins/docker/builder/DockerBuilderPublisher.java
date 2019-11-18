@@ -139,8 +139,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                                   String pushCredentialsId,
                                   boolean cleanImages,
                                   boolean cleanupWithJenkinsJobDelete,
-                                  final boolean noCache,
-                                  final boolean pull) {
+                                  boolean noCache,
+                                  boolean pull) {
         this.dockerFileDirectory = dockerFileDirectory;
         this.fromRegistry = fromRegistry;
         this.noCache = noCache;
