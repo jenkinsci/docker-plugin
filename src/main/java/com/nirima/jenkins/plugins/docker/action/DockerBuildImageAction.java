@@ -6,6 +6,8 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.export.ExportedBean;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.accmod.Restricted;
 
 import java.io.Serializable;
 import java.util.List;
@@ -28,24 +30,20 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
 
     public final boolean cleanupWithJenkinsJobDelete;
     public final boolean pushOnSuccess;
-    public final boolean noCache;
-    public final boolean pull;
+    public /* almost final */ boolean noCache;
+    public /* almost final */ boolean pull;
 
     @Deprecated
     public DockerBuildImageAction(String containerHost,
                                   String containerId,
                                   String taggedId,
                                   boolean cleanupWithJenkinsJobDelete,
-                                  boolean pushOnSuccess,
-                                  boolean noCache,
-                                  boolean pull) {
+                                  boolean pushOnSuccess) {
         this.containerHost = containerHost;
         this.containerId = containerId;
         this.taggedId = taggedId;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
         this.pushOnSuccess = pushOnSuccess;
-        this.noCache = noCache;
-        this.pull = pull;
         this.tags = null;
     }
 
@@ -53,17 +51,29 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
                                   String containerId,
                                   List<String> tags,
                                   boolean cleanupWithJenkinsJobDelete,
-                                  boolean pushOnSuccess,
-                                  final boolean noCache,
-                                  final boolean pull) {
+                                  boolean pushOnSuccess) {
         this.containerHost = containerHost;
         this.containerId = containerId;
-        this.noCache = noCache;
-        this.pull = pull;
         this.taggedId = null;
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
         this.pushOnSuccess = pushOnSuccess;
         this.tags = tags;
+    }
+
+    /**
+     * For internal use only, use {@link #DockerBuildImageAction(String, String, List, boolean, boolean)} instead.
+     */
+    @Restricted(NoExternalUse.class)
+    public DockerBuildImageAction(String containerHost,
+                                  String containerId,
+                                  List<String> tags,
+                                  boolean cleanupWithJenkinsJobDelete,
+                                  boolean pushOnSuccess,
+                                  boolean noCache,
+                                  boolean pull) {
+        this(containerHost, containerId, tags, cleanupWithJenkinsJobDelete, pushOnSuccess);
+        setNoCache(noCache);
+        setPull(pull);
     }
 
     public String getIconFileName() {
@@ -81,6 +91,15 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(getClass());
     }
+
+    public void setPull(boolean pull) {
+        this.pull = pull;
+    }
+
+    public void setNoCache(boolean noCache) {
+        this.noCache = noCache;
+    }
+
 
     /**
      * Just for assisting form related stuff.

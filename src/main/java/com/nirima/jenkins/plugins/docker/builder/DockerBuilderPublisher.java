@@ -39,6 +39,7 @@ import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,8 +125,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public final boolean cleanupWithJenkinsJobDelete;
 
     public final String cloud;
-    public final boolean noCache;
-    public final boolean pull;
+    public /* almost final */ boolean noCache;
+    public /* almost final */ boolean pull;
 
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
@@ -135,13 +136,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                                   boolean pushOnSuccess,
                                   String pushCredentialsId,
                                   boolean cleanImages,
-                                  boolean cleanupWithJenkinsJobDelete,
-                                  boolean noCache,
-                                  boolean pull) {
+                                  boolean cleanupWithJenkinsJobDelete) {
         this.dockerFileDirectory = dockerFileDirectory;
         this.fromRegistry = fromRegistry;
-        this.noCache = noCache;
-        this.pull = pull;
         setTagsString(tagsString);
         this.tag = null;
         this.cloud = cloud;
@@ -184,6 +181,24 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public DockerRegistryEndpoint getFromRegistry() {
         return fromRegistry;
+    }
+
+    public boolean isNoCache() {
+        return noCache;
+    }
+
+    @DataBoundSetter
+    public void setNoCache(boolean noCache) {
+        this.noCache = noCache;
+    }
+
+    public boolean isPull() {
+        return pull;
+    }
+
+    @DataBoundSetter
+    public void setPull(boolean pull) {
+        this.pull = pull;
     }
 
     public static List<String> filterStringToList(String str) {
