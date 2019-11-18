@@ -21,9 +21,7 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractProject;
-import hudson.model.Item;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.remoting.RemoteInputStream;
 import hudson.remoting.VirtualChannel;
 import hudson.slaves.Cloud;
@@ -295,7 +293,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             log("Docker Build Response : " + imageId);
 
             // Add an action to the build
-            run.addAction(new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull));
+            Action action = new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull);
+
+            run.addAction(action);
             run.save();
 
             if (pushOnSuccess) {
