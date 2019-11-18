@@ -28,7 +28,6 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
 
     public final boolean cleanupWithJenkinsJobDelete;
     public final boolean pushOnSuccess;
-
     public final boolean noCache;
     public final boolean pull;
 

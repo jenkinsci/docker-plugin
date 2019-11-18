@@ -124,7 +124,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public final boolean cleanupWithJenkinsJobDelete;
 
     public final String cloud;
-
     public final boolean noCache;
     public final boolean pull;
 
