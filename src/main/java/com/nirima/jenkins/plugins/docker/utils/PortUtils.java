@@ -174,7 +174,7 @@ public class PortUtils {
         private boolean executeOnce(final int thisTryNumber, final int totalTriesIntended) {
             final Connection sshConnection = new Connection(parent.host, parent.port);
             try {
-                sshConnection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
+                sshConnection.connect(null, sshTimeoutMillis, sshTimeoutMillis, sshTimeoutMillis);
                 LOGGER.info("SSH port is open on {}:{}", parent.host, parent.port);
                 return true;
             } catch (IOException e) {

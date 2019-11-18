@@ -245,6 +245,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         // Wait until sshd has started
         // TODO we could (also) have a more generic mechanism relying on healthcheck (inspect State.Health.Status)
         final PortUtils.ConnectionCheck connectionCheck = PortUtils.connectionCheck( address );
+        final PortUtils.ConnectionCheckSSH connectionCheckSSH = connectionCheck.useSSH();
         final Integer maxNumRetriesOrNull = getMaxNumRetries();
         if ( maxNumRetriesOrNull!=null ) {
             connectionCheck.withRetries( maxNumRetriesOrNull );
@@ -253,12 +254,21 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         if ( retryWaitTimeOrNull!=null ) {
             connectionCheck.withEveryRetryWaitFor( retryWaitTimeOrNull, TimeUnit.SECONDS );
         }
+        final Integer launchTimeoutSeconds = getLaunchTimeoutSeconds();
+        if( launchTimeoutSeconds != null) {
+            connectionCheckSSH.withSSHTimeout(launchTimeoutSeconds, TimeUnit.SECONDS);
+        }
         final long timestampBeforeConnectionCheck = System.nanoTime();
-        if (!connectionCheck.execute() || !connectionCheck.useSSH().execute()) {
+        if (!connectionCheck.execute() || !connectionCheckSSH.execute()) {
             final long timestampAfterConnectionCheckEnded = System.nanoTime();
             final long nanosecondsElapsed = timestampAfterConnectionCheckEnded - timestampBeforeConnectionCheck;
             final long secondsElapsed = TimeUnit.NANOSECONDS.toSeconds(nanosecondsElapsed);
-            throw new IOException("SSH service hadn't started after " + secondsElapsed + " seconds.");
+            final long millisecondsElapsed = TimeUnit.NANOSECONDS.toMillis(nanosecondsElapsed) - TimeUnit.SECONDS.toMillis(secondsElapsed);
+            throw new IOException("SSH service hadn't started after " + secondsElapsed + " seconds and "
+                    + millisecondsElapsed + " milliseconds."
+                    + "Try increasing the number of retries (currently " + maxNumRetriesOrNull
+                    + ") and/or the retry wait time (currently " + retryWaitTimeOrNull
+                    + ") to allow for containers taking longer to start.");
         }
 
         return sshKeyStrategy.getSSHLauncher(address, this);
