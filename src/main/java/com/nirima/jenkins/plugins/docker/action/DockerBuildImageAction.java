@@ -76,6 +76,14 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
         setPull(pull);
     }
 
+    public void setPull(boolean pull) {
+        this.pull = pull;
+    }
+
+    public void setNoCache(boolean noCache) {
+        this.noCache = noCache;
+    }
+
     public String getIconFileName() {
         return "/plugin/docker-plugin/images/24x24/docker.png";
     }
@@ -91,15 +99,6 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(getClass());
     }
-
-    public void setPull(boolean pull) {
-        this.pull = pull;
-    }
-
-    public void setNoCache(boolean noCache) {
-        this.noCache = noCache;
-    }
-
 
     /**
      * Just for assisting form related stuff.
