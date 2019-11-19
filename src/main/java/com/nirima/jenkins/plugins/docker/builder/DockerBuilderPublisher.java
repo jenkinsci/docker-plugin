@@ -22,6 +22,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.remoting.RemoteInputStream;
@@ -41,6 +42,7 @@ import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,6 +128,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public final boolean cleanupWithJenkinsJobDelete;
 
     public final String cloud;
+    public /* almost final */ boolean noCache;
+    public /* almost final */ boolean pull;
 
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
@@ -180,6 +184,24 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public DockerRegistryEndpoint getFromRegistry() {
         return fromRegistry;
+    }
+
+    public boolean isNoCache() {
+        return noCache;
+    }
+
+    @DataBoundSetter
+    public void setNoCache(boolean noCache) {
+        this.noCache = noCache;
+    }
+
+    public boolean isPull() {
+        return pull;
+    }
+
+    @DataBoundSetter
+    public void setPull(boolean pull) {
+        this.pull = pull;
     }
 
     public static List<String> filterStringToList(String str) {
@@ -288,7 +310,9 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             log("Docker Build Response : " + imageId);
 
             // Add an action to the build
-            run.addAction(new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess));
+            Action action = new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull);
+
+            run.addAction(action);
             run.save();
 
             if (pushOnSuccess) {
@@ -346,6 +370,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             final String imageId;
             try(final DockerClient client = getClientWithNoTimeout()) {
                 imageId = client.buildImageCmd(tar)
+                        .withNoCache(noCache)
+                        .withPull(pull)
                         .withBuildAuthConfigs(auths)
                         .exec(resultCallback)
                         .awaitImageId();

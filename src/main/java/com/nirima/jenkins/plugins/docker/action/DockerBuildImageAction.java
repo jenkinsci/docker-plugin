@@ -6,6 +6,8 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.export.ExportedBean;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.accmod.Restricted;
 
 import java.io.Serializable;
 import java.util.List;
@@ -28,6 +30,8 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
 
     public final boolean cleanupWithJenkinsJobDelete;
     public final boolean pushOnSuccess;
+    public /* almost final */ boolean noCache;
+    public /* almost final */ boolean pull;
 
     @Deprecated
     public DockerBuildImageAction(String containerHost,
@@ -54,6 +58,30 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
         this.pushOnSuccess = pushOnSuccess;
         this.tags = tags;
+    }
+
+    /**
+     * For internal use only, use {@link #DockerBuildImageAction(String, String, List, boolean, boolean)} instead.
+     */
+    @Restricted(NoExternalUse.class)
+    public DockerBuildImageAction(String containerHost,
+                                  String containerId,
+                                  List<String> tags,
+                                  boolean cleanupWithJenkinsJobDelete,
+                                  boolean pushOnSuccess,
+                                  boolean noCache,
+                                  boolean pull) {
+        this(containerHost, containerId, tags, cleanupWithJenkinsJobDelete, pushOnSuccess);
+        setNoCache(noCache);
+        setPull(pull);
+    }
+
+    public void setPull(boolean pull) {
+        this.pull = pull;
+    }
+
+    public void setNoCache(boolean noCache) {
+        this.noCache = noCache;
     }
 
     public String getIconFileName() {
