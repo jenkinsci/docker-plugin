@@ -42,6 +42,7 @@
     <f:entry title="${%Disable caching}" field="noCache">
         <f:checkbox default="false"/>
     </f:entry>
+
     <f:entry title="${%Pull base image}" field="pull">
         <f:checkbox default="false"/>
     </f:entry>
