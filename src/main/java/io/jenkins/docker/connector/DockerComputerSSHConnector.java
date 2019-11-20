@@ -33,6 +33,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -465,20 +467,26 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
      * in a CredentialStore
      */
     private static class DockerSSHLauncher extends SSHLauncher {
+        private static final String CREDENTIAL_ID = "InstanceIdentity";
         private String user;
         private String privateKey;
 
         public DockerSSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds, Integer maxNumRetries, Integer retryWaitTime, SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy) {
-            super(host, port, "InstanceIdentity", jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
+            super(host, port, CREDENTIAL_ID, jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
             this.user = user;
             this.privateKey = privateKey;
         }
 
         @Override
         public StandardUsernameCredentials getCredentials() {
-            return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "InstanceIdentity", user,
-                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null,
-                    "private key for docker ssh agent");
+            return makeCredentials(CREDENTIAL_ID, user, privateKey);
         }
+    }
+
+    @Restricted(NoExternalUse.class)
+    static StandardUsernameCredentials makeCredentials(String credId, String user, String privateKey) {
+        return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, credId, user,
+                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null,
+                "private key for docker ssh agent");
     }
 }

@@ -264,7 +264,7 @@ public class DockerCloud extends Cloud {
 
     private static void adjustContainersInProgress(DockerCloud cloud, DockerTemplate template, int adjustment) {
         final String cloudId = cloud.name;
-        final String templateId = template.getImage();
+        final String templateId = getTemplateId(template);
         synchronized (CONTAINERS_IN_PROGRESS) {
             Map<String, Integer> mapForThisCloud = CONTAINERS_IN_PROGRESS.get(cloudId);
             if (mapForThisCloud == null) {
@@ -285,9 +285,15 @@ public class DockerCloud extends Cloud {
         }
     }
 
-    int countContainersInProgress(DockerTemplate template) {
-        final String cloudId = super.name;
+    private static String getTemplateId(DockerTemplate template) {
         final String templateId = template.getImage();
+        return templateId;
+    }
+
+    @Restricted(NoExternalUse.class)
+    public int countContainersInProgress(DockerTemplate template) {
+        final String cloudId = super.name;
+        final String templateId = getTemplateId(template);
         synchronized (CONTAINERS_IN_PROGRESS) {
             final Map<String, Integer> allInProgressOrNull = CONTAINERS_IN_PROGRESS.get(cloudId);
             final Integer templateInProgressOrNull = allInProgressOrNull == null
