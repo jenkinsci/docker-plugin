@@ -45,6 +45,20 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
     }
 
     @Test
+    public void connectAgentViaSSHUsingInjectSshKeyAsContainerArgument() throws Exception {
+        final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy = new DockerComputerSSHConnector.InjectSSHKeyAsContainerArgument(COMMON_IMAGE_USERNAME);
+        final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
+        connector.setJavaPath(SSH_SLAVE_IMAGE_JAVAPATH);
+        final DockerTemplate template = new DockerTemplate(
+                new DockerTemplateBase(SSH_SLAVE_IMAGE_IMAGENAME),
+                connector,
+                LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
+        );
+        template.setName("connectAgentViaSSHUsingInjectSshKeyAsContainerArgument");
+        should_connect_agent(template);
+    }
+
+    @Test
     public void connectAgentViaSSHUsingCredentialsKey() throws Exception {
         final InstanceIdentity id = InstanceIdentity.get();
         final String privateKey = PEMEncodable.create(id.getPrivate()).encode();

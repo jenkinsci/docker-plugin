@@ -27,6 +27,7 @@ import hudson.security.ACL;
 import hudson.slaves.ComputerLauncher;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.client.DockerEnvUtils;
 import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -50,6 +51,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -174,20 +177,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
+        sshKeyStrategy.beforeContainerCreated(this, api, workdir, cmd);
         // TODO define a strategy for SSHD process configuration so we support more than openssh's sshd
-        final String[] cmdArray = cmd.getCmd();
-        if (cmdArray == null || cmdArray.length == 0) {
-
-            if (sshKeyStrategy.getInjectedKey() != null) {
-                cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port),
-                        // override sshd_config to force retrieval of InstanceIdentity public for as authentication
-                        "-o", "AuthorizedKeysCommand=/root/authorized_key",
-                        "-o", "AuthorizedKeysCommandUser=root"
-                );
-            } else {
-                cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port));
-            }
-        }
 
         cmd.withPortSpecs(port+"/tcp");
         final PortBinding sshPortBinding = PortBinding.parse(":" + port);
@@ -203,33 +194,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
     @Override
     public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
-        final String key = sshKeyStrategy.getInjectedKey();
-        if (key != null) {
-            String AuthorizedKeysCommand = "#!/bin/sh\n"
-                    + "[ \"$1\" = \"" + sshKeyStrategy.getUser() + "\" ] "
-                    + "&& echo '" + key + "'"
-                    + "|| :";
-
-            try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                 TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
-
-                TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
-                entry.setSize(AuthorizedKeysCommand.getBytes().length);
-                entry.setMode(0700);
-                tar.putArchiveEntry(entry);
-                tar.write(AuthorizedKeysCommand.getBytes());
-                tar.closeArchiveEntry();
-                tar.close();
-
-                try (InputStream is = new ByteArrayInputStream(bos.toByteArray());
-                     DockerClient client = api.getClient()) {
-                    client.copyArchiveToContainerCmd(containerId)
-                            .withTarInputStream(is)
-                            .withRemotePath("/root")
-                            .exec();
-                }
-            }
-        }
+        sshKeyStrategy.beforeContainerStarted(this, api, workdir, containerId);
     }
 
     @Override
@@ -346,16 +311,16 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     public abstract static class SSHKeyStrategy extends AbstractDescribableImpl<SSHKeyStrategy> {
-        public abstract String getInjectedKey() throws IOException;
+        public abstract void beforeContainerCreated(DockerComputerSSHConnector connector, DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException;
+        public abstract void beforeContainerStarted(DockerComputerSSHConnector connector, DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException;
         public abstract String getUser();
         public abstract ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector dockerComputerSSHConnector) throws IOException;
     }
 
-    public static class InjectSSHKey extends SSHKeyStrategy {
+    public abstract static class KeyInjectionStrategy extends SSHKeyStrategy {
         private final String user;
 
-        @DataBoundConstructor
-        public InjectSSHKey(String user) {
+        protected KeyInjectionStrategy(String user) {
             this.user = user;
         }
 
@@ -375,10 +340,71 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             );
         }
 
-        @Override
-        public String getInjectedKey() throws IOException {
+        protected String getInjectedKey() throws IOException {
             InstanceIdentity id = InstanceIdentity.get();
             return "ssh-rsa " + encode(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
+        }
+    }
+
+    public static class InjectSSHKey extends KeyInjectionStrategy {
+        @DataBoundConstructor
+        public InjectSSHKey(String user) {
+            super(user);
+        }
+
+        @Override
+        public void beforeContainerCreated(DockerComputerSSHConnector connector, DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
+            final int port = connector.getPort();
+            final boolean portIsNotDefault = port != 22;
+            final String injectedKey = getInjectedKey();
+            final String[] cmdArray = cmd.getCmd();
+            if (cmdArray == null || cmdArray.length == 0) {
+                if ( portIsNotDefault ) {
+                    cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port),
+                            // override sshd_config to force retrieval of InstanceIdentity public for as authentication
+                            "-o", "AuthorizedKeysCommand=/root/authorized_key",
+                            "-o", "AuthorizedKeysCommandUser=root"
+                            );
+                } else {
+                    cmd.withCmd("/usr/sbin/sshd", "-D",
+                            // override sshd_config to force retrieval of InstanceIdentity public for as authentication
+                            "-o", "AuthorizedKeysCommand=/root/authorized_key",
+                            "-o", "AuthorizedKeysCommandUser=root"
+                            );
+                }
+            }
+            if (injectedKey != null) {
+                DockerEnvUtils.addEnvToCmd("JENKINS_SLAVE_SSH_PUBKEY", injectedKey, cmd);
+            }
+        }
+
+        @Override
+        public void beforeContainerStarted(DockerComputerSSHConnector connector, DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
+            final String key = getInjectedKey();
+            final String AuthorizedKeysCommand = "#!/bin/sh\n"
+                    + "[ \"$1\" = \"" + getUser() + "\" ] "
+                    + "&& echo '" + key + "'"
+                    + "|| :";
+
+            try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                 TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
+
+                TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
+                entry.setSize(AuthorizedKeysCommand.getBytes().length);
+                entry.setMode(0700);
+                tar.putArchiveEntry(entry);
+                tar.write(AuthorizedKeysCommand.getBytes());
+                tar.closeArchiveEntry();
+                tar.close();
+
+                try (InputStream is = new ByteArrayInputStream(bos.toByteArray());
+                     DockerClient client = api.getClient()) {
+                    client.copyArchiveToContainerCmd(containerId)
+                            .withTarInputStream(is)
+                            .withRemotePath("/root")
+                            .exec();
+                }
+            }
         }
 
         @Extension
@@ -386,7 +412,41 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             @Nonnull
             @Override
             public String getDisplayName() {
-                return "Inject SSH key";
+                return "Inject SSH key using SSH AuthorizedKeysCommand option";
+            }
+        }
+    }
+
+    public static class InjectSSHKeyAsContainerArgument extends KeyInjectionStrategy {
+        @DataBoundConstructor
+        public InjectSSHKeyAsContainerArgument(String user) {
+            super(user);
+        }
+
+        @Override
+        public void beforeContainerCreated(DockerComputerSSHConnector connector, DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
+            final String injectedKey = getInjectedKey();
+            final String[] cmdArray = cmd.getCmd();
+            if (cmdArray == null || cmdArray.length == 0) {
+                cmd.withCmd(injectedKey);
+            } else {
+                ArrayList<String> l = new ArrayList<String>(cmdArray.length+1);
+                l.add(injectedKey);
+                l.addAll(Arrays.asList(cmdArray));
+                cmd.withCmd(l.toArray(new String[l.size()]));
+            }
+        }
+
+        @Override
+        public void beforeContainerStarted(DockerComputerSSHConnector connector, DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
+        }
+
+        @Extension
+        public static final class DescriptorImpl extends Descriptor<SSHKeyStrategy> {
+            @Nonnull
+            @Override
+            public String getDisplayName() {
+                return "Inject SSH key as 1st container argument";
             }
         }
     }
@@ -424,8 +484,13 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
 
         @Override
-        public String getInjectedKey() throws IOException {
-            return null;
+        public void beforeContainerCreated(DockerComputerSSHConnector connector, DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
+            // TODO Auto-generated method stub
+        }
+
+        @Override
+        public void beforeContainerStarted(DockerComputerSSHConnector connector, DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
+            // TODO Auto-generated method stub
         }
 
         @Extension
