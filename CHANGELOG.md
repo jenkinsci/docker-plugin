@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.9 (TBD)
+* Fix "SSH service hadn't started after 0 seconds" [#751](https://github.com/jenkinsci/docker-plugin/issues/751)
+* Fix SSH connection-timeout handling [JENKINS-59764](https://issues.jenkins-ci.org/browse/JENKINS-59764), [#755](https://github.com/jenkinsci/docker-plugin/pull/755)
+* Enhancement: Improve help text for docker-attach connection method [#761](https://github.com/jenkinsci/docker-plugin/pull/761)
+* Enhancement: Support --pull and --no-cache in build/publish image build step [#758](https://github.com/jenkinsci/docker-plugin/pull/758)
+
 ## 1.1.8 (2019-09-24)
 * Enhancement: Improve JCasC support [#726](https://github.com/jenkinsci/docker-plugin/pull/726)
 * Enhancement: Allow extra docker labels on containers [#747](https://github.com/jenkinsci/docker-plugin/pull/747)
