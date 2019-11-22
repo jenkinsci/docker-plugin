@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.9 (TBD)
+## 1.1.9 (2019-11-22)
 * Fix "SSH service hadn't started after 0 seconds" [#751](https://github.com/jenkinsci/docker-plugin/issues/751)
 * Fix SSH connection-timeout handling [JENKINS-59764](https://issues.jenkins-ci.org/browse/JENKINS-59764), [#755](https://github.com/jenkinsci/docker-plugin/pull/755)
 * Fix "Null value not allowed" in DockerComputer.getEnvironment [#759](https://github.com/jenkinsci/docker-plugin/issues/759)
