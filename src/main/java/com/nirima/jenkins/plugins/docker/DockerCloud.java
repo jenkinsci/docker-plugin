@@ -368,6 +368,7 @@ public class DockerCloud extends Cloud {
                             // TODO where can we log provisioning progress ?
                             final DockerAPI api = DockerCloud.this.getDockerApi();
                             slave = t.provisionNode(api, TaskListener.NULL);
+                            slave.setDockerAPI(api);
                             slave.setCloudId(DockerCloud.this.name);
                             plannedNode.complete(slave);
 

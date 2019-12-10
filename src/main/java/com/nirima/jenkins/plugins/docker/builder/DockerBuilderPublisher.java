@@ -24,15 +24,18 @@ import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Item;
+import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.remoting.RemoteInputStream;
 import hudson.remoting.VirtualChannel;
+import hudson.remoting.Channel;
 import hudson.slaves.Cloud;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.DockerTransientNode;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
@@ -226,15 +229,21 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         }
     }
 
-    protected DockerCloud getCloud(Launcher launcher) {
+    protected DockerAPI getDockerAPI(Launcher launcher) {
 
         DockerCloud theCloud;
+        VirtualChannel channel = launcher.getChannel();
 
         if (!Strings.isNullOrEmpty(cloud)) {
             theCloud = JenkinsUtils.getServer(cloud);
         } else {
-
-            Optional<DockerCloud> cloud = JenkinsUtils.getCloudForChannel(launcher.getChannel());
+            if(channel instanceof Channel) {
+                Node node = Jenkins.getInstance().getNode(((Channel)channel).getName() );
+                if (node instanceof DockerTransientNode) {
+                    return ((DockerTransientNode) node).getDockerAPI();
+                }
+            }
+            Optional<DockerCloud> cloud = JenkinsUtils.getCloudForChannel(channel);
             if (!cloud.isPresent())
                 throw new RuntimeException("Could not find the cloud this project was built on");
 
@@ -248,13 +257,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             for (DockerCloud dc : JenkinsUtils.getServers()) {
                 if (!dc.isTriton()) {
                     LOGGER.warn("Picked {} cloud instead", dc.getDisplayName());
-                    return dc;
+                    theCloud = dc;
+                    break;
                 }
             }
 
         }
 
-        return theCloud;
+        return theCloud.getDockerApi();
     }
 
     class Run implements Serializable {
@@ -270,14 +280,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         final transient hudson.model.Run<?, ?> run;
 
-        private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerCloud dockerCloud) {
+        private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerAPI dockerApi) {
 
             this.run = run;
             this.launcher = launcher;
             this.listener = listener;
             this.fpChild = fpChild;
             this.tagsToUse = tagsToUse;
-            this.dockerApi = dockerCloud.getDockerApi();
+            this.dockerApi = dockerApi;
 
         }
 
@@ -450,7 +460,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         } catch (MacroEvaluationException e) {
             listener.getLogger().println("Couldn't macro expand docker file directory " + dockerFileDirectory);
         }
-        new Run(run, launcher, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, getCloud(launcher)).run();
+        new Run(run, launcher, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, getDockerAPI(launcher)).run();
 
     }
 
