@@ -1,0 +1,23 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" >
+
+    <f:block>
+        A dedicated SSH (public) key (based on Jenkins master's unique Identity)
+        will be passed to the container as the first argument, and the matching
+        private key given to the Jenkins SSH launcher code to use to log in with.
+        <br/>
+        <u>Note:</u> This is what the official Jenkins docker-ssh-slave image expects.
+        <br/>
+        <u>Note:</u> If you are using the Windows version of the docker-ssh-slave,
+        you may find that you also need to set
+        (in the "Advanced" SSH connection properties below)
+        the "Prefix Start Slave Command" to
+        <code>powershell -Command "cd C:\Users\jenkins ; java -jar remoting.jar -workDir C:\Users\jenkins -jar-cache C:\Users\jenkins/remoting/jarCache" ; exit 0 ; rem '</code>
+        and "Suffix Start Slave Command" to <code>'</code>
+    </f:block>
+
+    <f:entry title="${%User}" field="user">
+        <f:textbox default="jenkins" />
+    </f:entry>
+
+</j:jelly>
