@@ -3,6 +3,7 @@ package io.jenkins.docker.connector;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.StartContainerCmd;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.thoughtworks.xstream.InitializationException;
 import hudson.model.AbstractDescribableImpl;
@@ -10,6 +11,7 @@ import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.Which;
 import hudson.slaves.ComputerLauncher;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +57,12 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      */
     public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {}
 
+    /**
+     * Specific method to start the container according connection method
+     */
+    public void startContainer(String containerId, DockerClient client, DockerTransientNode node) {
+        client.startContainerCmd(containerId).exec();
+    }
 
     /**
      * Ensure container is already set with a command, or set one to make it wait indefinitely

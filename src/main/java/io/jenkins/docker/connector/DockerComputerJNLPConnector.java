@@ -2,10 +2,12 @@ package io.jenkins.docker.connector;
 
 import static com.nirima.jenkins.plugins.docker.DockerTemplateBase.splitAndFilterEmpty;
 
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.google.common.base.Joiner;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -16,6 +18,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.util.LogTaskListener;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.client.DockerEnvUtils;
 import jenkins.model.Jenkins;
@@ -28,6 +31,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.logging.Level;
@@ -210,6 +215,40 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
             addEnvVar(knownVariables, v.getName(), argValue);
         }
         return knownVariables;
+    }
+
+    @Override
+    public void startContainer(String containerId, DockerClient client, DockerTransientNode node) {
+        new Thread(new Runnable() {
+            private volatile boolean isRunning = true;
+            @Override
+            public void run() {
+                long initialTime = Instant.now().getEpochSecond();
+                long idleSecond = BigDecimal.valueOf(((DockerOnceRetentionStrategy) node.getRetentionStrategy()).getIdleMinutes())
+                        .multiply(BigDecimal.valueOf(60))
+                        .longValue();
+                while (isRunning) {
+                    try {
+                        long currentTime = Instant.now().getEpochSecond();
+                        if(Jenkins.getInstance().getNode(node.getNodeName()) != null) {
+                            client.startContainerCmd(containerId).exec();
+                            stop();
+                        }
+                        if(currentTime - initialTime > idleSecond) {
+                            throw new InterruptedException("Start container timeout");
+                        }
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        String message = String.format("Cannot start the container with id %s for the node %s", containerId, node.getNodeName());
+                        LOGGER.log(Level.FINE, message, e);
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+            public void stop() {
+                isRunning = false;
+            }
+        }).start();
     }
 
     private static void addEnvVars(final EnvVars vars, final Iterable<? extends NodeProperty<?>> nodeProperties)
