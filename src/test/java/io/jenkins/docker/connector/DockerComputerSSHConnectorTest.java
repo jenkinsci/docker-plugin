@@ -3,6 +3,7 @@ package io.jenkins.docker.connector;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
@@ -68,7 +69,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
     @Test
     public void testPortBinding() throws IOException, InterruptedException {
         DockerComputerSSHConnector connector = new DockerComputerSSHConnector(Mockito.mock(DockerComputerSSHConnector.SSHKeyStrategy.class));
-        CreateContainerCmdImpl cmd = new CreateContainerCmdImpl(Mockito.mock(CreateContainerCmd.Exec.class), "");
+        CreateContainerCmdImpl cmd = new CreateContainerCmdImpl(Mockito.mock(CreateContainerCmd.Exec.class), Mockito.mock(AuthConfig.class), "");
         cmd.withPortBindings(PortBinding.parse("42:42"));
 
         connector.setPort(22);

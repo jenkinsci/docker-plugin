@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.netty.MediaType;
-import com.github.dockerjava.netty.WebTarget;
-import com.github.dockerjava.netty.exec.AbstrSyncDockerCmdExec;
+import com.github.dockerjava.core.MediaType;
+import com.github.dockerjava.core.WebTarget;
+import com.github.dockerjava.core.exec.AbstrSyncDockerCmdExec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

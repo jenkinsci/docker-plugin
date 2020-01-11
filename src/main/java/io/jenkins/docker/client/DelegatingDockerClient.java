@@ -17,31 +17,43 @@ import com.github.dockerjava.api.command.CopyFileFromContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateImageCmd;
 import com.github.dockerjava.api.command.CreateNetworkCmd;
+import com.github.dockerjava.api.command.CreateServiceCmd;
 import com.github.dockerjava.api.command.CreateVolumeCmd;
 import com.github.dockerjava.api.command.DisconnectFromNetworkCmd;
 import com.github.dockerjava.api.command.EventsCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InfoCmd;
+import com.github.dockerjava.api.command.InitializeSwarmCmd;
 import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectNetworkCmd;
+import com.github.dockerjava.api.command.InspectServiceCmd;
+import com.github.dockerjava.api.command.InspectSwarmCmd;
 import com.github.dockerjava.api.command.InspectVolumeCmd;
+import com.github.dockerjava.api.command.JoinSwarmCmd;
 import com.github.dockerjava.api.command.KillContainerCmd;
+import com.github.dockerjava.api.command.LeaveSwarmCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.ListImagesCmd;
 import com.github.dockerjava.api.command.ListNetworksCmd;
+import com.github.dockerjava.api.command.ListServicesCmd;
+import com.github.dockerjava.api.command.ListSwarmNodesCmd;
+import com.github.dockerjava.api.command.ListTasksCmd;
 import com.github.dockerjava.api.command.ListVolumesCmd;
 import com.github.dockerjava.api.command.LoadImageCmd;
 import com.github.dockerjava.api.command.LogContainerCmd;
+import com.github.dockerjava.api.command.LogSwarmObjectCmd;
 import com.github.dockerjava.api.command.PauseContainerCmd;
 import com.github.dockerjava.api.command.PingCmd;
+import com.github.dockerjava.api.command.PruneCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.RemoveNetworkCmd;
+import com.github.dockerjava.api.command.RemoveServiceCmd;
 import com.github.dockerjava.api.command.RemoveVolumeCmd;
 import com.github.dockerjava.api.command.RenameContainerCmd;
 import com.github.dockerjava.api.command.RestartContainerCmd;
@@ -54,11 +66,17 @@ import com.github.dockerjava.api.command.TagImageCmd;
 import com.github.dockerjava.api.command.TopContainerCmd;
 import com.github.dockerjava.api.command.UnpauseContainerCmd;
 import com.github.dockerjava.api.command.UpdateContainerCmd;
+import com.github.dockerjava.api.command.UpdateServiceCmd;
+import com.github.dockerjava.api.command.UpdateSwarmCmd;
+import com.github.dockerjava.api.command.UpdateSwarmNodeCmd;
 import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Identifier;
+import com.github.dockerjava.api.model.PruneType;
+import com.github.dockerjava.api.model.ServiceSpec;
+import com.github.dockerjava.api.model.SwarmSpec;
 
 /**
  * Simple delegate class for the {@link DockerClient} interface. This makes it
@@ -355,5 +373,85 @@ public class DelegatingDockerClient implements DockerClient {
     @Override
     public WaitContainerCmd waitContainerCmd(String arg0) {
         return getDelegate().waitContainerCmd(arg0);
+    }
+
+    @Override
+    public InitializeSwarmCmd initializeSwarmCmd(SwarmSpec arg0) {
+        return getDelegate().initializeSwarmCmd(arg0);
+    }
+
+    @Override
+    public InspectSwarmCmd inspectSwarmCmd() {
+        return getDelegate().inspectSwarmCmd();
+    }
+
+    @Override
+    public JoinSwarmCmd joinSwarmCmd() {
+        return getDelegate().joinSwarmCmd();
+    }
+
+    @Override
+    public LeaveSwarmCmd leaveSwarmCmd() {
+        return getDelegate().leaveSwarmCmd();
+    }
+
+    @Override
+    public UpdateSwarmCmd updateSwarmCmd(SwarmSpec arg0) {
+        return getDelegate().updateSwarmCmd(arg0);
+    }
+
+    @Override
+    public UpdateSwarmNodeCmd updateSwarmNodeCmd() {
+        return getDelegate().updateSwarmNodeCmd();
+    }
+
+    @Override
+    public ListSwarmNodesCmd listSwarmNodesCmd() {
+        return getDelegate().listSwarmNodesCmd();
+    }
+
+    @Override
+    public ListServicesCmd listServicesCmd() {
+        return getDelegate().listServicesCmd();
+    }
+
+    @Override
+    public CreateServiceCmd createServiceCmd(ServiceSpec arg0) {
+        return getDelegate().createServiceCmd(arg0);
+    }
+
+    @Override
+    public InspectServiceCmd inspectServiceCmd(String arg0) {
+        return getDelegate().inspectServiceCmd(arg0);
+    }
+
+    @Override
+    public UpdateServiceCmd updateServiceCmd(String arg0, ServiceSpec arg1) {
+        return getDelegate().updateServiceCmd(arg0, arg1);
+    }
+
+    @Override
+    public RemoveServiceCmd removeServiceCmd(String arg0) {
+        return getDelegate().removeServiceCmd(arg0);
+    }
+
+    @Override
+    public ListTasksCmd listTasksCmd() {
+        return getDelegate().listTasksCmd();
+    }
+
+    @Override
+    public LogSwarmObjectCmd logServiceCmd(String arg0) {
+        return getDelegate().logServiceCmd(arg0);
+    }
+
+    @Override
+    public LogSwarmObjectCmd logTaskCmd(String arg0) {
+        return getDelegate().logTaskCmd(arg0);
+    }
+
+    @Override
+    public PruneCmd pruneCmd(PruneType arg0) {
+        return getDelegate().pruneCmd(arg0);
     }
 }
