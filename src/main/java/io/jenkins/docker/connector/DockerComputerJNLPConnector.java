@@ -217,8 +217,11 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         return knownVariables;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void startContainer(String containerId, DockerClient client, DockerTransientNode node) {
+    public void startContainer(String containerId, DockerClient client, DockerTransientNode node, TaskListener listener) {
         new Thread(new Runnable() {
             private volatile boolean isRunning = true;
             @Override
@@ -232,13 +235,19 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
                         long currentTime = Instant.now().getEpochSecond();
                         if(Jenkins.getInstance().getNode(node.getNodeName()) != null) {
                             client.startContainerCmd(containerId).exec();
+                            final InspectContainerResponse inspect = client.inspectContainerCmd(containerId).exec();
+                            final Boolean running = inspect.getState().getRunning();
+                            if (Boolean.FALSE.equals(running)) {
+                                listener.error("Container {} is not running. {}", containerId, inspect.getState().getStatus());
+                                throw new IOException("Container is not running.");
+                            }
                             stop();
                         }
                         if(currentTime - initialTime > idleSecond) {
                             throw new InterruptedException("Start container timeout");
                         }
                         Thread.sleep(1000);
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException | IOException e) {
                         String message = String.format("Cannot start the container with id %s for the node %s", containerId, node.getNodeName());
                         LOGGER.log(Level.FINE, message, e);
                         Thread.currentThread().interrupt();
