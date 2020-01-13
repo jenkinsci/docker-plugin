@@ -30,6 +30,10 @@
       <f:textbox />
     </f:entry>
 
+    <f:entry title="${%Mounts}" field="mountsString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:entry title="${%Volumes}" field="volumesString">
       <f:expandableTextbox />
     </f:entry>

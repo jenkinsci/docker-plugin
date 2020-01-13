@@ -25,6 +25,7 @@ public class DockerTemplateTest {
     
 
     String dockerCommand = "dockerCommand";
+    String mountsString = "mounts";
     String volumesString = "volumes";
     String volumesFrom = "volumesFrom";
     String environmentsString = "environmentString";
@@ -39,7 +40,7 @@ public class DockerTemplateTest {
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, null, dnsString, network,
-                dockerCommand, volumesString, volumesString, environmentsString,
+                dockerCommand, mountsString, volumesString, volumesString, environmentsString,
                 hostname, memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
 
         return new DockerTemplate(dockerTemplateBase, null, labelString, remoteFs, instanceCapStr);

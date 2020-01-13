@@ -40,6 +40,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final String dnsString;
     public final String network;
     public final String dockerCommand;
+    public final String mountsString;
     public final String volumesString;
     public final String volumesFrom;
     public final String environmentsString;
@@ -62,6 +63,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String dnsString,
             String network,
             String dockerCommand,
+            String mountsString,
             String volumesString,
             String volumesFrom,
             String environmentsString,
@@ -81,6 +83,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.dnsString = dnsString;
         this.network = network;
         this.dockerCommand = dockerCommand;
+        this.mountsString = mountsString;
         this.volumesString = volumesString;
         this.volumesFrom = volumesFrom;
         this.environmentsString = environmentsString;
@@ -160,7 +163,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage, pullCredentialsId,
                 dnsString, network, xCommand,
-                volumesString, volumesFrom, environmentsString, xHostname,
+                mountsString, volumesString, volumesFrom, environmentsString, xHostname,
                 memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
 
         LOG.info("Starting container for image {}", xImage);

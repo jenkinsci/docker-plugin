@@ -2,10 +2,15 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.BindOptions;
+import com.github.dockerjava.api.model.BindPropagation;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.TmpfsOptions;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
 import com.github.dockerjava.api.model.Device;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -65,6 +70,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     public String[] dnsHosts;
 
     public String network;
+
+    /**
+     * Every String is a mount specification
+     */
+    public String[] mounts;
 
     /**
      * Every String is volume specification
@@ -143,11 +153,40 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               String macAddress,
                               String extraHostsString
     ) {
+        this(image, pullCredentialsId, dnsString, network, dockerCommand,
+                null, volumesString, volumesFromString, environmentsString, hostname,
+                memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts,
+                privileged, tty, macAddress, extraHostsString);
+    }
+
+    @Deprecated
+    public DockerTemplateBase(String image,
+                              String pullCredentialsId,
+                              String dnsString,
+                              String network,
+                              String dockerCommand,
+                              String mountsString,
+                              String volumesString,
+                              String volumesFromString,
+                              String environmentsString,
+                              String hostname,
+                              Integer memoryLimit,
+                              Integer memorySwap,
+                              Integer cpuShares,
+                              Integer shmSize,
+                              String bindPorts,
+                              boolean bindAllPorts,
+                              boolean privileged,
+                              boolean tty,
+                              String macAddress,
+                              String extraHostsString
+    ) {
         this(image);
         setPullCredentialsId(pullCredentialsId);
         setDnsString(dnsString);
         setNetwork(network);
         setDockerCommand(dockerCommand);
+        setMountsString(mountsString);
         setVolumesString(volumesString);
         setVolumesFromString(volumesFromString);
         setEnvironmentsString(environmentsString);
@@ -270,6 +309,25 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setNetwork(String network) {
         this.network = network;
+    }
+
+    @CheckForNull
+    public String[] getMounts() {
+        return filterStringArray(mounts);
+    }
+
+    public void setMounts(String[] mounts) {
+        this.mounts = mounts;
+    }
+
+    public String getMountsString() {
+        if (mounts == null) return null;
+        return Joiner.on("\n").join(mounts);
+    }
+
+    @DataBoundSetter
+    public void setMountsString(String mountsString) {
+        this.mounts = splitAndFilterEmpty(mountsString, "\n");
     }
 
     @CheckForNull
@@ -564,6 +622,62 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.withNetworkMode(network);
         }
 
+        if (getMounts().length > 0) {
+            List<Mount> mountsList = new ArrayList<>();
+
+            for (String mountAsString : getMounts()) {
+                Mount mount = new Mount().withType(MountType.VOLUME);
+                BindOptions bindOptions = null;
+                TmpfsOptions tmpfsOptions = null;
+
+                final String[] tokens = mountAsString.split(",");
+                for (String token : tokens) {
+                    final String[] parts = token.split("=");
+                    if (!(parts.length == 2 || parts.length == 1 && "readonly".equals(parts[0]))) {
+                        throw new IllegalArgumentException("Invalid mount: expected key=value comma separated pairs, or 'readonly' keyword");
+                    }
+
+                    switch (parts[0]) {
+                        case "type":
+                            mount.withType(MountType.valueOf(parts[1].toUpperCase()));
+                            break;
+                        case "source":
+                            mount.withSource(parts[1]);
+                            break;
+                        case "target":
+                        case "destination":
+                        case "dst":
+                            mount.withTarget(parts[1]);
+                            break;
+                        case "readonly":
+                            mount.withReadOnly(true);
+                            break;
+                        case "bind-propagation":
+                            bindOptions = new BindOptions().withPropagation(BindPropagation.valueOf((parts[1].startsWith("r") ? "R_" + parts[1].substring(1) : parts[1]).toUpperCase()));
+                            break;
+                        case "tmpfs-mode":
+                            if (tmpfsOptions == null) tmpfsOptions = new TmpfsOptions();
+                            tmpfsOptions.withMode(Integer.parseInt(parts[1]));
+                            break;
+                        case "tmpfs-size":
+                            if (tmpfsOptions == null) tmpfsOptions = new TmpfsOptions();
+                            tmpfsOptions.withSizeBytes(Long.parseLong(parts[1]));
+                            break;
+                    }
+                }
+
+                if (mount.getTarget() == null || mount.getTarget().isEmpty()) {
+                    throw new IllegalArgumentException("Invalid mount: target/destination must be set");
+                }
+
+                if (bindOptions != null) mount.withBindOptions(bindOptions);
+                if (tmpfsOptions != null) mount.withTmpfsOptions(tmpfsOptions);
+                mountsList.add(mount);
+            }
+
+            containerConfig.getHostConfig().withMounts(mountsList);
+        }
+
         // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196
         if (getVolumes().length > 0) {
             ArrayList<Volume> vols = new ArrayList<>();
@@ -671,6 +785,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", hostname='").append(hostname).append('\'');
         sb.append(", dnsHosts=").append(Arrays.toString(dnsHosts));
         sb.append(", network='").append(network).append('\'');
+        sb.append(", mounts=").append(Arrays.toString(mounts));
         sb.append(", volumes=").append(Arrays.toString(volumes));
         sb.append(", volumesFrom2=").append(Arrays.toString(volumesFrom2));
         sb.append(", environment=").append(Arrays.toString(environment));
@@ -708,6 +823,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
         if (!Arrays.equals(dnsHosts, that.dnsHosts)) return false;
         if (network != null ? !network.equals(that.network) : that.network != null) return false;
+        if (!Arrays.equals(mounts, that.mounts)) return false;
         if (!Arrays.equals(volumes, that.volumes)) return false;
         if (!Arrays.equals(volumesFrom2, that.volumesFrom2)) return false;
         if (!Arrays.equals(environment, that.environment)) return false;
@@ -731,6 +847,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(dnsHosts);
         result = 31 * result + (network != null ? network.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(mounts);
         result = 31 * result + Arrays.hashCode(volumes);
         result = 31 * result + Arrays.hashCode(volumesFrom2);
         result = 31 * result + Arrays.hashCode(environment);

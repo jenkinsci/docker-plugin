@@ -53,7 +53,7 @@ public class DockerCloudTest {
 
         final DockerTemplate template = new DockerTemplate(
                 new DockerTemplateBase("image", "pullCredentialsId", "dnsString", "network",
-                        "dockerCommand", "volumesString", "volumesFromString", "environmentString",
+                        "dockerCommand", "mountsString", "volumesString", "volumesFromString", "environmentString",
                         "hostname", 128, 256, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString"),
                 new DockerComputerAttachConnector("jenkins"),
                 "labelString", "remoteFs", "10");
