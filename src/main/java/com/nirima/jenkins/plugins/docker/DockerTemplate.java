@@ -561,7 +561,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, remoteFs, launcher);
 
             connector.beforeContainerStarted(api, remoteFs, containerId);
-            connector.startContainer(containerId, client, node);
+            connector.startContainer(containerId, client, node, listener);
             connector.afterContainerStarted(api, remoteFs, containerId);
 
             node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");

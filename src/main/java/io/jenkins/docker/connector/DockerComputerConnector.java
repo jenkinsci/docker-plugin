@@ -59,9 +59,20 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
 
     /**
      * Specific method to start the container according connection method
+     * @param containerId
+     * @param client
+     * @param node
+     * @param listener
+     * @throws IOException
      */
-    public void startContainer(String containerId, DockerClient client, DockerTransientNode node) {
+    public void startContainer(String containerId, DockerClient client, DockerTransientNode node, TaskListener listener) throws IOException {
         client.startContainerCmd(containerId).exec();
+        final InspectContainerResponse inspect = client.inspectContainerCmd(containerId).exec();
+        final Boolean running = inspect.getState().getRunning();
+        if (Boolean.FALSE.equals(running)) {
+            listener.error("Container {} is not running. {}", containerId, inspect.getState().getStatus());
+            throw new IOException("Container is not running.");
+        }
     }
 
     /**
@@ -97,12 +108,6 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
             inspect = client.inspectContainerCmd(containerId).exec();
         }
         final ComputerLauncher launcher = createLauncher(api, workdir, inspect, listener);
-
-        final Boolean running = inspect.getState().getRunning();
-        if (Boolean.FALSE.equals(running)) {
-            listener.error("Container {} is not running. {}", containerId, inspect.getState().getStatus());
-            throw new IOException("Container is not running.");
-        }
 
         return new DockerDelegatingComputerLauncher(launcher, api, containerId);
     }
