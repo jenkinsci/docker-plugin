@@ -57,9 +57,11 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.Map;
 
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static org.apache.commons.lang.StringUtils.isEmpty;
@@ -133,6 +135,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public final String cloud;
     public /* almost final */ boolean noCache;
     public /* almost final */ boolean pull;
+    public Map<String, String> labels;
 
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
@@ -205,6 +208,34 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     @DataBoundSetter
     public void setPull(boolean pull) {
         this.pull = pull;
+    }
+
+    public String getLabels() {
+        if (labels == null) {
+            return "";
+        }
+        return Joiner.on("\n").withKeyValueSeparator("=").join(labels);
+    }
+
+    public void setLabels(Map<String, String> labels) {
+        this.labels = labels;
+    }
+
+    private static Map<String, String> splitAndFilterEmptyMap(String s, String separator) {
+        Map<String, String> result = new LinkedHashMap<>();
+        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
+            String[] parts = o.trim().split("=", 2);
+            if (parts.length == 2)
+                result.put(parts[0].trim(), parts[1].trim());
+        }
+        return result;
+    }
+
+    @DataBoundSetter
+    public void setLabels(String labelsString) {
+        setLabels(isEmpty(labelsString) ?
+                Collections.EMPTY_MAP :
+                splitAndFilterEmptyMap(labelsString, "\n"));
     }
 
     public static List<String> filterStringToList(String str) {
@@ -320,7 +351,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             log("Docker Build Response : " + imageId);
 
             // Add an action to the build
-            Action action = new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull);
+            Action action = new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull, labels);
 
             run.addAction(action);
             run.save();
@@ -382,6 +413,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 imageId = client.buildImageCmd(tar)
                         .withNoCache(noCache)
                         .withPull(pull)
+                        .withLabels(labels)
                         .withBuildAuthConfigs(auths)
                         .exec(resultCallback)
                         .awaitImageId();

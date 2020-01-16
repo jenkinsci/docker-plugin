@@ -11,6 +11,7 @@ import org.kohsuke.accmod.Restricted;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by magnayn on 10/01/2014.
@@ -32,6 +33,7 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
     public final boolean pushOnSuccess;
     public /* almost final */ boolean noCache;
     public /* almost final */ boolean pull;
+    public Map<String, String> labels;
 
     @Deprecated
     public DockerBuildImageAction(String containerHost,
@@ -76,12 +78,32 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
         setPull(pull);
     }
 
+    /**
+     * For internal use only, use {@link #DockerBuildImageAction(String, String, List, boolean, boolean)} instead.
+     */
+    @Restricted(NoExternalUse.class)
+    public DockerBuildImageAction(String containerHost,
+                                  String containerId,
+                                  List<String> tags,
+                                  boolean cleanupWithJenkinsJobDelete,
+                                  boolean pushOnSuccess,
+                                  boolean noCache,
+                                  boolean pull,
+                                  Map<String, String> labels) {
+        this(containerHost, containerId, tags, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull);
+        setLabels(labels);
+    }
+
     public void setPull(boolean pull) {
         this.pull = pull;
     }
 
     public void setNoCache(boolean noCache) {
         this.noCache = noCache;
+    }
+
+    public void setLabels(Map<String, String> labels) {
+        this.labels = labels;
     }
 
     public String getIconFileName() {
