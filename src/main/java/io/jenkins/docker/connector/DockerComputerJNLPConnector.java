@@ -227,9 +227,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
             @Override
             public void run() {
                 long initialTime = Instant.now().getEpochSecond();
-                long idleSecond = BigDecimal.valueOf(((DockerOnceRetentionStrategy) node.getRetentionStrategy()).getIdleMinutes())
-                        .multiply(BigDecimal.valueOf(60))
-                        .longValue();
+                final long addNodeSecondTimeout = 30; // TODO : See if it need to be configurable
                 while (isRunning) {
                     try {
                         long currentTime = Instant.now().getEpochSecond();
@@ -243,7 +241,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
                             }
                             stop();
                         }
-                        if(currentTime - initialTime > idleSecond) {
+                        if(currentTime - initialTime > addNodeSecondTimeout) {
                             throw new InterruptedException("Start container timeout");
                         }
                         Thread.sleep(1000);
