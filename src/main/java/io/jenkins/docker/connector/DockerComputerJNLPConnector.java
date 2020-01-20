@@ -7,7 +7,6 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.google.common.base.Joiner;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -18,7 +17,6 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.util.LogTaskListener;
-import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.client.DockerEnvUtils;
 import jenkins.model.Jenkins;
@@ -31,7 +29,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -221,7 +218,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
      * {@inheritDoc}
      */
     @Override
-    public void startContainer(String containerId, DockerClient client, DockerTransientNode node, TaskListener listener) {
+    public void startContainer(String containerId, DockerClient client, String nodeName, TaskListener listener) {
         new Thread(new Runnable() {
             private volatile boolean isRunning = true;
             @Override
@@ -231,7 +228,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
                 while (isRunning) {
                     try {
                         long currentTime = Instant.now().getEpochSecond();
-                        if(Jenkins.getInstance().getNode(node.getNodeName()) != null) {
+                        if(Jenkins.getInstance().getNode(nodeName) != null) {
                             client.startContainerCmd(containerId).exec();
                             final InspectContainerResponse inspect = client.inspectContainerCmd(containerId).exec();
                             final Boolean running = inspect.getState().getRunning();
@@ -246,7 +243,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
                         }
                         Thread.sleep(1000);
                     } catch (InterruptedException | IOException e) {
-                        String message = String.format("Cannot start the container with id %s for the node %s", containerId, node.getNodeName());
+                        String message = String.format("Cannot start the container with id %s for the node %s", containerId, nodeName);
                         LOGGER.log(Level.FINE, message, e);
                         Thread.currentThread().interrupt();
                     }

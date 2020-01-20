@@ -3,7 +3,6 @@ package io.jenkins.docker.connector;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.StartContainerCmd;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.thoughtworks.xstream.InitializationException;
 import hudson.model.AbstractDescribableImpl;
@@ -11,7 +10,6 @@ import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.Which;
 import hudson.slaves.ComputerLauncher;
-import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,11 +59,11 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * Specific method to start the container according connection method
      * @param containerId
      * @param client
-     * @param node
+     * @param nodeName
      * @param listener
      * @throws IOException
      */
-    public void startContainer(String containerId, DockerClient client, DockerTransientNode node, TaskListener listener) throws IOException {
+    public void startContainer(String containerId, DockerClient client, String nodeName, TaskListener listener) throws IOException {
         client.startContainerCmd(containerId).exec();
         final InspectContainerResponse inspect = client.inspectContainerCmd(containerId).exec();
         final Boolean running = inspect.getState().getRunning();
