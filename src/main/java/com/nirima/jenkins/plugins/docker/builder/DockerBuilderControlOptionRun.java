@@ -46,6 +46,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final boolean privileged;
     public final boolean tty;
     public final String hostname;
+    public final String user;
     public final String bindPorts;
     public final Integer memoryLimit;
     public final Integer memorySwap;
@@ -66,6 +67,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String volumesFrom,
             String environmentsString,
             String hostname,
+            String user,
             Integer memoryLimit,
             Integer memorySwap,
             Integer cpuShares,
@@ -87,6 +89,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.privileged = privileged;
         this.tty = tty;
         this.hostname = hostname;
+        this.user = user;
         this.bindPorts = bindPorts;
         this.memoryLimit = memoryLimit;
         this.memorySwap = memorySwap;
@@ -114,6 +117,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         String xImage = expand(build, image);
         String xCommand = expand(build, dockerCommand);
         String xHostname = expand(build, hostname);
+        String xUser = expand(build, user);
 
         LOG.info("Pulling image {}", xImage);
         llog.println("Pulling image " + xImage);
@@ -124,7 +128,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         }
         // but the remainder can use a normal client with the default timeout
         try(final DockerClient client = dockerApi.getClient()) {
-            executeOnDocker(build, llog, xImage, xCommand, xHostname, client);
+            executeOnDocker(build, llog, xImage, xCommand, xHostname, xUser, client);
         }
     }
 
@@ -150,7 +154,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         }
     }
 
-    private void executeOnDocker(Run<?, ?> build, PrintStream llog, String xImage, String xCommand, String xHostname, DockerClient client)
+    private void executeOnDocker(Run<?, ?> build, PrintStream llog, String xImage, String xCommand, String xHostname, String xUser, DockerClient client)
             throws DockerException {
         try {
             client.inspectImageCmd(xImage).exec();
@@ -160,7 +164,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         DockerTemplateBase template = new DockerSimpleTemplate(xImage, pullCredentialsId,
                 dnsString, network, xCommand,
-                volumesString, volumesFrom, environmentsString, xHostname,
+                volumesString, volumesFrom, environmentsString, xHostname, xUser,
                 memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
 
         LOG.info("Starting container for image {}", xImage);

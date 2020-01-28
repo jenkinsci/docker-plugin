@@ -22,6 +22,10 @@
       <f:textbox />
     </f:entry>
 
+    <f:entry title="${%User}" field="user">
+      <f:textbox />
+    </f:entry>
+
     <f:entry title="${%DNS}" field="dnsString">
       <f:textbox />
     </f:entry>

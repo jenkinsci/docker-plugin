@@ -62,6 +62,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public String hostname;
 
+    /**
+     * --user argument to docker run command.
+     */
+    private String user;
+
     public String[] dnsHosts;
 
     public String network;
@@ -135,6 +140,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               String volumesFromString,
                               String environmentsString,
                               String hostname,
+                              String user,
                               Integer memoryLimit,
                               Integer memorySwap,
                               Integer cpuShares,
@@ -155,6 +161,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setVolumesFromString(volumesFromString);
         setEnvironmentsString(environmentsString);
         setHostname(hostname);
+        setUser(user);
         setMemoryLimit(memoryLimit);
         setMemorySwap(memorySwap);
         setCpuShares(cpuShares);
@@ -254,6 +261,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setHostname(String hostname) {
         this.hostname = hostname;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    @DataBoundSetter
+    public void setUser(String user) {
+        this.user = user;
     }
 
     public String getDnsString() {
@@ -540,6 +556,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.withHostName(hostname);
         }
 
+        if (!Strings.isNullOrEmpty(user)) {
+            containerConfig.withUser(user);
+        }
+
         String[] cmd = getDockerCommandArray();
         if (cmd.length > 0) {
             containerConfig.withCmd(cmd);
@@ -696,6 +716,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", registry=").append(registry);
         sb.append(", dockerCommand='").append(dockerCommand).append('\'');
         sb.append(", hostname='").append(hostname).append('\'');
+        sb.append(", user='").append(user).append('\'');
         sb.append(", dnsHosts=").append(Arrays.toString(dnsHosts));
         sb.append(", network='").append(network).append('\'');
         sb.append(", volumes=").append(Arrays.toString(volumes));
@@ -734,6 +755,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (dockerCommand != null ? !dockerCommand.equals(that.dockerCommand) : that.dockerCommand != null)
             return false;
         if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
+        if (user != null ? !user.equals(that.user) : that.user != null) return false;
         if (!Arrays.equals(dnsHosts, that.dnsHosts)) return false;
         if (network != null ? !network.equals(that.network) : that.network != null) return false;
         if (!Arrays.equals(volumes, that.volumes)) return false;
@@ -758,6 +780,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (registry != null ? registry.hashCode() : 0);
         result = 31 * result + (dockerCommand != null ? dockerCommand.hashCode() : 0);
         result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
+        result = 31 * result + (user != null ? user.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(dnsHosts);
         result = 31 * result + (network != null ? network.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(volumes);
