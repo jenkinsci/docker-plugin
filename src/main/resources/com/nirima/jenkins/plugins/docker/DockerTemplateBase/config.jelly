@@ -75,6 +75,10 @@
       <span class="warning">at your own risk</span>
     </f:entry>
 
+    <f:entry title="${%Security Options}" field="securityOptsString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:entry title="${%Allocate a pseudo-TTY}" field="tty">
       <f:checkbox />
     </f:entry>

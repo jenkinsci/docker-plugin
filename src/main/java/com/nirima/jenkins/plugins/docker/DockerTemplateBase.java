@@ -108,6 +108,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     private List<String> extraHosts;
 
     @CheckForNull
+    private List<String> securityOpts;
+
+    @CheckForNull
     private Map<String, String> extraDockerLabels;
 
     @DataBoundConstructor
@@ -421,6 +424,25 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").join(extraHosts);
     }
 
+    @CheckForNull
+    public List<String> getSecurityOpts() {
+        return securityOpts;
+    }
+
+    @CheckForNull
+    public String getSecurityOptsString() {
+        return securityOpts == null ? null : Joiner.on("\n").join(securityOpts);
+    }
+
+    public void setSecurityOpts( List<String> securityOpts ) {
+        this.securityOpts = securityOpts;
+    }
+
+    @DataBoundSetter
+    public void setSecurityOptsString(String securityOpts) {
+        setSecurityOpts( isEmpty(securityOpts) ? null : splitAndFilterEmptyList(securityOpts, "\n") );
+    }
+
     @DataBoundSetter
     public void setExtraDockerLabelsString(String extraDockerLabelsString) {
         setExtraDockerLabels(isEmpty(extraDockerLabelsString) ?
@@ -626,6 +648,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.getHostConfig().withShmSize(shmSizeInByte);
         }
 
+        final List<String> securityOptions = getSecurityOpts();
+        if (CollectionUtils.isNotEmpty(securityOptions)) {
+            containerConfig.getHostConfig().withSecurityOpts( securityOptions );
+        }
+
         return containerConfig;
     }
 
@@ -681,6 +708,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", cpuShares=").append(cpuShares);
         sb.append(", shmSize=").append(shmSize);
         sb.append(", privileged=").append(privileged);
+        sb.append(", securityOpts=").append(securityOpts);
         sb.append(", tty=").append(tty);
         sb.append(", macAddress='").append(macAddress).append('\'');
         sb.append(", extraHosts=").append(extraHosts);
@@ -717,6 +745,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
         if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
         if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
+        if (securityOpts != null ? !securityOpts.equals(that.securityOpts) : that.securityOpts != null) return false;
         if (extraHosts != null ? !extraHosts.equals(that.extraHosts) : that.extraHosts != null) return false;
         if (extraDockerLabels != null ? !extraDockerLabels.equals(that.extraDockerLabels) : that.extraDockerLabels != null) return false;
         return true;
@@ -741,6 +770,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
         result = 31 * result + (shmSize != null ? shmSize.hashCode() : 0);
         result = 31 * result + (privileged ? 1 : 0);
+        result = 31 * result + (securityOpts != null ? securityOpts.hashCode() : 0);
         result = 31 * result + (tty ? 1 : 0);
         result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
         result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
@@ -795,7 +825,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             final List<String> extraHosts = splitAndFilterEmptyList(extraHostsString, "\n");
             for (String extraHost : extraHosts) {
                 if (extraHost.trim().split(":").length < 2) {
-                    return FormValidation.error("Wrong extraHost {}", extraHost);
+                    return FormValidation.error("Wrong extraHost format: '%s'", extraHost);
+                }
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckSecurityOptsString(@QueryParameter String securityOptsString) {
+            final List<String> securityOpts = splitAndFilterEmptyList(securityOptsString, "\n");
+            for (String securityOpt : securityOpts) {
+                if ( !( securityOpt.trim().split("=").length == 2 || securityOpt.trim().startsWith( "no-new-privileges" ) ) ) {
+                    return FormValidation.warning("Security option may be incorrect. Please double check syntax: '%s'", securityOpt);
                 }
             }
             return FormValidation.ok();

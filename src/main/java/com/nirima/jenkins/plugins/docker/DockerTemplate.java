@@ -216,6 +216,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase.getExtraHostsString();
     }
 
+    @CheckForNull
+    public List<String> getSecurityOpts() {
+        return dockerTemplateBase.getSecurityOpts();
+    }
+
+    public String getSecurityOptsString() {
+        return dockerTemplateBase.getSecurityOptsString();
+    }
+
     public DockerRegistryEndpoint getRegistry() {
         return dockerTemplateBase.getRegistry();
     }
