@@ -1,3 +1,14 @@
 <div>
-    The operator can constrain the memory available to a container. If the host supports swap memory, then the setting can be larger than physical RAM. <br><br> Consult <a href="https://docs.docker.com/reference/run/">Docker Run Documentation</a> for further information.
+    <p>The operator can constrain the memory available to a container. If the host supports swap memory,
+    then the setting can be larger than physical RAM.</p>
+
+    <p>When the processes inside the container exceed the memory limit, effects vary depending on your setup,
+    e.g. out of memory errors may occur or the operating system could start killing processes.</p>
+
+    <p>Consult <a href="https://docs.docker.com/engine/reference/run/">Docker Run Documentation</a> for further
+    information.</p>
+
+    <p>Note that on most Docker installations, the memory limit will not stop Jenkins/Docker from spawning so many
+    containers that the machines total available memory will be exceeded. However, some Docker installations might be
+    able to constrain the number of containers automatically using the memory limit.</p>
 </div>
