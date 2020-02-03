@@ -1,7 +1,10 @@
 <div>
-    <p>The maximum number of containers, based on this template, that this provider is allowed to run in total.</p>
-    <p>Note that containers which have <b>not</b> been created by Jenkins are not included in this total.</p>
-    <p>A negative value, or zero, or 2147483647 all mean "no limit" is imposed on the this template,
+    <p>The maximum number of containers, based on this template, that this provider is allowed to run in total.
+    A negative value, or zero, or 2147483647 all mean "no limit" is imposed on the this template,
     although the overall cloud instance limit (if any) will still apply.</p>
-    <p><strong>Deprecated</strong> you should configure template with memory/cpu constraints, so docker infrastructure can manage resource consumption.</p>
+
+    <p>Note that containers which have <b>not</b> been created by Jenkins are not included in this total.</p>
+
+    <p>As an alternative, some Docker setups can also determine the maximum number of containers automatically using
+    memory/cpu constraints.</p>
 </div>
