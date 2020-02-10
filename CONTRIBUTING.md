@@ -9,7 +9,10 @@ If you're not 100% sure it's a bug in the code then please seek help elsewhere.
 e.g. the [jenkins-users google group](https://groups.google.com/forum/#!forum/jenkinsci-users).
 - [RTFM](https://en.wikipedia.org/wiki/RTFM).
 The Jenkins UI pages include help that should explain things.
-The [plugin's wiki page](https://wiki.jenkins.io/display/JENKINS/Docker+Plugin) gives additional information.
+The
+[documentation](README.md)
+gives additional information.
+Both of these assume a basic working understanding docker itself, so make sure you read [the docker documentation](https://docs.docker.com/) too.
 - Be helpful and make no demands.
   * This code is Free Open-Source Software - nobody is obliged to make things work for you *but* you have legal permission to fix things yourself.
   * If you're reporting and fixing an issue yourself then you only need to explain what problem you're fixing in enough detail that the maintainer(s) can understand why your changes are in the public interest.
@@ -75,6 +78,5 @@ Please do not do both in the same PR as this makes life difficult for anyone els
 
 # Links
 
-- https://wiki.jenkins.io/display/JENKINS/Docker+Plugin
-- https://wiki.jenkins.io/display/JENKINS/Beginners+Guide+to+Contributing
-- https://wiki.jenkins.io/display/JENKINS/Extend+Jenkins
+- https://plugins.jenkins.io/docker-plugin/
+- https://jenkins.io/participate/code/
