@@ -10,7 +10,7 @@ e.g. the [jenkins-users google group](https://groups.google.com/forum/#!forum/je
 - [RTFM](https://en.wikipedia.org/wiki/RTFM).
 The Jenkins UI pages include help that should explain things.
 The
-[documentation](README.md)
+[plugin documentation](README.md)
 gives additional information.
 Both of these assume a basic working understanding docker itself, so make sure you read [the docker documentation](https://docs.docker.com/) too.
 - Be helpful and make no demands.

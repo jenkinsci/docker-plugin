@@ -1,10 +1,13 @@
 # Docker plugin for Jenkins
 
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/docker.svg)](https://plugins.jenkins.io/docker)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/docker.svg?color=blue)](https://plugins.jenkins.io/docker)
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/docker-plugin.svg)](https://plugins.jenkins.io/docker-plugin)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/docker-plugin.svg?color=blue)](https://plugins.jenkins.io/docker-plugin)
 [![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/docker-plugin/master)](https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/)
 
-Jenkins Cloud Plugin for Docker
+#### Overview
+
+This plugin allows containers to be dynamically provisioned as Jenkins nodes using Docker.
+It is a Jenkins Cloud plugin for Docker.
 
 The aim of this docker plugin is to be able to use a
 [Docker](https://docs.docker.com/)
@@ -31,7 +34,8 @@ and Jenkins can then run docker containers to provide Jenkins (slave agent) Node
 
 ----
 
-**Note:** There is more than one docker plugin for Jenkins.
+**Note:** There is _more than one docker plugin_ for Jenkins.
+While this can be confusing for end-users, it's even more confusing when end users report bugs in the wrong place.
 e.g. if you are using Jenkins
 [pipeline / workflow / Jenkinsfile](https://jenkins.io/doc/book/pipeline/docker/)
 builds with code including terms like
@@ -40,12 +44,12 @@ or
 `docker.image`
 etc then you're using the
 [`docker-workflow`](https://plugins.jenkins.io/docker-workflow)
-plugin and should probably go to its repository instead of this one.
+plugin and should go to its repository instead of this one.
 
 ----
 
-**Note:** This plugin does not provide Docker capabilities; it allows Jenkins to use docker capabilities.
-i.e. Once you've installed docker, this plugin will allow Jenkins to use it.
+**Note:** This plugin does not _provide_ a Docker daemon; it allows Jenkins to _use_ a docker daemon.
+i.e. Once you've installed docker on your OS, this plugin will allow Jenkins to use it.
 
 ----
 
@@ -53,20 +57,19 @@ i.e. Once you've installed docker, this plugin will allow Jenkins to use it.
 
 A quick setup is :
 
-\- get a docker environment running
-
-\- follow the instructions for creating a docker image that can be used
+1. get a docker environment running
+1. follow the instructions for creating a docker image that can be used
 as a Jenkins Agent
 
 ### Docker Environment
 
-Follow the installation steps on docker.io.
+Follow the installation steps on [the docker website](https://docs.docker.com/).
 
-If your host needs to allow connections from a jenkins instance hosted on a different machine,
-you will need to open up the TCP port.
+If your Jenkins instance is not on the same OS as the docker install,
+you will need to open the docker TCP port so that Jenkins can communicate with the docker daemon.
 This can be achieved by editing the docker config file and setting (for example)
 
-``` syntaxhighlighter-pre
+```sh
 DOCKER_OPTS="-H tcp://0.0.0.0:2376 -H unix:///var/run/docker.sock"
 ```
 
@@ -76,7 +79,7 @@ is likely to be
 ,
 `/etc/default/docker`
 or
-`/etc/default/docker.io`
+`/etc/default/docker.io`.
 
 
 ### Multiple Docker Hosts
@@ -85,7 +88,8 @@ If you want to use more than just one physical node to run containers,
 you can use
 [Docker Swarm Standalone](https://github.com/docker/swarm)
 or you can define more than one docker "cloud".
-The docker engine swarm mode API is not supported at present.
+The docker engine swarm mode API is not supported
+(at present; enhancement contributions would be welcomed).
 
 To use the standalone swarm,
 follow docker swarm standalone instructions and configure Jenkins with the swarm's API endpoint.
@@ -163,25 +167,31 @@ COPY your-favorite-tool-here
 
 #### Note on ENTRYPOINT
 
-Avoid overriding the docker command, as SSH Launcher relies on it.
+Avoid overriding the docker command, as the SSH Launcher relies on it.
 
-You can use an Entrypoint to run some side service inside your build
-agent container before the agent runtime starts and establish a
-connexion.
-Just ensure your entrypoint eventually run the passed command:
+You _can_ use an Entrypoint to run some side service inside your build agent container before the agent runtime starts and establish a connection
+... but you MUST ensure your entrypoint eventually runs the passed command:
 
     exec "$@"
 
+## Further information
+
+More information can be obtained from the online help built into the Jenkins WebUI.
+Most configurable fields have explanatory text.
+This,
+combined with knowledge of [docker itself](https://docs.docker.com/),
+should answer most questions.
+
 # Configure plugin via Groovy script
 
-This
+Jenkins can be configured using Groovy code, and the docker plugin is no exception.
+For example, this
 [configuration script](docs/attachments/docker-plugin-configuration-script.groovy)
 could be run automatically upon
 [Jenkins post-initialization](https://wiki.jenkins.io/display/JENKINS/Post-initialization+script)
 or through the
-[Jenkins script console](https://wiki.jenkins.io/display/JENKINS/Jenkins+Script+Console)
-.
+[Jenkins script console](https://wiki.jenkins.io/display/JENKINS/Jenkins+Script+Console).
 If run,
-this will configure the docker-plugin to look for a docker daemon running within the same OS as the Jenkins master
+this script will configure the docker-plugin to look for a docker daemon running within the same OS as the Jenkins master
 (connecting to Docker service through `unix:///var/run/docker.sock`)
 and with the containers connecting to Jenkins using the "attach" method.
