@@ -16,7 +16,7 @@
 
     <name>Docker plugin</name>
     <description>Provide Cloud Provisioning and other Docker features</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
+    <url>https://github.com/jenkinsci/docker-plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>

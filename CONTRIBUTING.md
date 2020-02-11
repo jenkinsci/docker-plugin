@@ -42,7 +42,7 @@ No new restrictions/conditions are permitted.
 - Provide a copy/paste of the `Cloud` section from $JENKINS_HOME/config.xml file (redacted where neccessary).
 - Describe what your docker infrastructure looks like, e.g. single vs multiple, hosts vs swarms, where Jenkins is in relation to that etc.
 - Provide docker host/api version.
-- Ensure that any code or log example surround with [the right markdown](https://help.github.com/articles/github-flavored-markdown/) otherwise it'll be unreadable.
+- Ensure that any code or log examples are surrounded with [the right markdown](https://help.github.com/articles/github-flavored-markdown/) otherwise it'll be unreadable.
 
 # Submitting pull requests
 
