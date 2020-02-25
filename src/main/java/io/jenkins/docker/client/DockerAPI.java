@@ -7,6 +7,7 @@ import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.SSLConfig;
+import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
