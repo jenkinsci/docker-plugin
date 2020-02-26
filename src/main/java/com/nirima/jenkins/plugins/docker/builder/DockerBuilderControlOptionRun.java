@@ -47,6 +47,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final boolean tty;
     public final String hostname;
     public final String user;
+    public final String extraGroupsString;
     public final String bindPorts;
     public final Integer memoryLimit;
     public final Integer memorySwap;
@@ -68,6 +69,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String environmentsString,
             String hostname,
             String user,
+            String extraGroupsString,
             Integer memoryLimit,
             Integer memorySwap,
             Integer cpuShares,
@@ -90,6 +92,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.tty = tty;
         this.hostname = hostname;
         this.user = user;
+        this.extraGroupsString = extraGroupsString;
         this.bindPorts = bindPorts;
         this.memoryLimit = memoryLimit;
         this.memorySwap = memorySwap;
@@ -162,10 +165,10 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             throw new DockerClientException("Failed to pull image: " + image, e);
         }
 
-        DockerTemplateBase template = new DockerSimpleTemplate(xImage, pullCredentialsId,
-                dnsString, network, xCommand,
-                volumesString, volumesFrom, environmentsString, xHostname, xUser,
-                memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
+        DockerTemplateBase template = new DockerSimpleTemplate(
+                xImage, pullCredentialsId, dnsString, network, xCommand, volumesString, volumesFrom,
+                environmentsString, xHostname, xUser, extraGroupsString, memoryLimit, memorySwap, cpuShares,
+                shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
 
         LOG.info("Starting container for image {}", xImage);
         llog.println("Starting container for image " + xImage);

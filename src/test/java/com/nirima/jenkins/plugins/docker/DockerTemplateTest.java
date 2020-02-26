@@ -30,6 +30,7 @@ public class DockerTemplateTest {
     String environmentsString = "environmentString";
     String hostname = "hostname";
     String user = "user1";
+    String extraGroupsString = "foo\nbar";
     String bindPorts = "0.0.0.0:22";
     boolean bindAllPorts = true;
     boolean privileged = false;
@@ -39,9 +40,10 @@ public class DockerTemplateTest {
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
-        final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(image, null, dnsString, network,
-                dockerCommand, volumesString, volumesString, environmentsString,
-                hostname, user, memoryLimit, memorySwap, cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
+        final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(
+                image, null, dnsString, network, dockerCommand, volumesString, volumesString,
+                environmentsString, hostname, user, extraGroupsString, memoryLimit, memorySwap, cpuShares, shmSize,
+                bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
 
         return new DockerTemplate(dockerTemplateBase, null, labelString, remoteFs, instanceCapStr);
     }
