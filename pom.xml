@@ -56,6 +56,8 @@
         <java.level>8</java.level>
         <groovy.version>2.4.7</groovy.version>
         <jenkins.version>2.60.3</jenkins.version>
+        <!-- FIXME need to review spotbugs errors -->
+        <spotbugs.failOnError>false</spotbugs.failOnError>
     </properties>
 
     <dependencies>
@@ -218,13 +220,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <configuration>
-                    <failOnError>false</failOnError>     <!-- FIXME need to review findbugs errors -->
-                </configuration>
-            </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
