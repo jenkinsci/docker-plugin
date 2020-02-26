@@ -502,6 +502,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 cmd.exec(new PullImageResultCallback() {
                     @Override
                     public void onNext(PullResponseItem item) {
+                        super.onNext(item);
                         listener.getLogger().println(item.getStatus());
                     }
                 }).awaitCompletion();
