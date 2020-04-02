@@ -92,6 +92,7 @@ class DockerNodeStepExecution extends StepExecution {
         Computer computer = null;
         try {
             node = t.provisionNode(api, listener);
+            node.setDockerAPI(api);
             node.setAcceptingTasks(false); // Prevent this node to be used by tasks from build queue
             Jenkins.getInstance().addNode(node);
 

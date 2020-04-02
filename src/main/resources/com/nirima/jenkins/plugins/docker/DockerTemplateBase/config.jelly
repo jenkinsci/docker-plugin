@@ -22,6 +22,14 @@
       <f:textbox />
     </f:entry>
 
+    <f:entry title="${%User}" field="user">
+      <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Extra Groups}" field="extraGroupsString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:entry title="${%DNS}" field="dnsString">
       <f:textbox />
     </f:entry>
@@ -35,6 +43,10 @@
     </f:entry>
 
     <f:entry title="${%Volumes From}" field="volumesFromString">
+      <f:expandableTextbox />
+    </f:entry>
+
+    <f:entry title="${%Devices}" field="devicesString">
       <f:expandableTextbox />
     </f:entry>
 
@@ -71,6 +83,10 @@
       <span class="warning">at your own risk</span>
     </f:entry>
 
+    <f:entry title="${%Security Options}" field="securityOptsString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:entry title="${%Allocate a pseudo-TTY}" field="tty">
       <f:checkbox />
     </f:entry>
@@ -80,6 +96,10 @@
     </f:entry>
 
     <f:entry title="${%Extra Hosts}" field="extraHostsString">
+      <f:expandableTextbox />
+    </f:entry>
+
+    <f:entry title="${%Extra Docker Labels}" field="extraDockerLabelsString">
       <f:expandableTextbox />
     </f:entry>
 

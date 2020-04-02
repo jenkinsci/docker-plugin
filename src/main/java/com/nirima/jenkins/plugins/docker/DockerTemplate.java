@@ -216,6 +216,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase.getExtraHostsString();
     }
 
+    @CheckForNull
+    public List<String> getSecurityOpts() {
+        return dockerTemplateBase.getSecurityOpts();
+    }
+
+    public String getSecurityOptsString() {
+        return dockerTemplateBase.getSecurityOptsString();
+    }
+
     public DockerRegistryEndpoint getRegistry() {
         return dockerTemplateBase.getRegistry();
     }
@@ -255,8 +264,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public String getFullImageId() {
         return dockerTemplateBase.getFullImageId();
     }
-
-
 
     public DockerTemplateBase getDockerTemplateBase() {
         return dockerTemplateBase;
@@ -346,7 +353,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public List<? extends NodeProperty<?>> getNodeProperties() {
         return Collections.unmodifiableList(nodeProperties);
     }
-    
+
     @DataBoundSetter
     public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
         this.nodeProperties = nodeProperties;
@@ -442,7 +449,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         template.setPullStrategy(pullStrategy);
         template.setRemoveVolumes(removeVolumes);
         template.setRetentionStrategy((DockerOnceRetentionStrategy) retentionStrategy);
-        template.setNodeProperties(nodeProperties);
+        template.setNodeProperties(makeCopyOfList(nodeProperties));
         return template;
     }
 
@@ -495,6 +502,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 cmd.exec(new PullImageResultCallback() {
                     @Override
                     public void onNext(PullResponseItem item) {
+                        super.onNext(item);
                         listener.getLogger().println(item.getStatus());
                     }
                 }).awaitCompletion();
@@ -564,13 +572,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             connector.afterContainerStarted(api, remoteFs, containerId);
 
             final ComputerLauncher launcher = connector.createLauncher(api, containerId, remoteFs, listener);
-    
             final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, remoteFs, launcher);
             node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
             node.setMode(mode);
             node.setLabelString(labelString);
             node.setRetentionStrategy(retentionStrategy);
-            robustlySetNodeProperties(node, nodeProperties);
+            robustlySetNodeProperties(node, makeCopyOfList(nodeProperties));
             node.setRemoveVolumes(removeVolumes);
             node.setDockerAPI(api);
             finallyRemoveTheContainer = false;
@@ -590,12 +597,29 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
+    private static <T> List<T> makeCopyOfList(List<? extends T> listOrNull) {
+        final List<? extends T> originalList = Util.fixNull(listOrNull);
+        final List<T> copyList = new ArrayList<T>(originalList.size());
+        for( final T originalElement : originalList) {
+            final T copyOfElement = makeCopy(originalElement);
+            copyList.add(copyOfElement);
+        }
+        return copyList;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T makeCopy(final T original) {
+        final String xml = Jenkins.XSTREAM.toXML(original);
+        final Object copy = Jenkins.XSTREAM.fromXML(xml);
+        return (T) copy;
+    }
+
     /**
      * Returns a node name for a new node that doesn't clash with any we've
      * currently got.
      * 
-     * @param The
-     *            template's {@link #getName()}. This is used as a prefix for
+     * @param templateName
+     *            The template's {@link #getName()}. This is used as a prefix for
      *            the node name.
      * @return A unique unused node name suitable for use as a slave name for a
      *         slave created from this template.
@@ -701,9 +725,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
          */
         public List<NodePropertyDescriptor> getNodePropertiesDescriptors() {
-
             // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
-            List<NodePropertyDescriptor> result = new ArrayList<NodePropertyDescriptor>();
+            List<NodePropertyDescriptor> result = new ArrayList<>();
             Collection<NodePropertyDescriptor> list =
                     (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
             for (NodePropertyDescriptor npd : DescriptorVisibilityFilter.applyType(DockerTransientNode.class, list)) {
@@ -711,8 +734,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                     result.add(npd);
                 }
             }
-
-
             final Iterator<NodePropertyDescriptor> iterator = result.iterator();
             while (iterator.hasNext()) {
                 final NodePropertyDescriptor de = iterator.next();

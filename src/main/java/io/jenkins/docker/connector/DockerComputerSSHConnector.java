@@ -1,8 +1,10 @@
 package io.jenkins.docker.connector;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
@@ -10,17 +12,18 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
-import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
+import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.signature.RSAKeyAlgorithm;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import hudson.model.ItemGroup;
+import hudson.model.Item;
 import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
 import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
+import hudson.security.ACL;
 import hudson.slaves.ComputerLauncher;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.client.DockerAPI;
@@ -30,12 +33,16 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,6 +50,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -58,12 +66,19 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
     private final SSHKeyStrategy sshKeyStrategy;
     private int port;
+    @CheckForNull
     private String jvmOptions;
+    @CheckForNull
     private String javaPath;
+    @CheckForNull
     private String prefixStartSlaveCmd;
+    @CheckForNull
     private String suffixStartSlaveCmd;
+    @CheckForNull
     private Integer launchTimeoutSeconds;
+    @CheckForNull
     private Integer maxNumRetries;
+    @CheckForNull
     private Integer retryWaitTime;
 
     @DataBoundConstructor
@@ -87,6 +102,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         this.port = port;
     }
 
+    @CheckForNull
     public String getJvmOptions() {
         return jvmOptions;
     }
@@ -96,6 +112,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         this.jvmOptions = jvmOptions;
     }
 
+    @CheckForNull
     public String getJavaPath() {
         return javaPath;
     }
@@ -105,6 +122,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         this.javaPath = javaPath;
     }
 
+    @CheckForNull
     public String getPrefixStartSlaveCmd() {
         return prefixStartSlaveCmd;
     }
@@ -114,6 +132,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         this.prefixStartSlaveCmd = prefixStartSlaveCmd;
     }
 
+    @CheckForNull
     public String getSuffixStartSlaveCmd() {
         return suffixStartSlaveCmd;
     }
@@ -123,6 +142,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         this.suffixStartSlaveCmd = suffixStartSlaveCmd;
     }
 
+    @CheckForNull
     public Integer getLaunchTimeoutSeconds() {
         return launchTimeoutSeconds;
     }
@@ -132,6 +152,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         this.launchTimeoutSeconds = launchTimeoutSeconds;
     }
 
+    @CheckForNull
     public Integer getMaxNumRetries() {
         return maxNumRetries;
     }
@@ -141,6 +162,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         this.maxNumRetries = maxNumRetries;
     }
 
+    @CheckForNull
     public Integer getRetryWaitTime() {
         return retryWaitTime;
     }
@@ -152,9 +174,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
-
         // TODO define a strategy for SSHD process configuration so we support more than openssh's sshd
-        if (cmd.getCmd() == null || cmd.getCmd().length == 0) {
+        final String[] cmdArray = cmd.getCmd();
+        if (cmdArray == null || cmdArray.length == 0) {
 
             if (sshKeyStrategy.getInjectedKey() != null) {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port),
@@ -181,7 +203,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
     @Override
     public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
-
         final String key = sshKeyStrategy.getInjectedKey();
         if (key != null) {
             String AuthorizedKeysCommand = "#!/bin/sh\n"
@@ -225,12 +246,31 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         // Wait until sshd has started
         // TODO we could (also) have a more generic mechanism relying on healthcheck (inspect State.Health.Status)
-        final PortUtils.ConnectionCheck connectionCheck =
-                PortUtils.connectionCheck( address )
-                        .withRetries( maxNumRetries )
-                        .withEveryRetryWaitFor( retryWaitTime, TimeUnit.SECONDS );
-        if (!connectionCheck.execute() || !connectionCheck.useSSH().execute()) {
-            throw new IOException("SSH service didn't start after " + retryWaitTime*maxNumRetries + "s.");
+        final PortUtils.ConnectionCheck connectionCheck = PortUtils.connectionCheck( address );
+        final PortUtils.ConnectionCheckSSH connectionCheckSSH = connectionCheck.useSSH();
+        final Integer maxNumRetriesOrNull = getMaxNumRetries();
+        if ( maxNumRetriesOrNull!=null ) {
+            connectionCheck.withRetries( maxNumRetriesOrNull );
+        }
+        final Integer retryWaitTimeOrNull = getRetryWaitTime();
+        if ( retryWaitTimeOrNull!=null ) {
+            connectionCheck.withEveryRetryWaitFor( retryWaitTimeOrNull, TimeUnit.SECONDS );
+        }
+        final Integer launchTimeoutSeconds = getLaunchTimeoutSeconds();
+        if( launchTimeoutSeconds != null) {
+            connectionCheckSSH.withSSHTimeout(launchTimeoutSeconds, TimeUnit.SECONDS);
+        }
+        final long timestampBeforeConnectionCheck = System.nanoTime();
+        if (!connectionCheck.execute() || !connectionCheckSSH.execute()) {
+            final long timestampAfterConnectionCheckEnded = System.nanoTime();
+            final long nanosecondsElapsed = timestampAfterConnectionCheckEnded - timestampBeforeConnectionCheck;
+            final long secondsElapsed = TimeUnit.NANOSECONDS.toSeconds(nanosecondsElapsed);
+            final long millisecondsElapsed = TimeUnit.NANOSECONDS.toMillis(nanosecondsElapsed) - TimeUnit.SECONDS.toMillis(secondsElapsed);
+            throw new IOException("SSH service hadn't started after " + secondsElapsed + " seconds and "
+                    + millisecondsElapsed + " milliseconds."
+                    + "Try increasing the number of retries (currently " + maxNumRetriesOrNull
+                    + ") and/or the retry wait time (currently " + retryWaitTimeOrNull
+                    + ") to allow for containers taking longer to start.");
         }
 
         return sshKeyStrategy.getSSHLauncher(address, this);
@@ -289,14 +329,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         if(uri.getScheme().equals("unix")) {
             // Communicating with unix domain socket. so we assume localhost
             return "0.0.0.0";
-        } else {
-            return uri.getHost();
         }
+        return uri.getHost();
     }
 
     @Extension @Symbol("ssh")
     public static final class DescriptorImpl extends Descriptor<DockerComputerConnector> {
-
         @Override
         public String getDisplayName() {
             return "Connect with SSH";
@@ -308,16 +346,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     public abstract static class SSHKeyStrategy extends AbstractDescribableImpl<SSHKeyStrategy> {
-
         public abstract String getInjectedKey() throws IOException;
-
         public abstract String getUser();
-
         public abstract ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector dockerComputerSSHConnector) throws IOException;
     }
 
     public static class InjectSSHKey extends SSHKeyStrategy {
-
         private final String user;
 
         @DataBoundConstructor
@@ -325,15 +359,15 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             this.user = user;
         }
 
+        @Override
         public String getUser() {
             return user;
         }
 
         @Override
         public ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector connector) throws IOException {
-            InstanceIdentity id = InstanceIdentity.get();
-            String pem = PEMEncodable.create(id.getPrivate()).encode();
-
+            final InstanceIdentity id = InstanceIdentity.get();
+            final String pem = PEMEncodable.create(id.getPrivate()).encode();
             return new DockerSSHLauncher(address.getHostString(), address.getPort(), user, pem,
                     connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd,
                     connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime,
@@ -349,20 +383,16 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         @Extension
         public static final class DescriptorImpl extends Descriptor<SSHKeyStrategy> {
-
             @Nonnull
             @Override
             public String getDisplayName() {
                 return "Inject SSH key";
             }
         }
-
     }
 
     public static class ManuallyConfiguredSSHKey extends SSHKeyStrategy {
-
         private final String credentialsId;
-
         private final SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy;
 
         @DataBoundConstructor
@@ -400,15 +430,34 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         @Extension
         public static final class DescriptorImpl extends Descriptor<SSHKeyStrategy> {
-
             @Nonnull
             @Override
             public String getDisplayName() {
                 return "Use configured SSH credentials";
             }
 
-            public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
-                return DockerTemplateBase.DescriptorImpl.doFillCredentialsIdItems(context);
+            public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String credentialsId) {
+                if ( !hasPermission(context)) {
+                    return new StandardUsernameListBoxModel()
+                            .includeCurrentValue(credentialsId);
+                }
+                // Functionally the same as SSHLauncher's descriptor method, but without
+                // filtering by host/port as we don't/can't know those yet.
+                return new StandardUsernameListBoxModel()
+                        .includeMatchingAs(
+                                ACL.SYSTEM,
+                                context,
+                                StandardUsernameCredentials.class,
+                                Collections.emptyList(),
+                                SSHAuthenticator.matcher(Connection.class))
+                        .includeCurrentValue(credentialsId);
+            }
+
+            private boolean hasPermission(Item context) {
+                if (context != null) {
+                    return context.hasPermission(Item.CONFIGURE);
+                }
+                return Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER);
             }
         }
     }
@@ -418,21 +467,26 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
      * in a CredentialStore
      */
     private static class DockerSSHLauncher extends SSHLauncher {
-
+        private static final String CREDENTIAL_ID = "InstanceIdentity";
         private String user;
         private String privateKey;
 
         public DockerSSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds, Integer maxNumRetries, Integer retryWaitTime, SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy) {
-            super(host, port, "InstanceIdentity", jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
+            super(host, port, CREDENTIAL_ID, jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
             this.user = user;
             this.privateKey = privateKey;
         }
 
         @Override
         public StandardUsernameCredentials getCredentials() {
-            return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "InstanceIdentity", user,
-                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null,
-                    "private key for docker ssh agent");
+            return makeCredentials(CREDENTIAL_ID, user, privateKey);
         }
+    }
+
+    @Restricted(NoExternalUse.class)
+    static StandardUsernameCredentials makeCredentials(String credId, String user, String privateKey) {
+        return new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, credId, user,
+                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null,
+                "private key for docker ssh agent");
     }
 }

@@ -16,15 +16,14 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
 
 public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
+    private static final String JNLP_SLAVE_IMAGE_IMAGENAME = "jenkins/jnlp-slave";
 
     @Test
-    public void should_connect_agent() throws InterruptedException, ExecutionException, IOException, URISyntaxException {
+    public void connectAgentViaJNLP() throws Exception {
 
         final JenkinsLocationConfiguration location = JenkinsLocationConfiguration.get();
         URI uri = URI.create(location.getUrl());
@@ -37,16 +36,17 @@ public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest
         }
 
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase("jenkins/jnlp-slave"),
-                new DockerComputerJNLPConnector(new JNLPLauncher(null, null)).withUser("jenkins")
+                new DockerTemplateBase(JNLP_SLAVE_IMAGE_IMAGENAME),
+                new DockerComputerJNLPConnector(new JNLPLauncher(null, null)).withUser(COMMON_IMAGE_USERNAME)
                         .withJenkinsUrl(uri.toString()),
-                "docker-agent", "/home/jenkins/agent", "10"
+                        LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );
 
         if (SystemUtils.IS_OS_LINUX) {
             template.getDockerTemplateBase().setNetwork("host");
         }
 
+        template.setName("connectAgentViaJNLP");
         should_connect_agent(template);
     }
 

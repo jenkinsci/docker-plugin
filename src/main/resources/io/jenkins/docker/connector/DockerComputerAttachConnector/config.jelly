@@ -9,8 +9,10 @@
             </li>
             <li>
                 Entrypoint must be able to accept jenkins slave connection parameters.
-                See 
-                <a href="https://github.com/jenkinsci/docker-jnlp-slave">jenkins/docker-jnlp-slave</a>
+                See docker container
+                <a href="https://hub.docker.com/r/jenkins/jnlp-slave">jenkins/jnlp-slave</a>
+                and/or source
+                <a href="https://github.com/jenkinsci/docker-jnlp-slave">jenkinsci/docker-jnlp-slave</a>
                 as an example.
             </li>
         </ul>

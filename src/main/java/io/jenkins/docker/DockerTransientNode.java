@@ -1,11 +1,13 @@
 package io.jenkins.docker;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerOfflineCause;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Slave;
@@ -248,6 +250,9 @@ public class DockerTransientNode extends Slave {
         } catch (NotFoundException e) {
             logger.println("Container '" + containerId + "' already gone " + containerDescription + ".");
             containerNowRemoved = true;
+        } catch (ConflictException e) {
+            logger.println("Container '" + containerId + "' removal already in progress.");
+            containerNowRemoved = true;
         } catch (Exception ex) {
             logger.error("Failed to remove container '" + containerId + "' " + containerDescription + " due to exception:", ex);
         }
@@ -309,4 +314,17 @@ public class DockerTransientNode extends Slave {
         return (DockerCloud) cloud;
     }
 
+    @Extension
+    public static final class DockerTransientNodeDescriptor extends SlaveDescriptor {
+
+        @Override
+        public String getDisplayName() {
+            return "Docker Agent";
+        }
+
+        @Override
+        public boolean isInstantiable() {
+            return false;
+        }
+    }
 }

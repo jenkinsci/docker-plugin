@@ -17,7 +17,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
     private String user;
 
     public boolean isUseSSHKey() {
-        return useSSHKey != null && useSSHKey.booleanValue();
+        return useSSHKey != null && useSSHKey;
     }
 
     public DockerComputerConnector convertToConnector() {

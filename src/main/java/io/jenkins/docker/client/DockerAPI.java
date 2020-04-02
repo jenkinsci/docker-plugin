@@ -1,6 +1,5 @@
 package io.jenkins.docker.client;
 
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.VersionCmd;
@@ -8,13 +7,13 @@ import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.SSLConfig;
+import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import hudson.model.ItemGroup;
+import hudson.model.Item;
 import hudson.security.ACL;
-import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
@@ -24,6 +23,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
@@ -191,8 +191,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
     /** Obtains a {@link DockerClient} from the cache, or makes one and puts it in the cache, implicitly telling the cache we need it. */
     private static DockerClient getOrMakeClient(final String dockerUri, final String credentialsId,
             final int readTimeout, final int connectTimeout) {
-        final Integer readTimeoutInMillisecondsOrNull = readTimeout > 0 ? Integer.valueOf(readTimeout * 1000) : null;
-        final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? Integer.valueOf(connectTimeout * 1000) : null;
+        final Integer readTimeoutInMillisecondsOrNull = readTimeout > 0 ? readTimeout * 1000 : null;
+        final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? connectTimeout * 1000 : null;
         final DockerClientParameters cacheKey = new DockerClientParameters(dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
         synchronized(CLIENT_CACHE) {
             SharableDockerClient client = CLIENT_CACHE.getAndIncrementUsage(cacheKey);
@@ -318,14 +318,17 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerAPI> {
 
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String value) {
-            AccessControlled ac = (context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance());
-            if (!ac.hasPermission(Jenkins.ADMINISTER)) {
-                return new StandardListBoxModel().includeCurrentValue(value);
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String uri) {
+            final DockerServerEndpoint.DescriptorImpl descriptor = (DockerServerEndpoint.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(DockerServerEndpoint.class);
+            return descriptor.doFillCredentialsIdItems(context, uri);
+        }
+
+        public FormValidation doCheckCredentialsId(@AncestorInPath Item context, @QueryParameter String uri, @QueryParameter String value) {
+            final String credentialsOrNull = trimToNull(value);
+            if ( credentialsOrNull==null || credentialsAreValid(context, uri, credentialsOrNull)) {
+                return FormValidation.ok();
             }
-            return new StandardListBoxModel().includeAs(
-                    ACL.SYSTEM, context, DockerServerCredentials.class,
-                    Collections.<DomainRequirement>emptyList());
+            return FormValidation.error("Invalid credentials for URI " + uri);
         }
 
         public FormValidation doCheckConnectionTimeout(@QueryParameter String value) {
@@ -336,13 +339,20 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             return FormValidation.validateNonNegativeInteger(value);
         }
 
+        @RequirePOST
         public FormValidation doTestConnection(
+                @AncestorInPath Item context,
                 @QueryParameter String uri,
                 @QueryParameter String credentialsId,
                 @QueryParameter String apiVersion,
                 @QueryParameter int connectTimeout,
                 @QueryParameter int readTimeout
         ) {
+            throwIfNoPermission(context);
+            final FormValidation credentialsIdCheckResult = doCheckCredentialsId(context, uri, credentialsId);
+            if (credentialsIdCheckResult != FormValidation.ok()) {
+                return FormValidation.error("Invalid credentials");
+            }
             try {
                 final DockerServerEndpoint dsep = new DockerServerEndpoint(uri, credentialsId);
                 final DockerAPI dapi = new DockerAPI(dsep, connectTimeout, readTimeout, apiVersion, null);
@@ -355,6 +365,34 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
                 }
             } catch (Exception e) {
                 return FormValidation.error(e, e.getMessage());
+            }
+        }
+
+        private boolean credentialsAreValid(Item context, String uri, final String credentialsId) {
+            final ListBoxModel availableCredentials = doFillCredentialsIdItems(context, uri);
+            return optionIsAvailable(credentialsId, availableCredentials);
+        }
+
+        private boolean optionIsAvailable(final String optionValue, final ListBoxModel available) {
+            for (ListBoxModel.Option o : available) {
+                if (o.value == null) {
+                    if (optionValue == null) {
+                        return true; // both null = match
+                    }
+                } else {
+                    if (optionValue != null && optionValue.equals(o.value)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private void throwIfNoPermission(Item context) {
+            if (context != null) {
+                context.checkPermission(Item.CONFIGURE);
+            } else {
+                Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             }
         }
     }

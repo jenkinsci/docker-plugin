@@ -4,23 +4,17 @@ import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.concurrent.ExecutionException;
-
 public class DockerComputerAttachConnectorTest extends DockerComputerConnectorTest {
+    private static final String ATTACH_SLAVE_IMAGE_IMAGENAME = "jenkins/slave";
 
     @Test
-    public void should_connect_agent() throws InterruptedException, ExecutionException, IOException, URISyntaxException {
-
+    public void connectAgentViaDirectAttach() throws Exception {
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase("jenkins/slave"),
-                new DockerComputerAttachConnector("jenkins"),
-                "docker-agent", "/home/jenkins/agent", "10"
+                new DockerTemplateBase(ATTACH_SLAVE_IMAGE_IMAGENAME),
+                new DockerComputerAttachConnector(COMMON_IMAGE_USERNAME),
+                LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );
-
+        template.setName("connectAgentViaDirectAttach");
         should_connect_agent(template);
     }
-
-
 }

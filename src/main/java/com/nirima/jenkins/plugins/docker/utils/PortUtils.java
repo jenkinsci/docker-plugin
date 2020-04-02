@@ -15,8 +15,6 @@ import static com.google.common.base.Preconditions.checkState;
 public class PortUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(PortUtils.class);
 
-
-
     /**
      * @param host hostname to connect to
      * @param port port to open socket
@@ -35,26 +33,47 @@ public class PortUtils {
         private final String host;
         private final int port;
 
-        private int retries = 10;
-        private long retryDelay = (long) SECONDS.toMillis(2);
+        protected static final int DEFAULT_RETRIES = 10;
+        private int retries = DEFAULT_RETRIES;
+        protected static final int DEFAULT_RETRY_DELAY_SECONDS = 2;
+        private long retryDelay = SECONDS.toMillis(DEFAULT_RETRY_DELAY_SECONDS);
 
         private ConnectionCheck(String host, int port) {
             this.host = host;
             this.port = port;
         }
 
+        /**
+         * Sets the number of retries, such that {@link #execute()} will try
+         * once more than this. If this is not set then a default of
+         * {@value #DEFAULT_RETRIES} will be used.
+         * 
+         * @param retries
+         *            Number of retries. Negative values will be treated as
+         *            zero.
+         * @return this
+         */
         public ConnectionCheck withRetries(int retries) {
             this.retries = retries;
             return this;
         }
 
+        /**
+         * Sets the delay between tries. If this is not set then a default of
+         * {@value #DEFAULT_RETRY_DELAY_SECONDS} seconds will be used.
+         * 
+         * @param time
+         *            The lengthy of time.
+         * @param units
+         *            The units of that length.
+         * @return this
+         */
         public ConnectionCheck withEveryRetryWaitFor(int time, TimeUnit units) {
             retryDelay = units.toMillis(time);
             return this;
         }
 
         public ConnectionCheckSSH useSSH() {
-
             return new ConnectionCheckSSH(this);
         }
 
@@ -69,23 +88,29 @@ public class PortUtils {
             }
         }
 
-        public boolean execute() {
-
+        /**
+         * Tests the connection. If {@link #withRetries(int)} was set to more
+         * than zero then more than one attempt will be made, waiting (for the
+         * period specified by {@link #withEveryRetryWaitFor(int, TimeUnit)})
+         * between attempts.
+         * 
+         * @return true if the connection succeeded, false if it failed despite
+         *         any retries.
+         * @throws InterruptedException
+         *             if interrupted while waiting between retries.
+         */
+        public boolean execute() throws InterruptedException {
             LOGGER.trace("Testing connectivity to {} port {}", host, port );
-
             for (int i = 1; i <= retries; i++) {
                 if (executeOnce()) {
                     return true;
                 }
-                try {
-                    Thread.sleep(retryDelay);
-                } catch (InterruptedException e) {
-                    return false; // quit if interrupted
-                }
+                Thread.sleep(retryDelay);
             }
-
+            if (executeOnce()) {
+                return true;
+            }
             LOGGER.warn("Could not connect to {} port {}. Are you sure this location is contactable from Jenkins?", host, port);
-
             return false;
         }
     }
@@ -104,36 +129,60 @@ public class PortUtils {
         }
 
         /**
-         * Connects to sshd on host:port
-         * Retries while attempts reached with delay
-         * First with tcp port wait, then with ssh connection wait
+         * Tests the SSH connection. If the parent
+         * {@link ConnectionCheck#withRetries(int)} was set to more than zero
+         * then more than one attempt will be made, waiting (for the period
+         * specified by the parent
+         * {@link ConnectionCheck#withEveryRetryWaitFor(int, TimeUnit)}) between
+         * attempts. Note that, prior to testing that the port accepts SSH
+         * connection, it will first be tested to verify that it is open to TCP
+         * connections using {@link ConnectionCheck#execute()}, and this will
+         * also be subjected to retries, so that the total retry time for a port
+         * that is initially unavailable and then slow to accept SSH connections
+         * can be up to double what might be expected.
+         * 
+         * @return true if the connection succeeded, false if it failed despite
+         *         any retries.
+         * @throws InterruptedException
+         *             if interrupted while waiting between retries. Connects to
+         *             sshd on host:port. Retries while attempts reached with
+         *             delay First with tcp port wait, then with ssh connection
+         *             wait
+         * 
+         * @throws IllegalStateException
+         *             if the TCP port is not reachable despite retries.
+         * @throws InterruptedException
+         *             if interrupted while waiting between retries.
          */
-        public boolean execute() {
+        public boolean execute() throws InterruptedException {
             checkState(parent.execute(), "Port %s is not opened to connect to", parent.port);
 
-            for (int i = 1; i <= parent.retries; i++) {
-                Connection connection = new Connection(parent.host, parent.port);
-                try {
-                    connection.connect(null, 0, sshTimeoutMillis, sshTimeoutMillis);
-                    LOGGER.info("SSH port is open on {}:{}", parent.host, parent.port);
+            final int retries = Math.max(0, parent.retries);
+            final long retryDelay = parent.retryDelay;
+            final int totalTriesIntended = retries + 1;
+            int thisTryNumber;
+            for (thisTryNumber = 1; thisTryNumber <= retries; thisTryNumber++) {
+                if (executeOnce(thisTryNumber, totalTriesIntended)) {
                     return true;
-                } catch (IOException e) {
-                    LOGGER.error("Failed to connect to {}:{} (try {}/{}) - {}", parent.host, parent.port, i, parent.retries, e.getMessage());
-                } finally {
-                    connection.close();
                 }
-                try {
-                    Thread.sleep(parent.retryDelay);
-                } catch (InterruptedException e) {
-                    return false; // Quit if interrupted
-                }
+                Thread.sleep(retryDelay);
             }
-            // Tried over and again. no joy.
-            return false;
+            // last attempt
+            return executeOnce(thisTryNumber, totalTriesIntended);
+        }
+
+        private boolean executeOnce(final int thisTryNumber, final int totalTriesIntended) {
+            final Connection sshConnection = new Connection(parent.host, parent.port);
+            try {
+                sshConnection.connect(null, sshTimeoutMillis, sshTimeoutMillis, sshTimeoutMillis);
+                LOGGER.info("SSH port is open on {}:{}", parent.host, parent.port);
+                return true;
+            } catch (IOException e) {
+                LOGGER.error("Failed to connect to {}:{} (try {}/{}) - {}", parent.host, parent.port, thisTryNumber, totalTriesIntended, e.getMessage());
+                return false;
+            } finally {
+                sshConnection.close();
+            }
         }
     }
-
-
-
-
 }

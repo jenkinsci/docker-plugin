@@ -26,44 +26,38 @@
             <form method="post" action="controlSubmit" name="controlSubmit" id="control">
                 <input type="hidden" id="stopId" name="stopId" value=""/>
 
-            <table width="100%" border="1" cellpadding="2" cellspacing="0"
-                   class="pane bigtable"
-                   style="margin-top: 0">
-                <tr>
-
-                    <td class="pane-header">${%Container Id}</td>
-                    <td class="pane-header">${%Image}</td>
-                    <td class="pane-header">${%Command}</td>
-                    <td class="pane-header">${%Created}</td>
-                    <td class="pane-header">${%Status}</td>
-                    <td class="pane-header">${%Ports}</td>
-                    <td> - </td>
-
-                </tr>
-
-                <j:forEach var="res" items="${it.processes}">
+                <table width="100%" border="1" cellpadding="2" cellspacing="0"
+                       class="pane bigtable"
+                       style="margin-top: 0">
                     <tr>
-                        <td>${res.id}</td>
-                        <td>${res.image}</td>
-                        <td>${res.command}</td>
-                        <td>${it.asTime(res.created)}</td>
-                        <td>${res.status}</td>
-                        <td>
-                            <j:forEach var="port" items="${res.ports}">
-                                <p>${port}</p>
-                                <br/>
-                            </j:forEach>
-                        </td>
-
-                        <td>
-                            <input type="button" value="stop" onclick="stop('${res.id}')"></input>
-                        </td>
-
+                        <td class="pane-header">${%Container Id}</td>
+                        <td class="pane-header">${%Image}</td>
+                        <td class="pane-header">${%Command}</td>
+                        <td class="pane-header">${%Created}</td>
+                        <td class="pane-header">${%Status}</td>
+                        <td class="pane-header">${%Ports}</td>
+                        <td> - </td>
                     </tr>
-                </j:forEach>
-
-
-            </table>
+                    <j:forEach var="res" items="${it.processes}">
+                        <tr>
+                            <td>${res.id}</td>
+                            <td>${res.image}</td>
+                            <td>${res.command}</td>
+                            <td>${it.asTime(res.created)}</td>
+                            <td>${res.status}</td>
+                            <td>
+                                <j:forEach var="port" items="${res.ports}">
+                                    <p>${port}</p>
+                                    <br/>
+                                </j:forEach>
+                            </td>
+                            <td>
+                                <input type="button" value="stop" onclick="stop('${res.id}')"></input>
+                            </td>
+                        </tr>
+                    </j:forEach>
+                </table>
+            </form>
 
             <H2>Images</H2>
 
@@ -77,20 +71,15 @@
                     <td class="pane-header">${%Created}</td>
                     <td class="pane-header">${%Virtual Size}</td>
                 </tr>
-
-
                 <j:forEach var="res" items="${it.images}">
                     <tr>
-
                         <td>${res.tag}</td>
                         <td>${res.id}</td>
                         <td>${it.asTime(res.created)}</td>
                         <td>${res.virtualSize}</td>
                     </tr>
                 </j:forEach>
-
             </table>
-            </form>
 
         </l:main-panel>
     </l:layout>

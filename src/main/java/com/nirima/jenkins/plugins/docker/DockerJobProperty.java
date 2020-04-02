@@ -149,7 +149,7 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
 
                     } catch(DockerException ex) {
 
-                        LOGGER.error("Exception pushing docker image. Check that the destination registry is buildning.", ex);
+                        LOGGER.error("Exception pushing docker image. Check that the destination registry is building.", ex);
                         throw ex;
                     }
                 }
