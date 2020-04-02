@@ -17,6 +17,8 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.HostConfig;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
+import java.util.Arrays;
+
 public class DockerTemplateBaseTest {
 
     @BeforeClass
@@ -90,6 +92,42 @@ public class DockerTemplateBaseTest {
         } else {
             verify(mockCmd, never()).withEnv((String[]) anyVararg());
             verify(mockCmd, never()).withEnv(anyListOf(String.class));
+        }
+    }
+
+    @Test
+    public void fillContainerConfigGivenExtraGroupsThenSetsGroupAdd() {
+        // null/empty values result in no value being set
+        testFillContainerGroupAdd("null", null, false);
+        testFillContainerGroupAdd("empty", "", false);
+        testFillContainerGroupAdd("spaces", "\n\n", false);
+
+        // anything else, we should set things
+        testFillContainerGroupAdd("one", "foo", true, "foo");
+        testFillContainerGroupAdd("two", "foo\nbar", true, "foo", "bar");
+        testFillContainerGroupAdd("twospaced", "\nfoo\n\nbar\n\n", true, "foo", "bar");
+    }
+
+    private static void testFillContainerGroupAdd(
+            String imageName,
+            String extraGroupsStringToSet,
+            boolean groupAddIsExpectedToBeSet,
+            String... expectedGroupsSet) {
+        // Given
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setExtraGroupsString(extraGroupsStringToSet);
+
+        // When
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        // Then
+        if (groupAddIsExpectedToBeSet) {
+            verify(mockHostConfig, times(1)).withGroupAdd(Arrays.asList(expectedGroupsSet));
+        } else {
+            verify(mockHostConfig, never()).withGroupAdd(anyListOf(String.class));
         }
     }
 }

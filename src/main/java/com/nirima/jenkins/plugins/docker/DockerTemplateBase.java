@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.trimToNull;
@@ -66,6 +67,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * --user argument to docker run command.
      */
     private String user;
+
+    /**
+     * --group-add argument to docker run command.
+     */
+    private List<String> extraGroups;
 
     public String[] dnsHosts;
 
@@ -141,6 +147,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               String environmentsString,
                               String hostname,
                               String user,
+                              String extraGroupsString,
                               Integer memoryLimit,
                               Integer memorySwap,
                               Integer cpuShares,
@@ -162,6 +169,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setEnvironmentsString(environmentsString);
         setHostname(hostname);
         setUser(user);
+        setExtraGroupsString(extraGroupsString);
         setMemoryLimit(memoryLimit);
         setMemorySwap(memorySwap);
         setCpuShares(cpuShares);
@@ -270,6 +278,24 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public void setExtraGroups(List<String> extraGroups) {
+        this.extraGroups = extraGroups;
+    }
+
+    @DataBoundSetter
+    public void setExtraGroupsString(String extraGroupsString) {
+        setExtraGroups(isEmpty(extraGroupsString) ?
+                Collections.EMPTY_LIST :
+                splitAndFilterEmptyList(extraGroupsString, "\n"));
+    }
+
+    public String getExtraGroupsString() {
+        if (extraGroups == null) {
+            return "";
+        }
+        return Joiner.on("\n").join(extraGroups);
     }
 
     public String getDnsString() {
@@ -560,6 +586,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.withUser(user);
         }
 
+        if (CollectionUtils.isNotEmpty(extraGroups)) {
+            containerConfig.getHostConfig().withGroupAdd(extraGroups);
+        }
+
         String[] cmd = getDockerCommandArray();
         if (cmd.length > 0) {
             containerConfig.withCmd(cmd);
@@ -717,6 +747,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", dockerCommand='").append(dockerCommand).append('\'');
         sb.append(", hostname='").append(hostname).append('\'');
         sb.append(", user='").append(user).append('\'');
+        sb.append(", extraGroups=").append(extraGroups);
         sb.append(", dnsHosts=").append(Arrays.toString(dnsHosts));
         sb.append(", network='").append(network).append('\'');
         sb.append(", volumes=").append(Arrays.toString(volumes));
@@ -756,6 +787,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             return false;
         if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
         if (user != null ? !user.equals(that.user) : that.user != null) return false;
+        if (extraGroups != null ? !extraGroups.equals(that.extraGroups) : that.extraGroups != null) return false;
         if (!Arrays.equals(dnsHosts, that.dnsHosts)) return false;
         if (network != null ? !network.equals(that.network) : that.network != null) return false;
         if (!Arrays.equals(volumes, that.volumes)) return false;
@@ -781,6 +813,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (dockerCommand != null ? dockerCommand.hashCode() : 0);
         result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
         result = 31 * result + (user != null ? user.hashCode() : 0);
+        result = 31 * result + (extraGroups != null ? extraGroups.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(dnsHosts);
         result = 31 * result + (network != null ? network.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(volumes);
@@ -869,6 +902,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String extraDockerLabel : extraDockerLabels) {
                 if (extraDockerLabel.trim().split("=").length < 2) {
                     return FormValidation.error("Invalid extraDockerLabel \"%s\" will be ignored", extraDockerLabel);
+                }
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckExtraGroupsString(@QueryParameter String extraGroupsString) {
+            final List<String> extraGroups = splitAndFilterEmptyList(extraGroupsString, "\n");
+            Pattern pat = Pattern.compile("^(\\d+|[a-z_][a-z0-9_-]*[$]?)$");
+            for (String extraGroup : extraGroups) {
+                if (!pat.matcher(extraGroup.trim()).matches()) {
+                    return FormValidation.error("Wrong extraGroup format: '%s'", extraGroup);
                 }
             }
             return FormValidation.ok();

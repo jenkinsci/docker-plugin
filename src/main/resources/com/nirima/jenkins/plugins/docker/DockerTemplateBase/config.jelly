@@ -26,6 +26,10 @@
       <f:textbox />
     </f:entry>
 
+    <f:entry title="${%Extra Groups}" field="extraGroupsString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:entry title="${%DNS}" field="dnsString">
       <f:textbox />
     </f:entry>
