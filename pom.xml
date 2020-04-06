@@ -50,7 +50,7 @@
     </developers>
 
     <properties>
-        <revision>1.1.10</revision>
+        <revision>1.2.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>

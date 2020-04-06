@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0
+_2020-04-02_
+* Fix "ClassNotFoundException: com.github.dockerjava.netty.WebTarget" after upgrading to docker-java-api-plugin v 3.1.5 [#782](https://github.com/jenkinsci/docker-plugin/issues/782)
+* Fix DockerBuilderPublisher to work within dockerNode() [#756](https://github.com/jenkinsci/docker-plugin/issues/756)
+* Enhancement: Add "Security Options" field to docker templates [#744](https://github.com/jenkinsci/docker-plugin/issues/744)
+* Enhancement: Add "User" field to docker templates [#729](https://github.com/jenkinsci/docker-plugin/issues/729)
+* Enhancement: Improve docs for memory/instance constraints [#773](https://github.com/jenkinsci/docker-plugin/issues/773)
+* Enhancement: Add "Extra Groups" field to docker templates [#777](https://github.com/jenkinsci/docker-plugin/issues/777)
+* Moved plugin documentation from Jenkins wiki to GitHub [#774](https://github.com/jenkinsci/docker-plugin/issues/774)
+
+:warning: Earlier versions require `docker-java-api-plugin` version 3.0.14.  Later versions require `docker-java-api-plugin` version 3.1.5
+
 ## 1.1.9
 _2019-11-22_
 * Fix "SSH service hadn't started after 0 seconds" [#751](https://github.com/jenkinsci/docker-plugin/issues/751)
