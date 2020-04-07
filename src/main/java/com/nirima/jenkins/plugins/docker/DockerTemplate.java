@@ -56,6 +56,12 @@ import java.util.Set;
 
 
 public class DockerTemplate implements Describable<DockerTemplate> {
+	/**
+	 * The default timeout in seconds ({@value)s} to wait during container shutdown
+	 * until it will be forcefully terminated.
+	 */
+	public static final int DEFAULT_STOP_TIMEOUT = 10;
+	
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTemplate.class.getName());
 
     private static final UniqueIdGenerator ID_GENERATOR = new UniqueIdGenerator(36);
@@ -84,6 +90,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     private DockerTemplateBase dockerTemplateBase;
 
     private boolean removeVolumes;
+    
+    private int stopTimeout = DEFAULT_STOP_TIMEOUT;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
 
@@ -277,6 +285,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public void setRemoveVolumes(boolean removeVolumes) {
         this.removeVolumes = removeVolumes;
     }
+    
+    public int getStopTimeout() {
+    	return stopTimeout;
+    }
+    
+    @DataBoundSetter
+    public void setStopTimeout(int timeout) {
+    	this.stopTimeout = timeout;
+    }
 
     public String getLabelString() {
         return labelString;
@@ -448,6 +465,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         template.setMode(Node.Mode.EXCLUSIVE);
         template.setPullStrategy(pullStrategy);
         template.setRemoveVolumes(removeVolumes);
+        template.setStopTimeout(stopTimeout);
         template.setRetentionStrategy((DockerOnceRetentionStrategy) retentionStrategy);
         template.setNodeProperties(makeCopyOfList(nodeProperties));
         return template;
@@ -579,6 +597,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             node.setRetentionStrategy(retentionStrategy);
             robustlySetNodeProperties(node, makeCopyOfList(nodeProperties));
             node.setRemoveVolumes(removeVolumes);
+            node.setStopTimeout(stopTimeout);
             node.setDockerAPI(api);
             finallyRemoveTheContainer = false;
             return node;
@@ -753,6 +772,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             return FormValidation.validateNonNegativeInteger(value);
         }
 
+        public FormValidation doCheckStopTimeout(@QueryParameter String value) {
+            return FormValidation.validateNonNegativeInteger(value);
+        }
+        
         @Override
         public String getDisplayName() {
             return "Docker Template";
