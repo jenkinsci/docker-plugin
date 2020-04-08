@@ -40,7 +40,7 @@ public class DockerTransientNode extends Slave {
     private transient DockerAPI dockerAPI;
 
     private boolean removeVolumes;
-    
+
     private int stopTimeout = DockerTemplate.DEFAULT_STOP_TIMEOUT;
 
     private String cloudId;
@@ -98,13 +98,13 @@ public class DockerTransientNode extends Slave {
     public void setRemoveVolumes(boolean removeVolumes) {
         this.removeVolumes = removeVolumes;
     }
-    
+
     public int getStopTimeout() {
-    	return this.stopTimeout;
+        return this.stopTimeout;
     }
-    
+
     public void setStopTimeout(int timeout) {
-    	this.stopTimeout = timeout;
+        this.stopTimeout = timeout;
     }
 
     public String getCloudId() {
@@ -227,7 +227,7 @@ public class DockerTransientNode extends Slave {
      *         second is true if the container no longer exists.
      */
     private static boolean[] stopAndRemoveContainer(final DockerAPI api, final ILogger logger,
-            final String containerDescription, final boolean removeVolumes, int stopTimeout, final String containerId,
+            final String containerDescription, final boolean removeVolumes, final int stopTimeout, final String containerId,
             final boolean containerAlreadyStopped) {
         boolean containerNowStopped = containerAlreadyStopped;
         boolean containerNowRemoved = false;
@@ -306,8 +306,8 @@ public class DockerTransientNode extends Slave {
     public static boolean stopAndRemoveContainer(final DockerAPI api, final Logger logger, final String containerDescription,
             final boolean removeVolumes, final String containerId, final boolean containerAlreadyStopped) {
         final ILogger tl = createILoggerForSLF4JLogger(logger);
-		final boolean containerState[] = stopAndRemoveContainer(api, tl, containerDescription, removeVolumes,
-				DockerTemplate.DEFAULT_STOP_TIMEOUT, containerId, containerAlreadyStopped);
+        final boolean containerState[] = stopAndRemoveContainer(api, tl, containerDescription, removeVolumes,
+                DockerTemplate.DEFAULT_STOP_TIMEOUT, containerId, containerAlreadyStopped);
         return containerState[1];
     }
 
