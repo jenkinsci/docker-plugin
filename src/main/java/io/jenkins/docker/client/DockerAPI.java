@@ -236,20 +236,47 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         }
     }
 
-    /** Creates a new {@link DockerClient} */
+    /**
+     * Creates a new {@link DockerClient}.
+     * It's the caller's responsibility to dispose of the result.
+     */
+    @SuppressWarnings("resource")
     private static SharableDockerClient makeClient(final String dockerUri, final String credentialsId,
             final Integer readTimeoutInMillisecondsOrNull, final Integer connectTimeoutInMillisecondsOrNull) {
-        final DockerClient actualClient = DockerClientBuilder.getInstance(
-            new DefaultDockerClientConfig.Builder()
-                .withDockerHost(dockerUri)
-                .withCustomSslConfig(toSSlConfig(credentialsId))
-            )
-            .withDockerCmdExecFactory(new NettyDockerCmdExecFactory()
-            .withReadTimeout(readTimeoutInMillisecondsOrNull)
-            .withConnectTimeout(connectTimeoutInMillisecondsOrNull))
-            .build();
-        final SharableDockerClient multiUsageClient = new SharableDockerClient(actualClient);
-        return multiUsageClient;
+        NettyDockerCmdExecFactory cmdExecFactory = null;
+        DockerClient actualClient = null;
+        try {
+            cmdExecFactory = new NettyDockerCmdExecFactory()
+                    .withReadTimeout(readTimeoutInMillisecondsOrNull)
+                    .withConnectTimeout(connectTimeoutInMillisecondsOrNull);
+            final DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
+                    .withDockerHost(dockerUri)
+                    .withCustomSslConfig(toSSlConfig(credentialsId));
+            actualClient = DockerClientBuilder.getInstance(configBuilder)
+                .withDockerCmdExecFactory(cmdExecFactory)
+                .build();
+            final SharableDockerClient multiUsageClient = new SharableDockerClient(actualClient);
+            // if we've got this far, we're going to succeed, so we need to ensure that we
+            // don't close the resources we're returning.
+            cmdExecFactory = null;
+            actualClient = null;
+            return multiUsageClient;
+        } finally {
+            // these will no-op if we're successfully returning a value, but in any error
+            // cases we should ensure that we don't leak precious resources.
+            closeAndLogAnyExceptions(cmdExecFactory);
+            closeAndLogAnyExceptions(actualClient);
+        }
+    }
+
+    private static void closeAndLogAnyExceptions(Closeable resource) {
+        if (resource != null) {
+            try {
+                resource.close();
+            } catch (Exception ex) {
+                LOGGER.error("Unable to close {}", resource.toString(), ex);
+            }
+        }
     }
 
     private static SSLConfig toSSlConfig(String credentialsId) {
@@ -282,9 +309,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             final SSLConfig sslConfig = toSSlConfig(dockerHost.getCredentialsId());
             if (sslConfig != null) {
                 return sslConfig.getSSLContext().getSocketFactory().createSocket(uri.getHost(), uri.getPort());
-            } else {
-                return new Socket(uri.getHost(), uri.getPort());
             }
+            return new Socket(uri.getHost(), uri.getPort());
         } catch (Exception e) {
             throw new IOException("Failed to create a Socker for docker URI " + dockerHost.getUri(), e);
         }
