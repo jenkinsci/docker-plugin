@@ -233,6 +233,24 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase.getSecurityOptsString();
     }
 
+    @CheckForNull
+    public List<String> getCapabilitiesToAdd() {
+        return dockerTemplateBase.getCapabilitiesToAdd();
+    }
+
+    public String getCapabilitiesToAddString() {
+        return dockerTemplateBase.getCapabilitiesToAddString();
+    }
+
+    @CheckForNull
+    public List<String> getCapabilitiesToDrop() {
+        return dockerTemplateBase.getCapabilitiesToDrop();
+    }
+
+    public String getCapabilitiesToDropString() {
+        return dockerTemplateBase.getCapabilitiesToDropString();
+    }
+
     public DockerRegistryEndpoint getRegistry() {
         return dockerTemplateBase.getRegistry();
     }
