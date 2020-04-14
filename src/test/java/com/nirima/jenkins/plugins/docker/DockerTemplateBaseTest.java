@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.mock;
@@ -14,10 +15,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.HostConfig;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class DockerTemplateBaseTest {
 
@@ -128,6 +131,102 @@ public class DockerTemplateBaseTest {
             verify(mockHostConfig, times(1)).withGroupAdd(Arrays.asList(expectedGroupsSet));
         } else {
             verify(mockHostConfig, never()).withGroupAdd(anyListOf(String.class));
+        }
+    }
+
+    @Test
+    public void fillContainerConfigGivenSecurityOptions() {
+        testFillContainerSecurityOpts("null", null, false,
+                null);
+        String seccompSecurityOptUnconfined = "seccomp=unconfined";
+        testFillContainerSecurityOpts("unconfined", Arrays.asList(seccompSecurityOptUnconfined), true,
+                Arrays.asList(seccompSecurityOptUnconfined));
+    }
+
+    private static void testFillContainerSecurityOpts(final String imageName, final List<String> securityOptsToSet,
+            final boolean securityOptsIsExpectedToBeSet, final List<String> expectedSecurityOpts) {
+        // Given
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setSecurityOpts(securityOptsToSet);
+
+        // When
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        // Then
+        if (securityOptsIsExpectedToBeSet) {
+            verify(mockHostConfig, times(1)).withSecurityOpts(expectedSecurityOpts);
+        } else {
+            verify(mockHostConfig, never()).withSecurityOpts(anyList());
+        }
+    }
+
+    @Test
+    public void fillContainerConfigGivenCapabilitiesToAdd() {
+        testFillContainerCapabilitiesToAdd("null", null, false,
+                null);
+        String toAddInString = "AUDIT_CONTROL";
+        Capability toAdd = Capability.AUDIT_CONTROL;
+        testFillContainerCapabilitiesToAdd("toAdd", Arrays.asList(toAddInString), true,
+                Arrays.asList(toAdd));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void fillContainerConfigGivenCapabilitiesToAddWithException() {
+        testFillContainerCapabilitiesToAdd("not existing", Arrays.asList("DUMMY"), false,
+                null);
+    }
+
+    private static void testFillContainerCapabilitiesToAdd(final String imageName, final List<String> capabilitiesToSet,
+            final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
+        // Given
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setCapabilitiesToAdd(capabilitiesToSet);
+
+        // When
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        // Then
+        if (capabilitiesIsExpectedToBeSet) {
+            verify(mockCmd, times(1)).withCapAdd(expectedCapabilities);
+        } else {
+            verify(mockCmd, never()).withCapAdd(anyList());
+        }
+    }
+
+    @Test
+    public void fillContainerConfigGivenCapabilitiesToDrop() {
+        testFillContainerCapabilitiesToDrop("null", null, false, null);
+        String toDropInString = "AUDIT_CONTROL";
+        Capability toDrop = Capability.AUDIT_CONTROL;
+        testFillContainerCapabilitiesToDrop("toDrop", Arrays.asList(toDropInString), true,
+                Arrays.asList(toDrop));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void fillContainerConfigGivenCapabilitiesToDropWithException() {
+        testFillContainerCapabilitiesToDrop("not existing", Arrays.asList("DUMMY"), false,
+                null);
+    }
+
+    private static void testFillContainerCapabilitiesToDrop(final String imageName, final List<String> capabilitiesToSet,
+            final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
+        // Given
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setCapabilitiesToDrop(capabilitiesToSet);
+
+        // When
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        // Then
+        if (capabilitiesIsExpectedToBeSet) {
+            verify(mockCmd, times(1)).withCapDrop(expectedCapabilities);
+        } else {
+            verify(mockCmd, never()).withCapDrop(anyList());
         }
     }
 }

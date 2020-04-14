@@ -37,6 +37,9 @@ public class DockerTemplateTest {
     boolean tty = false;
     String macAddress = "92:d0:c6:0a:29:33";
     String extraHostsString = "extraHostsString";
+    String capabilitiesToAddString = "CHOWN";
+    String capabilitiesToDropString = "NET_ADMIN";
+    String securityOptsString = "seccomp=unconfined";
 
 
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
@@ -44,6 +47,9 @@ public class DockerTemplateTest {
                 image, null, dnsString, network, dockerCommand, volumesString, volumesString,
                 environmentsString, hostname, user, extraGroupsString, memoryLimit, memorySwap, cpuShares, shmSize,
                 bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
+        dockerTemplateBase.setCapabilitiesToAddString(capabilitiesToAddString);
+        dockerTemplateBase.setCapabilitiesToDropString(capabilitiesToDropString);
+        dockerTemplateBase.setSecurityOptsString(securityOptsString);
 
         return new DockerTemplate(dockerTemplateBase, null, labelString, remoteFs, instanceCapStr);
     }
@@ -72,6 +78,9 @@ public class DockerTemplateTest {
         assertTrue("Error, wrong memorySwap", 1280 == instance.getDockerTemplateBase().memorySwap);
         assertTrue("Error, wrong cpuShares", 1000 == instance.getDockerTemplateBase().cpuShares);
         assertTrue("Error, wrong shmSize", 1002 == instance.getDockerTemplateBase().shmSize);
+
+        assertTrue("Error, wrong capAdd", instance.getDockerTemplateBase().getCapabilitiesToAdd().contains("CHOWN"));
+        assertTrue("Error, wrong capDrop", instance.getDockerTemplateBase().getCapabilitiesToDrop().contains("NET_ADMIN"));
     }
 
 }

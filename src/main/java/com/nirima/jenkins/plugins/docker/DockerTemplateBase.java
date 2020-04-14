@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
@@ -120,6 +121,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @CheckForNull
     private List<String> securityOpts;
+
+    @CheckForNull
+    private List<String> capabilitiesToAdd;
+
+    @CheckForNull
+    private List<String> capabilitiesToDrop;
 
     @CheckForNull
     private Map<String, String> extraDockerLabels;
@@ -485,6 +492,52 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setSecurityOpts( isEmpty(securityOpts) ? null : splitAndFilterEmptyList(securityOpts, "\n") );
     }
 
+    @CheckForNull
+    public List<String> getCapabilitiesToAdd() {
+        return capabilitiesToAdd;
+    }
+
+    public String getCapabilitiesToAddString() {
+        if (capabilitiesToAdd == null) {
+            return "";
+        }
+        return Joiner.on("\n").join(capabilitiesToAdd);
+    }
+
+    public void setCapabilitiesToAdd(List<String> capabilitiesToAdd) {
+        this.capabilitiesToAdd = capabilitiesToAdd;
+    }
+
+    @DataBoundSetter
+    public void setCapabilitiesToAddString(String capabilitiesToAddString) {
+        setCapabilitiesToAdd(isEmpty(capabilitiesToAddString) ?
+                Collections.EMPTY_LIST :
+                splitAndFilterEmptyList(capabilitiesToAddString, "\n"));
+    }
+
+    @CheckForNull
+    public List<String> getCapabilitiesToDrop() {
+        return capabilitiesToDrop;
+    }
+
+    public String getCapabilitiesToDropString() {
+        if (capabilitiesToDrop == null) {
+            return "";
+        }
+        return Joiner.on("\n").join(capabilitiesToDrop);
+    }
+
+    public void setCapabilitiesToDrop(List<String> capabilitiesToDrop) {
+        this.capabilitiesToDrop = capabilitiesToDrop;
+    }
+
+    @DataBoundSetter
+    public void setCapabilitiesToDropString(String capabilitiesToDropString) {
+        setCapabilitiesToDrop(isEmpty(capabilitiesToDropString) ?
+                Collections.EMPTY_LIST :
+                splitAndFilterEmptyList(capabilitiesToDropString, "\n"));
+    }
+
     @DataBoundSetter
     public void setExtraDockerLabelsString(String extraDockerLabelsString) {
         setExtraDockerLabels(isEmpty(extraDockerLabelsString) ?
@@ -703,9 +756,30 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.getHostConfig().withSecurityOpts( securityOptions );
         }
 
+        final List<String> capabilitiesToAdd = getCapabilitiesToAdd();
+        if (CollectionUtils.isNotEmpty(capabilitiesToAdd)) {
+            containerConfig.withCapAdd(toCapabilities(capabilitiesToAdd));
+        }
+
+        final List<String> capabilitiesToDrop = getCapabilitiesToDrop();
+        if (CollectionUtils.isNotEmpty(capabilitiesToDrop)) {
+            containerConfig.withCapDrop(toCapabilities(capabilitiesToDrop));
+        }
+
         return containerConfig;
     }
 
+    private List<Capability> toCapabilities(List<String> capabilitiesString) {
+        List<Capability> res = new ArrayList<>();
+        for(String capability : capabilitiesString) {
+            try {
+                res.add(Capability.valueOf(capability));
+            } catch(IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid capability name : " + capability);
+            }
+        }
+        return res;
+    }
 
     /**
      * Calculates the value we use for the Docker label called
@@ -761,6 +835,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         sb.append(", shmSize=").append(shmSize);
         sb.append(", privileged=").append(privileged);
         sb.append(", securityOpts=").append(securityOpts);
+        sb.append(", capabilitiesToAdd=").append(capabilitiesToAdd);
+        sb.append(", capabilitiesToDrop=").append(capabilitiesToDrop);
         sb.append(", tty=").append(tty);
         sb.append(", macAddress='").append(macAddress).append('\'');
         sb.append(", extraHosts=").append(extraHosts);
@@ -800,6 +876,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
         if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
         if (securityOpts != null ? !securityOpts.equals(that.securityOpts) : that.securityOpts != null) return false;
+        if (capabilitiesToAdd != null ? !capabilitiesToAdd.equals(that.capabilitiesToAdd) : that.capabilitiesToAdd != null) return false;
+        if (capabilitiesToDrop != null ? !capabilitiesToDrop.equals(that.capabilitiesToDrop) : that.capabilitiesToDrop != null) return false;
         if (extraHosts != null ? !extraHosts.equals(that.extraHosts) : that.extraHosts != null) return false;
         if (extraDockerLabels != null ? !extraDockerLabels.equals(that.extraDockerLabels) : that.extraDockerLabels != null) return false;
         return true;
@@ -827,6 +905,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (shmSize != null ? shmSize.hashCode() : 0);
         result = 31 * result + (privileged ? 1 : 0);
         result = 31 * result + (securityOpts != null ? securityOpts.hashCode() : 0);
+        result = 31 * result + (capabilitiesToAdd != null ? capabilitiesToAdd.hashCode() : 0);
+        result = 31 * result + (capabilitiesToDrop != null ? capabilitiesToDrop.hashCode() : 0);
         result = 31 * result + (tty ? 1 : 0);
         result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
         result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
@@ -892,6 +972,26 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String securityOpt : securityOpts) {
                 if ( !( securityOpt.trim().split("=").length == 2 || securityOpt.trim().startsWith( "no-new-privileges" ) ) ) {
                     return FormValidation.warning("Security option may be incorrect. Please double check syntax: '%s'", securityOpt);
+                }
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckCapabilitiesToAddString(@QueryParameter String capabilitiesToAddString) {
+            return doCheckCapabilitiesString(capabilitiesToAddString);
+        }
+
+        public FormValidation doCheckCapabilitiesToDropString(@QueryParameter String capabilitiesToDropString) {
+            return doCheckCapabilitiesString(capabilitiesToDropString);
+        }
+
+        private static FormValidation doCheckCapabilitiesString(String capabilitiesString) {
+            final List<String> capabilities = splitAndFilterEmptyList(capabilitiesString, "\n");
+            for (String capability : capabilities) {
+                try {
+                    Capability.valueOf(capability);
+                } catch(IllegalArgumentException e) {
+                    return FormValidation.error("Wrong capability : %s", capability);
                 }
             }
             return FormValidation.ok();

@@ -87,6 +87,14 @@
       <f:expandableTextbox />
     </f:entry>
 
+    <f:entry title="${%Capabilities to add}" field="capabilitiesToAddString">
+      <f:expandableTextbox />
+    </f:entry>
+
+    <f:entry title="${%Capabilities to drop}" field="capabilitiesToDropString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:entry title="${%Allocate a pseudo-TTY}" field="tty">
       <f:checkbox />
     </f:entry>
