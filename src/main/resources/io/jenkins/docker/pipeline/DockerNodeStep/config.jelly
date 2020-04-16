@@ -19,6 +19,8 @@
         <c:select/>
       </f:entry>
 
+      <f:dropdownDescriptorSelector field="connector" title="Connect method"/>
+
   </f:advanced>
 
 </j:jelly>
