@@ -22,6 +22,8 @@ import java.util.logging.Logger;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import java.util.Objects;
+
 /**
  * Mix of {@link org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy} (1.3) and {@link CloudRetentionStrategy}
  * that allows configure it parameters and has Descriptor.
@@ -116,12 +118,15 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(idleMinutes);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         DockerOnceRetentionStrategy that = (DockerOnceRetentionStrategy) o;
-
         return idleMinutes == that.idleMinutes;
     }
 
