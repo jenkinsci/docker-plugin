@@ -5,18 +5,26 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.thoughtworks.xstream.InitializationException;
+
+import hudson.EnvVars;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.Which;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.NodeProperty;
+import hudson.util.LogTaskListener;
 import io.jenkins.docker.client.DockerAPI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Create a {@link DockerSlave} based on a template. Container is created in detached mode so it can survive
@@ -27,7 +35,8 @@ import java.io.IOException;
  */
 public abstract class DockerComputerConnector extends AbstractDescribableImpl<DockerComputerConnector> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerComputerConnector.class);
+    private static final Logger LOGGER = Logger.getLogger(DockerComputerConnector.class.getName());
+    private static final TaskListener LOGGER_LISTENER = new LogTaskListener(LOGGER, Level.FINER);
 
     protected static final File remoting;
 
@@ -39,20 +48,39 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
         }
     }
 
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        return true;
+    }
+
     /**
      * Can be overridden by concrete implementations to provide some customization to the container creation command
      */
+    @SuppressWarnings("unused")
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {}
 
     /**
      * Container has been created but not started yet, that's a good opportunity to inject <code>remoting.jar</code>
      * using {@link #injectRemotingJar(String, String, DockerClient)}
      */
+    @SuppressWarnings("unused")
     public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {}
 
     /**
      * Container has started. Good place to check it's healthy before considering agent is ready to accept connexions
      */
+    @SuppressWarnings("unused")
     public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {}
 
 
@@ -72,15 +100,27 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     /**
      * Utility method to copy remoting runtime into container on specified working directory
      */
-    protected String injectRemotingJar(String containerId, String workdir, DockerClient client) throws IOException {
-
+    protected String injectRemotingJar(String containerId, String workdir, DockerClient client) {
         // Copy slave.jar into container
         client.copyArchiveToContainerCmd(containerId)
                 .withHostResource(remoting.getAbsolutePath())
                 .withRemotePath(workdir)
                 .exec();
-
         return workdir + '/' + remoting.getName();
+    }
+
+    @Restricted(NoExternalUse.class)
+    protected static void addEnvVars(final EnvVars vars, final Iterable<? extends NodeProperty<?>> nodeProperties) throws IOException, InterruptedException {
+        if (nodeProperties != null) {
+            for (final NodeProperty<?> nodeProperty : nodeProperties) {
+                nodeProperty.buildEnvVars(vars, LOGGER_LISTENER);
+            }
+        }
+    }
+
+    @Restricted(NoExternalUse.class)
+    protected static void addEnvVar(final EnvVars vars, final String name, final Object valueOrNull) {
+        vars.put(name, valueOrNull == null ? "" : valueOrNull.toString());
     }
 
     public final ComputerLauncher createLauncher(final DockerAPI api, @Nonnull final String containerId, String workdir, TaskListener listener) throws IOException, InterruptedException {
@@ -104,5 +144,4 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * DockerAgentConnector so adequate setup did take place.
      */
     protected abstract ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
-
 }
