@@ -14,8 +14,6 @@ import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
-import hudson.slaves.NodeProperty;
-import hudson.util.LogTaskListener;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.client.DockerEnvUtils;
 import jenkins.model.Jenkins;
@@ -30,21 +28,22 @@ import org.kohsuke.stapler.DataBoundSetter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Objects;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public class DockerComputerJNLPConnector extends DockerComputerConnector {
-    private static final Logger LOGGER = Logger.getLogger(DockerComputerJNLPConnector.class.getCanonicalName());
-    private static final TaskListener LOGGER_LISTENER = new LogTaskListener(LOGGER, Level.FINER);
 
+    @CheckForNull
     private String user;
     private final JNLPLauncher jnlpLauncher;
+    @CheckForNull
     private String jenkinsUrl;
+    @CheckForNull
     private String[] entryPointArguments;
 
     @DataBoundConstructor
@@ -52,29 +51,42 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         this.jnlpLauncher = jnlpLauncher;
     }
 
-
+    @Nonnull
     public String getUser() {
-        return user;
+        return user==null ? "" : user;
     }
 
     @DataBoundSetter
     public void setUser(String user) {
-        this.user = user;
+        if ( user==null || user.trim().isEmpty()) {
+            this.user = null;
+        } else {
+            this.user = user;
+        }
     }
 
-    public String getJenkinsUrl(){ return jenkinsUrl; }
+    @Nonnull
+    public String getJenkinsUrl() {
+        return jenkinsUrl==null ? "" : jenkinsUrl;
+    }
 
     @DataBoundSetter
-    public void setJenkinsUrl(String jenkinsUrl){ this.jenkinsUrl = jenkinsUrl; }
+    public void setJenkinsUrl(String jenkinsUrl) {
+        if ( jenkinsUrl==null || jenkinsUrl.trim().isEmpty()) {
+            this.jenkinsUrl = null;
+        } else {
+            this.jenkinsUrl = jenkinsUrl;
+        }
+    }
 
     @CheckForNull
     public String[] getEntryPointArguments(){
         return entryPointArguments;
     }
 
-    @CheckForNull
+    @Nonnull
     public String getEntryPointArgumentsString() {
-        if (entryPointArguments == null) return null;
+        if (entryPointArguments == null) return "";
         return Joiner.on("\n").join(entryPointArguments);
     }
 
@@ -110,6 +122,26 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         return jnlpLauncher;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Arrays.hashCode(entryPointArguments);
+        result = prime * result + Objects.hash(jenkinsUrl, jnlpLauncher, user);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        DockerComputerJNLPConnector other = (DockerComputerJNLPConnector) obj;
+        return Arrays.equals(entryPointArguments, other.entryPointArguments)
+                && Objects.equals(jenkinsUrl, other.jenkinsUrl) && Objects.equals(jnlpLauncher, other.jnlpLauncher)
+                && Objects.equals(user, other.user);
+    }
 
     @Override
     protected ComputerLauncher createLauncher(final DockerAPI api, final String workdir, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
@@ -210,19 +242,6 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
             addEnvVar(knownVariables, v.getName(), argValue);
         }
         return knownVariables;
-    }
-
-    private static void addEnvVars(final EnvVars vars, final Iterable<? extends NodeProperty<?>> nodeProperties)
-            throws IOException, InterruptedException {
-        if (nodeProperties != null) {
-            for (final NodeProperty<?> nodeProperty : nodeProperties) {
-                nodeProperty.buildEnvVars(vars, LOGGER_LISTENER);
-            }
-        }
-    }
-
-    private static void addEnvVar(final EnvVars vars, final String name, final Object valueOrNull) {
-        vars.put(name, valueOrNull == null ? "" : valueOrNull.toString());
     }
 
     @Extension @Symbol("jnlp")
