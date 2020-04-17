@@ -4,7 +4,8 @@
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 * Enhancement: container stop timeout now configurable [#732](https://github.com/jenkinsci/docker-plugin/issues/732)
 * Fix possible resource leak [#786](https://github.com/jenkinsci/docker-plugin/issues/786)
-* Enhancement: can now add/drop capabilites [#696](https://github.com/jenkinsci/docker-plugin/issues/696)
+* Enhancement: can now add/drop docker capabilites [#696](https://github.com/jenkinsci/docker-plugin/issues/696)
+* Enhancement: can now customise "attach" connections [#790](https://github.com/jenkinsci/docker-plugin/issues/790)
 
 ## 1.2.0
 _2020-04-02_
