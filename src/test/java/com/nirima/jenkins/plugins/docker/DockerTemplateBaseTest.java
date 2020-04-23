@@ -229,4 +229,25 @@ public class DockerTemplateBaseTest {
             verify(mockCmd, never()).withCapDrop(anyList());
         }
     }
+
+    @Test
+    public void fillContainerConfigCgroupParent() {
+        testFillContainerConfigCgroupParent("not existing", "dummy_cgroup_parent");
+    }
+
+    private static void testFillContainerConfigCgroupParent(final String imageName, final String cgroupParent) {
+        // Given
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setCgroupParent(cgroupParent);
+
+        // When
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        // Then
+        verify(mockHostConfig, times(1)).withCgroupParent(cgroupParent);
+    }
+
 }

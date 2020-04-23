@@ -200,6 +200,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase.getMemorySwap();
     }
 
+    public String getCgroupParent() {
+        return dockerTemplateBase.getCgroupParent();
+    }
+
     public Integer getCpuShares() {
         return dockerTemplateBase.getCpuShares();
     }

@@ -9,6 +9,7 @@ import jenkins.model.Jenkins
 def dockerTemplateBaseParameters = [
   bindAllPorts:       false,
   bindPorts:          '',
+  cgroupParent:       '',
   cpuShares:          null,
   dnsString:          '',
   dockerCommand:      '',
@@ -58,6 +59,7 @@ DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(
   dockerTemplateBaseParameters.hostname,
   dockerTemplateBaseParameters.memoryLimit,
   dockerTemplateBaseParameters.memorySwap,
+  dockerTemplateBaseParameters.cgroupParent,
   dockerTemplateBaseParameters.cpuShares,
   dockerTemplateBaseParameters.sharedMemorySize,
   dockerTemplateBaseParameters.bindPorts,
