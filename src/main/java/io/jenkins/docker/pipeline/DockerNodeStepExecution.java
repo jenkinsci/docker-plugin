@@ -23,6 +23,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 
 import javax.annotation.Nonnull;
+
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -31,11 +32,11 @@ import java.util.concurrent.CompletableFuture;
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 class DockerNodeStepExecution extends StepExecution {
-
     private final String dockerHost;
     private final String credentialsId;
     private final String image;
     private final String remoteFs;
+    /** The {@link DockerComputerConnector} ... which has to be {@link Serializable} too (not all are) */
     private final DockerComputerConnector connector;
     private transient volatile CompletableFuture<DockerTransientNode> task;
     private volatile String nodeName;
@@ -71,14 +72,11 @@ class DockerNodeStepExecution extends StepExecution {
     }
 
     private DockerTransientNode createNode(TaskListener listener) {
-
         final String uuid = UUID.randomUUID().toString();
-
         final DockerTemplate t = new DockerTemplate(
                 new DockerTemplateBase(image),
                 connector,
                 uuid, remoteFs, "1");
-
         t.setMode(Node.Mode.EXCLUSIVE);
 
         final DockerAPI api;
@@ -88,7 +86,7 @@ class DockerNodeStepExecution extends StepExecution {
             api = new DockerAPI(new DockerServerEndpoint(dockerHost, credentialsId));
         }
 
-        DockerTransientNode node;
+        final DockerTransientNode node;
         Computer computer = null;
         try {
             node = t.provisionNode(api, listener);
@@ -111,7 +109,6 @@ class DockerNodeStepExecution extends StepExecution {
                     listener.getLogger().println("Failed to capture docker agent provisioning log " + x);
                 }
             }
-
             getContext().onFailure(e);
             return null;
         }
@@ -127,9 +124,7 @@ class DockerNodeStepExecution extends StepExecution {
         throw new IllegalStateException("Must either specify dockerHost/credentialsId, or define at least one Docker cloud");
     }
 
-
     private void invokeBody(DockerTransientNode node, TaskListener listener) {
-
         this.nodeName = node.getNodeName();
         FilePath ws = null;
         Computer computer = null;
@@ -163,7 +158,6 @@ class DockerNodeStepExecution extends StepExecution {
     }
 
     private static class Callback extends BodyExecutionCallback.TailCall {
-
         private final String nodeName;
 
         public Callback(Node node) {

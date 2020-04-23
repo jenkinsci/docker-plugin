@@ -336,9 +336,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
     private boolean isStillTooYoung(Long created, Instant snapshotInstant) {
         final Instant createdInstant = Instant.ofEpochSecond(created.longValue());
-
         final Duration containerLifetime = Duration.between(createdInstant, snapshotInstant);
-
         /*
          * We allow containers to have a grace duration, during which is permitted for them 
          * to start/run without having a node attached.
@@ -348,9 +346,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          * is allowed to kill any container. 
          */
         final Duration graceDurationForContainers = Duration.ofSeconds(JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L));
-
         final Duration untilMayBeCleanedUp = containerLifetime.minus(graceDurationForContainers);
-
         return untilMayBeCleanedUp.isNegative();
     }
 
@@ -607,7 +603,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         private void addOverallRuntime(long runtime) {
             overallRuntime += runtime;
         }
-        
+
         private void addRetrieveContainerRuntime(long runtime) {
             retrieveContainersRuntime += runtime;
             retrieveContainersCalls++;
@@ -633,7 +629,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             }
             return new Long(containersRemovedGracefullyRuntimeSum / containersRemovedGracefully).toString();
         }
-        
+
         private String getAverageRetrieveContainerRuntime() {
             if (retrieveContainersCalls == 0) {
                 return "0";

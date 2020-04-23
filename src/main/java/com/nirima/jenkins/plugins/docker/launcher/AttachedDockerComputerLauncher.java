@@ -9,6 +9,7 @@ import io.jenkins.docker.connector.DockerComputerConnector;
 @Deprecated
 public class AttachedDockerComputerLauncher extends DockerComputerLauncher {
 
+    @Override
     public DockerComputerConnector convertToConnector() {
         return new DockerComputerAttachConnector();
     }

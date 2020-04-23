@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core">
   <div>
     <p>
-      Overrides the command passed to <code>docker exec</code> when the remote agent code is run on the container.
+      Sets the command passed to <code>docker exec</code> when the remote agent code is run on the container.
     </p>
     <p>
       <b>NOTE:</b>

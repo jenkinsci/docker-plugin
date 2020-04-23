@@ -75,6 +75,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private DockerComputerConnector connector;
 
+    /** @deprecated Use {@link #connector} instead. */
     @Deprecated
     private transient DockerComputerLauncher launcher;
 
@@ -106,7 +107,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     private @CheckForNull String name;
 
     /**
-     * fully default
+     * Default constructor; give an unusable instance.
      */
     public DockerTemplate() {
         this.labelString = "";
@@ -447,7 +448,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     /**
      * Initializes data structure that we don't persist.
      */
-    public Object readResolve() {
+    protected Object readResolve() {
         try {
             // https://github.com/jenkinsci/docker-plugin/issues/270
             if (configVersion < 2) {
@@ -487,6 +488,48 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         template.setRetentionStrategy((DockerOnceRetentionStrategy) retentionStrategy);
         template.setNodeProperties(makeCopyOfList(nodeProperties));
         return template;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DockerTemplate template = (DockerTemplate) o;
+
+        if (configVersion != template.configVersion) return false;
+        if (instanceCap != template.instanceCap) return false;
+        if (removeVolumes != template.removeVolumes) return false;
+        if (stopTimeout != template.stopTimeout) return false;
+        if (!labelString.equals(template.labelString)) return false;
+        if (!connector.equals(template.connector)) return false;
+        if (!remoteFs.equals(template.remoteFs)) return false;
+        if (mode != template.mode) return false;
+        if (!retentionStrategy.equals(template.retentionStrategy)) return false;
+        if (!dockerTemplateBase.equals(template.dockerTemplateBase)) return false;
+        if (!pullStrategy.equals(template.pullStrategy)) return false;
+        if (!nodeProperties.equals(template.nodeProperties)) return false;
+        if (!getDisabled().equals(template.getDisabled())) return false;
+        return dockerTemplateBase.equals(template.dockerTemplateBase);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = configVersion;
+        result = 31 * result + labelString.hashCode();
+        result = 31 * result + connector.hashCode();
+        result = 31 * result + remoteFs.hashCode();
+        result = 31 * result + instanceCap;
+        result = 31 * result + mode.hashCode();
+        result = 31 * result + retentionStrategy.hashCode();
+        result = 31 * result + dockerTemplateBase.hashCode();
+        result = 31 * result + (removeVolumes ? 1 : 0);
+        result = 31 * result + stopTimeout;
+        result = 31 * result + labelSet.hashCode();
+        result = 31 * result + pullStrategy.hashCode();
+        result = 31 * result + nodeProperties.hashCode();
+        result = 31 * result + getDisabled().hashCode();
+        return result;
     }
 
     @Override
@@ -568,7 +611,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             if (StringUtils.isBlank(remoteFs)) {
                 remoteFs = "/";
             }
-
             try(final DockerClient client = api.getClient()) {
                 return doProvisionNode(api, client, listener);
             }
@@ -645,7 +687,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return copyList;
     }
 
-    @SuppressWarnings("unchecked")
     private static <T> T makeCopy(final T original) {
         final String xml = Jenkins.XSTREAM.toXML(original);
         final Object copy = Jenkins.XSTREAM.fromXML(xml);
@@ -715,48 +756,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 }
             }
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DockerTemplate template = (DockerTemplate) o;
-
-        if (configVersion != template.configVersion) return false;
-        if (instanceCap != template.instanceCap) return false;
-        if (removeVolumes != template.removeVolumes) return false;
-        if (stopTimeout != template.stopTimeout) return false;
-        if (!labelString.equals(template.labelString)) return false;
-        if (!connector.equals(template.connector)) return false;
-        if (!remoteFs.equals(template.remoteFs)) return false;
-        if (mode != template.mode) return false;
-        if (!retentionStrategy.equals(template.retentionStrategy)) return false;
-        if (!dockerTemplateBase.equals(template.dockerTemplateBase)) return false;
-        if (!pullStrategy.equals(template.pullStrategy)) return false;
-        if (!nodeProperties.equals(template.nodeProperties)) return false;
-        if (!getDisabled().equals(template.getDisabled())) return false;
-        return dockerTemplateBase.equals(template.dockerTemplateBase);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = configVersion;
-        result = 31 * result + labelString.hashCode();
-        result = 31 * result + connector.hashCode();
-        result = 31 * result + remoteFs.hashCode();
-        result = 31 * result + instanceCap;
-        result = 31 * result + mode.hashCode();
-        result = 31 * result + retentionStrategy.hashCode();
-        result = 31 * result + dockerTemplateBase.hashCode();
-        result = 31 * result + (removeVolumes ? 1 : 0);
-        result = 31 * result + stopTimeout;
-        result = 31 * result + labelSet.hashCode();
-        result = 31 * result + pullStrategy.hashCode();
-        result = 31 * result + nodeProperties.hashCode();
-        result = 31 * result + getDisabled().hashCode();
-        return result;
     }
 
     @Extension

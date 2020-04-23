@@ -20,6 +20,7 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
         return useSSHKey != null && useSSHKey;
     }
 
+    @Override
     public DockerComputerConnector convertToConnector() {
         DockerComputerSSHConnector.SSHKeyStrategy strategy =
                 isUseSSHKey() ? new DockerComputerSSHConnector.InjectSSHKey(user)
@@ -34,5 +35,4 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
 
         return connector;
     }
-
 }

@@ -21,10 +21,10 @@ public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
     protected String user;
 
+    @Override
     public DockerComputerConnector convertToConnector() {
         final DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector(jnlpLauncher);
         connector.setUser(user);
         return connector;
     }
-
 }

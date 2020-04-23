@@ -36,23 +36,19 @@ public class DockerRegistry  implements Describable<DockerRegistry> {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
-
     private Object readResolve() {
         // TODO migrate to docker-commons' DockerRegistryEndpoint
         // inspect all DockerTemplates
         return this;
     }
 
-
     @Deprecated
     public static final class DescriptorImpl extends Descriptor<DockerRegistry> {
-
         @Override
         public String getDisplayName() {
-            return "Docker Registry";
+            return "Docker Registry [DEPRECATED]";
         }
     }
-
 }
 
 

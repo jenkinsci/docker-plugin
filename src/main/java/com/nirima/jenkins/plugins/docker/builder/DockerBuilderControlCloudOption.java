@@ -8,6 +8,7 @@ import hudson.model.Run;
 import jenkins.model.Jenkins;
 
 import javax.annotation.Nonnull;
+
 import java.util.Optional;
 
 
@@ -22,13 +23,12 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
     protected DockerBuilderControlCloudOption(String cloudName) {
         this.cloudName = cloudName;
     }
-    
+
     public String getCloudName() {
         return cloudName;
     }
 
     protected @Nonnull DockerCloud getCloud(Run<?, ?> build, Launcher launcher) {
-
         // Did we specify?
         if (!Strings.isNullOrEmpty(cloudName)) {
             DockerCloud specifiedCloud = (DockerCloud)Jenkins.getInstance().getCloud(cloudName);
@@ -46,5 +46,4 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
 
         return cloud.get();
     }
-
 }

@@ -48,6 +48,7 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
         }
     }
 
+    @SuppressWarnings("unused")
     private void executeOnDocker(Run<?, ?> build, PrintStream llog, DockerClient client)
             throws DockerException {
         try {

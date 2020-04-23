@@ -36,16 +36,17 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
         llog.println("Stopping all containers");
 
         for (DockerLaunchAction.Item containerItem : getLaunchAction(build).getRunning()) {
-            LOG.info("Stopping container {}", containerItem.id);
-            llog.println("Stopping container " + containerItem.id);
+            final String containerId = containerItem.id;
+            LOG.info("Stopping container {}", containerId);
+            llog.println("Stopping container " + containerId);
 
-            containerItem.client.stopContainerCmd(containerItem.id).exec();
+            containerItem.client.stopContainerCmd(containerId).exec();
 
             if (remove) {
-                LOG.info("Removing container {}", containerItem.id);
-                llog.println("Removing container " + containerItem.id);
+                LOG.info("Removing container {}", containerId);
+                llog.println("Removing container " + containerId);
 
-                containerItem.client.removeContainerCmd(containerItem.id).exec();
+                containerItem.client.removeContainerCmd(containerId).exec();
             }
         }
     }
@@ -56,6 +57,5 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
         public String getDisplayName() {
             return "Stop All Containers";
         }
-
     }
 }

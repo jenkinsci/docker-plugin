@@ -31,9 +31,9 @@ public class DockerQueueListener extends QueueListener {
 
     @Override
     public void onEnterWaiting(WaitingItem wi) {
-        DockerJobTemplateProperty jobTemplate = getJobTemplate(wi);
+        final DockerJobTemplateProperty jobTemplate = getJobTemplate(wi);
         if (jobTemplate != null) {
-            Cloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
+            final Cloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
             if (cloud instanceof DockerCloud) {
                 final String uuid = UUID.randomUUID().toString();
                 final DockerTemplate template = jobTemplate.getTemplate().cloneWithLabel(uuid);
@@ -45,9 +45,9 @@ public class DockerQueueListener extends QueueListener {
 
     @Override
     public void onLeft(LeftItem li) {
-        DockerJobTemplateProperty jobTemplate = getJobTemplate(li);
+        final DockerJobTemplateProperty jobTemplate = getJobTemplate(li);
         if (jobTemplate != null) {
-            Cloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
+            final Cloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
             if (cloud instanceof DockerCloud) {
                 ((DockerCloud) cloud).removeJobTemplate(li.getId());
             }
@@ -62,24 +62,21 @@ public class DockerQueueListener extends QueueListener {
      */
     private DockerJobTemplateProperty getJobTemplate(Item item) {
         if (item.task instanceof Project) {
-            Project<?, ?> project = (Project<?, ?>) item.task;
+            final Project<?, ?> project = (Project<?, ?>) item.task;
             if (project != null) {
                 final DockerJobTemplateProperty p = project.getProperty(DockerJobTemplateProperty.class);
                 if (p != null) return p;
-
                 // backward compatibility. DockerJobTemplateProperty used to be a nested object in DockerJobProperty
-                DockerJobProperty property = project.getProperty(DockerJobProperty.class);
+                final DockerJobProperty property = project.getProperty(DockerJobProperty.class);
                 if (property != null) {
                     return property.getDockerJobTemplate();
                 }
             }
         }
-
         return null;
     }
 
     private static class DockerTemplateLabelAssignmentAction extends InvisibleAction implements LabelAssignmentAction {
-
         private final String uuid;
 
         private DockerTemplateLabelAssignmentAction(String uuid) {

@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 public class DockerRunListener extends RunListener<Run<?,?>> {
     private static final Logger LOGGER = Logger.getLogger(DockerRunListener.class.getName());
 
-
     @Override
     public void onStarted(Run<?, ?> run, TaskListener listener) {
         final Computer computer = Computer.currentComputer();
@@ -31,17 +30,14 @@ public class DockerRunListener extends RunListener<Run<?,?>> {
             run.addAction(new DockerBuildAction(node));
         }
     }
-    
+
     @Override
     public void onDeleted(Run<?, ?> run) {
         super.onDeleted(run);
         List<DockerBuildImageAction> actions = run.getActions(DockerBuildImageAction.class);
-
         for(DockerBuildImageAction action : actions) {
             if( action.cleanupWithJenkinsJobDelete ) {
                 LOGGER.info("Attempting to clean up docker image for " + run);
-
-
                 if( action.pushOnSuccess ) {
 
                     // TODO:
@@ -71,6 +67,5 @@ public class DockerRunListener extends RunListener<Run<?,?>> {
                 }
             }
         }
-
     }
 }

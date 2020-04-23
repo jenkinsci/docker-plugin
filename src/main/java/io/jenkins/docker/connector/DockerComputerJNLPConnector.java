@@ -180,7 +180,6 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
-
         final String effectiveJenkinsUrl = StringUtils.isEmpty(jenkinsUrl) ? Jenkins.getInstance().getRootUrl() : jenkinsUrl;
         final String nodeName = DockerTemplate.getNodeNameFromContainerConfig(cmd);
         final String secret = JnlpSlaveAgentProtocol.SLAVE_SECRET.mac(nodeName);

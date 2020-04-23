@@ -28,6 +28,7 @@ public class DockerCloudTest {
     @Rule
     public JenkinsRule jenkins = new JenkinsRule();
 
+    @SuppressWarnings("unused")
     @Test
     public void testConstructor_0_10_2() {
         new DockerCloud("name",

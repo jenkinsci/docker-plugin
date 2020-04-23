@@ -26,7 +26,6 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
     private final String containerHost;
     private final String containerId;
     private String inspect;
-
     private String taggedId;
 
     public DockerBuildAction(String containerHost, String containerId, String taggedId) {
@@ -53,7 +52,6 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
         }
     }
 
-
     public String getCloudId() {
         return cloudId;
     }
@@ -71,22 +69,25 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
     }
 
     public String getInspect() {
-
         return inspect;
     }
 
+    @Override
     public String getIconFileName() {
         return "/plugin/docker-plugin/images/24x24/docker.png";
     }
 
+    @Override
     public String getDisplayName() {
         return "Built on Docker";
     }
 
+    @Override
     public String getUrlName() {
         return "docker";
     }
 
+    @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(getClass());
     }
@@ -96,6 +97,7 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
      */
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerBuildAction> {
+        @Override
         public String getDisplayName() {
             return "Docker";
         }

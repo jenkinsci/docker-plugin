@@ -67,7 +67,6 @@ public class DockerCloud extends Cloud {
      * Default value for {@link #getEffectiveErrorDurationInMilliseconds()}
      * used when {@link #errorDuration} is null.
      */
-    @Restricted(NoExternalUse.class)
     private static final int ERROR_DURATION_DEFAULT_SECONDS = 300; // 5min
 
     @CheckForNull
@@ -677,7 +676,7 @@ public class DockerCloud extends Cloud {
         return (DockerCloud) Jenkins.getInstance().getCloud(name);
     }
 
-    public Object readResolve() {
+    protected Object readResolve() {
         //Xstream is not calling readResolve() for nested Describable's
         for (DockerTemplate template : getTemplates()) {
             template.readResolve();
@@ -871,14 +870,12 @@ public class DockerCloud extends Cloud {
         // we can't use DockerRegistryEndpoint#getToken as this one do check domainRequirement based on registry URL
         // but in some context (typically, passing registry auth for `docker build`) we just can't guess this one.
 
-        Credentials c = firstOrNull(CredentialsProvider.lookupCredentials(
+        final Credentials c = firstOrNull(CredentialsProvider.lookupCredentials(
                 IdCredentials.class, context, ACL.SYSTEM, Collections.EMPTY_LIST),
                 withId(registry.getCredentialsId()));
-
         if (c == null) {
             throw new IllegalArgumentException("Invalid Credential ID " + registry.getCredentialsId());
         }
-
         final DockerRegistryToken t = AuthenticationTokens.convert(DockerRegistryToken.class, c);
         final String token = t.getToken();
         // What docker-commons claim to be a "token" is actually configuration storage
