@@ -43,8 +43,6 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
         return null;
     }
 
-
-
     public void setRegistryList(List<DockerRegistry> registryList) {
         this.registryList = registryList;
         save();
@@ -54,15 +52,13 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
         return registryList;
     }
 
-
-
     // --- obsolete code goes here. kept for backward compatibility
 
     public final boolean getPullFix() {
         return false;
     }
 
+    @SuppressWarnings("unused")
     public final void setPullFix(boolean pullFix) {
     }
-
 }

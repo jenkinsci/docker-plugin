@@ -41,13 +41,12 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
         return launchAction;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     public Descriptor<DockerBuilderControlOption> getDescriptor() {
         return Jenkins.getInstance().getDescriptorOrDie(getClass());
     }
 
     public static abstract class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption> {
-
         public ListBoxModel doFillCloudNameItems() {
             ListBoxModel model = new ListBoxModel();
             model.add("Cloud this build is running on", "");
@@ -56,6 +55,5 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
             }
             return model;
         }
-
     }
 }

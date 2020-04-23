@@ -34,6 +34,7 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -99,8 +100,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      */
     public String[] devices;
 
-    @CheckForNull
-    public String[] environment;
+    public @CheckForNull String[] environment;
 
     public String bindPorts;
     public boolean bindAllPorts;
@@ -113,30 +113,22 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     public boolean privileged;
     public boolean tty;
 
-    @CheckForNull
-    private String macAddress;
+    private @CheckForNull String macAddress;
 
-    @CheckForNull
-    private List<String> extraHosts;
+    private @CheckForNull List<String> extraHosts;
 
-    @CheckForNull
-    private List<String> securityOpts;
+    private @CheckForNull List<String> securityOpts;
 
-    @CheckForNull
-    private List<String> capabilitiesToAdd;
+    private @CheckForNull List<String> capabilitiesToAdd;
+    private @CheckForNull List<String> capabilitiesToDrop;
 
-    @CheckForNull
-    private List<String> capabilitiesToDrop;
-
-    @CheckForNull
-    private Map<String, String> extraDockerLabels;
+    private @CheckForNull Map<String, String> extraDockerLabels;
 
     @DataBoundConstructor
     public DockerTemplateBase(String image) {
         if (image == null) {
             throw new IllegalArgumentException("Image can't be null");
         }
-
         this.image = image.trim();
     }
 
@@ -199,7 +191,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (pullCredentialsId == null && registry != null) {
             pullCredentialsId = registry.getCredentialsId();
         }
-
         return this;
     }
 
@@ -459,11 +450,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.macAddress = trimToNull(macAddress);
     }
 
-    @DataBoundSetter
-    public void setExtraHostsString(String extraHostsString) {
-        setExtraHosts(isEmpty(extraHostsString) ?
-                Collections.EMPTY_LIST :
-                splitAndFilterEmptyList(extraHostsString, "\n"));
+    @CheckForNull
+    public List<String> getExtraHosts() {
+        return extraHosts;
     }
 
     public String getExtraHostsString() {
@@ -471,6 +460,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             return "";
         }
         return Joiner.on("\n").join(extraHosts);
+    }
+
+    public void setExtraHosts(List<String> extraHosts) {
+        this.extraHosts = extraHosts;
+    }
+
+    @DataBoundSetter
+    public void setExtraHostsString(String extraHostsString) {
+        setExtraHosts(isEmpty(extraHostsString) ?
+                Collections.EMPTY_LIST :
+                splitAndFilterEmptyList(extraHostsString, "\n"));
     }
 
     @CheckForNull
@@ -538,11 +538,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                 splitAndFilterEmptyList(capabilitiesToDropString, "\n"));
     }
 
-    @DataBoundSetter
-    public void setExtraDockerLabelsString(String extraDockerLabelsString) {
-        setExtraDockerLabels(isEmpty(extraDockerLabelsString) ?
-                Collections.EMPTY_MAP :
-                splitAndFilterEmptyMap(extraDockerLabelsString, "\n"));
+    @Nonnull
+    public Map<String, String> getExtraDockerLabels() {
+        return extraDockerLabels == null ? Collections.EMPTY_MAP : extraDockerLabels;
     }
 
     public String getExtraDockerLabelsString() {
@@ -552,8 +550,18 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").withKeyValueSeparator("=").join(extraDockerLabels);
     }
 
-    // -- UI binding End
+    public void setExtraDockerLabels(Map<String, String> extraDockerLabels) {
+        this.extraDockerLabels = MapUtils.isEmpty(extraDockerLabels) ? null : extraDockerLabels;
+    }
 
+    @DataBoundSetter
+    public void setExtraDockerLabelsString(String extraDockerLabelsString) {
+        setExtraDockerLabels(isEmpty(extraDockerLabelsString) ?
+                Collections.EMPTY_MAP :
+                splitAndFilterEmptyMap(extraDockerLabelsString, "\n"));
+    }
+
+    // -- UI binding End
 
     public DockerRegistryEndpoint getRegistry() {
         if (registry == null) {
@@ -578,29 +586,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.volumesFrom2 = volumes;
     }
 
-
-    @CheckForNull
-    public List<String> getExtraHosts() {
-        return extraHosts;
-    }
-
-    public void setExtraHosts(List<String> extraHosts) {
-        this.extraHosts = extraHosts;
-    }
-
-    @Nonnull
-    public Map<String, String> getExtraDockerLabels() {
-        return extraDockerLabels == null ? Collections.EMPTY_MAP : extraDockerLabels;
-    }
-
-    public void setExtraDockerLabels(Map<String, String> extraDockerLabels) {
-        this.extraDockerLabels = MapUtils.isEmpty(extraDockerLabels) ? null : extraDockerLabels;
-    }
-
     public String getDisplayName() {
         return "Image of " + getImage();
     }
-
 
     public String[] getDockerCommandArray() {
         String[] dockerCommandArray = new String[0];
@@ -612,11 +600,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public Iterable<PortBinding> getPortMappings() {
-
         if (Strings.isNullOrEmpty(bindPorts)) {
             return Collections.emptyList();
         }
-
         return Iterables.transform(Splitter.on(' ')
                         .trimResults()
                         .omitEmptyStrings()
@@ -649,9 +635,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         }
 
         containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
-
         containerConfig.withPublishAllPorts(bindAllPorts);
-
         containerConfig.withPrivileged(privileged);
 
         Map<String,String> map = new HashMap<>();
@@ -693,7 +677,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (getVolumes().length > 0) {
             ArrayList<Volume> vols = new ArrayList<>();
             ArrayList<Bind> binds = new ArrayList<>();
-
             for (String vol : getVolumes()) {
                 final String[] group = vol.split(":");
                 if (group.length > 1) {
@@ -708,7 +691,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                     vols.add(new Volume(vol));
                 }
             }
-
             containerConfig.withVolumes(vols.toArray(new Volume[vols.size()]));
             containerConfig.withBinds(binds.toArray(new Bind[binds.size()]));
         }
@@ -718,7 +700,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String volFromStr : getVolumesFrom2()) {
                 volFrom.add(new VolumesFrom(volFromStr));
             }
-
             containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
         }
 
@@ -727,7 +708,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String deviceStr : getDevices()) {
                 devices.add(Device.parse(deviceStr));
             }
-
             containerConfig.withDevices(devices);
         }
 
@@ -788,6 +768,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      */
     static String getJenkinsUrlForContainerLabel() {
         final Jenkins jenkins = Jenkins.getInstance();
+        // Note: While Jenkins.getInstance() claims to be @Nonnull it can
+        // return null during unit-tests, so we need to null-proof here.
         final String rootUrl = jenkins == null ? null : jenkins.getRootUrl();
         return Util.fixNull(rootUrl);
     }
@@ -813,45 +795,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("DockerTemplateBase{");
-        sb.append("image='").append(image).append('\'');
-        sb.append(", pullCredentialsId='").append(pullCredentialsId).append('\'');
-        sb.append(", registry=").append(registry);
-        sb.append(", dockerCommand='").append(dockerCommand).append('\'');
-        sb.append(", hostname='").append(hostname).append('\'');
-        sb.append(", user='").append(user).append('\'');
-        sb.append(", extraGroups=").append(extraGroups);
-        sb.append(", dnsHosts=").append(Arrays.toString(dnsHosts));
-        sb.append(", network='").append(network).append('\'');
-        sb.append(", volumes=").append(Arrays.toString(volumes));
-        sb.append(", volumesFrom2=").append(Arrays.toString(volumesFrom2));
-        sb.append(", environment=").append(Arrays.toString(environment));
-        sb.append(", bindPorts='").append(bindPorts).append('\'');
-        sb.append(", bindAllPorts=").append(bindAllPorts);
-        sb.append(", memoryLimit=").append(memoryLimit);
-        sb.append(", memorySwap=").append(memorySwap);
-        sb.append(", cpuShares=").append(cpuShares);
-        sb.append(", shmSize=").append(shmSize);
-        sb.append(", privileged=").append(privileged);
-        sb.append(", securityOpts=").append(securityOpts);
-        sb.append(", capabilitiesToAdd=").append(capabilitiesToAdd);
-        sb.append(", capabilitiesToDrop=").append(capabilitiesToDrop);
-        sb.append(", tty=").append(tty);
-        sb.append(", macAddress='").append(macAddress).append('\'');
-        sb.append(", extraHosts=").append(extraHosts);
-        sb.append(", extraDockerLabels=").append(extraDockerLabels);
-        sb.append('}');
-        return sb.toString();
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         DockerTemplateBase that = (DockerTemplateBase) o;
-
         if (bindAllPorts != that.bindAllPorts) return false;
         if (privileged != that.privileged) return false;
         if (tty != that.tty) return false;
@@ -912,6 +859,39 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
         result = 31 * result + (extraDockerLabels != null ? extraDockerLabels.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("DockerTemplateBase{");
+        sb.append("image='").append(image).append('\'');
+        sb.append(", pullCredentialsId='").append(pullCredentialsId).append('\'');
+        sb.append(", registry=").append(registry);
+        sb.append(", dockerCommand='").append(dockerCommand).append('\'');
+        sb.append(", hostname='").append(hostname).append('\'');
+        sb.append(", user='").append(user).append('\'');
+        sb.append(", extraGroups=").append(extraGroups);
+        sb.append(", dnsHosts=").append(Arrays.toString(dnsHosts));
+        sb.append(", network='").append(network).append('\'');
+        sb.append(", volumes=").append(Arrays.toString(volumes));
+        sb.append(", volumesFrom2=").append(Arrays.toString(volumesFrom2));
+        sb.append(", environment=").append(Arrays.toString(environment));
+        sb.append(", bindPorts='").append(bindPorts).append('\'');
+        sb.append(", bindAllPorts=").append(bindAllPorts);
+        sb.append(", memoryLimit=").append(memoryLimit);
+        sb.append(", memorySwap=").append(memorySwap);
+        sb.append(", cpuShares=").append(cpuShares);
+        sb.append(", shmSize=").append(shmSize);
+        sb.append(", privileged=").append(privileged);
+        sb.append(", securityOpts=").append(securityOpts);
+        sb.append(", capabilitiesToAdd=").append(capabilitiesToAdd);
+        sb.append(", capabilitiesToDrop=").append(capabilitiesToDrop);
+        sb.append(", tty=").append(tty);
+        sb.append(", macAddress='").append(macAddress).append('\'');
+        sb.append(", extraHosts=").append(extraHosts);
+        sb.append(", extraDockerLabels=").append(extraDockerLabels);
+        sb.append('}');
+        return sb.toString();
     }
 
     @Extension

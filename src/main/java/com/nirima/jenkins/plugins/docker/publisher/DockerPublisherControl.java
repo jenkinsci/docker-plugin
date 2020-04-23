@@ -29,6 +29,7 @@ public class DockerPublisherControl extends Recorder implements Serializable {
         this.remove = remove;
     }
 
+    @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.BUILD;
     }
@@ -40,13 +41,11 @@ public class DockerPublisherControl extends Recorder implements Serializable {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-
         try {
             new DockerBuilderControlOptionStopAll(remove).execute(build, launcher, listener);
         } catch (DockerException e) {
             throw new RuntimeException(e);
         }
-
         return true;
     }
 

@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,7 +62,6 @@ import static hudson.remoting.Base64.encode;
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public class DockerComputerSSHConnector extends DockerComputerConnector {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerComputerSSHConnector.class);
 
     private final SSHKeyStrategy sshKeyStrategy;
@@ -177,7 +177,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         // TODO define a strategy for SSHD process configuration so we support more than openssh's sshd
         final String[] cmdArray = cmd.getCmd();
         if (cmdArray == null || cmdArray.length == 0) {
-
             if (sshKeyStrategy.getInjectedKey() != null) {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port),
                         // override sshd_config to force retrieval of InstanceIdentity public for as authentication
@@ -188,7 +187,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 cmd.withCmd("/usr/sbin/sshd", "-D", "-p", String.valueOf(port));
             }
         }
-
         cmd.withPortSpecs(port+"/tcp");
         final PortBinding sshPortBinding = PortBinding.parse(":" + port);
         final Ports portBindings = cmd.getPortBindings();
@@ -205,14 +203,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
         final String key = sshKeyStrategy.getInjectedKey();
         if (key != null) {
-            String AuthorizedKeysCommand = "#!/bin/sh\n"
+            final String AuthorizedKeysCommand = "#!/bin/sh\n"
                     + "[ \"$1\" = \"" + sshKeyStrategy.getUser() + "\" ] "
                     + "&& echo '" + key + "'"
                     + "|| :";
-
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
                  TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
-
                 TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
                 entry.setSize(AuthorizedKeysCommand.getBytes().length);
                 entry.setMode(0700);
@@ -220,7 +216,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 tar.write(AuthorizedKeysCommand.getBytes());
                 tar.closeArchiveEntry();
                 tar.close();
-
                 try (InputStream is = new ByteArrayInputStream(bos.toByteArray());
                      DockerClient client = api.getClient()) {
                     client.copyArchiveToContainerCmd(containerId)
@@ -241,9 +236,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             throw new IOException("Failed to launch docker SSH agent. Container exited with status " + inspect.getState().getExitCode());
         }
         LOGGER.debug("container created {}", inspect);
-
         final InetSocketAddress address = getBindingForPort(api, inspect, port);
-
         // Wait until sshd has started
         // TODO we could (also) have a more generic mechanism relying on healthcheck (inspect State.Health.Status)
         final PortUtils.ConnectionCheck connectionCheck = PortUtils.connectionCheck( address );
@@ -272,7 +265,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                     + ") and/or the retry wait time (currently " + retryWaitTimeOrNull
                     + ") to allow for containers taking longer to start.");
         }
-
         return sshKeyStrategy.getSSHLauncher(address, this);
     }
 
@@ -281,21 +273,17 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         // get exposed port
         ExposedPort sshPort = new ExposedPort(internalPort);
         Integer port = 22;
-
         final NetworkSettings networkSettings = ir.getNetworkSettings();
         final Ports ports = networkSettings.getPorts();
         final Map<ExposedPort, Ports.Binding[]> bindings = ports.getBindings();
-
         // Get the binding that goes to the port that we're interested in (e.g: 22)
         final Ports.Binding[] sshBindings = bindings.get(sshPort);
-
         // Find where it's mapped to
         for (Ports.Binding b : sshBindings) {
             String hps = b.getHostPortSpec();
             port = Integer.valueOf(hps);
         }
         String host = getExternalIP(api, ir, networkSettings, sshBindings);
-
         return new InetSocketAddress(host, port);
     }
 
@@ -306,7 +294,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         if (dockerHostname != null && !dockerHostname.trim().isEmpty()) {
             return dockerHostname;
         }
-
         // for (standalone) swarm, need to get the address of the actual host
         if (api.isSwarm()) {
             for (Ports.Binding b : sshBindings) {
@@ -316,7 +303,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 }
             }
         }
-
         // see https://github.com/joyent/sdc-docker/issues/132
         final String driver = ir.getExecDriver();
         if (driver != null && driver.startsWith("sdc")) {
@@ -324,7 +310,6 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             // see https://docs.joyent.com/public-cloud/instances/docker/how/inspect-containers
             return networkSettings.getIpAddress();
         }
-
         final URI uri = URI.create(api.getDockerHost().getUri());
         if(uri.getScheme().equals("unix")) {
             // Communicating with unix domain socket. so we assume localhost

@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker.action;
 
-
 import com.github.dockerjava.api.DockerClient;
 
 import java.io.Serializable;
@@ -27,12 +26,9 @@ public class DockerLaunchAction implements Action, Serializable, Cloneable{
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
-            Item item = (Item) o;
-
+            final Item item = (Item) o;
             if (!client.equals(item.client)) return false;
             if (!id.equals(item.id)) return false;
-
             return true;
         }
 
@@ -46,14 +42,17 @@ public class DockerLaunchAction implements Action, Serializable, Cloneable{
 
     private transient List<Item> running = new ArrayList<>();
 
+    @Override
     public String getIconFileName() {
         return null;
     }
 
+    @Override
     public String getDisplayName() {
         return null;
     }
 
+    @Override
     public String getUrlName() {
         return null;
     }

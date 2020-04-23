@@ -24,6 +24,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
+
 import java.util.Set;
 
 /**
@@ -81,7 +82,7 @@ public class DockerNodeStep extends Step {
         return connector;
     }
 
-    @DataBoundSetter // TODO this is not mentioned in config.jelly
+    @DataBoundSetter
     public void setConnector(DockerComputerConnector connector) {
         this.connector = connector;
     }
@@ -93,7 +94,6 @@ public class DockerNodeStep extends Step {
 
     @Extension(optional = true)
     public static class DescriptorImpl extends StepDescriptor {
-
         @Override
         public String getFunctionName() {
             return "dockerNode";
@@ -110,7 +110,6 @@ public class DockerNodeStep extends Step {
             return descriptor.doFillCredentialsIdItems(item, uri);
         }
 
-
         @Override public boolean takesImplicitBlockArgument() {
             return true;
         }
@@ -125,5 +124,4 @@ public class DockerNodeStep extends Step {
             return ImmutableSet.of(Computer.class, FilePath.class, /* DefaultStepContext infers from Computer: */ Node.class, Launcher.class);
         }
     }
-
 }

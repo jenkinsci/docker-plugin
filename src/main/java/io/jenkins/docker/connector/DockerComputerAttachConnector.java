@@ -176,8 +176,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     }
 
     @Restricted(NoExternalUse.class)
-    public enum ArgumentVariables {
-        JavaExe("JAVA", "The java binary, e.g. java, /usr/bin/java etc."), //
+    enum ArgumentVariables {
+        JavaExe("JAVA_EXE", "The Java Executable, e.g. java, /usr/bin/java etc."), //
         JvmArgs("JVM_ARGS", "Any arguments for the JVM itself, e.g. -Xmx250m."), //
         JarName("JAR_NAME", "The name of the jar file the node must run, e.g. slave.jar."), //
         RemoteFs("FS_DIR",
@@ -214,7 +214,6 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         return new DockerAttachLauncher(api, inspect.getId(), getUser(), workdir, getJavaExe(), getJvmArgsString(), getEntryPointCmdString());
     }
 
-
     @Extension(ordinal = 100) @Symbol("attach")
     public static class DescriptorImpl extends Descriptor<DockerComputerConnector> {
 
@@ -223,11 +222,11 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         }
 
         public String getJavaExeVariableName() {
-            return ArgumentVariables.JavaExe.name;
+            return ArgumentVariables.JavaExe.getName();
         }
 
         public String getJvmArgsVariableName() {
-            return ArgumentVariables.JvmArgs.name;
+            return ArgumentVariables.JvmArgs.getName();
         }
 
         public Collection<ArgumentVariables> getEntryPointCmdVariables() {
@@ -290,14 +289,10 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
                 final ExecCreateCmdResponse exec = cmd.exec();
                 execId = exec.getId();
             }
-
-            String js = "{ \"Detach\": false, \"Tty\": false }";
-
-            Socket socket = api.getSocket();
-
+            final String js = "{ \"Detach\": false, \"Tty\": false }";
+            final Socket socket = api.getSocket();
             final OutputStream out = socket.getOutputStream();
             final InputStream in = socket.getInputStream();
-
             final PrintWriter w = new PrintWriter(out);
             w.println("POST /v1.32/exec/" + execId + "/start HTTP/1.1");
             w.println("Host: docker.sock");

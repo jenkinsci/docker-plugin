@@ -34,7 +34,6 @@ import java.util.logging.Logger;
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public abstract class DockerComputerConnector extends AbstractDescribableImpl<DockerComputerConnector> {
-
     private static final Logger LOGGER = Logger.getLogger(DockerComputerConnector.class.getName());
     private static final TaskListener LOGGER_LISTENER = new LogTaskListener(LOGGER, Level.FINER);
 
@@ -93,7 +92,6 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
             cmd.withCmd("/bin/sh")
                .withTty(true)
                .withAttachStdin(false);
-
         }
     }
 

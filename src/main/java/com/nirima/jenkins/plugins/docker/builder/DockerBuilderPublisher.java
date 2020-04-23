@@ -110,11 +110,12 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     public final String dockerFileDirectory;
 
+    /** @deprecated use {@link #fromRegistry} instead */
     private transient String pullCredentialsId;
     private DockerRegistryEndpoint fromRegistry;
 
     /**
-     * @deprecated use {@link #tags}
+     * @deprecated use {@link #setTags(List)} and/or {@link #getTags()}
      */
     @Deprecated
     public String tag;
@@ -125,6 +126,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     public final boolean pushOnSuccess;
 
     private String pushCredentialsId;
+    /** @deprecated use {@link #pushCredentialsId} instead */
     private transient DockerRegistryEndpoint registry;
 
     public final boolean cleanImages;
@@ -154,6 +156,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         this.cleanupWithJenkinsJobDelete = cleanupWithJenkinsJobDelete;
     }
 
+    @SuppressWarnings("unused")
     public DockerRegistryEndpoint getRegistry(Identifier identifier) {
         if (registry == null) {
             registry = new DockerRegistryEndpoint(null, pushCredentialsId);
@@ -161,6 +164,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         return registry;
     }
 
+    /** @deprecated See {@link #getFromRegistry()} */
     public String getPullCredentialsId() {
         return pullCredentialsId;
     }
@@ -230,30 +234,26 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
     }
 
     protected DockerAPI getDockerAPI(Launcher launcher) {
-
         DockerCloud theCloud;
-        VirtualChannel channel = launcher.getChannel();
-
+        final VirtualChannel channel = launcher.getChannel();
         if (!Strings.isNullOrEmpty(cloud)) {
             theCloud = JenkinsUtils.getServer(cloud);
         } else {
             if(channel instanceof Channel) {
-                Node node = Jenkins.getInstance().getNode(((Channel)channel).getName() );
+                final Node node = Jenkins.getInstance().getNode(((Channel)channel).getName() );
                 if (node instanceof DockerTransientNode) {
                     return ((DockerTransientNode) node).getDockerAPI();
                 }
             }
-            Optional<DockerCloud> cloud = JenkinsUtils.getCloudForChannel(channel);
-            if (!cloud.isPresent())
+            final Optional<DockerCloud> cloudForChannel = JenkinsUtils.getCloudForChannel(channel);
+            if (!cloudForChannel.isPresent())
                 throw new RuntimeException("Could not find the cloud this project was built on");
-
-            theCloud = cloud.get();
+            theCloud = cloudForChannel.get();
         }
 
         // Triton can't do docker build. Ensure we're not trying to do that.
         if (theCloud.isTriton()) {
             LOGGER.warn("Selected cloud for build does not support this feature. Finding an alternative");
-
             for (DockerCloud dc : JenkinsUtils.getServers()) {
                 if (!dc.isTriton()) {
                     LOGGER.warn("Picked {} cloud instead", dc.getDisplayName());
@@ -261,34 +261,25 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     break;
                 }
             }
-
         }
-
         return theCloud.getDockerApi();
     }
 
     class Run implements Serializable {
-
         final transient Launcher launcher;
         final TaskListener listener;
-
         final FilePath fpChild;
-
         final List<String> tagsToUse;
-
         private final DockerAPI dockerApi;
-
         final transient hudson.model.Run<?, ?> run;
 
         private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerAPI dockerApi) {
-
             this.run = run;
             this.launcher = launcher;
             this.listener = listener;
             this.fpChild = fpChild;
             this.tagsToUse = tagsToUse;
             this.dockerApi = dockerApi;
-
         }
 
         private DockerAPI getDockerAPI() {
@@ -309,27 +300,20 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
         boolean run() throws IOException, InterruptedException {
             log("Docker Build");
-
-            String imageId = buildImage();
-
+            final String imageId = buildImage();
             // The ID of the image we just generated
             if (imageId == null) {
                 return false;
             }
-
             log("Docker Build Response : " + imageId);
-
             // Add an action to the build
             Action action = new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull);
-
             run.addAction(action);
             run.save();
-
             if (pushOnSuccess) {
                 log("Pushing " + tagsToUse);
                 pushImages();
             }
-
             if (cleanImages) {
                 // For some reason, docker delete doesn't delete all tagged
                 // versions, despite force = true.
@@ -342,9 +326,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     log("Error attempting to clean images");
                 }
             }
-
             log("Docker Build Done");
-
             return true;
         }
 
@@ -362,11 +344,8 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             if (pullRegistry != null && pullRegistry.getCredentialsId() != null) {
                 auths.addConfig(DockerCloud.getAuthConfig(pullRegistry, run.getParent().getParent()));
             }
-
             log("Docker Build: building image at path " + fpChild.getRemote());
             final InputStream tar = fpChild.act(new DockerBuildCallable());
-
-
             BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
                 @Override
                 public void onNext(BuildResponseItem item) {
@@ -388,16 +367,14 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                 if (imageId == null) {
                     throw new AbortException("Built image id is null. Some error occured");
                 }
-    
                 // tag built image with tags
-                for (String tag : tagsToUse) {
-                    final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tag);
+                for (String thisTag : tagsToUse) {
+                    final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(thisTag);
                     final String commitTag = isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
                     log("Tagging built image with " + reposTag.repos + ":" + commitTag);
                     client.tagImageCmd(imageId, reposTag.repos, commitTag).withForce().exec();
                 }
             }
-
             return imageId;
         }
 
@@ -424,11 +401,11 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
                     PushImageCmd cmd = client.pushImageCmd(identifier);
 
                     int i = identifier.repository.name.indexOf('/');
-                    String registry = i >= 0 ?
+                    String regName = i >= 0 ?
                             identifier.repository.name.substring(0,i) : null;
 
                     DockerCloud.setRegistryAuthentication(cmd,
-                            new DockerRegistryEndpoint(registry, pushCredentialsId),
+                            new DockerRegistryEndpoint(regName, getPushCredentialsId()),
                             run.getParent().getParent());
                     cmd.exec(resultCallback).awaitSuccess();
                 } catch (DockerException ex) {
@@ -450,10 +427,7 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
 
     @Override
     public void perform(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
-
-        List<String> expandedTags;
-
-        expandedTags = expandTags(run, workspace, launcher, listener);
+        final List<String> expandedTags = expandTags(run, workspace, launcher, listener);
         String expandedDockerFileDirectory = dockerFileDirectory;
         try {
             expandedDockerFileDirectory = TokenMacro.expandAll(run, workspace, listener, this.dockerFileDirectory);
@@ -461,7 +435,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             listener.getLogger().println("Couldn't macro expand docker file directory " + dockerFileDirectory);
         }
         new Run(run, launcher, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, getDockerAPI(launcher)).run();
-
     }
 
     @Override
@@ -490,7 +463,6 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
             } catch (Throwable t) {
                 return FormValidation.error(t.getMessage());
             }
-
             return FormValidation.ok();
         }
 
@@ -539,5 +511,3 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         return this;
     }
 }
-
-

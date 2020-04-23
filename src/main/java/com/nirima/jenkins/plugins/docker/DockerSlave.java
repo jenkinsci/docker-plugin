@@ -20,14 +20,17 @@ public class DockerSlave extends Slave {
 
     private transient String containerId;
 
+    @SuppressWarnings("unused")
     private transient String cloudId;
 
-    private transient  DockerAPI dockerAPI;
+    @SuppressWarnings("unused")
+    private transient DockerAPI dockerAPI;
 
     private DockerSlave(@Nonnull String name, String remoteFS, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
         super(name, remoteFS, launcher);
     }
 
+    @Override
     protected Object readResolve() {
         try {
             return new DockerTransientNode(containerId, containerId, dockerTemplate.remoteFs, getLauncher());
@@ -35,8 +38,6 @@ public class DockerSlave extends Slave {
             throw new RuntimeException("Failed to migrate DockerSlave", e);
         }
     }
-
-
 
     /* FIXME better move this to a io.jenkins.docker.DockerTransientNode.Callback
     private void slaveShutdown(final TaskListener listener) throws DockerException, IOException {
@@ -150,5 +151,4 @@ public class DockerSlave extends Slave {
         theRun.save();
     }
     */
-
 }

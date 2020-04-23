@@ -22,7 +22,6 @@ public class DockerTemplateTest {
     String suffixStartSlaveCmd = " suffixStartSlaveCmd";
     String instanceCapStr = "";
     String network = "";
-    
 
     String dockerCommand = "dockerCommand";
     String volumesString = "volumes";
@@ -73,11 +72,23 @@ public class DockerTemplateTest {
 
         assertEquals(2, instance.getDockerTemplateBase().dnsHosts.length);
         assertArrayEquals(expected, instance.getDockerTemplateBase().dnsHosts);
-        
+    }
+
+    @Test
+    public void testLimits() {
+        DockerTemplate instance;
+        instance = getDockerTemplateInstanceWithDNSHost("");
+
         assertTrue("Error, wrong memoryLimit", 1024 == instance.getDockerTemplateBase().memoryLimit);
         assertTrue("Error, wrong memorySwap", 1280 == instance.getDockerTemplateBase().memorySwap);
         assertTrue("Error, wrong cpuShares", 1000 == instance.getDockerTemplateBase().cpuShares);
         assertTrue("Error, wrong shmSize", 1002 == instance.getDockerTemplateBase().shmSize);
+    }
+
+    @Test
+    public void testCapabilities() {
+        DockerTemplate instance;
+        instance = getDockerTemplateInstanceWithDNSHost("");
 
         assertTrue("Error, wrong capAdd", instance.getDockerTemplateBase().getCapabilitiesToAdd().contains("CHOWN"));
         assertTrue("Error, wrong capDrop", instance.getDockerTemplateBase().getCapabilitiesToDrop().contains("NET_ADMIN"));

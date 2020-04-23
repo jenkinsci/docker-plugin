@@ -4,17 +4,15 @@
     <p>
       Any arguments to be passed to the JVM executable.
       <br/>
-      Defaults to nothing at all.
+      Defaults to &quot;&quot; if left unset.
     </p>
     <p>
       <b>NOTE:</b>
-      This sets the
+      This sets the value of the variable
       ${app.getDescriptor('io.jenkins.docker.connector.DockerComputerAttachConnector').jvmArgsVariableName}
       in the entry point command.
       If you override the entry point command
-      but do <em>not</em> include the
-      ${app.getDescriptor('io.jenkins.docker.connector.DockerComputerAttachConnector').jvmArgsVariableName}
-      variable then this setting will have no effect.
+      but do <em>not</em> use this variable then this setting will have no effect.
     </p>
   </div>
 </j:jelly>
