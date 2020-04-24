@@ -649,7 +649,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             connector.beforeContainerStarted(api, remoteFs, containerId);
             client.startContainerCmd(containerId).exec();
             connector.afterContainerStarted(api, remoteFs, containerId);
-
             final ComputerLauncher launcher = connector.createLauncher(api, containerId, remoteFs, listener);
             final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, remoteFs, launcher);
             node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
@@ -662,11 +661,17 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             node.setDockerAPI(api);
             finallyRemoveTheContainer = false;
             return node;
-        } finally {
+        }
+        catch(Throwable e) {
+            LOGGER.error("Removing container {} because of the following exception", containerId, e);
+            throw e;
+        }
+        finally {
             // if something went wrong, cleanup aborted container
             // while ensuring that the original exception escapes.
             if ( finallyRemoveTheContainer ) {
                 try {
+                    LOGGER.info("Removing container {} ", containerId);
                     client.removeContainerCmd(containerId).withForce(true).exec();
                 } catch (NotFoundException ex) {
                     LOGGER.info("Unable to remove container '" + containerId + "' as it had already gone.");
