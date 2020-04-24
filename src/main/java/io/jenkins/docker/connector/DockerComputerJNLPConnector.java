@@ -202,10 +202,6 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         }
     }
 
-    @Override
-    public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
-    }
-
     private static EnvVars calculateVariablesForVariableSubstitution(final String nodeName, final String secret,
             final String jnlpTunnel, final String jenkinsUrl) throws IOException, InterruptedException {
         final EnvVars knownVariables = new EnvVars();

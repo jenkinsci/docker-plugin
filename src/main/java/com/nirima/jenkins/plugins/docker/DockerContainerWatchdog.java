@@ -401,8 +401,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             throw new ContainerIsTaintedException(String.format("Node for container ID %s has appeared", container.getId()));
         }
 
-        containerLabels.get(DockerContainerLabelKeys.REMOVE_VOLUMES);
-
         String removeVolumesString = containerLabels.get(DockerContainerLabelKeys.REMOVE_VOLUMES);
         if (removeVolumesString == null) {
             throw new ContainerIsTaintedException(String.format("Container ID %s has no '%s' label; skipping.",
@@ -605,28 +603,28 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             if (executions == 0) {
                 return "0";
             }
-            return new Long(overallRuntime / executions).toString();
+            return Long.toString(overallRuntime / executions);
         }
 
         private String getContainerRemovalAverageDurationForce() {
             if (containersRemovedForce == 0) {
                 return "0";
             }
-            return new Long(containersRemovedForceRuntimeSum / containersRemovedForce).toString();
+            return Long.toString(containersRemovedForceRuntimeSum / containersRemovedForce);
         }
 
         private String getContainerRemovalAverageDurationGracefully() {
             if (containersRemovedGracefully == 0) {
                 return "0";
             }
-            return new Long(containersRemovedGracefullyRuntimeSum / containersRemovedGracefully).toString();
+            return Long.toString(containersRemovedGracefullyRuntimeSum / containersRemovedGracefully);
         }
 
         private String getAverageRetrieveContainerRuntime() {
             if (retrieveContainersCalls == 0) {
                 return "0";
             }
-            return new Long(retrieveContainersRuntime / retrieveContainersCalls).toString();
+            return Long.toString(retrieveContainersRuntime / retrieveContainersCalls);
         }
     }
 }

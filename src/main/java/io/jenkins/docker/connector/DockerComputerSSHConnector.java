@@ -302,9 +302,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         if ( retryWaitTimeOrNull!=null ) {
             connectionCheck.withEveryRetryWaitFor( retryWaitTimeOrNull, TimeUnit.SECONDS );
         }
-        final Integer launchTimeoutSeconds = getLaunchTimeoutSeconds();
-        if( launchTimeoutSeconds != null) {
-            connectionCheckSSH.withSSHTimeout(launchTimeoutSeconds, TimeUnit.SECONDS);
+        final Integer sshTimeoutSeconds = getLaunchTimeoutSeconds();
+        if( sshTimeoutSeconds != null) {
+            connectionCheckSSH.withSSHTimeout(sshTimeoutSeconds, TimeUnit.SECONDS);
         }
         final long timestampBeforeConnectionCheck = System.nanoTime();
         if (!connectionCheck.execute() || !connectionCheckSSH.execute()) {

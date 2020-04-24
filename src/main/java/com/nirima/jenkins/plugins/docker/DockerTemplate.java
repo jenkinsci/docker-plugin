@@ -615,7 +615,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Override
     public Descriptor<DockerTemplate> getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
+        return Jenkins.getInstance().getDescriptor(getClass());
     }
 
     @Nonnull
