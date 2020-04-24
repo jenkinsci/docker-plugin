@@ -1,8 +1,9 @@
 package io.jenkins.docker.connector;
 
-import static com.nirima.jenkins.plugins.docker.DockerTemplateBase.splitAndFilterEmpty;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmpty;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -49,42 +50,34 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     @CheckForNull
     private String[] entryPointArguments;
 
+    @Restricted(NoExternalUse.class)
+    public DockerComputerJNLPConnector() {
+        this(new JNLPLauncher());
+    }
+
     @DataBoundConstructor
     public DockerComputerJNLPConnector(JNLPLauncher jnlpLauncher) {
         this.jnlpLauncher = jnlpLauncher;
     }
 
-    @Nonnull
+    @CheckForNull
     public String getUser() {
-        return user==null ? "" : user;
+        return Util.fixEmptyAndTrim(user);
     }
 
     @DataBoundSetter
     public void setUser(String user) {
-        if ( user==null || user.trim().isEmpty()) {
-            this.user = null;
-        } else {
-            this.user = user;
-        }
+        this.user = Util.fixEmptyAndTrim(user);
     }
 
-    @Nonnull
+    @CheckForNull
     public String getJenkinsUrl() {
-        return jenkinsUrl==null ? "" : jenkinsUrl;
+        return Util.fixEmptyAndTrim(jenkinsUrl);
     }
 
     @DataBoundSetter
     public void setJenkinsUrl(String jenkinsUrl) {
-        if ( jenkinsUrl==null || jenkinsUrl.trim().isEmpty()) {
-            this.jenkinsUrl = null;
-        } else {
-            this.jenkinsUrl = jenkinsUrl;
-        }
-    }
-
-    @CheckForNull
-    public String[] getEntryPointArguments(){
-        return entryPointArguments;
+        this.jenkinsUrl = Util.fixEmptyAndTrim(jenkinsUrl);
     }
 
     @Nonnull
@@ -98,21 +91,17 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         setEntryPointArguments(splitAndFilterEmpty(entryPointArgumentsString, "\n"));
     }
 
-    public void setEntryPointArguments(String[] entryPointArguments) {
-        if (entryPointArguments == null || entryPointArguments.length == 0) {
-            this.entryPointArguments = null;
-        } else {
-            this.entryPointArguments = entryPointArguments;
-        }
+    private void setEntryPointArguments(String[] entryPointArguments) {
+        this.entryPointArguments = fixEmpty(entryPointArguments);
     }
 
     public DockerComputerJNLPConnector withUser(String user) {
-        this.user = user;
+        setUser(user);
         return this;
     }
 
     public DockerComputerJNLPConnector withJenkinsUrl(String jenkinsUrl) {
-        this.jenkinsUrl = jenkinsUrl;
+        setJenkinsUrl(jenkinsUrl);
         return this;
     }
 

@@ -1,8 +1,9 @@
 package io.jenkins.docker.connector;
 
-import static com.nirima.jenkins.plugins.docker.DockerTemplateBase.splitAndFilterEmpty;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmpty;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 import com.github.dockerjava.api.DockerClient;
@@ -69,37 +70,24 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         this.user = user;
     }
 
-    @Nonnull
+    @CheckForNull
     public String getUser() {
-        return user==null ? "" : user;
+        return Util.fixEmptyAndTrim(user);
     }
 
     @DataBoundSetter
     public void setUser(String user) {
-        if ( user==null || user.trim().isEmpty()) {
-            this.user = null;
-        } else {
-            this.user = user;
-        }
+        this.user = Util.fixEmptyAndTrim(user);
     }
 
-    @Nonnull
+    @CheckForNull
     public String getJavaExe() {
-        return javaExe==null ? "" : javaExe;
+        return Util.fixEmptyAndTrim(javaExe);
     }
 
     @DataBoundSetter
     public void setJavaExe(String javaExe) {
-        if ( javaExe==null || javaExe.trim().isEmpty()) {
-            this.javaExe = null;
-        } else {
-            this.javaExe = javaExe;
-        }
-    }
-
-    @CheckForNull
-    public String[] getEntryPointCmd(){
-        return entryPointCmd;
+        this.javaExe = Util.fixEmptyAndTrim(javaExe);
     }
 
     @Nonnull
@@ -113,17 +101,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         setEntryPointCmd(splitAndFilterEmpty(entryPointCmdString, "\n"));
     }
 
-    public void setEntryPointCmd(String[] entryPointCmd) {
-        if (entryPointCmd == null || entryPointCmd.length == 0) {
-            this.entryPointCmd = null;
-        } else {
-            this.entryPointCmd = entryPointCmd;
-        }
-    }
-
-    @CheckForNull
-    public String[] getJvmArgs(){
-        return jvmArgs;
+    private void setEntryPointCmd(String[] entryPointCmd) {
+        this.entryPointCmd = fixEmpty(entryPointCmd);
     }
 
     @Nonnull
@@ -137,12 +116,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         setJvmArgs(splitAndFilterEmpty(jvmArgsString, "\n"));
     }
 
-    public void setJvmArgs(String[] jvmArgs) {
-        if (jvmArgs == null || jvmArgs.length == 0) {
-            this.jvmArgs = null;
-        } else {
-            this.jvmArgs = jvmArgs;
-        }
+    private void setJvmArgs(String[] jvmArgs) {
+        this.jvmArgs = fixEmpty(jvmArgs);
     }
 
     @Override
@@ -263,30 +238,30 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     private static class DockerAttachLauncher extends ComputerLauncher {
         private final DockerAPI api;
         private final String containerId;
-        private final String user;
+        private final String userOrNull;
         private final String remoteFs;
-        private final String javaExe;
-        private final String jvmArgs;
-        private final String entryPointCmd;
+        private final String javaExeOrNull;
+        private final String jvmArgsOrEmpty;
+        private final String entryPointCmdOrEmpty;
 
         private DockerAttachLauncher(DockerAPI api, String containerId, String user, String remoteFs, String javaExe, String jvmArgs, String entryPointCmd) {
             this.api = api;
             this.containerId = containerId;
-            this.user = user;
+            this.userOrNull = user;
             this.remoteFs = remoteFs;
-            this.javaExe = javaExe;
-            this.jvmArgs = jvmArgs;
-            this.entryPointCmd = entryPointCmd;
+            this.javaExeOrNull = javaExe;
+            this.jvmArgsOrEmpty = jvmArgs;
+            this.entryPointCmdOrEmpty = entryPointCmd;
         }
 
         @Override
         public void launch(final SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
             final PrintStream logger = computer.getListener().getLogger();
             final String jenkinsUrl = Jenkins.getInstance().getRootUrl();
-            final String effectiveJavaExe = javaExe.isEmpty() ? "java" : javaExe;
-            final String effectiveJvmArgs = jvmArgs.isEmpty() ? "" : jvmArgs;
+            final String effectiveJavaExe = StringUtils.isNotBlank(javaExeOrNull) ? javaExeOrNull : "java";
+            final String effectiveJvmArgs = StringUtils.isNotBlank(jvmArgsOrEmpty) ? jvmArgsOrEmpty : "" ;
             final EnvVars knownVariables = calculateVariablesForVariableSubstitution(effectiveJavaExe, effectiveJvmArgs, remoting.getName(), remoteFs, jenkinsUrl);
-            final String effectiveEntryPointCmdString = StringUtils.isNotBlank(entryPointCmd) ? entryPointCmd : DEFAULT_ENTRY_POINT_CMD_STRING;
+            final String effectiveEntryPointCmdString = StringUtils.isNotBlank(entryPointCmdOrEmpty) ? entryPointCmdOrEmpty : DEFAULT_ENTRY_POINT_CMD_STRING;
             final String resolvedEntryPointCmdString = Util.replaceMacro(effectiveEntryPointCmdString, knownVariables);
             final String[] resolvedEntryPointCmd = splitAndFilterEmpty(resolvedEntryPointCmdString, "\n");
             logger.println("Connecting to docker container " + containerId + ", running command " + Joiner.on(" ").join(resolvedEntryPointCmd));
@@ -299,8 +274,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
                         .withAttachStderr(true)
                         .withTty(false)
                         .withCmd(resolvedEntryPointCmd);
-                if (StringUtils.isNotBlank(user)) {
-                    cmd.withUser(user);
+                if (StringUtils.isNotBlank(userOrNull)) {
+                    cmd.withUser(userOrNull);
                 }
                 final ExecCreateCmdResponse exec = cmd.exec();
                 execId = exec.getId();
@@ -344,8 +319,9 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
 
         }
 
-        private static EnvVars calculateVariablesForVariableSubstitution(final String javaExe, final String jvmArgs, final String jarName, final String remoteFs,
-                final String jenkinsUrl) throws IOException, InterruptedException {
+        private static EnvVars calculateVariablesForVariableSubstitution(@Nonnull final String javaExe,
+                @Nonnull final String jvmArgs, @Nonnull final String jarName, @Nonnull final String remoteFs,
+                @Nonnull final String jenkinsUrl) throws IOException, InterruptedException {
             final EnvVars knownVariables = new EnvVars();
             final Jenkins j = Jenkins.getInstance();
             addEnvVars(knownVariables, j.getGlobalNodeProperties());

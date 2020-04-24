@@ -676,6 +676,7 @@ public class DockerCloud extends Cloud {
         return true;
     }
 
+    @CheckForNull
     public static DockerCloud getCloudByName(String name) {
         return (DockerCloud) Jenkins.getInstance().getCloud(name);
     }
@@ -887,10 +888,10 @@ public class DockerCloud extends Cloud {
         final Credentials c = firstOrNull(CredentialsProvider.lookupCredentials(
                 IdCredentials.class, context, ACL.SYSTEM, Collections.EMPTY_LIST),
                 withId(registry.getCredentialsId()));
-        if (c == null) {
+        final DockerRegistryToken t = c == null ? null : AuthenticationTokens.convert(DockerRegistryToken.class, c);
+        if (t == null) {
             throw new IllegalArgumentException("Invalid Credential ID " + registry.getCredentialsId());
         }
-        final DockerRegistryToken t = AuthenticationTokens.convert(DockerRegistryToken.class, c);
         final String token = t.getToken();
         // What docker-commons claim to be a "token" is actually configuration storage
         // see https://github.com/docker/docker-ce/blob/v17.09.0-ce/components/cli/cli/config/configfile/file.go#L214

@@ -6,6 +6,7 @@ import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -26,11 +27,11 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
-import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
+import io.jenkins.docker.connector.DockerComputerJNLPConnector;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
@@ -56,6 +57,7 @@ import java.util.Set;
 
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 public class DockerTemplate implements Describable<DockerTemplate> {
@@ -74,15 +76,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private int configVersion = 2;
 
-    private final String labelString;
+    private final @CheckForNull String labelString;
 
-    private DockerComputerConnector connector;
+    private @Nonnull DockerComputerConnector connector;
 
     /** @deprecated Use {@link #connector} instead. */
     @Deprecated
     private transient DockerComputerLauncher launcher;
 
-    public String remoteFs;
+    public @CheckForNull String remoteFs;
 
     public final int instanceCap;
 
@@ -91,19 +93,19 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     // for backward compatibility reason can't declare this attribute as type DockerOnceRetentionStrategy
     private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(10);
 
-    private DockerTemplateBase dockerTemplateBase;
+    private @Nonnull DockerTemplateBase dockerTemplateBase;
 
     private boolean removeVolumes;
 
     private int stopTimeout = DEFAULT_STOP_TIMEOUT;
 
-    private transient /*almost final*/ Set<LabelAtom> labelSet;
+    private @Nonnull transient /*almost final*/ Set<LabelAtom> labelSet;
 
-    private @CheckForNull DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
+    private @CheckForNull DockerImagePullStrategy pullStrategy;
 
     private int pullTimeout;
 
-    private List<? extends NodeProperty<?>> nodeProperties = Collections.EMPTY_LIST;
+    private @CheckForNull List<? extends NodeProperty<?>> nodeProperties;
 
     private @CheckForNull DockerDisabled disabled;
 
@@ -112,13 +114,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     /**
      * Default constructor; give an unusable instance.
      */
+    @Deprecated
     public DockerTemplate() {
         this.labelString = "";
         this.instanceCap = 1;
     }
 
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
-                          DockerComputerConnector connector,
+                          @Nonnull DockerComputerConnector connector,
                           String labelString,
                           String remoteFs,
                           String instanceCapStr) {
@@ -129,13 +132,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @DataBoundConstructor
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
-                          DockerComputerConnector connector,
+                          @Nonnull DockerComputerConnector connector,
                           String labelString,
                           String instanceCapStr
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.connector = connector;
-        this.labelString = Util.fixNull(labelString);
+        this.labelString = Util.fixEmpty(labelString);
 
         if (Strings.isNullOrEmpty(instanceCapStr)) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -147,10 +150,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     // -- DockerTemplateBase mixin
-
-    public static String[] filterStringArray(String[] arr) {
-        return DockerTemplateBase.filterStringArray(arr);
-    }
 
     public String getImage() {
         return dockerTemplateBase.getImage();
@@ -317,6 +316,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.stopTimeout = timeout;
     }
 
+    @CheckForNull
     public String getLabelString() {
         return labelString;
     }
@@ -343,17 +343,19 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return retentionStrategy;
     }
 
+    @Nonnull
     public DockerComputerConnector getConnector() {
         return connector;
     }
 
+    @CheckForNull
     public String getRemoteFs() {
-        return remoteFs;
+        return Util.fixEmpty(remoteFs);
     }
 
     @DataBoundSetter
     public void setRemoteFs(String remoteFs) {
-        this.remoteFs = remoteFs;
+        this.remoteFs = Util.fixEmpty(remoteFs);
     }
 
     public String getInstanceCapStr() {
@@ -367,17 +369,23 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return instanceCap;
     }
 
+    @Nonnull
     public Set<LabelAtom> getLabelSet() {
         return labelSet;
     }
 
+    @Nonnull
     public DockerImagePullStrategy getPullStrategy() {
-        return pullStrategy;
+        return pullStrategy != null ? pullStrategy : DockerImagePullStrategy.PULL_LATEST;
     }
 
     @DataBoundSetter
     public void setPullStrategy(DockerImagePullStrategy pullStrategy) {
-        this.pullStrategy = pullStrategy;
+        if (pullStrategy == DockerImagePullStrategy.PULL_LATEST) {
+            this.pullStrategy = null;
+        } else {
+            this.pullStrategy = pullStrategy;
+        }
     }
 
     public int getPullTimeout() {
@@ -389,13 +397,18 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.pullTimeout = pullTimeout;
     }
 
+    @CheckForNull
     public List<? extends NodeProperty<?>> getNodeProperties() {
-        return Collections.unmodifiableList(nodeProperties);
+        final List<? extends NodeProperty<?>> nullOrNotEmpty = fixEmpty(nodeProperties);
+        if (nullOrNotEmpty == null) {
+            return null;
+        }
+        return Collections.unmodifiableList(nullOrNotEmpty);
     }
 
     @DataBoundSetter
     public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
-        this.nodeProperties = nodeProperties;
+        this.nodeProperties = fixEmpty(nodeProperties);
     }
 
     public DockerDisabled getDisabled() {
@@ -422,6 +435,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
+    @Nonnull
     public String getName() {
         if( name==null || name.trim().isEmpty()) {
             return DEFAULT_NAME;
@@ -438,13 +452,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
         if (retentionStrategy == null) {
             retentionStrategy = new DockerOnceRetentionStrategy(10);
-        }
-        if (pullStrategy == null) {
-            pullStrategy = DockerImagePullStrategy.PULL_LATEST;
-        }
-        if (nodeProperties == null) {
-            nodeProperties = 
-                new DescribableList<NodeProperty<?>, NodePropertyDescriptor>(Jenkins.getInstance());
         }
     }
 
@@ -472,8 +479,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 LOGGER.error("Can't parse labels: ", t);
             }
 
-            if (connector == null && launcher != null) {
-                connector = launcher.convertToConnector();
+            if (connector == null ) {
+                if (launcher != null) {
+                    connector = launcher.convertToConnector();
+                } else {
+                    connector = new DockerComputerJNLPConnector();
+                }
             }
         } catch (Throwable t) {
             LOGGER.error("Can't convert old values to new (double conversion?): ", t);
@@ -485,11 +496,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public DockerTemplate cloneWithLabel(String label)  {
         final DockerTemplate template = new DockerTemplate(dockerTemplateBase, connector, label, remoteFs, "1");
         template.setMode(Node.Mode.EXCLUSIVE);
-        template.setPullStrategy(pullStrategy);
+        template.setPullStrategy(getPullStrategy());
         template.setRemoveVolumes(removeVolumes);
         template.setStopTimeout(stopTimeout);
         template.setRetentionStrategy((DockerOnceRetentionStrategy) retentionStrategy);
-        template.setNodeProperties(makeCopyOfList(nodeProperties));
+        template.setNodeProperties(makeCopyOfList(getNodeProperties()));
         return template;
     }
 
@@ -581,12 +592,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
     }
 
+    @Nonnull
     InspectImageResponse pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
         final String image = getFullImageId();
 
         final boolean shouldPullImage;
         try(final DockerClient client = api.getClient()) {
-            shouldPullImage = pullStrategy.shouldPullImage(client, image);
+            shouldPullImage = getPullStrategy().shouldPullImage(client, image);
         }
         if (shouldPullImage) {
             // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
@@ -624,14 +636,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
         try {
             final InspectImageResponse image = pullImage(api, listener);
-            if (StringUtils.isBlank(remoteFs)) {
-                remoteFs = image.getContainerConfig().getWorkingDir();
-            }
-            if (StringUtils.isBlank(remoteFs)) {
-                remoteFs = "/";
-            }
+            final String effectiveRemoteFsDir = getEffectiveRemoteFs(image);
             try(final DockerClient client = api.getClient()) {
-                return doProvisionNode(api, client, listener);
+                return doProvisionNode(api, client, effectiveRemoteFsDir, listener);
             }
         } catch (IOException | Descriptor.FormException | InterruptedException | RuntimeException ex) {
             final DockerCloud ourCloud = DockerCloud.findCloudForTemplate(this);
@@ -647,37 +654,54 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
-    private DockerTransientNode doProvisionNode(DockerAPI api, DockerClient client, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
-        LOGGER.info("Trying to run container for {}", getImage());
-        final DockerComputerConnector connector = getConnector();
+    @Nonnull
+    private String getEffectiveRemoteFs(final InspectImageResponse image) {
+        final String remoteFsOrNull = getRemoteFs();
+        if (remoteFsOrNull != null) {
+            return remoteFsOrNull;
+        }
+        final ContainerConfig containerConfig = image.getContainerConfig();
+        final String containerWorkingDir = containerConfig == null ? null : containerConfig.getWorkingDir();
+        if (!StringUtils.isBlank(containerWorkingDir)) {
+            return containerWorkingDir;
+        }
+        return "/";
+    }
 
-        final CreateContainerCmd cmd = client.createContainerCmd(getImage());
+    private DockerTransientNode doProvisionNode(final DockerAPI api, final DockerClient client,
+            final String effectiveRemoteFsDir, final TaskListener listener)
+            throws IOException, Descriptor.FormException, InterruptedException {
+        final String ourImage = getImage(); // can't be null
+        LOGGER.info("Trying to run container for image \"{}\"", ourImage);
+        final DockerComputerConnector ourConnector = getConnector();
+
+        final CreateContainerCmd cmd = client.createContainerCmd(ourImage);
         fillContainerConfig(cmd);
 
-        connector.beforeContainerCreated(api, remoteFs, cmd);
+        ourConnector.beforeContainerCreated(api, effectiveRemoteFsDir, cmd);
 
         final String nodeName = getNodeNameFromContainerConfig(cmd);
-        LOGGER.info("Trying to run container for node {} from image: {}", nodeName, getImage());
+        LOGGER.info("Trying to run container for node {} from image: {}", nodeName, ourImage);
         boolean finallyRemoveTheContainer = true;
         final String containerId = cmd.exec().getId();
         // if we get this far, we have created the container so,
         // if we fail to return the node, we need to ensure it's cleaned up.
-        LOGGER.info("Started container ID {} for node {} from image: {}", containerId, nodeName, getImage());
+        LOGGER.info("Started container ID {} for node {} from image: {}", containerId, nodeName, ourImage);
 
         try {
-            connector.beforeContainerStarted(api, remoteFs, containerId);
+            ourConnector.beforeContainerStarted(api, effectiveRemoteFsDir, containerId);
             client.startContainerCmd(containerId).exec();
-            connector.afterContainerStarted(api, remoteFs, containerId);
+            ourConnector.afterContainerStarted(api, effectiveRemoteFsDir, containerId);
 
-            final ComputerLauncher launcher = connector.createLauncher(api, containerId, remoteFs, listener);
-            final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, remoteFs, launcher);
-            node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
-            node.setMode(mode);
-            node.setLabelString(labelString);
-            node.setRetentionStrategy(retentionStrategy);
-            robustlySetNodeProperties(node, makeCopyOfList(nodeProperties));
-            node.setRemoveVolumes(removeVolumes);
-            node.setStopTimeout(stopTimeout);
+            final ComputerLauncher nodeLauncher = ourConnector.createLauncher(api, containerId, effectiveRemoteFsDir, listener);
+            final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, effectiveRemoteFsDir, nodeLauncher);
+            node.setNodeDescription("Docker Agent [" + ourImage + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
+            node.setMode(getMode());
+            node.setLabelString(getLabelString());
+            node.setRetentionStrategy(getRetentionStrategy());
+            robustlySetNodeProperties(node, makeCopyOfList(getNodeProperties()));
+            node.setRemoveVolumes(isRemoveVolumes());
+            node.setStopTimeout(getStopTimeout());
             node.setDockerAPI(api);
             finallyRemoveTheContainer = false;
             return node;
@@ -697,9 +721,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     private static <T> List<T> makeCopyOfList(List<? extends T> listOrNull) {
-        final List<? extends T> originalList = Util.fixNull(listOrNull);
-        final List<T> copyList = new ArrayList<T>(originalList.size());
-        for( final T originalElement : originalList) {
+        if (listOrNull == null) {
+            return null;
+        }
+        final List<T> copyList = new ArrayList<>(listOrNull.size());
+        for( final T originalElement : listOrNull) {
             final T copyOfElement = makeCopy(originalElement);
             copyList.add(copyOfElement);
         }

@@ -59,12 +59,11 @@ public class DockerTemplateTest {
         String[] expected;
 
         instance = getDockerTemplateInstanceWithDNSHost("");
-        assertEquals(0, instance.getDockerTemplateBase().dnsHosts.length);
+        expected = null;
+        assertArrayEquals(expected, instance.getDockerTemplateBase().dnsHosts);
 
         instance = getDockerTemplateInstanceWithDNSHost("8.8.8.8");
         expected = new String[]{"8.8.8.8"};
-
-        assertEquals(1, instance.getDockerTemplateBase().dnsHosts.length);
         assertArrayEquals(expected, instance.getDockerTemplateBase().dnsHosts);
 
         instance = getDockerTemplateInstanceWithDNSHost("8.8.8.8 8.8.4.4");
