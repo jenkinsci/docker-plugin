@@ -54,8 +54,12 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 import static hudson.remoting.Base64.encode;
 
 /**
@@ -170,6 +174,52 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     @DataBoundSetter
     public void setRetryWaitTime(Integer retryWaitTime) {
         this.retryWaitTime = retryWaitTime;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(javaPath, jvmOptions, launchTimeoutSeconds, maxNumRetries, port,
+                prefixStartSlaveCmd, retryWaitTime, sshKeyStrategy, suffixStartSlaveCmd);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DockerComputerSSHConnector other = (DockerComputerSSHConnector) obj;
+        return Objects.equals(javaPath, other.javaPath) && Objects.equals(jvmOptions, other.jvmOptions)
+                && Objects.equals(launchTimeoutSeconds, other.launchTimeoutSeconds)
+                && Objects.equals(maxNumRetries, other.maxNumRetries) && port == other.port
+                && Objects.equals(prefixStartSlaveCmd, other.prefixStartSlaveCmd)
+                && Objects.equals(retryWaitTime, other.retryWaitTime)
+                && Objects.equals(sshKeyStrategy, other.sshKeyStrategy)
+                && Objects.equals(suffixStartSlaveCmd, other.suffixStartSlaveCmd);
+    }
+
+    @Override
+    public String toString() {
+        // Maintenance node: This should list all the data we use in the equals()
+        // method, but in the order the fields are declared in the class.
+        // Note: If modifying this code, remember to update hashCode() and toString()
+        final StringBuilder sb = startToString(this);
+        bldToString(sb, "sshKeyStrategy", sshKeyStrategy);
+        bldToString(sb, "port", port);
+        bldToString(sb, "jvmOptions", jvmOptions);
+        bldToString(sb, "javaPath", javaPath);
+        bldToString(sb, "prefixStartSlaveCmd", prefixStartSlaveCmd);
+        bldToString(sb, "suffixStartSlaveCmd", suffixStartSlaveCmd);
+        bldToString(sb, "launchTimeoutSeconds", launchTimeoutSeconds);
+        bldToString(sb, "maxNumRetries", maxNumRetries);
+        bldToString(sb, "retryWaitTime", retryWaitTime);
+        endToString(sb);
+        return sb.toString();
     }
 
     @Override
@@ -335,6 +385,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         public abstract String getInjectedKey() throws IOException;
         public abstract String getUser();
         public abstract ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector dockerComputerSSHConnector) throws IOException;
+        @Override
+        public abstract boolean equals(Object obj); // force subclasses to implement this
+        @Override
+        public abstract int hashCode(); // force subclasses to implement this
+        @Override
+        public abstract String toString(); // force subclasses to implement this
     }
 
     public static class InjectSSHKey extends SSHKeyStrategy {
@@ -348,6 +404,31 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         @Override
         public String getUser() {
             return user;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            InjectSSHKey other = (InjectSSHKey) obj;
+            return Objects.equals(user, other.user);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(user);
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = startToString(this);
+            bldToString(sb, "user", user);
+            endToString(sb);
+            return sb.toString();
         }
 
         @Override
@@ -398,6 +479,33 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         public SshHostKeyVerificationStrategy getSshHostKeyVerificationStrategy() {
             return sshHostKeyVerificationStrategy;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(credentialsId, sshHostKeyVerificationStrategy);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            ManuallyConfiguredSSHKey other = (ManuallyConfiguredSSHKey) obj;
+            return Objects.equals(credentialsId, other.credentialsId)
+                    && Objects.equals(sshHostKeyVerificationStrategy, other.sshHostKeyVerificationStrategy);
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = startToString(this);
+            bldToString(sb, "credentialsId", credentialsId);
+            bldToString(sb, "sshHostKeyVerificationStrategy", sshHostKeyVerificationStrategy);
+            endToString(sb);
+            return sb.toString();
         }
 
         @Override

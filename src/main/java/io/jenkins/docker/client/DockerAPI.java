@@ -39,6 +39,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**

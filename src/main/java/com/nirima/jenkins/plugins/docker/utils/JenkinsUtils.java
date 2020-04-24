@@ -24,7 +24,9 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -194,5 +196,80 @@ public class JenkinsUtils {
         boolean booleanValue = false;
         booleanValue = Boolean.parseBoolean(value);
         return booleanValue;
+    }
+
+    /**
+     * Used to help with toString methods.
+     */
+    @Restricted(NoExternalUse.class)
+    public static StringBuilder startToString(Object subjectOfToString) {
+        return new StringBuilder(subjectOfToString.getClass().getSimpleName());
+    }
+
+    /**
+     * Used to help with toString methods.
+     */
+    @Restricted(NoExternalUse.class)
+    public static void endToString(StringBuilder sb) {
+        if (sb.indexOf("{") >= 0) {
+            sb.append("}");
+        } else {
+            sb.append("{}");
+        }
+    }
+
+    /**
+     * Used to help with toString methods.
+     */
+    @Restricted(NoExternalUse.class)
+    public static <T> void bldToString(StringBuilder sb, String attributeName, @Nullable T[] value) {
+        if (value == null) {
+            return;
+        }
+        if (sb.indexOf("{") >= 0) {
+            sb.append(", ");
+        } else {
+            sb.append("{");
+        }
+        sb.append(attributeName);
+        sb.append("=");
+        sb.append(Arrays.toString(value));
+    }
+
+    /**
+     * Used to help with toString methods.
+     */
+    @Restricted(NoExternalUse.class)
+    public static void bldToString(StringBuilder sb, String attributeName, int value) {
+        if (sb.indexOf("{") >= 0) {
+            sb.append(", ");
+        } else {
+            sb.append("{");
+        }
+        sb.append(attributeName);
+        sb.append("=");
+        sb.append(value);
+    }
+
+    /**
+     * Used to help with toString methods.
+     */
+    @Restricted(NoExternalUse.class)
+    public static void bldToString(StringBuilder sb, String attributeName, @Nullable Object value) {
+        if (value == null) {
+            return;
+        }
+        if (sb.indexOf("{") >= 0) {
+            sb.append(", ");
+        } else {
+            sb.append("{");
+        }
+        sb.append(attributeName);
+        sb.append("=");
+        if (value instanceof String) {
+            sb.append('\'').append(value).append('\'');
+        } else {
+            sb.append(value);
+        }
     }
 }

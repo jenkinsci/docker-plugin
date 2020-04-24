@@ -39,6 +39,11 @@ public class DockerLaunchAction implements Action, Serializable {
             result = 31 * result + id.hashCode();
             return result;
         }
+
+        @Override
+        public String toString() {
+            return "Item [client=" + client + ", id=" + id + "]";
+        }
     }
 
     private transient List<Item> running = new ArrayList<>();

@@ -52,6 +52,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -696,14 +699,17 @@ public class DockerCloud extends Cloud {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("DockerCloud{");
-        sb.append("name=").append(name);
-        sb.append(", dockerApi=").append(dockerApi);
-        sb.append(", containerCap=").append(containerCap);
-        sb.append(", exposeDockerHost=").append(exposeDockerHost);
-        sb.append(", disabled=").append(disabled);
-        sb.append(", templates='").append(templates).append('\'');
-        sb.append('}');
+        final StringBuilder sb = startToString(this);
+        // Maintenance node: This should list all the data we use in the equals()
+        // method, but in the order the fields are declared in the class.
+        // Note: If modifying this code, remember to update hashCode() and toString()
+        bldToString(sb, "name", name);
+        bldToString(sb, "dockerApi", dockerApi);
+        bldToString(sb, "containerCap", containerCap);
+        bldToString(sb, "exposeDockerHost", exposeDockerHost);
+        bldToString(sb, "disabled", getDisabled());
+        bldToString(sb, "templates", templates);
+        endToString(sb);
         return sb.toString();
     }
 
@@ -711,12 +717,15 @@ public class DockerCloud extends Cloud {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        // Maintenance node: This should list all the fields from the equals method,
+        // preferably in the same order.
+        // Note: If modifying this code, remember to update equals() and toString()
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((dockerApi == null) ? 0 : dockerApi.hashCode());
         result = prime * result + containerCap;
-        result = prime * result + ((templates == null) ? 0 : templates.hashCode());
         result = prime * result + (exposeDockerHost ? 1231 : 1237);
         result = prime * result + getDisabled().hashCode();
+        result = prime * result + ((templates == null) ? 0 : templates.hashCode());
         return result;
     }
 
@@ -726,13 +735,17 @@ public class DockerCloud extends Cloud {
         if (o == null || getClass() != o.getClass()) return false;
 
         DockerCloud that = (DockerCloud) o;
-
+        // Maintenance note: This should include all non-transient fields.
+        // Fields that are "usually unique" should go first.
+        // Primitive fields should be tested before objects.
+        // Computationally-expensive fields get tested last.
+        // Note: If modifying this code, remember to update hashCode() and toString()
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (dockerApi != null ? !dockerApi.equals(that.dockerApi) : that.dockerApi != null) return false;
         if (containerCap != that.containerCap) return false;
-        if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
         if (exposeDockerHost != that.exposeDockerHost)return false;
         if (!getDisabled().equals(that.getDisabled())) return false;
+        if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
         return true;
     }
 
