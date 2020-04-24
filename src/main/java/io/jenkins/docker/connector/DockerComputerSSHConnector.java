@@ -203,17 +203,18 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
         final String key = sshKeyStrategy.getInjectedKey();
         if (key != null) {
-            final String AuthorizedKeysCommand = "#!/bin/sh\n"
+            final String authorizedKeysCommand = "#!/bin/sh\n"
                     + "[ \"$1\" = \"" + sshKeyStrategy.getUser() + "\" ] "
                     + "&& echo '" + key + "'"
                     + "|| :";
+            final byte[] authorizedKeysCommandAsBytes = authorizedKeysCommand.getBytes(StandardCharsets.UTF_8);
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
                  TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
                 TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
-                entry.setSize(AuthorizedKeysCommand.getBytes().length);
+                entry.setSize(authorizedKeysCommandAsBytes.length);
                 entry.setMode(0700);
                 tar.putArchiveEntry(entry);
-                tar.write(AuthorizedKeysCommand.getBytes());
+                tar.write(authorizedKeysCommandAsBytes);
                 tar.closeArchiveEntry();
                 tar.close();
                 try (InputStream is = new ByteArrayInputStream(bos.toByteArray());

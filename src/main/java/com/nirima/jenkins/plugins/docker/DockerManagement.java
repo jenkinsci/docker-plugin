@@ -36,12 +36,12 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public String getDisplayName() {
-        return Messages.DisplayName();
+        return Messages.displayName();
     }
 
     @Override
     public String getDescription() {
-        return Messages.PluginDescription();
+        return Messages.pluginDescription();
     }
 
     public static DockerManagement get() {
