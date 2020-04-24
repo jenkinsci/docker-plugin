@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -113,11 +114,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     /**
      * Default constructor; give an unusable instance.
+     * 
+     * @deprecated This gives an empty image name, which isn't valid.
      */
     @Deprecated
     public DockerTemplate() {
-        this.labelString = "";
-        this.instanceCap = 1;
+        this(new DockerTemplateBase(""), new DockerComputerJNLPConnector(), null, "1");
     }
 
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
@@ -261,9 +263,17 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         final String templateName = getName();
-        final Map<String, String> labels = result.getLabels();
+        final Map<String, String> existingLabels = containerConfig.getLabels();
+        final Map<String, String> labels;
+        if (existingLabels == null) {
+            labels = new HashMap<>();
+            containerConfig.withLabels(labels);
+        } else {
+            labels = existingLabels;
+        }
         labels.put(DockerContainerLabelKeys.REMOVE_VOLUMES, Boolean.toString(isRemoveVolumes()));
         labels.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
+        containerConfig.withLabels(labels);
         final String nodeName = calcUnusedNodeName(templateName);
         setNodeNameInContainerConfig(result, nodeName);
         return result;
@@ -271,7 +281,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Restricted(NoExternalUse.class) // public for tests only
     public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName) {
-        containerConfig.getLabels().put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        final Map<String, String> existingLabels = containerConfig.getLabels();
+        final Map<String, String> labels;
+        if (existingLabels == null) {
+            labels = new HashMap<>();
+            containerConfig.withLabels(labels);
+        } else {
+            labels = existingLabels;
+        }
+        labels.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
     }
 
     /**
@@ -283,9 +301,17 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      *            {@link #fillContainerConfig(CreateContainerCmd)}.
      * @return The name that {@link Node#getNodeName()} should return for the
      *         node for the container that will be created by this command.
+     * @throws IllegalStateException if no label was found.
      */
+    @Nonnull
     public static String getNodeNameFromContainerConfig(CreateContainerCmd containerConfig) {
-        return containerConfig.getLabels().get(DockerContainerLabelKeys.NODE_NAME);
+        final Map<String, String> labels = containerConfig.getLabels();
+        final String result = labels == null ? null : labels.get(DockerContainerLabelKeys.NODE_NAME);
+        if (result == null) {
+            throw new IllegalStateException("Internal Error: containerConfig does not have a label "
+                    + DockerContainerLabelKeys.NODE_NAME + " set");
+        }
+        return result;
     }
 
     // --
@@ -812,7 +838,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
             List<NodePropertyDescriptor> result = new ArrayList<>();
             Collection<NodePropertyDescriptor> list =
-                    (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
+                    Jenkins.getInstance().getDescriptorList(NodeProperty.class);
             for (NodePropertyDescriptor npd : DescriptorVisibilityFilter.applyType(DockerTransientNode.class, list)) {
                 if (npd.isApplicable(DockerTransientNode.class)) {
                     result.add(npd);
