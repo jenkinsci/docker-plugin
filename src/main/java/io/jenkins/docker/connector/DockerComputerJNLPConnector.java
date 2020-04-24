@@ -1,6 +1,9 @@
 package io.jenkins.docker.connector;
 
 import static com.nirima.jenkins.plugins.docker.DockerTemplateBase.splitAndFilterEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
@@ -141,6 +144,17 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         return Arrays.equals(entryPointArguments, other.entryPointArguments)
                 && Objects.equals(jenkinsUrl, other.jenkinsUrl) && Objects.equals(jnlpLauncher, other.jnlpLauncher)
                 && Objects.equals(user, other.user);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = startToString(this);
+        bldToString(sb, "user", user);
+        bldToString(sb, "jnlpLauncher", jnlpLauncher);
+        bldToString(sb, "jenkinsUrl", jenkinsUrl);
+        bldToString(sb, "entryPointArguments", entryPointArguments);
+        endToString(sb);
+        return sb.toString();
     }
 
     @Override

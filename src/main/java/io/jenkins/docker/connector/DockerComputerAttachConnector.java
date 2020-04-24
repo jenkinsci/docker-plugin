@@ -1,6 +1,9 @@
 package io.jenkins.docker.connector;
 
 import static com.nirima.jenkins.plugins.docker.DockerTemplateBase.splitAndFilterEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -161,6 +164,17 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         DockerComputerAttachConnector other = (DockerComputerAttachConnector) obj;
         return Arrays.equals(entryPointCmd, other.entryPointCmd) && Objects.equals(javaExe, other.javaExe)
                 && Arrays.equals(jvmArgs, other.jvmArgs) && Objects.equals(user, other.user);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = startToString(this);
+        bldToString(sb, "user", user);
+        bldToString(sb, "javaExe", javaExe);
+        bldToString(sb, "jvmArgs", jvmArgs);
+        bldToString(sb, "entryPointCmd", entryPointCmd);
+        endToString(sb);
+        return sb.toString();
     }
 
     @Override

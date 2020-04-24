@@ -45,6 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
@@ -800,13 +803,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DockerTemplateBase that = (DockerTemplateBase) o;
+        // Maintenance note: This should include all non-transient fields.
+        // Fields that are "usually unique" should go first.
+        // Primitive fields should be tested before objects.
+        // Computationally-expensive fields get tested last.
+        // Note: If modifying this code, remember to update hashCode() and toString()
         if (bindAllPorts != that.bindAllPorts) return false;
         if (privileged != that.privileged) return false;
         if (tty != that.tty) return false;
         if (!image.equals(that.image)) return false;
         if (pullCredentialsId != null ? !pullCredentialsId.equals(that.pullCredentialsId) : that.pullCredentialsId != null)
             return false;
-        if (registry != null ? !registry.equals(that.registry) : that.registry != null) return false;
         if (dockerCommand != null ? !dockerCommand.equals(that.dockerCommand) : that.dockerCommand != null)
             return false;
         if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
@@ -816,6 +823,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (network != null ? !network.equals(that.network) : that.network != null) return false;
         if (!Arrays.equals(volumes, that.volumes)) return false;
         if (!Arrays.equals(volumesFrom2, that.volumesFrom2)) return false;
+        if (!Arrays.equals(devices, that.devices)) return false;
         if (!Arrays.equals(environment, that.environment)) return false;
         if (bindPorts != null ? !bindPorts.equals(that.bindPorts) : that.bindPorts != null) return false;
         if (memoryLimit != null ? !memoryLimit.equals(that.memoryLimit) : that.memoryLimit != null) return false;
@@ -833,9 +841,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @Override
     public int hashCode() {
+        // Maintenance node: This should list all the fields from the equals method,
+        // preferably in the same order.
+        // Note: If modifying this code, remember to update equals() and toString()
         int result = image.hashCode();
         result = 31 * result + (pullCredentialsId != null ? pullCredentialsId.hashCode() : 0);
-        result = 31 * result + (registry != null ? registry.hashCode() : 0);
         result = 31 * result + (dockerCommand != null ? dockerCommand.hashCode() : 0);
         result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
         result = 31 * result + (user != null ? user.hashCode() : 0);
@@ -844,6 +854,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (network != null ? network.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(volumes);
         result = 31 * result + Arrays.hashCode(volumesFrom2);
+        result = 31 * result + Arrays.hashCode(devices);
         result = 31 * result + Arrays.hashCode(environment);
         result = 31 * result + (bindPorts != null ? bindPorts.hashCode() : 0);
         result = 31 * result + (bindAllPorts ? 1 : 0);
@@ -864,34 +875,37 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("DockerTemplateBase{");
-        sb.append("image='").append(image).append('\'');
-        sb.append(", pullCredentialsId='").append(pullCredentialsId).append('\'');
-        sb.append(", registry=").append(registry);
-        sb.append(", dockerCommand='").append(dockerCommand).append('\'');
-        sb.append(", hostname='").append(hostname).append('\'');
-        sb.append(", user='").append(user).append('\'');
-        sb.append(", extraGroups=").append(extraGroups);
-        sb.append(", dnsHosts=").append(Arrays.toString(dnsHosts));
-        sb.append(", network='").append(network).append('\'');
-        sb.append(", volumes=").append(Arrays.toString(volumes));
-        sb.append(", volumesFrom2=").append(Arrays.toString(volumesFrom2));
-        sb.append(", environment=").append(Arrays.toString(environment));
-        sb.append(", bindPorts='").append(bindPorts).append('\'');
-        sb.append(", bindAllPorts=").append(bindAllPorts);
-        sb.append(", memoryLimit=").append(memoryLimit);
-        sb.append(", memorySwap=").append(memorySwap);
-        sb.append(", cpuShares=").append(cpuShares);
-        sb.append(", shmSize=").append(shmSize);
-        sb.append(", privileged=").append(privileged);
-        sb.append(", securityOpts=").append(securityOpts);
-        sb.append(", capabilitiesToAdd=").append(capabilitiesToAdd);
-        sb.append(", capabilitiesToDrop=").append(capabilitiesToDrop);
-        sb.append(", tty=").append(tty);
-        sb.append(", macAddress='").append(macAddress).append('\'');
-        sb.append(", extraHosts=").append(extraHosts);
-        sb.append(", extraDockerLabels=").append(extraDockerLabels);
-        sb.append('}');
+        final StringBuilder sb = startToString(this);
+        // Maintenance node: This should list all the data we use in the equals()
+        // method, but in the order the fields are declared in the class.
+        // Note: If modifying this code, remember to update hashCode() and toString()
+        bldToString(sb, "image", image);
+        bldToString(sb, "pullCredentialsId", pullCredentialsId);
+        bldToString(sb, "dockerCommand", dockerCommand);
+        bldToString(sb, "hostname", hostname);
+        bldToString(sb, "user", user);
+        bldToString(sb, "extraGroups", extraGroups);
+        bldToString(sb, "dnsHosts", dnsHosts);
+        bldToString(sb, "network'", network);
+        bldToString(sb, "volumes", volumes);
+        bldToString(sb, "volumesFrom2", volumesFrom2);
+        bldToString(sb, "devices", devices);
+        bldToString(sb, "environment", environment);
+        bldToString(sb, "bindPorts'", bindPorts);
+        bldToString(sb, "bindAllPorts", bindAllPorts);
+        bldToString(sb, "memoryLimit", memoryLimit);
+        bldToString(sb, "memorySwap", memorySwap);
+        bldToString(sb, "cpuShares", cpuShares);
+        bldToString(sb, "shmSize", shmSize);
+        bldToString(sb, "privileged", privileged);
+        bldToString(sb, "tty", tty);
+        bldToString(sb, "macAddress'", macAddress);
+        bldToString(sb, "extraHosts", extraHosts);
+        bldToString(sb, "securityOpts", securityOpts);
+        bldToString(sb, "capabilitiesToAdd", capabilitiesToAdd);
+        bldToString(sb, "capabilitiesToDrop", capabilitiesToDrop);
+        bldToString(sb, "extraDockerLabels", extraDockerLabels);
+        endToString(sb);
         return sb.toString();
     }
 

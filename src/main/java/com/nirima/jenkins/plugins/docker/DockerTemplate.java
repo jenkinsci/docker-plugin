@@ -9,7 +9,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.command.PullImageResultCallback;
-import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
@@ -52,8 +51,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 public class DockerTemplate implements Describable<DockerTemplate> {
     /**
@@ -491,70 +494,86 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DockerTemplate template = (DockerTemplate) o;
-
-        if (configVersion != template.configVersion) return false;
-        if (instanceCap != template.instanceCap) return false;
-        if (removeVolumes != template.removeVolumes) return false;
-        if (stopTimeout != template.stopTimeout) return false;
-        if (!labelString.equals(template.labelString)) return false;
-        if (!connector.equals(template.connector)) return false;
-        if (!remoteFs.equals(template.remoteFs)) return false;
-        if (mode != template.mode) return false;
-        if (!retentionStrategy.equals(template.retentionStrategy)) return false;
-        if (!dockerTemplateBase.equals(template.dockerTemplateBase)) return false;
-        if (!pullStrategy.equals(template.pullStrategy)) return false;
-        if (!nodeProperties.equals(template.nodeProperties)) return false;
-        if (!getDisabled().equals(template.getDisabled())) return false;
-        return dockerTemplateBase.equals(template.dockerTemplateBase);
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final DockerTemplate other = (DockerTemplate) obj;
+        // Maintenance note: This should include all non-transient fields.
+        // Fields that are "usually unique" should go first.
+        // Primitive fields should be tested before objects.
+        // Computationally-expensive fields get tested last.
+        // Note: If modifying this code, remember to update hashCode() and toString()
+        return Objects.equals(name, other.name)
+                && Objects.equals(labelString, other.labelString)
+                && configVersion == other.configVersion
+                && instanceCap == other.instanceCap
+                && mode == other.mode
+                && pullTimeout == other.pullTimeout
+                && removeVolumes == other.removeVolumes
+                && stopTimeout == other.stopTimeout
+                && Objects.equals(connector, other.connector)
+                && Objects.equals(remoteFs, other.remoteFs)
+                && Objects.equals(dockerTemplateBase, other.dockerTemplateBase)
+                && Objects.equals(retentionStrategy, other.retentionStrategy)
+                && Objects.equals(getNodeProperties(), other.getNodeProperties())
+                && getPullStrategy() == other.getPullStrategy()
+                && Objects.equals(getDisabled(), other.getDisabled());
     }
 
     @Override
     public int hashCode() {
-        int result = configVersion;
-        result = 31 * result + labelString.hashCode();
-        result = 31 * result + connector.hashCode();
-        result = 31 * result + remoteFs.hashCode();
-        result = 31 * result + instanceCap;
-        result = 31 * result + mode.hashCode();
-        result = 31 * result + retentionStrategy.hashCode();
-        result = 31 * result + dockerTemplateBase.hashCode();
-        result = 31 * result + (removeVolumes ? 1 : 0);
-        result = 31 * result + stopTimeout;
-        result = 31 * result + labelSet.hashCode();
-        result = 31 * result + pullStrategy.hashCode();
-        result = 31 * result + nodeProperties.hashCode();
-        result = 31 * result + getDisabled().hashCode();
-        return result;
+        // Maintenance node: This should list all the fields from the equals method,
+        // preferably in the same order.
+        // Note: If modifying this code, remember to update equals() and toString()
+        return Objects.hash(
+                name,
+                labelString,
+                configVersion,
+                instanceCap,
+                mode,
+                pullTimeout,
+                removeVolumes,
+                stopTimeout,
+                connector,
+                remoteFs,
+                dockerTemplateBase,
+                retentionStrategy,
+                getNodeProperties(),
+                getPullStrategy(),
+                getDisabled());
     }
 
     @Override
     public String toString() {
-        return "DockerTemplate{" +
-                "configVersion=" + configVersion +
-                ", labelString='" + labelString + '\'' +
-                ", connector=" + connector +
-                ", remoteFs='" + remoteFs + '\'' +
-                ", instanceCap=" + instanceCap +
-                ", mode=" + mode +
-                ", retentionStrategy=" + retentionStrategy +
-                ", dockerTemplateBase=" + dockerTemplateBase +
-                ", stopTimeout=" + stopTimeout +
-                ", removeVolumes=" + removeVolumes +
-                ", pullStrategy=" + pullStrategy +
-                ", nodeProperties=" + nodeProperties +
-                ", disabled=" + disabled +
-                '}';
+        // Maintenance node: This should list all the data we use in the equals()
+        // method, but in the order the fields are declared in the class.
+        // Note: If modifying this code, remember to update hashCode() and toString()
+        final StringBuilder sb = startToString(this);
+        bldToString(sb, "configVersion", configVersion);
+        bldToString(sb, "labelString", labelString);
+        bldToString(sb, "connector", connector);
+        bldToString(sb, "remoteFs", remoteFs);
+        bldToString(sb, "instanceCap", instanceCap);
+        bldToString(sb, "mode", mode);
+        bldToString(sb, "retentionStrategy", retentionStrategy);
+        bldToString(sb, "dockerTemplateBase", dockerTemplateBase);
+        bldToString(sb, "removeVolumes", removeVolumes);
+        bldToString(sb, "stopTimeout", stopTimeout);
+        bldToString(sb, "pullStrategy", getPullStrategy());
+        bldToString(sb, "pullTimeout", pullTimeout);
+        bldToString(sb, "nodeProperties", getNodeProperties());
+        bldToString(sb, "disabled", getDisabled());
+        bldToString(sb, "name", name);
+        endToString(sb);
+        return sb.toString();
     }
 
     public String getShortDescription() {
-        return Objects.toStringHelper(this)
-                .add("image", dockerTemplateBase.getImage())
-                .toString();
+        return "DockerTemplate{image=" + dockerTemplateBase.getImage() + "}";
     }
 
     @Override
