@@ -33,7 +33,7 @@ public class DockerRegistry  implements Describable<DockerRegistry> {
 
     @Override
     public Descriptor<DockerRegistry> getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
+        return Jenkins.getInstance().getDescriptor(getClass());
     }
 
     private Object readResolve() {
