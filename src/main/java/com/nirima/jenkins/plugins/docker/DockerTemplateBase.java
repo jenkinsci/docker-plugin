@@ -835,6 +835,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * container we make, so that we can recognize our own containers later.
      */
     @Nonnull
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "It can be null during unit tests.")
     static String getJenkinsUrlForContainerLabel() {
         final Jenkins jenkins = Jenkins.getInstance();
         // Note: While Jenkins.getInstance() claims to be @Nonnull it can
