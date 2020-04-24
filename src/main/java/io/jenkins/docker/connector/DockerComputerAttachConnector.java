@@ -191,6 +191,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         }
     }
 
+    private static final String DEFAULT_JAVA_EXE = "java";
+    private static final String DEFAULT_JVM_ARGS = "";
     private static final String DEFAULT_ENTRY_POINT_CMD_STRING = "${" + ArgumentVariables.JavaExe.getName() + "}\n"
             + "${" + ArgumentVariables.JvmArgs.getName() + "}\n"
             + "-jar\n"
@@ -209,11 +211,15 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     public static class DescriptorImpl extends Descriptor<DockerComputerConnector> {
 
         public String getDefaultJavaExe() {
-            return "java";
+            return DEFAULT_JAVA_EXE;
         }
 
         public String getJavaExeVariableName() {
             return ArgumentVariables.JavaExe.getName();
+        }
+
+        public String getDefaultJvmArgs() {
+            return DEFAULT_JVM_ARGS;
         }
 
         public String getJvmArgsVariableName() {
@@ -258,8 +264,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         public void launch(final SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
             final PrintStream logger = computer.getListener().getLogger();
             final String jenkinsUrl = Jenkins.getInstance().getRootUrl();
-            final String effectiveJavaExe = StringUtils.isNotBlank(javaExeOrNull) ? javaExeOrNull : "java";
-            final String effectiveJvmArgs = StringUtils.isNotBlank(jvmArgsOrEmpty) ? jvmArgsOrEmpty : "" ;
+            final String effectiveJavaExe = StringUtils.isNotBlank(javaExeOrNull) ? javaExeOrNull : DEFAULT_JAVA_EXE;
+            final String effectiveJvmArgs = StringUtils.isNotBlank(jvmArgsOrEmpty) ? jvmArgsOrEmpty : DEFAULT_JVM_ARGS ;
             final EnvVars knownVariables = calculateVariablesForVariableSubstitution(effectiveJavaExe, effectiveJvmArgs, remoting.getName(), remoteFs, jenkinsUrl);
             final String effectiveEntryPointCmdString = StringUtils.isNotBlank(entryPointCmdOrEmpty) ? entryPointCmdOrEmpty : DEFAULT_ENTRY_POINT_CMD_STRING;
             final String resolvedEntryPointCmdString = Util.replaceMacro(effectiveEntryPointCmdString, knownVariables);
@@ -360,7 +366,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
             return knownVariables;
         }
 
-        private String readLine(InputStream in) throws IOException {
+        private static String readLine(InputStream in) throws IOException {
             StringBuilder s = new StringBuilder();
             int c;
             while((c = in.read()) > 0) {
