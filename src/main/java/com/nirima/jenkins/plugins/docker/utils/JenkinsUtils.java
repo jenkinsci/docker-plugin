@@ -110,7 +110,7 @@ public class JenkinsUtils {
                 _id = Util.getDigestOf(new ByteArrayInputStream(InstanceIdentity.get().getPublic().getEncoded()));
             }
         } catch (IOException e) {
-            LOG.error("Could not get Jenkins instance ID.");
+            LOG.error("Could not get Jenkins instance ID.", e);
             _id = "";
         }
         return _id;

@@ -47,7 +47,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
         try {
             remoting = Which.jarFile(Channel.class);
         } catch (IOException e) {
-            throw new InitializationException("Failed to resolve path to remoting.jar");
+            throw new InitializationException("Failed to resolve path to remoting.jar", e);
         }
     }
 

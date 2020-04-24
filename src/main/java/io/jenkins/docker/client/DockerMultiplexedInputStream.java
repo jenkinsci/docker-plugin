@@ -3,6 +3,7 @@ package io.jenkins.docker.client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,7 @@ public class DockerMultiplexedInputStream extends InputStream {
                                 new String(payload, 0, received, StandardCharsets.UTF_8));
                     break;
                 default:
-                    throw new IOException("Unexpected application/vnd.docker.raw-stream frame type " + header);
+                    throw new IOException("Unexpected application/vnd.docker.raw-stream frame type " + Arrays.toString(header));
             }
         }
     }

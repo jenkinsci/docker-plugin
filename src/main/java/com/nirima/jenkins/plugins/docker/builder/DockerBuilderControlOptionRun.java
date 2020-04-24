@@ -181,13 +181,14 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         getLaunchAction(build).started(client, containerId);
     }
 
-    private String expand(Run<?, ?> build, String text) {
+    @SuppressWarnings("unused")
+    private static String expand(Run<?, ?> build, String text) {
         try {
             if (build instanceof AbstractBuild && !Strings.isNullOrEmpty(text)) {
-                text = TokenMacro.expandAll((AbstractBuild) build, TaskListener.NULL, text);
+                return TokenMacro.expandAll((AbstractBuild) build, TaskListener.NULL, text);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.info("Unable to expand variables in text {}", text);
         }
         return text;
     }

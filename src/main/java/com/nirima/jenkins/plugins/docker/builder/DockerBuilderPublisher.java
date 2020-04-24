@@ -328,7 +328,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
                 try {
                     cleanImages(imageId);
                 } catch (Exception ex) {
-                    log("Error attempting to clean images");
+                    log("Error attempting to clean images", ex);
                 }
             }
             log("Docker Build Done");
@@ -388,6 +388,15 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             listener.getLogger().println(s);
         }
 
+        protected void log(Throwable ex) {
+            ex.printStackTrace(listener.getLogger());
+        }
+
+        protected void log(String s, Throwable ex) {
+            log(s);
+            log(ex);
+        }
+
         private void pushImages() throws IOException {
             for (String tagToUse : tagsToUse) {
                 Identifier identifier = Identifier.fromCompoundString(tagToUse);
@@ -439,6 +448,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             expandedDockerFileDirectory = TokenMacro.expandAll(run, workspace, listener, this.dockerFileDirectory);
         } catch (MacroEvaluationException e) {
             listener.getLogger().println("Couldn't macro expand docker file directory " + dockerFileDirectory);
+            e.printStackTrace(listener.getLogger());
         }
         new Run(run, launcher, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, getDockerAPI(launcher)).run();
     }
@@ -455,6 +465,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
                 eTags.add(TokenMacro.expandAll(build, workspace, listener, tag));
             } catch (MacroEvaluationException | IOException | InterruptedException e) {
                 listener.getLogger().println("Couldn't macro expand tag " + tag);
+                e.printStackTrace(listener.getLogger());
             }
         }
         return eTags;
