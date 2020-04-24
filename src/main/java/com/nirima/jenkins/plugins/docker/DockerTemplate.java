@@ -835,11 +835,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         /**
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
          */
+        @SuppressWarnings("cast")
         public List<NodePropertyDescriptor> getNodePropertiesDescriptors() {
             // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
             List<NodePropertyDescriptor> result = new ArrayList<>();
             Collection<NodePropertyDescriptor> list =
-                    Jenkins.getInstance().getDescriptorList(NodeProperty.class);
+                    (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
             for (NodePropertyDescriptor npd : DescriptorVisibilityFilter.applyType(DockerTransientNode.class, list)) {
                 if (npd.isApplicable(DockerTransientNode.class)) {
                     result.add(npd);
