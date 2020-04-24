@@ -152,7 +152,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     }
 
     @Restricted(NoExternalUse.class)
-    public enum ArgumentVariables {
+    enum ArgumentVariables {
         NodeName("NODE_NAME", "The name assigned to this node"), //
         Secret("JNLP_SECRET",
                 "The secret that must be passed to slave.jar's -secret argument to pass JNLP authentication."), //
@@ -206,7 +206,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
     }
 
-    private EnvVars calculateVariablesForVariableSubstitution(final String nodeName, final String secret,
+    private static EnvVars calculateVariablesForVariableSubstitution(final String nodeName, final String secret,
             final String jnlpTunnel, final String jenkinsUrl) throws IOException, InterruptedException {
         final EnvVars knownVariables = new EnvVars();
         final Jenkins j = Jenkins.getInstance();

@@ -42,6 +42,8 @@ import org.apache.commons.lang.Validate;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -226,7 +228,9 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         this.pull = pull;
     }
 
-    public static void verifyTags(String tagsString) {
+    // package access for test purposes
+    @Restricted(NoExternalUse.class)
+    static void verifyTags(String tagsString) {
         final List<String> verifyTags = splitAndTrimFilterEmptyList(tagsString, "\n");
         for (String verifyTag : verifyTags) {
             // Our strings are subjected to variable substitution before they are used, so ${foo} might be valid.
@@ -270,17 +274,15 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         return theCloud.getDockerApi();
     }
 
-    class Run {
-        final Launcher launcher;
-        final TaskListener listener;
-        final FilePath fpChild;
-        final List<String> tagsToUse;
+    private class Run {
+        private final TaskListener listener;
+        private final FilePath fpChild;
+        private final List<String> tagsToUse;
         private final DockerAPI dockerApi;
-        final hudson.model.Run<?, ?> run;
+        private final hudson.model.Run<?, ?> run;
 
         private Run(hudson.model.Run<?, ?> run, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerAPI dockerApi) {
             this.run = run;
-            this.launcher = launcher;
             this.listener = listener;
             this.fpChild = fpChild;
             this.tagsToUse = tagsToUse;
@@ -442,7 +444,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
 
     @Override
     public void perform(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
-        final List<String> expandedTags = expandTags(run, workspace, launcher, listener);
+        final List<String> expandedTags = expandTags(run, workspace, listener);
         String expandedDockerFileDirectory = dockerFileDirectory;
         try {
             expandedDockerFileDirectory = TokenMacro.expandAll(run, workspace, listener, this.dockerFileDirectory);
@@ -450,7 +452,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             listener.getLogger().println("Couldn't macro expand docker file directory " + dockerFileDirectory);
             e.printStackTrace(listener.getLogger());
         }
-        new Run(run, launcher, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, getDockerAPI(launcher)).run();
+        new Run(run, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, getDockerAPI(launcher)).run();
     }
 
     @Override
@@ -458,7 +460,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         return (DescriptorImpl) super.getDescriptor();
     }
 
-    private List<String> expandTags(hudson.model.Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) {
+    private List<String> expandTags(hudson.model.Run<?, ?> build, FilePath workspace, TaskListener listener) {
         List<String> eTags = new ArrayList<>(tags.size());
         for (String tag : tags) {
             try {

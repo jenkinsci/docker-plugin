@@ -322,7 +322,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
 
-    private InetSocketAddress getBindingForPort(DockerAPI api, InspectContainerResponse ir, int internalPort) {
+    private static InetSocketAddress getBindingForPort(DockerAPI api, InspectContainerResponse ir, int internalPort) {
         // get exposed port
         ExposedPort sshPort = new ExposedPort(internalPort);
         Integer port = 22;
@@ -340,7 +340,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         return new InetSocketAddress(host, port);
     }
 
-    private String getExternalIP(DockerAPI api, InspectContainerResponse ir, NetworkSettings networkSettings,
+    private static String getExternalIP(DockerAPI api, InspectContainerResponse ir, NetworkSettings networkSettings,
                                  Ports.Binding[] sshBindings) {
         // If an explicit IP/hostname has been defined, always prefer this one
         String dockerHostname = api.getHostname();

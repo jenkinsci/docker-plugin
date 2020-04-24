@@ -165,7 +165,7 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
         return tagToken;
     }
 
-    private void addJenkinsAction(AbstractBuild build, String dockerHost, String containerId, String tag_image) throws IOException {
+    private static void addJenkinsAction(AbstractBuild build, String dockerHost, String containerId, String tag_image) throws IOException {
         build.addAction(new DockerBuildAction(dockerHost, containerId, tag_image));
         build.save();
     }
