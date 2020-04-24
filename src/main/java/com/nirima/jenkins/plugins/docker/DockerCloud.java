@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -894,7 +895,7 @@ public class DockerCloud extends Cloud {
         // What docker-commons claim to be a "token" is actually configuration storage
         // see https://github.com/docker/docker-ce/blob/v17.09.0-ce/components/cli/cli/config/configfile/file.go#L214
         // i.e base64 encoded username : password
-        final String decode = new String(Base64.decodeBase64(token));
+        final String decode = new String(Base64.decodeBase64(token), StandardCharsets.UTF_8);
         int i = decode.indexOf(':');
         if (i > 0) {
             String username = decode.substring(0, i);
