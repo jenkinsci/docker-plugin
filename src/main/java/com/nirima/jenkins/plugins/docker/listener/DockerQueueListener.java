@@ -12,12 +12,12 @@ import hudson.model.labels.LabelAssignmentAction;
 import hudson.model.labels.LabelAtom;
 import hudson.model.queue.QueueListener;
 import hudson.model.queue.SubTask;
-import hudson.slaves.Cloud;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerJobProperty;
 import com.nirima.jenkins.plugins.docker.DockerJobTemplateProperty;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.util.UUID;
 
@@ -33,11 +33,11 @@ public class DockerQueueListener extends QueueListener {
     public void onEnterWaiting(WaitingItem wi) {
         final DockerJobTemplateProperty jobTemplate = getJobTemplate(wi);
         if (jobTemplate != null) {
-            final Cloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
-            if (cloud instanceof DockerCloud) {
+            final DockerCloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
+            if (cloud != null) {
                 final String uuid = UUID.randomUUID().toString();
                 final DockerTemplate template = jobTemplate.getTemplate().cloneWithLabel(uuid);
-                ((DockerCloud) cloud).addJobTemplate(wi.getId(), template);
+                cloud.addJobTemplate(wi.getId(), template);
                 wi.addAction(new DockerTemplateLabelAssignmentAction(uuid));
             }
         }
@@ -47,9 +47,9 @@ public class DockerQueueListener extends QueueListener {
     public void onLeft(LeftItem li) {
         final DockerJobTemplateProperty jobTemplate = getJobTemplate(li);
         if (jobTemplate != null) {
-            final Cloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
-            if (cloud instanceof DockerCloud) {
-                ((DockerCloud) cloud).removeJobTemplate(li.getId());
+            final DockerCloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
+            if (cloud != null) {
+                cloud.removeJobTemplate(li.getId());
             }
         }
     }
@@ -60,17 +60,16 @@ public class DockerQueueListener extends QueueListener {
      * @param item Item which includes a template.
      * @return If the item includes a template then the template will be returned. Otherwise <code>null</code>.
      */
+    @CheckForNull
     private static DockerJobTemplateProperty getJobTemplate(Item item) {
         if (item.task instanceof Project) {
             final Project<?, ?> project = (Project<?, ?>) item.task;
-            if (project != null) {
-                final DockerJobTemplateProperty p = project.getProperty(DockerJobTemplateProperty.class);
-                if (p != null) return p;
-                // backward compatibility. DockerJobTemplateProperty used to be a nested object in DockerJobProperty
-                final DockerJobProperty property = project.getProperty(DockerJobProperty.class);
-                if (property != null) {
-                    return property.getDockerJobTemplate();
-                }
+            final DockerJobTemplateProperty p = project.getProperty(DockerJobTemplateProperty.class);
+            if (p != null) return p;
+            // backward compatibility. DockerJobTemplateProperty used to be a nested object in DockerJobProperty
+            final DockerJobProperty property = project.getProperty(DockerJobProperty.class);
+            if (property != null) {
+                return property.getDockerJobTemplate();
             }
         }
         return null;

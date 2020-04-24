@@ -93,7 +93,7 @@ public class JenkinsUtils {
     public static synchronized Collection<DockerCloud> getServers() {
         Collection clouds = Collections2.filter(Jenkins.getInstance().clouds, new Predicate<Cloud>() {
             @Override
-            public boolean apply(@Nullable Cloud input) {
+            public boolean apply(Cloud input) {
                 return input instanceof DockerCloud;
             }
         });
@@ -104,13 +104,14 @@ public class JenkinsUtils {
     public static DockerCloud getServer(final String serverName) {
         return Iterables.find(getServers(), new Predicate<DockerCloud>() {
             @Override
-            public boolean apply(@Nullable DockerCloud input) {
-                return serverName.equals(input.getDisplayName());
+            public boolean apply(DockerCloud input) {
+                return input != null && serverName.equals(input.getDisplayName());
             }
         });
     }
 
     @Restricted(NoExternalUse.class)
+    @Nonnull
     public static String getInstanceId() {
         try {
             if (_id == null) {

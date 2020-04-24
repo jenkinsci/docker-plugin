@@ -308,10 +308,6 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         boolean run() throws IOException, InterruptedException {
             log("Docker Build");
             final String imageId = buildImage();
-            // The ID of the image we just generated
-            if (imageId == null) {
-                return false;
-            }
             log("Docker Build Response : " + imageId);
             // Add an action to the build
             Action action = new DockerBuildImageAction(dockerApi.getDockerHost().getUri(), imageId, tagsToUse, cleanupWithJenkinsJobDelete, pushOnSuccess, noCache, pull);
@@ -461,16 +457,23 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
     }
 
     private List<String> expandTags(hudson.model.Run<?, ?> build, FilePath workspace, TaskListener listener) {
-        List<String> eTags = new ArrayList<>(tags.size());
-        for (String tag : tags) {
-            try {
-                eTags.add(TokenMacro.expandAll(build, workspace, listener, tag));
-            } catch (MacroEvaluationException | IOException | InterruptedException e) {
-                listener.getLogger().println("Couldn't macro expand tag " + tag);
-                e.printStackTrace(listener.getLogger());
+        final List<String> tagsOrNull = getTags();
+        final List<String> result;
+        if (tagsOrNull == null) {
+            result = new ArrayList<>(0);
+        } else {
+            result = new ArrayList<>(tagsOrNull.size());
+            for (final String thisTag : tagsOrNull) {
+                try {
+                    final String expandedTag = TokenMacro.expandAll(build, workspace, listener, thisTag);
+                    result.add(expandedTag);
+                } catch (MacroEvaluationException | IOException | InterruptedException e) {
+                    listener.getLogger().println("Couldn't macro expand tag " + thisTag);
+                    e.printStackTrace(listener.getLogger());
+                }
             }
         }
-        return eTags;
+        return result;
     }
 
     @Extension

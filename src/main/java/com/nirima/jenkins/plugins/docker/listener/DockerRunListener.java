@@ -26,8 +26,11 @@ public class DockerRunListener extends RunListener<Run<?,?>> {
     public void onStarted(Run<?, ?> run, TaskListener listener) {
         final Computer computer = Computer.currentComputer();
         if (computer instanceof DockerComputer) {
-            final DockerTransientNode node = ((DockerComputer) computer).getNode();
-            run.addAction(new DockerBuildAction(node));
+            final DockerComputer dockerComputer = (DockerComputer) computer;
+            final DockerTransientNode node = dockerComputer.getNode();
+            if (node != null) {
+                run.addAction(new DockerBuildAction(node));
+            }
         }
     }
 
