@@ -32,6 +32,7 @@ import java.io.PrintStream;
  * @author magnayn
  */
 public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOption {
+    private static final long serialVersionUID = -3444073364874467342L;
     private static final Logger LOG = LoggerFactory.getLogger(DockerBuilderControlOptionRun.class);
 
     public final String image;

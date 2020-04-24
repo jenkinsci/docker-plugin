@@ -21,10 +21,14 @@ import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -32,22 +36,67 @@ import java.util.concurrent.CompletableFuture;
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 class DockerNodeStepExecution extends StepExecution {
+    private static final long serialVersionUID = 1959552800000929329L;
+
+    /**
+     * Default <code>connector</code> used by
+     * {@link #DockerNodeStepExecution(StepContext, DockerComputerConnector, String, String, String, String)}
+     * if null was provided.
+     */
+    @Restricted(NoExternalUse.class)
+    static final DockerComputerConnector DEFAULT_CONNECTOR = new DockerComputerAttachConnector();
+
     private final String dockerHost;
     private final String credentialsId;
     private final String image;
     private final String remoteFs;
     /** The {@link DockerComputerConnector} ... which has to be {@link Serializable} too (not all are) */
-    private final DockerComputerConnector connector;
+    private final Serializable connector;
     private transient volatile CompletableFuture<DockerTransientNode> task;
     private volatile String nodeName;
 
-    public DockerNodeStepExecution(StepContext context, DockerComputerConnector connector, String dockerHost, String credentialsId, String image, String remoteFs) {
+    public DockerNodeStepExecution(StepContext context, @Nullable DockerComputerConnector connector, String dockerHost, String credentialsId, String image, String remoteFs) {
         super(context);
-        this.connector = connector != null ? connector : new DockerComputerAttachConnector();
+        if( connector!=null ) {
+            assertIsSerializableDockerComputerConnector(connector);
+            this.connector = (Serializable) connector;
+        } else {
+            assertIsSerializableDockerComputerConnector(DEFAULT_CONNECTOR);
+            this.connector = (Serializable) DEFAULT_CONNECTOR;
+        }
         this.dockerHost = dockerHost;
         this.credentialsId = credentialsId;
         this.image = image;
         this.remoteFs = remoteFs;
+    }
+
+    /**
+     * @throws IllegalArgumentException if given anything other than a
+     *                                  {@link DockerComputerConnector} that is also
+     *                                  {@link Serializable}.
+     */
+    @Restricted(NoExternalUse.class)
+    static void assertIsSerializableDockerComputerConnector(Object connector) {
+        final String whatUserTried = connector.toString();
+        final Class<? extends Object> clazz = connector.getClass();
+        final String msg = getReasonWhyThisIsNotASerializableDockerComputerConnector(whatUserTried, clazz);
+        if (msg != null) {
+            throw new IllegalArgumentException(msg);
+        }
+    }
+
+    @Restricted(NoExternalUse.class)
+    static String getReasonWhyThisIsNotASerializableDockerComputerConnector(final String whatUserTried,
+            final Class<? extends Object> clazz) {
+        final boolean extendsOk = DockerComputerConnector.class.isAssignableFrom(clazz);
+        final boolean implementsOk = Serializable.class.isAssignableFrom(clazz);
+        if (extendsOk && implementsOk) {
+            return null;
+        }
+        final String msg = whatUserTried + " is not valid."
+                + (extendsOk ? "" : (" It does not extend " + DockerComputerConnector.class.getCanonicalName() + "."))
+                + (implementsOk ? "" : (" It does not implement " + Serializable.class.getCanonicalName() + "."));
+        return msg;
     }
 
     @Override
@@ -75,7 +124,7 @@ class DockerNodeStepExecution extends StepExecution {
         final String uuid = UUID.randomUUID().toString();
         final DockerTemplate t = new DockerTemplate(
                 new DockerTemplateBase(image),
-                connector,
+                (DockerComputerConnector) connector,
                 uuid, remoteFs, "1");
         t.setMode(Node.Mode.EXCLUSIVE);
 

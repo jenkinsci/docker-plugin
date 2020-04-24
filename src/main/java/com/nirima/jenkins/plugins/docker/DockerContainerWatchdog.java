@@ -109,8 +109,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      */
 
     private static class WatchdogProcessingTimeout extends Error {
-        private static final long serialVersionUID = 2162341066478288340L;
-
         public WatchdogProcessingTimeout() {
             super();
         }
@@ -221,8 +219,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private class ContainersRetrievalException extends Exception {
-        private static final long serialVersionUID = -3370783213009509440L;
-
         public ContainersRetrievalException(Throwable cause) {
             super(cause);
         }
@@ -375,16 +371,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private static class TerminationException extends Exception {
-        private static final long serialVersionUID = -7259431101547222511L;
-
         public TerminationException(String message) {
             super(message);
         }
     }
 
     private static class ContainerIsTaintedException extends Exception {
-        private static final long serialVersionUID = -8500246547989418166L;
-
         public ContainerIsTaintedException(String message) {
             super(message);
         }

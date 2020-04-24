@@ -1,11 +1,14 @@
 package io.jenkins.docker.pipeline;
 
 import com.google.common.collect.ImmutableSet;
+
+import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.Computer;
+import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -25,6 +28,9 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -78,13 +84,22 @@ public class DockerNodeStep extends Step {
         this.remoteFs = Util.fixEmpty(remoteFs);
     }
 
-    public DockerComputerConnector getConnector() {
-        return connector;
+    public <T extends DockerComputerConnector & Serializable> T getConnector() {
+        if (connector == null) {
+            return null;
+        }
+        DockerNodeStepExecution.assertIsSerializableDockerComputerConnector(connector);
+        return (T) connector;
     }
 
     @DataBoundSetter
     public void setConnector(DockerComputerConnector connector) {
-        this.connector = connector;
+        if (connector == null || connector.equals(DockerNodeStepExecution.DEFAULT_CONNECTOR)) {
+            this.connector = null;
+        } else {
+            DockerNodeStepExecution.assertIsSerializableDockerComputerConnector(connector);
+            this.connector = connector;
+        }
     }
 
     @Override
@@ -122,6 +137,22 @@ public class DockerNodeStep extends Step {
         @Override public Set<? extends Class<?>> getProvidedContext() {
             // TODO can/should we provide Executor? We cannot access Executor.start(WorkUnit) from outside the package. cf. isAcceptingTasks, withContexts
             return ImmutableSet.of(Computer.class, FilePath.class, /* DefaultStepContext infers from Computer: */ Node.class, Launcher.class);
+        }
+
+        public List<Descriptor<? extends DockerComputerConnector>> getAcceptableConnectorDescriptors() {
+            final List<Descriptor<? extends DockerComputerConnector>> result = new ArrayList<>();
+            final DescriptorExtensionList<DockerComputerConnector, Descriptor<DockerComputerConnector>> all = DockerComputerConnector.all();
+            // Note: Not all DockerComputerConnector classes are suitable
+            // We have to filter the list so the user doesn't select one that isn't ok.
+            for (final Descriptor<? extends DockerComputerConnector> connectorDescriptor : all) {
+                final Class<? extends DockerComputerConnector> connectorClass = connectorDescriptor.getKlass().toJavaClass();
+                final String reason = DockerNodeStepExecution.getReasonWhyThisIsNotASerializableDockerComputerConnector(
+                        connectorClass.toGenericString(), connectorClass);
+                if (reason == null) {
+                    result.add(connectorDescriptor);
+                }
+            }
+            return result;
         }
     }
 }

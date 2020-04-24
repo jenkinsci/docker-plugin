@@ -17,14 +17,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.Serializable;
 
 /**
  * Builder that adds template to all clouds.
  *
  * @author Jocelyn De La Rosa
  */
-public class DockerBuilderNewTemplate extends Builder implements Serializable {
+public class DockerBuilderNewTemplate extends Builder {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderNewTemplate.class);
 
     private DockerTemplate dockerTemplate;

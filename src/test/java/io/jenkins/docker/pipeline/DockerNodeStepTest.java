@@ -27,6 +27,7 @@ package io.jenkins.docker.pipeline;
 import com.google.common.collect.ImmutableSet;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.FilePath;
+import hudson.model.Descriptor;
 import hudson.model.DownloadService;
 import hudson.model.Node;
 import hudson.model.Slave;
@@ -36,6 +37,9 @@ import hudson.tasks.Maven;
 import hudson.tools.DownloadFromUrlInstaller;
 import hudson.tools.InstallSourceProperty;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.connector.DockerComputerAttachConnector;
+import io.jenkins.docker.connector.DockerComputerConnector;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang3.SystemUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -61,7 +65,9 @@ import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.structs.describable.DescribableModel;
@@ -302,6 +308,29 @@ public class DockerNodeStepTest {
                         "}\n", true));
                 WorkflowRun r = story.j.buildAndAssertSuccess(j);
                 story.j.assertLogContains("Successfully built", r);
+            }
+        });
+    }
+
+    @Test
+    public void getAcceptableConnectorDescriptors() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                // Given
+                final Jenkins jenkins = story.j.getInstance();
+                final Descriptor ourDesc = jenkins.getDescriptor(DockerNodeStep.class);
+                final Descriptor expectedDesc = jenkins.getDescriptor(DockerComputerAttachConnector.class);
+                final DockerNodeStep.DescriptorImpl ourInstance = (DockerNodeStep.DescriptorImpl) ourDesc;
+                final DockerComputerAttachConnector.DescriptorImpl attachDescriptor = (DockerComputerAttachConnector.DescriptorImpl) expectedDesc;
+                final List<Descriptor<? extends DockerComputerConnector>> expected = new ArrayList<>();
+                expected.add(attachDescriptor);
+
+                // When
+                final List<Descriptor<? extends DockerComputerConnector>> actual = ourInstance.getAcceptableConnectorDescriptors();
+
+                // Then
+                assertEquals(expected, actual);
             }
         });
     }

@@ -54,7 +54,6 @@ import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +67,7 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
  * Builder extension to build / publish an image from a Dockerfile.
  * TODO automatic migration to https://wiki.jenkins.io/display/JENKINS/CloudBees+Docker+Build+and+Publish+plugin
  */
-public class DockerBuilderPublisher extends Builder implements Serializable, SimpleBuildStep {
+public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderPublisher.class);
 
@@ -265,13 +264,13 @@ public class DockerBuilderPublisher extends Builder implements Serializable, Sim
         return theCloud.getDockerApi();
     }
 
-    class Run implements Serializable {
-        final transient Launcher launcher;
+    class Run {
+        final Launcher launcher;
         final TaskListener listener;
         final FilePath fpChild;
         final List<String> tagsToUse;
         private final DockerAPI dockerApi;
-        final transient hudson.model.Run<?, ?> run;
+        final hudson.model.Run<?, ?> run;
 
         private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerAPI dockerApi) {
             this.run = run;
