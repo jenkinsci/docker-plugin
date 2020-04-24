@@ -60,7 +60,7 @@ public class DockerQueueListener extends QueueListener {
      * @param item Item which includes a template.
      * @return If the item includes a template then the template will be returned. Otherwise <code>null</code>.
      */
-    private DockerJobTemplateProperty getJobTemplate(Item item) {
+    private static DockerJobTemplateProperty getJobTemplate(Item item) {
         if (item.task instanceof Project) {
             final Project<?, ?> project = (Project<?, ?>) item.task;
             if (project != null) {

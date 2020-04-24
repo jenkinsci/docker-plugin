@@ -48,7 +48,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      * @param clock the clock which shall be used from now on
      */
     @Restricted(NoExternalUse.class)
-    public void setClock(Clock clock) {
+    void setClock(Clock clock) {
         this.clock = clock;
     }
 
@@ -218,7 +218,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return csmMerged;
     }
 
-    private class ContainersRetrievalException extends Exception {
+    private static class ContainersRetrievalException extends Exception {
         public ContainersRetrievalException(Throwable cause) {
             super(cause);
         }
@@ -330,7 +330,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
     }
 
-    private boolean isStillTooYoung(Long created, Instant snapshotInstant) {
+    private static boolean isStillTooYoung(Long created, Instant snapshotInstant) {
         final Instant createdInstant = Instant.ofEpochSecond(created.longValue());
         final Duration containerLifetime = Duration.between(createdInstant, snapshotInstant);
         /*

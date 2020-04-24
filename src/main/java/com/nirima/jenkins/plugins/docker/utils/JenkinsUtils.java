@@ -39,6 +39,7 @@ import java.util.Optional;
 /**
  * Utilities to fetch things out of jenkins environment.
  */
+@Restricted(NoExternalUse.class)
 public class JenkinsUtils {
     private static final Logger LOG = LoggerFactory.getLogger(JenkinsUtils.class);
     private static String _id;
@@ -46,6 +47,7 @@ public class JenkinsUtils {
     /**
      * If the build was on a cloud, get the ID of that cloud.
      */
+    @Restricted(NoExternalUse.class)
     public static Optional<DockerCloud> getCloudForBuild(AbstractBuild build) {
         Node node = build.getBuiltOn();
         if (node instanceof DockerTransientNode) {
@@ -57,6 +59,7 @@ public class JenkinsUtils {
     /**
      * If the build was workflow, get the ID of that channel.
      */
+    @Restricted(NoExternalUse.class)
     public static Optional<DockerCloud> getCloudForChannel(VirtualChannel channel) {
         if (channel instanceof Channel) {
             Channel c = (Channel) channel;
@@ -68,6 +71,7 @@ public class JenkinsUtils {
         return Optional.empty();
     }
 
+    @Restricted(NoExternalUse.class)
     public static Optional<DockerCloud> getCloudThatWeBuiltOn(Run<?, ?> build, Launcher launcher) {
         Optional<DockerCloud> cloud;
         // A bit unpleasant, but the getBuiltOn method is in AbstractBuild and
@@ -85,6 +89,7 @@ public class JenkinsUtils {
      *
      * @return the list as a LinkedList of DockerCloud
      */
+    @Restricted(NoExternalUse.class)
     public static synchronized Collection<DockerCloud> getServers() {
         Collection clouds = Collections2.filter(Jenkins.getInstance().clouds, new Predicate<Cloud>() {
             @Override
@@ -95,6 +100,7 @@ public class JenkinsUtils {
         return clouds;
     }
 
+    @Restricted(NoExternalUse.class)
     public static DockerCloud getServer(final String serverName) {
         return Iterables.find(getServers(), new Predicate<DockerCloud>() {
             @Override
@@ -104,6 +110,7 @@ public class JenkinsUtils {
         });
     }
 
+    @Restricted(NoExternalUse.class)
     public static String getInstanceId() {
         try {
             if (_id == null) {
