@@ -56,8 +56,6 @@
         <java.level>8</java.level>
         <groovy.version>2.4.7</groovy.version>
         <jenkins.version>2.60.3</jenkins.version>
-        <!-- FIXME need to review spotbugs errors -->
-        <spotbugs.failOnError>false</spotbugs.failOnError>
     </properties>
 
     <dependencies>
