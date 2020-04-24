@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import java.io.IOException;
+import java.time.Clock;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,6 +31,10 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     private List<DockerCloud> allClouds;
     private List<DockerTransientNode> nodesRemoved = new LinkedList<>();
     private List<String> containersRemoved = new LinkedList<>();
+
+    public static void setClockOn(DockerContainerWatchdog i, Clock clock) {
+        i.setClock(clock);
+    }
 
     @Override
     protected List<DockerCloud> getAllClouds() {

@@ -26,6 +26,9 @@ package io.jenkins.docker.pipeline;
 
 import com.google.common.collect.ImmutableSet;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.DockerContainerWatchdog;
+import com.nirima.jenkins.plugins.docker.TestableDockerContainerWatchdog;
+
 import hudson.FilePath;
 import hudson.model.Descriptor;
 import hudson.model.DownloadService;
@@ -60,14 +63,19 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
+
+import java.time.Clock;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.structs.describable.DescribableModel;
@@ -121,11 +129,60 @@ public class DockerNodeStepTest {
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
+    private void doCleanUp() {
+        try {
+            // remove all nodes
+            final JenkinsRule j = story.j;
+            final Jenkins jenkins = j.jenkins;
+            final List<Node> nodes = jenkins.getNodes();
+            for (final Node node : nodes) {
+                jenkins.removeNode(node);
+            }
+            // now trigger the docker cleanup, telling it it's long overdue.
+            final DockerContainerWatchdog cleaner = jenkins.getExtensionList(DockerContainerWatchdog.class).get(0);
+            final String cleanerThreadName = cleaner.name;
+            final Clock now = Clock.systemUTC();
+            final Clock future = Clock.offset(now, Duration.ofMinutes(60));
+            waitUntilNoThreadRunning(cleanerThreadName);
+            TestableDockerContainerWatchdog.setClockOn(cleaner, future);
+            cleaner.doRun();
+            waitUntilNoThreadRunning(cleanerThreadName);
+            TestableDockerContainerWatchdog.setClockOn(cleaner, now);
+        } catch (Throwable loggedAndSuppressed) {
+            loggedAndSuppressed.printStackTrace();
+        }
+    }
+
+    private static void waitUntilNoThreadRunning(String name) throws InterruptedException {
+        while (isThreadRunning(name)) {
+            Thread.sleep(1000L);
+        }
+    }
+
+    private static boolean isThreadRunning(String name) {
+        final Map<Thread, StackTraceElement[]> all = Thread.getAllStackTraces();
+        for (final Thread t : all.keySet()) {
+            final String tName = t.getName();
+            if (tName.contains(name) && t.isAlive()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Test
     public void simpleProvision() throws Exception {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "simpleProvision");
                 j.setDefinition(new CpsFlowDefinition(dockerNodeJenkinsAgent() + " {\n" +
                         "  sh 'echo \"hello there\"'\n" +
@@ -141,6 +198,14 @@ public class DockerNodeStepTest {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "withinNode");
                 j.setDefinition(new CpsFlowDefinition("node {\n" +
                         "  " + dockerNodeJenkinsAgent() + " {\n" +
@@ -159,6 +224,14 @@ public class DockerNodeStepTest {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 // I feel like there's a way to do this without downloading the JSON, but at the moment I can't figure it out.
                 DownloadService.Downloadable mvnDl = DownloadService.Downloadable.get("hudson.tasks.Maven.MavenInstaller");
                 mvnDl.updateNow();
@@ -185,6 +258,14 @@ public class DockerNodeStepTest {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "changeDir");
                 j.setDefinition(new CpsFlowDefinition(dockerNodeJenkinsAgent() + " {\n" +
                         "  echo \"dir is '${pwd()}'\"\n" +
@@ -205,6 +286,14 @@ public class DockerNodeStepTest {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "deleteDir");
                 j.setDefinition(new CpsFlowDefinition(dockerNodeJenkinsAgent() + " {\n" +
                         "  sh 'mkdir -p subdir'\n" +
@@ -227,6 +316,14 @@ public class DockerNodeStepTest {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 Slave s1 = story.j.createOnlineSlave();
                 s1.setLabelString("first-agent");
                 s1.setMode(Node.Mode.EXCLUSIVE);
@@ -282,6 +379,14 @@ public class DockerNodeStepTest {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "pathModification");
                 j.setDefinition(new CpsFlowDefinition(dockerNodeJenkinsAgent() + " {\n" +
                         "  echo \"Original PATH: ${env.PATH}\"\n" +
@@ -301,6 +406,14 @@ public class DockerNodeStepTest {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "dockerBuilderPublisher");
                 j.setDefinition(new CpsFlowDefinition(dockerNodeJenkinsAgent() + " {\n" +
                         "  writeFile(file: 'Dockerfile', text: 'FROM jenkins/slave')\n" +
@@ -317,6 +430,14 @@ public class DockerNodeStepTest {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                try {
+                    runTest();
+                } finally {
+                    doCleanUp();
+                }
+            }
+
+            private void runTest() throws Throwable {
                 // Given
                 final Jenkins jenkins = story.j.getInstance();
                 final Descriptor ourDesc = jenkins.getDescriptor(DockerNodeStep.class);
