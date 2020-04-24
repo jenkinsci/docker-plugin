@@ -699,20 +699,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (volumesOrNull !=null && volumesOrNull.length > 0) {
             ArrayList<Volume> vols = new ArrayList<>();
             ArrayList<Bind> binds = new ArrayList<>();
-            for (String vol : volumesOrNull) {
-                final String[] group = vol.split(":");
-                if (group.length > 1) {
-                    if (group[1].equals("/")) {
-                        throw new IllegalArgumentException("Invalid bind mount: destination can't be '/'");
-                    }
-
-                    binds.add(Bind.parse(vol));
-                } else if (vol.equals("/")) {
-                    throw new IllegalArgumentException("Invalid volume: path can't be '/'");
-                } else {
-                    vols.add(new Volume(vol));
-                }
-            }
+            parseVolumesStrings(volumesOrNull, vols, binds);
             containerConfig.withVolumes(vols.toArray(new Volume[vols.size()]));
             containerConfig.withBinds(binds.toArray(new Bind[binds.size()]));
         }
@@ -776,6 +763,50 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return containerConfig;
     }
 
+    /**
+     * Parses a given volumesString value, appending any {@link Volume}s and {@link Bind}s to the specified lists.
+     * @param volumes The strings to be parsed.
+     * @param volumeListResult List to which any {@link Volume}s should be stored in.
+     * @param bindListResult List to which any {@link Bind}s should be stored in.
+     * @throws IllegalArgumentException if anything is invalid.
+     */
+    private static void parseVolumesStrings(final String[] volumes, List<Volume> volumeListResult, List<Bind> bindListResult) {
+        for (String vol : volumes) {
+            parseVolumesString(vol, volumeListResult, bindListResult);
+        }
+    }
+
+    private static void parseVolumesString(String vol, List<Volume> volumeListResult, List<Bind> bindListResult) {
+        final String[] group = vol.split(":");
+        final int length = group.length;
+        if (length > 3) {
+            throw new IllegalArgumentException("Invalid bind syntax, '" + vol + "'. Must be x:y or x:y:z.");
+        }
+        if (length > 1) {
+            if (group[1].equals("/")) {
+                throw new IllegalArgumentException("Invalid bind mount, '"+vol+"'. Destination may not be '/'");
+            }
+            final Bind result;
+            try {
+                result = Bind.parse(vol);
+            } catch ( RuntimeException ex ) {
+                throw new IllegalArgumentException("Invalid bind mount, '" + vol + "'. " + ex.getMessage(), ex);
+            }
+            bindListResult.add(result);
+            return;
+        }
+        if (vol.equals("/")) {
+            throw new IllegalArgumentException("Invalid volume: path may not be '/'");
+        }
+        final Volume result;
+        try {
+            result = new Volume(vol);
+        } catch ( RuntimeException ex ) {
+            throw new IllegalArgumentException("Invalid volume, '" + vol + "'. " + ex.getMessage(), ex);
+        }
+        volumeListResult.add(result);
+    }
+
     @Nonnull
     private static HostConfig hostConfig(CreateContainerCmd containerConfig) {
         final HostConfig hc = containerConfig.getHostConfig();
@@ -786,13 +817,13 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return hc;
     }
 
-    private List<Capability> toCapabilities(List<String> capabilitiesString) {
+    private static List<Capability> toCapabilities(List<String> capabilitiesString) {
         List<Capability> res = new ArrayList<>();
         for(String capability : capabilitiesString) {
             try {
                 res.add(Capability.valueOf(capability));
             } catch(IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid capability name : " + capability);
+                throw new IllegalArgumentException("Invalid capability name : " + capability, e);
             }
         }
         return res;
@@ -949,26 +980,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
         public FormValidation doCheckVolumesString(@QueryParameter String volumesString) {
             try {
-                final String[] strings = splitAndFilterEmpty(volumesString, "\n");
-                for (String s : strings) {
-                    if (s.equals("/")) {
-                        return FormValidation.error("Invalid volume: path can't be '/'");
-                    }
-
-                    final String[] group = s.split(":");
-                    if (group.length > 3) {
-                        return FormValidation.error("Wrong syntax: " + s);
-                    } else if (group.length == 2 || group.length == 3) {
-                        if (group[1].equals("/")) {
-                            return FormValidation.error("Invalid bind mount: destination can't be '/'");
-                        }
-                        Bind.parse(s);
-                    } else if (group.length == 1) {
-                        new Volume(s);
-                    } else {
-                        return FormValidation.error("Wrong line: " + s);
-                    }
-                }
+                final String[] volumes = splitAndFilterEmpty(volumesString, "\n");
+                parseVolumesStrings(volumes, new ArrayList<>(), new ArrayList<>());
             } catch (Throwable t) {
                 return FormValidation.error(t.getMessage());
             }
