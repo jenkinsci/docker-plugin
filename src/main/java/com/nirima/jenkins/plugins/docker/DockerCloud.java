@@ -28,6 +28,8 @@ import io.jenkins.docker.client.DockerAPI;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Base64;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -360,8 +362,10 @@ public class DockerCloud extends Cloud {
                 LOGGER.info("Will provision '{}', for label: '{}', in cloud: '{}'",
                         t.getImage(), label, getDisplayName());
 
+                final ProvisioningActivity.Id id = new ProvisioningActivity.Id(
+                        DockerCloud.this.name, t.getName() + " (" + t.getImage() + ")", null);
                 final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
-                r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors()));
+                r.add(new TrackedPlannedNode(id, t.getNumExecutors(), plannedNode));
 
                 final Runnable taskToCreateNewSlave = new Runnable() {
                     @Override
@@ -373,6 +377,7 @@ public class DockerCloud extends Cloud {
                             slave = t.provisionNode(api, TaskListener.NULL);
                             slave.setDockerAPI(api);
                             slave.setCloudId(DockerCloud.this.name);
+                            slave.setProvisioningId(id);
                             plannedNode.complete(slave);
 
                             // On provisioning completion, let's trigger NodeProvisioner
