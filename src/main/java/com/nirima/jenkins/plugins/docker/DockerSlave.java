@@ -14,6 +14,7 @@ import java.io.IOException;
  * @deprecated use {@link DockerTransientNode}
  */
 @Deprecated
+@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value="SE_NO_SERIALVERSIONID", justification="Deprecated; required for backwards compatibility only.")
 public class DockerSlave extends Slave {
 
     private transient  DockerTemplate dockerTemplate;
