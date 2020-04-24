@@ -4,7 +4,7 @@
     <p>
       Any arguments to be passed to the JVM executable.
       <br/>
-      Defaults to &quot;&quot; if left unset.
+      Defaults to &quot;<code>${app.getDescriptor('io.jenkins.docker.connector.DockerComputerAttachConnector').defaultJvmArgs}</code>&quot; if left unset.
     </p>
     <p>
       <b>NOTE:</b>
