@@ -153,7 +153,10 @@ class DockerNodeStepExecution extends StepExecution {
             // Provisioning failed ! capture computer log and dump to pipeline log to assist in diagnostic
             if (computer != null) {
                 try {
-                    listener.getLogger().write(computer.getLog().getBytes());
+                    final String computerLogAsString = computer.getLog();
+                    listener.getLogger().println("Node provisioning failed: " + e);
+                    listener.getLogger().println(computerLogAsString);
+                    listener.getLogger().println("See log above for details.");
                 } catch (IOException x) {
                     listener.getLogger().println("Failed to capture docker agent provisioning log " + x);
                 }

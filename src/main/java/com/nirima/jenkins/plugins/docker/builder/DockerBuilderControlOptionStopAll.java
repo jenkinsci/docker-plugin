@@ -1,6 +1,8 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
 import hudson.Extension;
 import hudson.Launcher;
@@ -46,7 +48,13 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
                 LOG.info("Removing container {}", containerId);
                 llog.println("Removing container " + containerId);
 
-                containerItem.client.removeContainerCmd(containerId).exec();
+                try {
+                    containerItem.client.removeContainerCmd(containerId).exec();
+                } catch (NotFoundException e) {
+                    llog.println("Container '" + containerId + "' already gone.");
+                } catch (ConflictException e) {
+                    llog.println("Container '" + containerId + "' removal already in progress.");
+                }
             }
         }
     }
