@@ -20,7 +20,7 @@ import java.io.Serializable;
  * Created by magnayn on 10/01/2014.
  */
 @ExportedBean
-public class DockerBuildAction implements Action, Serializable, Cloneable, Describable<DockerBuildAction> {
+public class DockerBuildAction implements Action, Serializable, Describable<DockerBuildAction> {
 
     private String cloudId;
     private final String containerHost;

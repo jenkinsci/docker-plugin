@@ -16,7 +16,7 @@ import java.util.List;
  * Created by magnayn on 10/01/2014.
  */
 @ExportedBean
-public class DockerBuildImageAction implements Action, Serializable, Cloneable, Describable<DockerBuildImageAction> {
+public class DockerBuildImageAction implements Action, Serializable, Describable<DockerBuildImageAction> {
 
     public final String containerHost;
     public final String containerId;

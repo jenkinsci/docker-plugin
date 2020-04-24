@@ -11,7 +11,7 @@ import hudson.model.Action;
 /**
  * Action to record launching of a slave.
  */
-public class DockerLaunchAction implements Action, Serializable, Cloneable{
+public class DockerLaunchAction implements Action, Serializable {
 
     public static class Item {
         public final DockerClient client;
