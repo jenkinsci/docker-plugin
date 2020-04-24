@@ -52,6 +52,7 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
  * Base for docker templates - does not include Jenkins items like labels.
  */
 public class DockerTemplateBase implements Describable<DockerTemplateBase>, Serializable {
+    private static final long serialVersionUID = 1838584884066776725L;
 
     private final String image;
 

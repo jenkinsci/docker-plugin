@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.Socket;
 import java.net.URI;
 import java.util.Collections;
@@ -45,11 +44,8 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Serializable {
+public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerAPI.class);
-
-    private static final long serialVersionUID = 1L;
-
 
     private DockerServerEndpoint dockerHost;
 
@@ -300,7 +296,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         try {
             final URI uri = new URI(dockerHost.getUri());
             if ("unix".equals(uri.getScheme())) {
-                final AFUNIXSocketAddress unix = new AFUNIXSocketAddress(new File("/var/run/docker.sock"));
+                final String socketFileName = uri.getPath();
+                final AFUNIXSocketAddress unix = new AFUNIXSocketAddress(new File(socketFileName));
                 final Socket socket = AFUNIXSocket.newInstance();
                 socket.connect(unix);
                 return socket;
@@ -339,6 +336,18 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         result = 31 * result + (apiVersion != null ? apiVersion.hashCode() : 0);
         result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = startToString(this);
+        bldToString(sb, "dockerHost", dockerHost);
+        bldToString(sb, "connectTimeout", connectTimeout);
+        bldToString(sb, "readTimeout", readTimeout);
+        bldToString(sb, "apiVersion", apiVersion);
+        bldToString(sb, "hostname", hostname);
+        endToString(sb);
+        return sb.toString();
     }
 
     @Extension
@@ -399,7 +408,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             return optionIsAvailable(credentialsId, availableCredentials);
         }
 
-        private boolean optionIsAvailable(final String optionValue, final ListBoxModel available) {
+        private static boolean optionIsAvailable(final String optionValue, final ListBoxModel available) {
             for (ListBoxModel.Option o : available) {
                 if (o.value == null) {
                     if (optionValue == null) {
@@ -414,7 +423,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             return false;
         }
 
-        private void throwIfNoPermission(Item context) {
+        private static void throwIfNoPermission(Item context) {
             if (context != null) {
                 context.checkPermission(Item.CONFIGURE);
             } else {

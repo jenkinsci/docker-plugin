@@ -6,8 +6,10 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.thoughtworks.xstream.InitializationException;
 
+import hudson.DescriptorExtensionList;
 import hudson.EnvVars;
 import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.Which;
@@ -15,6 +17,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.util.LogTaskListener;
 import io.jenkins.docker.client.DockerAPI;
+import jenkins.model.Jenkins;
 
 import javax.annotation.Nonnull;
 
@@ -142,4 +145,13 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * DockerAgentConnector so adequate setup did take place.
      */
     protected abstract ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
+
+    /**
+     * Returns all the registered {@link DockerComputerConnector} descriptors.
+     */
+    public static DescriptorExtensionList<DockerComputerConnector, Descriptor<DockerComputerConnector>> all() {
+        final Jenkins j = Jenkins.getInstance();
+        return j.<DockerComputerConnector, Descriptor<DockerComputerConnector>>getDescriptorList(
+                DockerComputerConnector.class);
+    }
 }

@@ -12,6 +12,7 @@ import hudson.model.Action;
  * Action to record launching of a slave.
  */
 public class DockerLaunchAction implements Action, Serializable {
+    private static final long serialVersionUID = 322300594612029744L;
 
     public static class Item {
         public final DockerClient client;
@@ -41,6 +42,14 @@ public class DockerLaunchAction implements Action, Serializable {
     }
 
     private transient List<Item> running = new ArrayList<>();
+
+    /**
+     * Initializes data structure that we don't persist.
+     */
+    private Object readResolve() {
+        running = new ArrayList<>();
+        return this;
+    }
 
     @Override
     public String getIconFileName() {

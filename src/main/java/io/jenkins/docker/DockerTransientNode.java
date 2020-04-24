@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public class DockerTransientNode extends Slave {
+    private static final long serialVersionUID = 1349729340506926183L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTransientNode.class.getName());
 
     //Keeping real containerId information, but using containerName as containerId

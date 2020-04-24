@@ -19,7 +19,7 @@
         <c:select/>
       </f:entry>
 
-      <f:dropdownDescriptorSelector field="connector" title="Connect method"/>
+      <f:dropdownDescriptorSelector field="connector" title="Connect method" descriptors="${descriptor.getAcceptableConnectorDescriptors()}"/>
 
   </f:advanced>
 
