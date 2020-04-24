@@ -16,6 +16,7 @@ import com.nirima.jenkins.plugins.docker.utils.PortUtils;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.signature.RSAKeyAlgorithm;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
@@ -109,42 +110,42 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
     @CheckForNull
     public String getJvmOptions() {
-        return jvmOptions;
+        return Util.fixEmptyAndTrim(jvmOptions);
     }
 
     @DataBoundSetter
     public void setJvmOptions(String jvmOptions) {
-        this.jvmOptions = jvmOptions;
+        this.jvmOptions = Util.fixEmptyAndTrim(jvmOptions);
     }
 
     @CheckForNull
     public String getJavaPath() {
-        return javaPath;
+        return Util.fixEmptyAndTrim(javaPath);
     }
 
     @DataBoundSetter
     public void setJavaPath(String javaPath) {
-        this.javaPath = javaPath;
+        this.javaPath = Util.fixEmptyAndTrim(javaPath);
     }
 
     @CheckForNull
     public String getPrefixStartSlaveCmd() {
-        return prefixStartSlaveCmd;
+        return Util.fixEmptyAndTrim(prefixStartSlaveCmd);
     }
 
     @DataBoundSetter
     public void setPrefixStartSlaveCmd(String prefixStartSlaveCmd) {
-        this.prefixStartSlaveCmd = prefixStartSlaveCmd;
+        this.prefixStartSlaveCmd = Util.fixEmptyAndTrim(prefixStartSlaveCmd);
     }
 
     @CheckForNull
     public String getSuffixStartSlaveCmd() {
-        return suffixStartSlaveCmd;
+        return Util.fixEmptyAndTrim(suffixStartSlaveCmd);
     }
 
     @DataBoundSetter
     public void setSuffixStartSlaveCmd(String suffixStartSlaveCmd) {
-        this.suffixStartSlaveCmd = suffixStartSlaveCmd;
+        this.suffixStartSlaveCmd = Util.fixEmptyAndTrim(suffixStartSlaveCmd);
     }
 
     @CheckForNull
@@ -437,8 +438,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             final InstanceIdentity id = InstanceIdentity.get();
             final String pem = PEMEncodable.create(id.getPrivate()).encode();
             return new DockerSSHLauncher(address.getHostString(), address.getPort(), user, pem,
-                    connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd,
-                    connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime,
+                    connector.getJvmOptions(), connector.getJavaPath(), connector.getPrefixStartSlaveCmd(), connector.getSuffixStartSlaveCmd(),
+                    connector.getLaunchTimeoutSeconds(), connector.getMaxNumRetries(), connector.getRetryWaitTime(),
                     new NonVerifyingKeyVerificationStrategy()
             );
         }
@@ -512,8 +513,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         @Override
         public ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector connector) throws IOException {
             return new SSHLauncher(address.getHostString(), address.getPort(), getCredentialsId(),
-                    connector.jvmOptions, connector.javaPath, connector.prefixStartSlaveCmd, connector.suffixStartSlaveCmd,
-                    connector.launchTimeoutSeconds, connector.maxNumRetries, connector.retryWaitTime,
+                    connector.getJvmOptions(), connector.getJavaPath(), connector.getPrefixStartSlaveCmd(), connector.getSuffixStartSlaveCmd(),
+                    connector.getLaunchTimeoutSeconds(), connector.getMaxNumRetries(), connector.getRetryWaitTime(),
                     sshHostKeyVerificationStrategy
             );
         }

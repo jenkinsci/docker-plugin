@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
@@ -15,18 +16,24 @@ import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
 
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -199,6 +206,51 @@ public class JenkinsUtils {
     }
 
     /**
+     * Turns empty arrays into nulls.
+     * 
+     * @param array The array (or null)
+     * @return null or the non-empty array.
+     */
+    @Restricted(NoExternalUse.class)
+    @CheckForNull
+    public static <T> T[] fixEmpty(@Nullable T[] array) {
+        if (array == null || array.length == 0) {
+            return null;
+        }
+        return array;
+    }
+
+    /**
+     * Turns empty collections into nulls.
+     * 
+     * @param collection The collection (or null)
+     * @return null or the non-empty collection.
+     */
+    @Restricted(NoExternalUse.class)
+    @CheckForNull
+    public static <C extends Collection> C fixEmpty(@Nullable C collection) {
+        if (collection == null || collection.isEmpty()) {
+            return null;
+        }
+        return collection;
+    }
+
+    /**
+     * Turns empty maps into nulls.
+     * 
+     * @param map The map (or null)
+     * @return null or the non-empty map.
+     */
+    @Restricted(NoExternalUse.class)
+    @CheckForNull
+    public static <C extends Map<?, ?>> C fixEmpty(@Nullable C map) {
+        if (map == null || map.isEmpty()) {
+            return null;
+        }
+        return map;
+    }
+
+    /**
      * Used to help with toString methods.
      */
     @Restricted(NoExternalUse.class)
@@ -271,5 +323,109 @@ public class JenkinsUtils {
         } else {
             sb.append(value);
         }
+    }
+
+    /**
+     * Splits a (potentially null/empty) text string into an array of non-empty
+     * strings.
+     * 
+     * @param s         The string to be split.
+     * @param separator The separator regex, e.g. "\n".
+     * @return An array (possibly empty, never null).
+     */
+    @Restricted(NoExternalUse.class)
+    @Nonnull
+    public static String[] splitAndFilterEmpty(@Nullable String s, String separator) {
+        if (s == null) {
+            return new String[0];
+        }
+        final List<String> result = new ArrayList<>();
+        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
+            result.add(o);
+        }
+        return result.toArray(new String[result.size()]);
+    }
+
+    /**
+     * Splits a (potentially null/empty) text string into a {@link List} of
+     * non-empty strings.
+     * 
+     * @param s         The string to be split.
+     * @param separator The separator regex, e.g. "\n".
+     * @return A {@link List} (possibly empty, never null).
+     */
+    @Restricted(NoExternalUse.class)
+    @Nonnull
+    public static List<String> splitAndFilterEmptyList(@Nullable String s, String separator) {
+        final List<String> result = new ArrayList<>();
+        if (s != null) {
+            for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
+                result.add(o);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Splits a (potentially null/empty) text string into a {@link List} of
+     * non-empty strings, trimming each entry too.
+     * 
+     * @param s         The string to be split.
+     * @param separator The separator regex, e.g. "\n".
+     * @return A {@link List} (possibly empty, never null).
+     */
+    public static List<String> splitAndTrimFilterEmptyList(String s, String separator) {
+        final List<String> result = new ArrayList<>();
+        if (s != null) {
+            for (String o : Splitter.on(separator).omitEmptyStrings().trimResults().split(s)) {
+                result.add(o);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Splits a (potentially null/empty) text string of the form
+     * "name=value&lt;separator&gt;foo=bar" into a {@link Map}, ignoring empty
+     * sections and sections that do not include an "=".
+     * 
+     * @param s         The string to be split.
+     * @param separator The separator regex, e.g. "\n".
+     * @return A {@link Map} (possibly empty, never null).
+     */
+    @Restricted(NoExternalUse.class)
+    @Nonnull
+    public static Map<String, String> splitAndFilterEmptyMap(@Nullable String s, String separator) {
+        final Map<String, String> result = new LinkedHashMap<>();
+        if (s != null) {
+            for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
+                String[] parts = o.trim().split("=", 2);
+                if (parts.length == 2)
+                    result.put(parts[0].trim(), parts[1].trim());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Clones a String array but stripping all entries and omitting any that are
+     * null or empty after stripping.
+     * 
+     * @param arr The starting array; this will not be modified.
+     * @return A new array no longer than the one given, but which may be empty.
+     */
+    @Restricted(NoExternalUse.class)
+    @Nonnull
+    public static String[] filterStringArray(@Nullable String[] arr) {
+        final ArrayList<String> strings = new ArrayList<>();
+        if (arr != null) {
+            for (String s : arr) {
+                s = StringUtils.stripToNull(s);
+                if (s != null) {
+                    strings.add(s);
+                }
+            }
+        }
+        return strings.toArray(new String[strings.size()]);
     }
 }

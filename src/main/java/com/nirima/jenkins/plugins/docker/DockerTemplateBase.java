@@ -7,6 +7,7 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
 import com.github.dockerjava.api.model.Device;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -23,7 +24,6 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
@@ -40,15 +40,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.filterStringArray;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmptyList;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmptyMap;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
-import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
@@ -57,62 +60,62 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
 public class DockerTemplateBase implements Describable<DockerTemplateBase>, Serializable {
     private static final long serialVersionUID = 1838584884066776725L;
 
-    private final String image;
+    private @Nonnull final String image;
 
-    private String pullCredentialsId;
-    private transient DockerRegistryEndpoint registry;
+    private @CheckForNull String pullCredentialsId;
+    private @CheckForNull transient DockerRegistryEndpoint registry;
 
     /**
      * Field dockerCommand
      */
-    private String dockerCommand;
+    private @CheckForNull String dockerCommand;
 
-    public String hostname;
+    public @CheckForNull String hostname;
 
     /**
      * --user argument to docker run command.
      */
-    private String user;
+    private @CheckForNull String user;
 
     /**
      * --group-add argument to docker run command.
      */
-    private List<String> extraGroups;
+    private @CheckForNull List<String> extraGroups;
 
-    public String[] dnsHosts;
+    public @CheckForNull String[] dnsHosts;
 
-    public String network;
+    public @CheckForNull String network;
 
     /**
      * Every String is volume specification
      */
-    public String[] volumes;
+    public @CheckForNull String[] volumes;
 
     /**
      * @deprecated use {@link #volumesFrom2}
      */
     @Deprecated
-    public String volumesFrom;
+    public @CheckForNull String volumesFrom;
 
     /**
      * Every String is volumeFrom specification
      */
-    public String[] volumesFrom2;
+    public @CheckForNull String[] volumesFrom2;
 
     /**
      * Every String is a device to be mapped
      */
-    public String[] devices;
+    public @CheckForNull String[] devices;
 
     public @CheckForNull String[] environment;
 
-    public String bindPorts;
+    public @CheckForNull String bindPorts;
     public boolean bindAllPorts;
 
-    public Integer memoryLimit;
-    public Integer memorySwap;
-    public Integer cpuShares;
-    public Integer shmSize;
+    public @CheckForNull Integer memoryLimit;
+    public @CheckForNull Integer memorySwap;
+    public @CheckForNull Integer cpuShares;
+    public @CheckForNull Integer shmSize;
 
     public boolean privileged;
     public boolean tty;
@@ -198,101 +201,66 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return this;
     }
 
-    //TODO move/replace
-    public static String[] splitAndFilterEmpty(String s, String separator) {
-        if (s == null) {
-            return new String[0];
-        }
-        List<String> result = new ArrayList<>();
-        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
-            result.add(o);
-        }
-        return result.toArray(new String[result.size()]);
-    }
-
-    public static List<String> splitAndFilterEmptyList(String s, String separator) {
-        List<String> result = new ArrayList<>();
-        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
-            result.add(o);
-        }
-        return result;
-    }
-
-    private static Map<String, String> splitAndFilterEmptyMap(String s, String separator) {
-        Map<String, String> result = new LinkedHashMap<>();
-        for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
-            String[] parts = o.trim().split("=", 2);
-            if (parts.length == 2)
-                result.put(parts[0].trim(), parts[1].trim());
-        }
-        return result;
-    }
-
-    //TODO move/replace
-    public static String[] filterStringArray(String[] arr) {
-        final ArrayList<String> strings = new ArrayList<>();
-        if (arr != null) {
-            for (String s : arr) {
-                s = StringUtils.stripToNull(s);
-                if (s != null) {
-                    strings.add(s);
-                }
-            }
-        }
-        return strings.toArray(new String[strings.size()]);
-    }
-
+    @Nonnull
     public String getImage() {
         return image.trim();
     }
 
+    @CheckForNull
     public String getPullCredentialsId() {
-        return pullCredentialsId;
+        return Util.fixEmpty(pullCredentialsId);
     }
 
     @DataBoundSetter
     public void setPullCredentialsId(String pullCredentialsId) {
-        this.pullCredentialsId = pullCredentialsId;
+        this.pullCredentialsId = Util.fixEmpty(pullCredentialsId);
     }
 
+    @CheckForNull
     public String getDockerCommand() {
-        return dockerCommand;
+        return Util.fixEmpty(dockerCommand);
     }
 
     @DataBoundSetter
     public void setDockerCommand(String dockerCommand) {
-        this.dockerCommand = dockerCommand;
+        this.dockerCommand = Util.fixEmpty(dockerCommand);
     }
 
+    @CheckForNull
     public String getHostname() {
-        return hostname;
+        return Util.fixEmpty(hostname);
     }
 
     @DataBoundSetter
     public void setHostname(String hostname) {
-        this.hostname = hostname;
+        this.hostname = Util.fixEmpty(hostname);
     }
 
+    @CheckForNull
     public String getUser() {
-        return user;
+        return Util.fixEmpty(user);
     }
 
     @DataBoundSetter
     public void setUser(String user) {
-        this.user = user;
+        this.user = Util.fixEmpty(user);
+    }
+
+    @CheckForNull
+    public List<String> getExtraGroups() {
+        return fixEmpty(extraGroups);
     }
 
     public void setExtraGroups(List<String> extraGroups) {
-        this.extraGroups = extraGroups;
+        this.extraGroups = fixEmpty(extraGroups);
     }
 
     @DataBoundSetter
     public void setExtraGroupsString(String extraGroupsString) {
-        setExtraGroups(isEmpty(extraGroupsString) ?
-                Collections.EMPTY_LIST :
-                splitAndFilterEmptyList(extraGroupsString, "\n"));
+        setExtraGroups(splitAndFilterEmptyList(extraGroupsString, "\n"));
     }
 
+    @Nonnull
     public String getExtraGroupsString() {
         if (extraGroups == null) {
             return "";
@@ -300,46 +268,60 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return Joiner.on("\n").join(extraGroups);
     }
 
+    @CheckForNull
+    public String[] getDnsHosts() {
+        return fixEmpty(dnsHosts);
+    }
+
+    @Nonnull
     public String getDnsString() {
-        if (dnsHosts == null) return null;
+        if (dnsHosts == null) return "";
         return Joiner.on(" ").join(dnsHosts);
+    }
+
+    public void setDnsHosts(String[] dnsHosts) {
+        this.dnsHosts = fixEmpty(dnsHosts);
     }
 
     @DataBoundSetter
     public void setDnsString(String dnsString) {
-        this.dnsHosts = splitAndFilterEmpty(dnsString, " ");
+        setDnsHosts(splitAndFilterEmpty(dnsString, " "));
     }
 
+    @CheckForNull
     public String getNetwork() {
-        return network;
+        return Util.fixEmpty(network);
     }
 
     @DataBoundSetter
     public void setNetwork(String network) {
-        this.network = network;
+        this.network = Util.fixEmpty(network);
     }
 
     @CheckForNull
     public String[] getVolumes() {
-        return filterStringArray(volumes);
+        return fixEmpty(filterStringArray(volumes));
     }
 
     public void setVolumes(String[] volumes) {
-        this.volumes = volumes;
+        this.volumes = fixEmpty(volumes);
     }
 
+    @Nonnull
     public String getVolumesString() {
-        if (volumes == null) return null;
+        if (volumes == null) return "";
         return Joiner.on("\n").join(volumes);
     }
 
     @DataBoundSetter
     public void setVolumesString(String volumesString) {
-        this.volumes = splitAndFilterEmpty(volumesString, "\n");
+        setVolumes(splitAndFilterEmpty(volumesString, "\n"));
     }
 
+    @Nonnull
     public String getVolumesFromString() {
-        return Joiner.on("\n").join(getVolumesFrom2());
+        final String[] volumesFrom2OrNull = getVolumesFrom2();
+        return volumesFrom2OrNull==null ? "" : Joiner.on("\n").join(volumesFrom2OrNull);
     }
 
     @DataBoundSetter
@@ -349,36 +331,52 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @CheckForNull
     public String[] getDevices() {
-        return filterStringArray(devices);
+        return fixEmpty(filterStringArray(devices));
     }
 
+    @Nonnull
     public String getDevicesString() {
-        if (devices == null) return null;
+        if (devices == null) return "";
         return Joiner.on("\n").join(devices);
+    }
+
+    public void setDevices(String[] devices) {
+        this.devices = fixEmpty(devices);
     }
 
     @DataBoundSetter
     public void setDevicesString(String devicesString) {
-        this.devices = splitAndFilterEmpty(devicesString, "\n");
+        setDevices(splitAndFilterEmpty(devicesString, "\n"));
     }
 
+    @CheckForNull
+    public String[] getEnvironment() {
+        return fixEmpty(environment);
+    }
+
+    @Nonnull
     public String getEnvironmentsString() {
-        if (environment == null) return null;
+        if (environment == null) return "";
         return Joiner.on("\n").join(environment);
+    }
+
+    public void setEnvironment(String[] environment) {
+        this.environment = fixEmpty(environment);
     }
 
     @DataBoundSetter
     public void setEnvironmentsString(String environmentsString) {
-        this.environment = splitAndFilterEmpty(environmentsString, "\n");
+        setEnvironment(splitAndFilterEmpty(environmentsString, "\n"));
     }
 
+    @CheckForNull
     public String getBindPorts() {
-        return bindPorts;
+        return Util.fixEmpty(bindPorts);
     }
 
     @DataBoundSetter
     public void setBindPorts(String bindPorts) {
-        this.bindPorts = bindPorts;
+        this.bindPorts = Util.fixEmpty(bindPorts);
     }
 
     public boolean isBindAllPorts() {
@@ -390,6 +388,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.bindAllPorts = bindAllPorts;
     }
 
+    @CheckForNull
     public Integer getMemoryLimit() {
         return memoryLimit;
     }
@@ -399,6 +398,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.memoryLimit = memoryLimit;
     }
 
+    @CheckForNull
     public Integer getMemorySwap() {
         return memorySwap;
     }
@@ -408,6 +408,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.memorySwap = memorySwap;
     }
 
+    @CheckForNull
     public Integer getCpuShares() {
         return cpuShares;
     }
@@ -417,6 +418,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.cpuShares = cpuShares;
     }
 
+    @CheckForNull
     public Integer getShmSize() {
         return shmSize;
     }
@@ -456,9 +458,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @CheckForNull
     public List<String> getExtraHosts() {
-        return extraHosts;
+        return fixEmpty(extraHosts);
     }
 
+    @Nonnull
     public String getExtraHostsString() {
         if (extraHosts == null) {
             return "";
@@ -467,40 +470,39 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public void setExtraHosts(List<String> extraHosts) {
-        this.extraHosts = extraHosts;
+        this.extraHosts = fixEmpty(extraHosts);
     }
 
     @DataBoundSetter
     public void setExtraHostsString(String extraHostsString) {
-        setExtraHosts(isEmpty(extraHostsString) ?
-                Collections.EMPTY_LIST :
-                splitAndFilterEmptyList(extraHostsString, "\n"));
+        setExtraHosts(splitAndFilterEmptyList(extraHostsString, "\n"));
     }
 
     @CheckForNull
     public List<String> getSecurityOpts() {
-        return securityOpts;
+        return fixEmpty(securityOpts);
     }
 
-    @CheckForNull
+    @Nonnull
     public String getSecurityOptsString() {
-        return securityOpts == null ? null : Joiner.on("\n").join(securityOpts);
+        return securityOpts == null ? "" : Joiner.on("\n").join(securityOpts);
     }
 
     public void setSecurityOpts( List<String> securityOpts ) {
-        this.securityOpts = securityOpts;
+        this.securityOpts = fixEmpty(securityOpts);
     }
 
     @DataBoundSetter
     public void setSecurityOptsString(String securityOpts) {
-        setSecurityOpts( isEmpty(securityOpts) ? null : splitAndFilterEmptyList(securityOpts, "\n") );
+        setSecurityOpts(splitAndFilterEmptyList(securityOpts, "\n"));
     }
 
     @CheckForNull
     public List<String> getCapabilitiesToAdd() {
-        return capabilitiesToAdd;
+        return fixEmpty(capabilitiesToAdd);
     }
 
+    @Nonnull
     public String getCapabilitiesToAddString() {
         if (capabilitiesToAdd == null) {
             return "";
@@ -509,21 +511,20 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public void setCapabilitiesToAdd(List<String> capabilitiesToAdd) {
-        this.capabilitiesToAdd = capabilitiesToAdd;
+        this.capabilitiesToAdd = fixEmpty(capabilitiesToAdd);
     }
 
     @DataBoundSetter
     public void setCapabilitiesToAddString(String capabilitiesToAddString) {
-        setCapabilitiesToAdd(isEmpty(capabilitiesToAddString) ?
-                Collections.EMPTY_LIST :
-                splitAndFilterEmptyList(capabilitiesToAddString, "\n"));
+        setCapabilitiesToAdd(splitAndFilterEmptyList(capabilitiesToAddString, "\n"));
     }
 
     @CheckForNull
     public List<String> getCapabilitiesToDrop() {
-        return capabilitiesToDrop;
+        return fixEmpty(capabilitiesToDrop);
     }
 
+    @Nonnull
     public String getCapabilitiesToDropString() {
         if (capabilitiesToDrop == null) {
             return "";
@@ -532,21 +533,20 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public void setCapabilitiesToDrop(List<String> capabilitiesToDrop) {
-        this.capabilitiesToDrop = capabilitiesToDrop;
+        this.capabilitiesToDrop = fixEmpty(capabilitiesToDrop);
     }
 
     @DataBoundSetter
     public void setCapabilitiesToDropString(String capabilitiesToDropString) {
-        setCapabilitiesToDrop(isEmpty(capabilitiesToDropString) ?
-                Collections.EMPTY_LIST :
-                splitAndFilterEmptyList(capabilitiesToDropString, "\n"));
+        setCapabilitiesToDrop(splitAndFilterEmptyList(capabilitiesToDropString, "\n"));
+    }
+
+    @CheckForNull
+    public Map<String, String> getExtraDockerLabels() {
+        return fixEmpty(extraDockerLabels);
     }
 
     @Nonnull
-    public Map<String, String> getExtraDockerLabels() {
-        return extraDockerLabels == null ? Collections.EMPTY_MAP : extraDockerLabels;
-    }
-
     public String getExtraDockerLabelsString() {
         if (extraDockerLabels == null) {
             return "";
@@ -555,14 +555,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public void setExtraDockerLabels(Map<String, String> extraDockerLabels) {
-        this.extraDockerLabels = MapUtils.isEmpty(extraDockerLabels) ? null : extraDockerLabels;
+        this.extraDockerLabels = fixEmpty(extraDockerLabels);
     }
 
     @DataBoundSetter
     public void setExtraDockerLabelsString(String extraDockerLabelsString) {
-        setExtraDockerLabels(isEmpty(extraDockerLabelsString) ?
-                Collections.EMPTY_MAP :
-                splitAndFilterEmptyMap(extraDockerLabelsString, "\n"));
+        setExtraDockerLabels(splitAndFilterEmptyMap(extraDockerLabelsString, "\n"));
     }
 
     // -- UI binding End
@@ -582,27 +580,29 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return volumesFrom;
     }
 
+    @CheckForNull
     public String[] getVolumesFrom2() {
-        return filterStringArray(volumesFrom2);
+        return fixEmpty(filterStringArray(volumesFrom2));
     }
 
     public void setVolumesFrom2(String[] volumes) {
-        this.volumesFrom2 = volumes;
+        this.volumesFrom2 = fixEmpty(volumes);
     }
 
     public String getDisplayName() {
         return "Image of " + getImage();
     }
 
+    @CheckForNull
     public String[] getDockerCommandArray() {
         String[] dockerCommandArray = new String[0];
         if (dockerCommand != null && !dockerCommand.isEmpty()) {
             dockerCommandArray = dockerCommand.split(" ");
         }
-
-        return dockerCommandArray;
+        return fixEmpty(dockerCommandArray);
     }
 
+    @Nonnull
     public Iterable<PortBinding> getPortMappings() {
         if (Strings.isNullOrEmpty(bindPorts)) {
             return Collections.emptyList();
@@ -621,67 +621,85 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
-        if (hostname != null && !hostname.isEmpty()) {
-            containerConfig.withHostName(hostname);
+        final String hostnameOrNull = getHostname();
+        if (hostnameOrNull != null && !hostnameOrNull.isEmpty()) {
+            containerConfig.withHostName(hostnameOrNull);
         }
 
-        if (!Strings.isNullOrEmpty(user)) {
-            containerConfig.withUser(user);
+        final String userOrNull = getUser();
+        if (userOrNull != null && !userOrNull.isEmpty()) {
+            containerConfig.withUser(userOrNull);
         }
 
-        if (CollectionUtils.isNotEmpty(extraGroups)) {
-            containerConfig.getHostConfig().withGroupAdd(extraGroups);
+        final List<String> extraGroupsOrNull = getExtraGroups();
+        if (CollectionUtils.isNotEmpty(extraGroupsOrNull)) {
+            hostConfig(containerConfig).withGroupAdd(extraGroupsOrNull);
         }
 
-        String[] cmd = getDockerCommandArray();
-        if (cmd.length > 0) {
-            containerConfig.withCmd(cmd);
+        final String[] cmdOrNull = getDockerCommandArray();
+        if (cmdOrNull != null && cmdOrNull.length > 0) {
+            containerConfig.withCmd(cmdOrNull);
         }
 
         containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
         containerConfig.withPublishAllPorts(bindAllPorts);
         containerConfig.withPrivileged(privileged);
 
-        Map<String,String> map = new HashMap<>();
-        map.putAll(getExtraDockerLabels());
-        map.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID, getJenkinsInstanceIdForContainerLabel());
-        map.put(DockerContainerLabelKeys.JENKINS_URL, getJenkinsUrlForContainerLabel());
-        map.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
+        final Map<String, String> existingLabelsOrNull = containerConfig.getLabels();
+        final Map<String, String> labels;
+        if (existingLabelsOrNull == null) {
+            labels = new HashMap<>();
+            containerConfig.withLabels(labels);
+        } else {
+            labels = existingLabelsOrNull;
+        }
+        final Map<String, String> extraDockerLabelsOrNull = getExtraDockerLabels();
+        if (extraDockerLabelsOrNull != null && !extraDockerLabelsOrNull.isEmpty()) {
+            labels.putAll(extraDockerLabelsOrNull);
+        }
+        labels.put(DockerContainerLabelKeys.JENKINS_INSTANCE_ID, getJenkinsInstanceIdForContainerLabel());
+        labels.put(DockerContainerLabelKeys.JENKINS_URL, getJenkinsUrlForContainerLabel());
+        labels.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
 
-        containerConfig.withLabels(map);
-
-        if (cpuShares != null && cpuShares > 0) {
-            containerConfig.withCpuShares(cpuShares);
+        final Integer cpuSharesOrNull = getCpuShares();
+        if (cpuSharesOrNull != null && cpuSharesOrNull > 0) {
+            containerConfig.withCpuShares(cpuSharesOrNull);
         }
 
-        if (memoryLimit != null && memoryLimit > 0) {
-            Long memoryInByte = (long) memoryLimit * 1024 * 1024;
+        final Integer memoryLimitOrNull = getMemoryLimit();
+        if (memoryLimitOrNull != null && memoryLimitOrNull > 0) {
+            final long memoryInByte = memoryLimitOrNull.longValue() * 1024L * 1024L;
             containerConfig.withMemory(memoryInByte);
         }
 
-        if (memorySwap != null) {
-            if (memorySwap > 0) {
-                Long memorySwapInByte = (long) memorySwap * 1024 * 1024;
+        final Integer memorySwapOrNullOrNegative = getMemorySwap();
+        if (memorySwapOrNullOrNegative != null) {
+            final long memorySwapOrNegative = memorySwapOrNullOrNegative.longValue();
+            if (memorySwapOrNegative > 0L) {
+                long memorySwapInByte = memorySwapOrNegative * 1024L * 1024L;
                 containerConfig.withMemorySwap(memorySwapInByte);
             } else {
-                containerConfig.withMemorySwap(memorySwap.longValue());
+                containerConfig.withMemorySwap(memorySwapOrNegative);
             }
         }
 
-        if (dnsHosts != null && dnsHosts.length > 0) {
-            containerConfig.withDns(dnsHosts);
+        final String[] dnsHostsOrNull = getDnsHosts();
+        if (dnsHostsOrNull != null && dnsHostsOrNull.length > 0) {
+            containerConfig.withDns(dnsHostsOrNull);
         }
 
-        if (network != null && network.length() > 0) {
+        final String networkOrNull = getNetwork();
+        if (networkOrNull != null && networkOrNull.length() > 0) {
             containerConfig.withNetworkDisabled(false);
-            containerConfig.withNetworkMode(network);
+            containerConfig.withNetworkMode(networkOrNull);
         }
 
         // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196
-        if (getVolumes().length > 0) {
+        final String[] volumesOrNull = getVolumes();
+        if (volumesOrNull !=null && volumesOrNull.length > 0) {
             ArrayList<Volume> vols = new ArrayList<>();
             ArrayList<Bind> binds = new ArrayList<>();
-            for (String vol : getVolumes()) {
+            for (String vol : volumesOrNull) {
                 final String[] group = vol.split(":");
                 if (group.length > 1) {
                     if (group[1].equals("/")) {
@@ -699,58 +717,73 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.withBinds(binds.toArray(new Bind[binds.size()]));
         }
 
-        if (getVolumesFrom2().length > 0) {
+        final String[] volumesFrom2OrNull = getVolumesFrom2();
+        if (volumesFrom2OrNull != null && volumesFrom2OrNull.length > 0) {
             ArrayList<VolumesFrom> volFrom = new ArrayList<>();
-            for (String volFromStr : getVolumesFrom2()) {
+            for (String volFromStr : volumesFrom2OrNull) {
                 volFrom.add(new VolumesFrom(volFromStr));
             }
             containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
         }
 
-        if (getDevices().length > 0) {
-            ArrayList<Device> devices = new ArrayList<>();
-            for (String deviceStr : getDevices()) {
-                devices.add(Device.parse(deviceStr));
+        final String[] devicesOrNull = getDevices();
+        if (devicesOrNull != null && devicesOrNull.length > 0) {
+            final List<Device> list = new ArrayList<>();
+            for (String deviceStr : devicesOrNull) {
+                list.add(Device.parse(deviceStr));
             }
-            containerConfig.withDevices(devices);
+            containerConfig.withDevices(list);
         }
 
         containerConfig.withTty(tty);
 
-        if (environment != null && environment.length > 0) {
-            containerConfig.withEnv(environment);
+        final String[] environmentOrNull = getEnvironment();
+        if (environmentOrNull != null && environmentOrNull.length > 0) {
+            containerConfig.withEnv(environmentOrNull);
         }
 
-        if (getMacAddress() != null) {
-            containerConfig.withMacAddress(getMacAddress());
+        final String macAddressOrNull = getMacAddress();
+        if (macAddressOrNull != null && !macAddressOrNull.isEmpty()) {
+            containerConfig.withMacAddress(macAddressOrNull);
         }
 
-        final List<String> extraHosts = getExtraHosts();
-        if (CollectionUtils.isNotEmpty(extraHosts)) {
-            containerConfig.withExtraHosts(extraHosts.toArray(new String[extraHosts.size()]));
+        final List<String> extraHostsOrNull = getExtraHosts();
+        if (CollectionUtils.isNotEmpty(extraHostsOrNull)) {
+            containerConfig.withExtraHosts(extraHostsOrNull.toArray(new String[extraHostsOrNull.size()]));
         }
 
-        if (shmSize != null && shmSize > 0) {
-            final Long shmSizeInByte = shmSize * 1024L * 1024L;
-            containerConfig.getHostConfig().withShmSize(shmSizeInByte);
+        final Integer shmSizeOrNull = getShmSize();
+        if (shmSizeOrNull != null && shmSizeOrNull.intValue() > 0) {
+            final long shmSizeInByte = shmSizeOrNull.longValue() * 1024L * 1024L;
+            hostConfig(containerConfig).withShmSize(shmSizeInByte);
         }
 
-        final List<String> securityOptions = getSecurityOpts();
-        if (CollectionUtils.isNotEmpty(securityOptions)) {
-            containerConfig.getHostConfig().withSecurityOpts( securityOptions );
+        final List<String> securityOptionsOrNull = getSecurityOpts();
+        if (CollectionUtils.isNotEmpty(securityOptionsOrNull)) {
+            hostConfig(containerConfig).withSecurityOpts( securityOptionsOrNull );
         }
 
-        final List<String> capabilitiesToAdd = getCapabilitiesToAdd();
-        if (CollectionUtils.isNotEmpty(capabilitiesToAdd)) {
-            containerConfig.withCapAdd(toCapabilities(capabilitiesToAdd));
+        final List<String> capabilitiesToAddOrNull = getCapabilitiesToAdd();
+        if (CollectionUtils.isNotEmpty(capabilitiesToAddOrNull)) {
+            containerConfig.withCapAdd(toCapabilities(capabilitiesToAddOrNull));
         }
 
-        final List<String> capabilitiesToDrop = getCapabilitiesToDrop();
-        if (CollectionUtils.isNotEmpty(capabilitiesToDrop)) {
-            containerConfig.withCapDrop(toCapabilities(capabilitiesToDrop));
+        final List<String> capabilitiesToDropOrNull = getCapabilitiesToDrop();
+        if (CollectionUtils.isNotEmpty(capabilitiesToDropOrNull)) {
+            containerConfig.withCapDrop(toCapabilities(capabilitiesToDropOrNull));
         }
 
         return containerConfig;
+    }
+
+    @Nonnull
+    private static HostConfig hostConfig(CreateContainerCmd containerConfig) {
+        final HostConfig hc = containerConfig.getHostConfig();
+        if (hc == null) {
+            throw new IllegalStateException("Can't find " + HostConfig.class.getCanonicalName() + " within "
+                    + CreateContainerCmd.class.getCanonicalName() + " " + containerConfig);
+        }
+        return hc;
     }
 
     private List<Capability> toCapabilities(List<String> capabilitiesString) {
@@ -770,6 +803,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * {@link DockerContainerLabelKeys#JENKINS_URL} that we put into every
      * container we make, so that we can recognize our own containers later.
      */
+    @Nonnull
     static String getJenkinsUrlForContainerLabel() {
         final Jenkins jenkins = Jenkins.getInstance();
         // Note: While Jenkins.getInstance() claims to be @Nonnull it can
@@ -783,6 +817,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * {@link DockerContainerLabelKeys#JENKINS_INSTANCE_ID} that we put into every
      * container we make, so that we can recognize our own containers later.
      */
+    @Nonnull
     static String getJenkinsInstanceIdForContainerLabel() {
         return JenkinsUtils.getInstanceId();
     }

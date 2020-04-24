@@ -12,7 +12,6 @@ import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.github.dockerjava.core.dockerfile.Dockerfile;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
@@ -51,15 +50,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndTrimFilterEmptyList;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
@@ -110,7 +113,9 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
     public final String dockerFileDirectory;
 
     /** @deprecated use {@link #fromRegistry} instead */
+    @Deprecated
     private transient String pullCredentialsId;
+    @CheckForNull
     private DockerRegistryEndpoint fromRegistry;
 
     /**
@@ -124,24 +129,27 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
 
     public final boolean pushOnSuccess;
 
+    @CheckForNull
     private String pushCredentialsId;
     /** @deprecated use {@link #pushCredentialsId} instead */
+    @Deprecated
     private transient DockerRegistryEndpoint registry;
 
     public final boolean cleanImages;
     public final boolean cleanupWithJenkinsJobDelete;
 
+    @CheckForNull
     public final String cloud;
     public /* almost final */ boolean noCache;
     public /* almost final */ boolean pull;
 
     @DataBoundConstructor
     public DockerBuilderPublisher(String dockerFileDirectory,
-                                  DockerRegistryEndpoint fromRegistry,
-                                  String cloud,
-                                  String tagsString,
+                                  @Nullable DockerRegistryEndpoint fromRegistry,
+                                  @Nullable String cloud,
+                                  @Nullable String tagsString,
                                   boolean pushOnSuccess,
-                                  String pushCredentialsId,
+                                  @Nullable String pushCredentialsId,
                                   boolean cleanImages,
                                   boolean cleanupWithJenkinsJobDelete) {
         this.dockerFileDirectory = dockerFileDirectory;
@@ -156,6 +164,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
     }
 
     @SuppressWarnings("unused")
+    @Deprecated
     public DockerRegistryEndpoint getRegistry(Identifier identifier) {
         if (registry == null) {
             registry = new DockerRegistryEndpoint(null, pushCredentialsId);
@@ -164,30 +173,37 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
     }
 
     /** @deprecated See {@link #getFromRegistry()} */
+    @Deprecated
+    @CheckForNull
     public String getPullCredentialsId() {
         return pullCredentialsId;
     }
 
+    @CheckForNull
     public String getPushCredentialsId() {
         return pushCredentialsId;
     }
 
+    @CheckForNull
     public List<String> getTags() {
-        return tags;
+        return fixEmpty(tags);
     }
 
     public void setTags(List<String> tags) {
-        this.tags = tags;
+        this.tags = fixEmpty(tags);
     }
 
+    @Nonnull
     public String getTagsString() {
-        return getTags() == null ? "" : Joiner.on("\n").join(getTags());
+        final List<String> tagsOrNull = getTags();
+        return tagsOrNull == null ? "" : Joiner.on("\n").join(tagsOrNull);
     }
 
     public void setTagsString(String tagsString) {
-        setTags(filterStringToList(tagsString));
+        setTags(splitAndTrimFilterEmptyList(tagsString, "\n"));
     }
 
+    @CheckForNull
     public DockerRegistryEndpoint getFromRegistry() {
         return fromRegistry;
     }
@@ -210,18 +226,8 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         this.pull = pull;
     }
 
-    public static List<String> filterStringToList(String str) {
-        if (str == null) return Collections.<String>emptyList();
-
-        List<String> result = new ArrayList<>();
-        for (String o : Splitter.on("\n").omitEmptyStrings().trimResults().split(str)) {
-            result.add(o);
-        }
-        return result;
-    }
-
     public static void verifyTags(String tagsString) {
-        final List<String> verifyTags = filterStringToList(tagsString);
+        final List<String> verifyTags = splitAndTrimFilterEmptyList(tagsString, "\n");
         for (String verifyTag : verifyTags) {
             // Our strings are subjected to variable substitution before they are used, so ${foo} might be valid.
             // So we do some fake substitution to help prevent incorrect complaints.
@@ -272,7 +278,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         private final DockerAPI dockerApi;
         final hudson.model.Run<?, ?> run;
 
-        private Run(hudson.model.Run<?, ?> run, final Launcher launcher, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerAPI dockerApi) {
+        private Run(hudson.model.Run<?, ?> run, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerAPI dockerApi) {
             this.run = run;
             this.launcher = launcher;
             this.listener = listener;
@@ -337,6 +343,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             }
         }
 
+        @Nonnull
         private String buildImage() throws IOException, InterruptedException {
             final AuthConfigurations auths = new AuthConfigurations();
             final DockerRegistryEndpoint pullRegistry = getFromRegistry();

@@ -20,6 +20,7 @@ import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -70,27 +71,28 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * Can be overridden by concrete implementations to provide some customization to the container creation command
      */
     @SuppressWarnings("unused")
-    public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {}
+    public void beforeContainerCreated(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull CreateContainerCmd cmd) throws IOException, InterruptedException {}
 
     /**
      * Container has been created but not started yet, that's a good opportunity to inject <code>remoting.jar</code>
      * using {@link #injectRemotingJar(String, String, DockerClient)}
      */
     @SuppressWarnings("unused")
-    public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {}
+    public void beforeContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull String containerId) throws IOException, InterruptedException {}
 
     /**
      * Container has started. Good place to check it's healthy before considering agent is ready to accept connexions
      */
     @SuppressWarnings("unused")
-    public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {}
+    public void afterContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull String containerId) throws IOException, InterruptedException {}
 
 
     /**
      * Ensure container is already set with a command, or set one to make it wait indefinitely
      */
-    protected void ensureWaiting(CreateContainerCmd cmd) {
-        if (cmd.getCmd() == null || cmd.getCmd().length == 0) {
+    protected void ensureWaiting(@Nonnull CreateContainerCmd cmd) {
+        final String[] cmdAlreadySet = cmd.getCmd();
+        if (cmdAlreadySet == null || cmdAlreadySet.length == 0) {
             // no command has been set, we need one that will just hang. Typically "sh" waiting for stdin
             cmd.withCmd("/bin/sh")
                .withTty(true)
@@ -101,7 +103,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     /**
      * Utility method to copy remoting runtime into container on specified working directory
      */
-    protected String injectRemotingJar(String containerId, String workdir, DockerClient client) {
+    protected String injectRemotingJar(@Nonnull String containerId, @Nonnull String workdir, @Nonnull DockerClient client) {
         // Copy slave.jar into container
         client.copyArchiveToContainerCmd(containerId)
                 .withHostResource(remoting.getAbsolutePath())
@@ -111,7 +113,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     }
 
     @Restricted(NoExternalUse.class)
-    protected static void addEnvVars(final EnvVars vars, final Iterable<? extends NodeProperty<?>> nodeProperties) throws IOException, InterruptedException {
+    protected static void addEnvVars(@Nonnull final EnvVars vars, @Nullable final Iterable<? extends NodeProperty<?>> nodeProperties) throws IOException, InterruptedException {
         if (nodeProperties != null) {
             for (final NodeProperty<?> nodeProperty : nodeProperties) {
                 nodeProperty.buildEnvVars(vars, LOGGER_LISTENER);
@@ -120,11 +122,12 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     }
 
     @Restricted(NoExternalUse.class)
-    protected static void addEnvVar(final EnvVars vars, final String name, final Object valueOrNull) {
+    protected static void addEnvVar(@Nonnull final EnvVars vars, @Nonnull final String name, @Nullable final Object valueOrNull) {
         vars.put(name, valueOrNull == null ? "" : valueOrNull.toString());
     }
 
-    public final ComputerLauncher createLauncher(final DockerAPI api, @Nonnull final String containerId, String workdir, TaskListener listener) throws IOException, InterruptedException {
+    @Nonnull
+    public final ComputerLauncher createLauncher(@Nonnull final DockerAPI api, @Nonnull final String containerId, @Nonnull String workdir, @Nonnull TaskListener listener) throws IOException, InterruptedException {
         final InspectContainerResponse inspect;
         try(final DockerClient client = api.getClient()) {
             inspect = client.inspectContainerCmd(containerId).exec();
@@ -144,7 +147,8 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * Create a Launcher to create an Agent with this container. Can assume container has been created by this
      * DockerAgentConnector so adequate setup did take place.
      */
-    protected abstract ComputerLauncher createLauncher(DockerAPI api, String workdir, InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException;
+    @Nonnull
+    protected abstract ComputerLauncher createLauncher(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull InspectContainerResponse inspect, @Nonnull TaskListener listener) throws IOException, InterruptedException;
 
     /**
      * Returns all the registered {@link DockerComputerConnector} descriptors.
