@@ -246,7 +246,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         DockerCloud theCloud;
         final VirtualChannel channel = launcher.getChannel();
         if (!Strings.isNullOrEmpty(cloud)) {
-            theCloud = JenkinsUtils.getServer(cloud);
+            theCloud = JenkinsUtils.getCloudByNameOrThrow(cloud);
         } else {
             if(channel instanceof Channel) {
                 final Node node = Jenkins.getInstance().getNode(((Channel)channel).getName() );
@@ -263,7 +263,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         // Triton can't do docker build. Ensure we're not trying to do that.
         if (theCloud.isTriton()) {
             LOGGER.warn("Selected cloud for build does not support this feature. Finding an alternative");
-            for (DockerCloud dc : JenkinsUtils.getServers()) {
+            for (DockerCloud dc : DockerCloud.instances()) {
                 if (!dc.isTriton()) {
                     LOGGER.warn("Picked {} cloud instead", dc.getDisplayName());
                     theCloud = dc;

@@ -1,9 +1,8 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import com.google.common.base.Predicate;
+import com.google.common.base.Function;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.Launcher;
 import hudson.Util;
@@ -12,7 +11,6 @@ import hudson.model.Node;
 import hudson.model.Run;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
-import hudson.slaves.Cloud;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
 
@@ -85,27 +83,33 @@ public class JenkinsUtils {
     }
 
     /**
-     * Get the list of Docker servers.
-     *
-     * @return the list as a LinkedList of DockerCloud
+     * Finds the {@link DockerCloud} with the {@link DockerCloud#getDisplayName()}
+     * matching the specified name.
+     * 
+     * @param serverName The name to look for.
+     * @return {@link DockerCloud} with the {@link DockerCloud#getDisplayName()}
+     *         matching the specified name.
+     * @throws IllegalArgumentException if no {@link DockerCloud} exists with that
+     *                                  name.
      */
     @Restricted(NoExternalUse.class)
-    public static synchronized Collection<DockerCloud> getServers() {
-        Collection clouds = Collections2.filter(Jenkins.getInstance().clouds, new Predicate<Cloud>() {
-            @Override
-            public boolean apply(Cloud input) {
-                return input instanceof DockerCloud;
-            }
-        });
-        return clouds;
+    @Nonnull
+    public static DockerCloud getCloudByNameOrThrow(final String serverName) {
+        final DockerCloud resultOrNull = DockerCloud.getCloudByName(serverName);
+        if (resultOrNull != null) {
+            return resultOrNull;
+        }
+        throw new IllegalArgumentException("No " + DockerCloud.class.getSimpleName() + " with name '" + serverName
+                + "'.  Known names are " + getServerNames());
     }
 
     @Restricted(NoExternalUse.class)
-    public static DockerCloud getServer(final String serverName) {
-        return Iterables.find(getServers(), new Predicate<DockerCloud>() {
+    @Nonnull
+    public static List<String> getServerNames() {
+        return Lists.transform(DockerCloud.instances(), new Function<DockerCloud, String>() {
             @Override
-            public boolean apply(DockerCloud input) {
-                return input != null && serverName.equals(input.getDisplayName());
+            public String apply(DockerCloud input) {
+                return input == null ? "" : input.getDisplayName();
             }
         });
     }
