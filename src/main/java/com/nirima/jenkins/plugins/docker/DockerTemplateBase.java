@@ -114,6 +114,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public @CheckForNull Integer memoryLimit;
     public @CheckForNull Integer memorySwap;
+    public @CheckForNull Long cpuPeriod;
+    public @CheckForNull Long cpuQuota;
     public @CheckForNull Integer cpuShares;
     public @CheckForNull Integer shmSize;
 
@@ -156,6 +158,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               String extraGroupsString,
                               Integer memoryLimit,
                               Integer memorySwap,
+                              Long cpuPeriod,
+                              Long cpuQuota,
                               Integer cpuShares,
                               Integer shmSize,
                               String bindPorts,
@@ -178,6 +182,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setExtraGroupsString(extraGroupsString);
         setMemoryLimit(memoryLimit);
         setMemorySwap(memorySwap);
+        setCpuPeriod(cpuPeriod);
+        setCpuQuota(cpuQuota);
         setCpuShares(cpuShares);
         setShmSize(shmSize);
         setBindPorts(bindPorts);
@@ -406,6 +412,26 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setMemorySwap(Integer memorySwap) {
         this.memorySwap = memorySwap;
+    }
+
+    @CheckForNull
+    public Long getCpuPeriod() {
+        return cpuPeriod;
+    }
+
+    @DataBoundSetter
+    public void setCpuPeriod(Long cpuPeriod) {
+        this.cpuPeriod = cpuPeriod;
+    }
+
+    @CheckForNull
+    public Long getCpuQuota() {
+        return cpuQuota;
+    }
+
+    @DataBoundSetter
+    public void setCpuQuota(Long cpuQuota) {
+        this.cpuQuota = cpuQuota;
     }
 
     @CheckForNull
@@ -661,6 +687,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         labels.put(DockerContainerLabelKeys.JENKINS_URL, getJenkinsUrlForContainerLabel());
         labels.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
 
+        final Long cpuPeriodOrNull = getCpuPeriod();
+        if (cpuPeriodOrNull != null && cpuPeriodOrNull > 0) {
+            hostConfig(containerConfig).withCpuPeriod(cpuPeriodOrNull);
+        }
+
+        final Long cpuQuotaOrNull = getCpuQuota();
+        if (cpuQuotaOrNull != null && cpuQuotaOrNull > 0) {
+            hostConfig(containerConfig).withCpuQuota(cpuQuotaOrNull);
+        }
+
         final Integer cpuSharesOrNull = getCpuShares();
         if (cpuSharesOrNull != null && cpuSharesOrNull > 0) {
             containerConfig.withCpuShares(cpuSharesOrNull);
@@ -895,6 +931,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (bindPorts != null ? !bindPorts.equals(that.bindPorts) : that.bindPorts != null) return false;
         if (memoryLimit != null ? !memoryLimit.equals(that.memoryLimit) : that.memoryLimit != null) return false;
         if (memorySwap != null ? !memorySwap.equals(that.memorySwap) : that.memorySwap != null) return false;
+        if (cpuPeriod != null ? !cpuPeriod.equals(that.cpuPeriod) : that.cpuPeriod != null) return false;
+        if (cpuQuota != null ? !cpuQuota.equals(that.cpuQuota) : that.cpuQuota != null) return false;
         if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
         if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
         if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
@@ -927,6 +965,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (bindAllPorts ? 1 : 0);
         result = 31 * result + (memoryLimit != null ? memoryLimit.hashCode() : 0);
         result = 31 * result + (memorySwap != null ? memorySwap.hashCode() : 0);
+        result = 31 * result + (cpuPeriod != null ? cpuPeriod.hashCode() : 0);
+        result = 31 * result + (cpuQuota != null ? cpuQuota.hashCode() : 0);
         result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
         result = 31 * result + (shmSize != null ? shmSize.hashCode() : 0);
         result = 31 * result + (privileged ? 1 : 0);
@@ -962,6 +1002,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "bindAllPorts", bindAllPorts);
         bldToString(sb, "memoryLimit", memoryLimit);
         bldToString(sb, "memorySwap", memorySwap);
+        bldToString(sb, "cpuPeriod", cpuPeriod);
+        bldToString(sb, "cpuQuota", cpuQuota);
         bldToString(sb, "cpuShares", cpuShares);
         bldToString(sb, "shmSize", shmSize);
         bldToString(sb, "privileged", privileged);
