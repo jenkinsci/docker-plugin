@@ -63,7 +63,7 @@ import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString
 
 public class DockerTemplate implements Describable<DockerTemplate> {
     /**
-     * The default timeout in seconds ({@value)s} to wait during container shutdown
+     * The default timeout in seconds ({@value #DEFAULT_STOP_TIMEOUT}s) to wait during container shutdown
      * until it will be forcefully terminated.
      */
     public static final int DEFAULT_STOP_TIMEOUT = 10;
