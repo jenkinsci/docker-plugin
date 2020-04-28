@@ -35,7 +35,6 @@ public class DockerTransientNode extends Slave {
     private static final long serialVersionUID = 1349729340506926183L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTransientNode.class.getName());
 
-    //Keeping real containerId information, but using containerName as containerId
     private final String containerId;
 
     private transient DockerAPI dockerAPI;
@@ -48,8 +47,42 @@ public class DockerTransientNode extends Slave {
 
     private AtomicBoolean acceptingTasks = new AtomicBoolean(true);
 
-    public DockerTransientNode(@Nonnull String nodeName, String containerId, String workdir, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
-        super(nodeName, workdir, launcher);
+    /**
+     * @deprecated Use {@link #DockerTransientNode(String, String, String)} then
+     *             {@link #setLauncher(ComputerLauncher)}.
+     * @param nodeName    Passed to
+     *                    {@link #DockerTransientNode(String, String, String)}.
+     * @param containerId Passed to
+     *                    {@link #DockerTransientNode(String, String, String)}.
+     * @param workdir     Passed to
+     *                    {@link #DockerTransientNode(String, String, String)}.
+     * @param launcher    Passed to {@link #setLauncher(ComputerLauncher)}
+     * @throws             Descriptor.FormException See
+     *                     {@link #DockerTransientNode(String, String, String)}.
+     * @throws IOException See {@link #DockerTransientNode(String, String, String)}.
+     */
+    @Deprecated
+    public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
+        this(nodeName, containerId, workdir);
+        setLauncher(launcher);
+    }
+
+    /**
+     * Preferred constructor. Note that, unless this is a JNLP node, callers will
+     * later have to call {@link #setLauncher(ComputerLauncher)}.
+     * 
+     * @param nodeName    Name of the node; passed to
+     *                    {@link Slave#Slave(String, String, ComputerLauncher)}.
+     * @param containerId Docker container id.
+     * @param workdir     remoteFs home dir; passed to
+     *                    {@link Slave#Slave(String, String, ComputerLauncher)}.
+     * @throws             Descriptor.FormException See
+     *                     {@link Slave#Slave(String, String, ComputerLauncher)}.
+     * @throws IOException See
+     *                     {@link Slave#Slave(String, String, ComputerLauncher)}.
+     */
+    public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir) throws Descriptor.FormException, IOException {
+        super(nodeName, workdir, null);
         this.containerId = containerId;
         setNumExecutors(1);
         setMode(Mode.EXCLUSIVE);
@@ -65,6 +98,7 @@ public class DockerTransientNode extends Slave {
         this.acceptingTasks.set(acceptingTasks);
     }
 
+    @Nonnull
     public String getContainerId(){
         return containerId;
     }

@@ -18,6 +18,7 @@ import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.client.DockerEnvUtils;
 import jenkins.model.Jenkins;
@@ -200,6 +201,17 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         if (StringUtils.isNotBlank(user)) {
             cmd.withUser(user);
         }
+    }
+
+    @Override
+    public void beforeContainerStarted(DockerAPI api, String workdir, DockerTransientNode node)
+            throws IOException, InterruptedException {
+        // For JNLP, we need to have the Jenkins Node known to Jenkins as a valid JNLP
+        // node before the container starts, otherwise it might get started before
+        // Jenkins is ready for it.
+        // That's why we explicitly add the node here instead of allowing the cloud
+        // provisioning process to add it later.
+        ensureNodeIsKnown(node);
     }
 
     private static EnvVars calculateVariablesForVariableSubstitution(final String nodeName, final String secret,

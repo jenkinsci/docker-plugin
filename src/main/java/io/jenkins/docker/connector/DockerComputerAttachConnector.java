@@ -21,6 +21,7 @@ import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.client.DockerMultiplexedInputStream;
 import jenkins.model.Jenkins;
@@ -160,7 +161,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     }
 
     @Override
-    public void afterContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
+    public void afterContainerStarted(DockerAPI api, String workdir, DockerTransientNode node) throws IOException, InterruptedException {
+        final String containerId = node.getContainerId();
         try(final DockerClient client = api.getClient()) {
             injectRemotingJar(containerId, workdir, client);
         }
