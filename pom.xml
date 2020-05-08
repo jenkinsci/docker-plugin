@@ -23,7 +23,7 @@
             <url>https://opensource.org/licenses/MIT</url>
             <distribution>repo</distribution>
         </license>
-     </licenses>
+    </licenses>
 
     <developers>
         <developer>
@@ -123,7 +123,12 @@
             <version>2.16</version>
             <optional>true</optional>
         </dependency>
-
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>cloud-stats</artifactId>
+            <version>0.25</version>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-durable-task-step</artifactId>
@@ -235,41 +240,41 @@
     </build>
 
     <profiles>
-      <!-- Workaround to add new dependency for Jenkins Version 2.86+ as it's removed from Jenkins Core  -->
-      <profile>
-        <id>jenkins_2_89</id>
-        <activation>
-            <property>
-                <name>jenkins.version</name>
-                <value>2.89.4</value>
-            </property>
-        </activation>
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>command-launcher</artifactId>
-                <version>1.2</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-      </profile>
-      <profile>
-        <id>jenkins_2_107</id>
-        <activation>
-            <property>
-                <name>jenkins.version</name>
-                <value>2.107.1</value>
-            </property>
-        </activation>
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>command-launcher</artifactId>
-                <version>1.2</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-      </profile>
+        <!-- Workaround to add new dependency for Jenkins Version 2.86+ as it's removed from Jenkins Core  -->
+        <profile>
+            <id>jenkins_2_89</id>
+            <activation>
+                <property>
+                    <name>jenkins.version</name>
+                    <value>2.89.4</value>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>command-launcher</artifactId>
+                    <version>1.2</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>jenkins_2_107</id>
+            <activation>
+                <property>
+                    <name>jenkins.version</name>
+                    <value>2.107.1</value>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jenkins-ci.plugins</groupId>
+                    <artifactId>command-launcher</artifactId>
+                    <version>1.2</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
     </profiles>
 
     <scm>
