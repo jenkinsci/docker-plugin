@@ -8,10 +8,8 @@ import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.DockerTransientNode;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
+import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -21,6 +19,8 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class CloudStatsFactoryTest {
+    @Rule
+    public JenkinsRule j = new JenkinsRule();
 
     @BeforeClass
     public static void setUpClass() {
@@ -43,7 +43,6 @@ public class CloudStatsFactoryTest {
     }
 
     @Test
-    @Ignore("Requires PowerMock of Jenkins and very little logic here. See https://wiki.jenkins.io/display/JENKINS/Mocking+in+Unit+Tests")
     public void createTransientNode() throws Throwable{
         CloudStatsFactory uut = new CloudStatsFactory();
         ComputerLauncher launcher = mock(ComputerLauncher.class);
