@@ -31,7 +31,7 @@ No new restrictions/conditions are permitted.
   * How is this failing?
   * What should happen instead?
 - Provide step-by-step instructions for how to reproduce the issue.
-  * Try to avoid relying on custom docker images or for the repro case. Ideally, reproduce with a `jenkins/(ssh-slave|jnlp-slave|slave)` image with a dumb freestyle job, as that makes life easier for everyone.
+  * Try to avoid relying on custom docker images or for the repro case. Ideally, reproduce with a `jenkins/(ssh-slave|jnlp-slave|agent)` image with a dumb freestyle job, as that makes life easier for everyone.
 - Specify the Jenkins core & plugin version (of all docker-related plugins) that you're seeing the issue with.
 - Check `Manage Jenkins` -> `Manage Old Data` for out of date configuration data and provide this info.
 - Check and provide errors from system jenkins.log and errors from `Manage Jenkins` -> `System Log`.
