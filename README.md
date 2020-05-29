@@ -149,12 +149,12 @@ for the Docker image to be used:
 
 -   a JDK installed.
     You can use
-    [jenkins/slave](https://hub.docker.com/r/jenkins/slave/)
+    [jenkins/agent](https://hub.docker.com/r/jenkins/agent/)
     as a basis for a custom image. 
 
 To create a custom image and bundle your favorite tools,
 create a `Dockerfile` with the `FROM` to point to one of the
-jenkins/\*-slave
+jenkins/\*-slave or jenkins/agent
 reference images,
 and install everything needed for your own usage, e.g.
 
