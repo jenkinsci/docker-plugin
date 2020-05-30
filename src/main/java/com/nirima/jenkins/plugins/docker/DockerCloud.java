@@ -28,6 +28,7 @@ import io.jenkins.docker.client.DockerAPI;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Base64;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -40,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -67,6 +69,7 @@ public class DockerCloud extends Cloud {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerCloud.class);
 
+    static final DockerNodeFactory NODE_FACTORY = DockerNodeFactory.getInstance();
     /**
      * Default value for {@link #getEffectiveErrorDurationInMilliseconds()}
      * used when {@link #errorDuration} is null.
@@ -121,6 +124,7 @@ public class DockerCloud extends Cloud {
 
     /** Length of time, in seconds, that {@link #disabled} should auto-disable for if we encounter an error. */
     private @CheckForNull Integer errorDuration;
+
 
     @DataBoundConstructor
     public DockerCloud(String name,
@@ -361,26 +365,32 @@ public class DockerCloud extends Cloud {
                         t.getImage(), label, getDisplayName());
 
                 final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
-                r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors()));
+                DockerNodeFactory.DockerPlannedNode pn =
+                        NODE_FACTORY.createPlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors(),
+                                getDisplayName(), t.getImage(), label.getName());
 
+                r.add(pn);
                 final Runnable taskToCreateNewSlave = new Runnable() {
                     @Override
                     public void run() {
                         DockerTransientNode slave = null;
                         try {
-                            // TODO where can we log provisioning progress ?
+                            // TODO where can we log provisioning progress ? // In the CloudMonitor API!
+                            pn.notifyStarted(); // get().onStarted(id);
                             final DockerAPI api = DockerCloud.this.getDockerApi();
                             slave = t.provisionNode(api, TaskListener.NULL);
                             slave.setDockerAPI(api);
                             slave.setCloudId(DockerCloud.this.name);
-                            plannedNode.complete(slave);
+                            pn.notifySuccess(slave); //get().onComplete(id, slave);
 
+                            plannedNode.complete(slave);
                             // On provisioning completion, let's trigger NodeProvisioner
                             robustlyAddNodeToJenkins(slave);
 
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                     t, getDisplayName(), ex);
+                            pn.notifyFailure(ex); // get().onFailure(id, ex);
                             plannedNode.completeExceptionally(ex);
                             if (slave != null) {
                                 slave.terminate(LOGGER);
