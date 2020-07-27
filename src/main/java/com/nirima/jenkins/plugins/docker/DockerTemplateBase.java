@@ -643,7 +643,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public DockerRegistryEndpoint getRegistry() {
         if (registry == null) {
-            registry = new DockerRegistryEndpoint(null, pullCredentialsId);
+            registry = DockerRegistryEndpoint.fromImageName(getImage(), pullCredentialsId);
         }
         return registry;
     }

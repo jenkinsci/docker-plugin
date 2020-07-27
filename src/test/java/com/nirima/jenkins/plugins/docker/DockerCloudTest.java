@@ -2,9 +2,11 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsStore;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.github.dockerjava.api.model.AuthConfig;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Node;
 import hudson.util.Secret;
@@ -17,6 +19,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import java.io.IOException;
 import java.util.Collections;
 
 import static com.cloudbees.plugins.credentials.CredentialsScope.SYSTEM;
@@ -123,5 +126,37 @@ public class DockerCloudTest {
         Assert.assertEquals(state + "c1.countContainersInProgress(i2)", c1i2, c1.countContainersInProgress(i2));
         Assert.assertEquals(state + "c2.countContainersInProgress(i1)", c2i1, c2.countContainersInProgress(i1));
         Assert.assertEquals(state + "c2.countContainersInProgress(i2)", c2i2, c2.countContainersInProgress(i2));
+    }
+    
+    @Test
+    public void testRegistryCredentials() throws IOException {
+
+        final CredentialsStore store = CredentialsProvider.lookupStores(jenkins.getInstance()).iterator().next();
+        StandardUsernamePasswordCredentials rc = new UsernamePasswordCredentialsImpl(SYSTEM, "pullCredentialsId", null, "test", "secret");
+        store.addCredentials(Domain.global(), rc);
+
+        // Test default registry / no tag
+        DockerTemplateBase dtb1 = new DockerTemplateBase("user/image1");
+        dtb1.setPullCredentialsId(rc.getId());
+        AuthConfig authConfig = DockerCloud.getAuthConfig(dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
+        Assert.assertEquals("test", authConfig.getUsername());
+        Assert.assertEquals("secret", authConfig.getPassword());
+        Assert.assertEquals(AuthConfig.DEFAULT_SERVER_ADDRESS, authConfig.getRegistryAddress());
+
+        // Test default registry / tag
+        dtb1 = new DockerTemplateBase("user/image1:tag");
+        dtb1.setPullCredentialsId(rc.getId());
+        authConfig = DockerCloud.getAuthConfig(dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
+        Assert.assertEquals("test", authConfig.getUsername());
+        Assert.assertEquals("secret", authConfig.getPassword());
+        Assert.assertEquals(AuthConfig.DEFAULT_SERVER_ADDRESS, authConfig.getRegistryAddress());
+
+        // Test custom registry / tag
+        dtb1 = new DockerTemplateBase("my.docker.registry/repo/image1:tag");
+        dtb1.setPullCredentialsId(rc.getId());
+        authConfig = DockerCloud.getAuthConfig(dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
+        Assert.assertEquals("test", authConfig.getUsername());
+        Assert.assertEquals("secret", authConfig.getPassword());
+        Assert.assertEquals("https://my.docker.registry", authConfig.getRegistryAddress());
     }
 }
