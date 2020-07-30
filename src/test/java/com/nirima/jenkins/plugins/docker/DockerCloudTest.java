@@ -167,8 +167,23 @@ public class DockerCloudTest {
         Assert.assertEquals("secret", authConfig.getPassword());
         Assert.assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
 
+        // Test custom registry / port / tag / sha
+        dtb1 = new DockerTemplateBase("my.docker.registry:12345/repo/image@sha256:sha256");
+        dtb1.setPullCredentialsId(rc.getId());
+        authConfig = DockerCloud.getAuthConfig(dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
+        Assert.assertEquals("test", authConfig.getUsername());
+        Assert.assertEquals("secret", authConfig.getPassword());
+        Assert.assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
+
         // Test V2
         dtb1 = new DockerTemplateBase("my.docker.registry:12345/namespace/repo/image1:tag");
+        dtb1.setPullCredentialsId(rc.getId());
+        authConfig = DockerCloud.getAuthConfig(dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
+        Assert.assertEquals("test", authConfig.getUsername());
+        Assert.assertEquals("secret", authConfig.getPassword());
+        Assert.assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
+
+        dtb1 = new DockerTemplateBase("my.docker.registry:12345/namespace/repo/image@sha256:sha256");
         dtb1.setPullCredentialsId(rc.getId());
         authConfig = DockerCloud.getAuthConfig(dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
         Assert.assertEquals("test", authConfig.getUsername());
