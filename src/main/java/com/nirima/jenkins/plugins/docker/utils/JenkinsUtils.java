@@ -96,8 +96,7 @@ public class JenkinsUtils {
     @Nonnull
     public static DockerCloud getCloudByNameOrThrow(final String serverName) {
         try {
-            final DockerCloud resultOrNull;
-            resultOrNull = DockerCloud.getCloudByName(serverName);
+            final DockerCloud resultOrNull = DockerCloud.getCloudByName(serverName);
             if (resultOrNull != null) {
                 return resultOrNull;
             }
