@@ -828,20 +828,6 @@ public class DockerCloud extends Cloud {
 
     @Restricted(NoExternalUse.class)
     @CheckForNull
-    static DockerCloud findCloudByName(final String cloudName) {
-        for (Cloud cloud : Jenkins.getInstance().clouds) {
-            if (cloud instanceof DockerCloud) {
-                final String thisCloudName = cloud.getDisplayName();
-                if (cloudName.equals(thisCloudName)) {
-                    return (DockerCloud) cloud;
-                }
-            }
-        }
-        return null;
-    }
-
-    @Restricted(NoExternalUse.class)
-    @CheckForNull
     static DockerCloud findCloudForTemplate(final DockerTemplate template) {
         for (DockerCloud cloud : instances()) {
             if ( cloud.hasTemplate(template) ) {
