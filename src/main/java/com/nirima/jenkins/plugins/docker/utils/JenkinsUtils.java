@@ -95,9 +95,14 @@ public class JenkinsUtils {
     @Restricted(NoExternalUse.class)
     @Nonnull
     public static DockerCloud getCloudByNameOrThrow(final String serverName) {
-        final DockerCloud resultOrNull = DockerCloud.getCloudByName(serverName);
-        if (resultOrNull != null) {
-            return resultOrNull;
+        try {
+            final DockerCloud resultOrNull;
+            resultOrNull = DockerCloud.getCloudByName(serverName);
+            if (resultOrNull != null) {
+                return resultOrNull;
+            }
+        } catch (ClassCastException treatedAsCloudNotFound) {
+            // we found a cloud of that name, but it wasn't one of ours.
         }
         throw new IllegalArgumentException("No " + DockerCloud.class.getSimpleName() + " with name '" + serverName
                 + "'.  Known names are " + getServerNames());
