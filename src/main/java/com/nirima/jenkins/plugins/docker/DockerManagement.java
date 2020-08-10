@@ -81,12 +81,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
     }
 
     public Collection<String> getServerNames() {
-        return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, String>() {
-            @Override
-            public String apply(DockerCloud input) {
-                return input.getDisplayName();
-            }
-        });
+        return JenkinsUtils.getServerNames();
     }
 
     public static class ServerDetail {
@@ -109,13 +104,13 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
                 }
                 return "(" + containers.size() + ")";
             } catch (Exception ex) {
-                return "Error";
+                return "Error: " + ex;
             }
         }
     }
 
     public Collection<ServerDetail> getServers() {
-        return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, ServerDetail>() {
+        return Collections2.transform(DockerCloud.instances(), new Function<DockerCloud, ServerDetail>() {
             @Override
             public ServerDetail apply(@Nullable DockerCloud input) {
                 return new ServerDetail(input);

@@ -40,6 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -813,18 +815,19 @@ public class DockerCloud extends Cloud {
         return TimeUnit.SECONDS.toMillis(ERROR_DURATION_DEFAULT_SECONDS);
     }
 
+    @Nonnull
     public static List<DockerCloud> instances() {
         List<DockerCloud> instances = new ArrayList<>();
         for (Cloud cloud : Jenkins.getInstance().clouds) {
             if (cloud instanceof DockerCloud) {
                 instances.add((DockerCloud) cloud);
             }
-
         }
         return instances;
     }
 
     @Restricted(NoExternalUse.class)
+    @CheckForNull
     static DockerCloud findCloudForTemplate(final DockerTemplate template) {
         for (DockerCloud cloud : instances()) {
             if ( cloud.hasTemplate(template) ) {

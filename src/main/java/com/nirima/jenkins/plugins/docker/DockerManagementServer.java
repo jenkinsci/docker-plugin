@@ -36,7 +36,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
 
     public DockerManagementServer(String name) {
         this.name = name;
-        theCloud = JenkinsUtils.getServer(name);
+        theCloud = JenkinsUtils.getCloudByNameOrThrow(name);
     }
 
     public Collection getImages(){
