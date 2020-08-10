@@ -16,6 +16,7 @@ public class DockerTemplateTest {
     String javaPath = " javaPath";
     Integer memoryLimit = 1024;
     Integer memorySwap = 1280;
+    String cgroupParent = "cgroupParent";
     Integer cpuShares = 1000;
     Integer shmSize = 1002;
     String prefixStartSlaveCmd = "prefixStartSlaveCmd";
@@ -44,7 +45,7 @@ public class DockerTemplateTest {
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(
                 image, null, dnsString, network, dockerCommand, volumesString, volumesString,
-                environmentsString, hostname, user, extraGroupsString, memoryLimit, memorySwap, cpuShares, shmSize,
+                environmentsString, hostname, user, extraGroupsString, memoryLimit, memorySwap, cgroupParent, cpuShares, shmSize,
                 bindPorts, bindAllPorts, privileged, tty, macAddress, extraHostsString);
         dockerTemplateBase.setCapabilitiesToAddString(capabilitiesToAddString);
         dockerTemplateBase.setCapabilitiesToDropString(capabilitiesToDropString);

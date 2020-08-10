@@ -114,6 +114,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public @CheckForNull Integer memoryLimit;
     public @CheckForNull Integer memorySwap;
+    public @CheckForNull String cgroupParent;
     public @CheckForNull Integer cpuShares;
     public @CheckForNull Integer shmSize;
 
@@ -156,6 +157,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               String extraGroupsString,
                               Integer memoryLimit,
                               Integer memorySwap,
+                              String cgroupParent,
                               Integer cpuShares,
                               Integer shmSize,
                               String bindPorts,
@@ -178,6 +180,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setExtraGroupsString(extraGroupsString);
         setMemoryLimit(memoryLimit);
         setMemorySwap(memorySwap);
+        setCgroupParent(cgroupParent);
         setCpuShares(cpuShares);
         setShmSize(shmSize);
         setBindPorts(bindPorts);
@@ -406,6 +409,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setMemorySwap(Integer memorySwap) {
         this.memorySwap = memorySwap;
+    }
+
+    @CheckForNull
+    public String getCgroupParent() {
+        return cgroupParent;
+    }
+
+    @DataBoundSetter
+    public void setCgroupParent(String cgroupParent) {
+        this.cgroupParent = cgroupParent;
     }
 
     @CheckForNull
@@ -661,6 +674,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         labels.put(DockerContainerLabelKeys.JENKINS_URL, getJenkinsUrlForContainerLabel());
         labels.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
 
+        if (!Strings.isNullOrEmpty(cgroupParent)) {
+            hostConfig(containerConfig).withCgroupParent(cgroupParent);
+        }
+
         final Integer cpuSharesOrNull = getCpuShares();
         if (cpuSharesOrNull != null && cpuSharesOrNull > 0) {
             containerConfig.withCpuShares(cpuSharesOrNull);
@@ -895,6 +912,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (bindPorts != null ? !bindPorts.equals(that.bindPorts) : that.bindPorts != null) return false;
         if (memoryLimit != null ? !memoryLimit.equals(that.memoryLimit) : that.memoryLimit != null) return false;
         if (memorySwap != null ? !memorySwap.equals(that.memorySwap) : that.memorySwap != null) return false;
+        if (cgroupParent != null ? !cgroupParent.equals(that.cgroupParent) : that.cgroupParent != null) return false;
         if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
         if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
         if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
@@ -927,6 +945,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (bindAllPorts ? 1 : 0);
         result = 31 * result + (memoryLimit != null ? memoryLimit.hashCode() : 0);
         result = 31 * result + (memorySwap != null ? memorySwap.hashCode() : 0);
+        result = 31 * result + (cgroupParent != null ? cgroupParent.hashCode() : 0);
         result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
         result = 31 * result + (shmSize != null ? shmSize.hashCode() : 0);
         result = 31 * result + (privileged ? 1 : 0);
@@ -963,6 +982,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "memoryLimit", memoryLimit);
         bldToString(sb, "memorySwap", memorySwap);
         bldToString(sb, "cpuShares", cpuShares);
+        bldToString(sb, "cgroupParent", cgroupParent);
         bldToString(sb, "shmSize", shmSize);
         bldToString(sb, "privileged", privileged);
         bldToString(sb, "tty", tty);
