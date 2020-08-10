@@ -17,12 +17,15 @@ import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class DockerTransientNode extends Slave {
+public class DockerTransientNode extends Slave implements TrackedItem {
     private static final long serialVersionUID = 1349729340506926183L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTransientNode.class.getName());
 
@@ -45,6 +48,8 @@ public class DockerTransientNode extends Slave {
     private int stopTimeout = DockerTemplate.DEFAULT_STOP_TIMEOUT;
 
     private String cloudId;
+
+    private ProvisioningActivity.Id provisioningId;
 
     private AtomicBoolean acceptingTasks = new AtomicBoolean(true);
 
@@ -116,9 +121,23 @@ public class DockerTransientNode extends Slave {
         this.cloudId = cloudId;
     }
 
+    public ProvisioningActivity.Id getProvisioningId() {
+        return provisioningId;
+    }
+
+    public void setProvisioningId(ProvisioningActivity.Id provisioningId) {
+        this.provisioningId = provisioningId.named(getNodeName());
+    }
+
     @Override
     public DockerComputer createComputer() {
         return new DockerComputer(this);
+    }
+
+    @Nullable
+    @Override
+    public ProvisioningActivity.Id getId() {
+        return provisioningId;
     }
 
     private interface ILogger {

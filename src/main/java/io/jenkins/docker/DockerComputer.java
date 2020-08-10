@@ -6,7 +6,11 @@ import hudson.EnvVars;
 import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.client.DockerAPI;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import java.io.IOException;
+
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 
 /**
@@ -14,7 +18,7 @@ import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
  *
  * @author magnayn
  */
-public class DockerComputer extends SlaveComputer {
+public class DockerComputer extends SlaveComputer implements TrackedItem {
     // private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
 
     public DockerComputer(DockerTransientNode node) {
@@ -71,5 +75,12 @@ public class DockerComputer extends SlaveComputer {
                 .add("name", super.getName())
                 .add("slave", getNode())
                 .toString();
+    }
+
+    @Nullable
+    @Override
+    public ProvisioningActivity.Id getId() {
+        final DockerTransientNode nodeOrNull = getNode();
+        return nodeOrNull == null ? null : nodeOrNull.getId();
     }
 }
