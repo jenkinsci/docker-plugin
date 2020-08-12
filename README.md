@@ -25,7 +25,7 @@ the labels/tags that this template provides,
 the docker image,
 how to start it,
 etc)
-and Jenkins can then run docker containers to provide Jenkins (slave agent) Nodes on which Jenkins can run builds.
+and Jenkins can then run docker containers to provide Jenkins (agent) Nodes on which Jenkins can run builds.
 
 #### See also
 * [Software licence](LICENSE)
