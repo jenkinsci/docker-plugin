@@ -104,7 +104,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * Utility method to copy remoting runtime into container on specified working directory
      */
     protected String injectRemotingJar(@Nonnull String containerId, @Nonnull String workdir, @Nonnull DockerClient client) {
-        // Copy slave.jar into container
+        // Copy agent.jar into container
         client.copyArchiveToContainerCmd(containerId)
                 .withHostResource(remoting.getAbsolutePath())
                 .withRemotePath(workdir)

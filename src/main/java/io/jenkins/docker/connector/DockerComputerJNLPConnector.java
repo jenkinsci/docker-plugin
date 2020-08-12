@@ -155,7 +155,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     enum ArgumentVariables {
         NodeName("NODE_NAME", "The name assigned to this node"), //
         Secret("JNLP_SECRET",
-                "The secret that must be passed to slave.jar's -secret argument to pass JNLP authentication."), //
+                "The secret that must be passed to agent.jar's -secret argument to pass JNLP authentication."), //
         JenkinsUrl("JENKINS_URL", "The Jenkins root URL."), //
         TunnelArgument("TUNNEL_ARG",
                 "If a JNLP tunnel has been specified then this evaluates to '-tunnel', otherwise it evaluates to the empty string"), //

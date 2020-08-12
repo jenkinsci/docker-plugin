@@ -9,7 +9,7 @@ import java.util.List;
 import hudson.model.Action;
 
 /**
- * Action to record launching of a slave.
+ * Action to record launching of an agent.
  */
 public class DockerLaunchAction implements Action, Serializable {
     private static final long serialVersionUID = 322300594612029744L;
