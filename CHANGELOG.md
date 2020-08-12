@@ -6,6 +6,9 @@ A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docke
 * Fix possible resource leak [#786](https://github.com/jenkinsci/docker-plugin/issues/786)
 * Enhancement: can now add/drop docker capabilites [#696](https://github.com/jenkinsci/docker-plugin/issues/696)
 * Enhancement: can now customise "attach" connections [#790](https://github.com/jenkinsci/docker-plugin/issues/790)
+* QA: Made SpotBugs mandatory [#793](https://github.com/jenkinsci/docker-plugin/issues/793), [#794](https://github.com/jenkinsci/docker-plugin/issues/794), [#798](https://github.com/jenkinsci/docker-plugin/issues/798)
+* Improve errors when folks specify cloud names we don't have [#796](https://github.com/jenkinsci/docker-plugin/issues/796)
+* Update terminology and reference non-deprecated image names [#802](https://github.com/jenkinsci/docker-plugin/issues/802)
 
 ## 1.2.0
 _2020-04-02_
@@ -102,7 +105,7 @@ _2017-12-05_
 * added support for variables in tags and Dockerfile directory
 * removed "mappedFsWorkspace" option, which only make sense for a local docker host.
 * refactoring
-* fix `-tunnel` option for JNLP slaves
+* fix `-tunnel` option for JNLP agents
 * fix UI data-binding issues
 
 ## 1.0.4
@@ -123,7 +126,7 @@ _2017-10-20_
 * re-implemented UI for SSH connector with explicit SSH key strategies
 * use configured user for JNLP launcher
 * wait for ssh service to be up before trying to connect
-* refactored launchers for extensibility and pipeline compatibility (reconnect slave after restart) 
+* refactored launchers for extensibility and pipeline compatibility (reconnect agent after restart) 
 
 ## 1.0.1
 _2017-10-17_
@@ -167,7 +170,7 @@ _2016-09-13_
 ## 0.16.0
 _2015-11-26_
 * Workflow support for build steps (publish, start/stop containers)
-* Enable the JNLP slave support (Experimental). 
+* Enable the JNLP agent support (Experimental). 
 * Add a credential type to allow TLS connections.
 * Work-around for pull status failures
 
@@ -233,8 +236,8 @@ _2015-07-21_
 _2015-07-06_
 * Unbunble launchers
 * Improve provisioning
-* Change '@' delimiter in slave name to '-'
-* Fix not removed "suspended" slaves introduced in 0.9.4
+* Change '@' delimiter in agent name to '-'
+* Fix not removed "suspended" agents introduced in 0.9.4
 
 ## 0.9.4
 _2015-07-03_
@@ -242,7 +245,7 @@ _2015-07-03_
 
 ## 0.9.3
 _2015-06-14_
-* Hide Docker strategies for non-docker slaves.
+* Hide Docker strategies for non-docker agents.
 
 ## 0.9.2
 _2015-05-30_
@@ -273,7 +276,7 @@ _2015-04-26_
 _2015-04-24_
 * Handle exception inspecting newly created container
 * Added experimental feature for choosing retention strategies and number of executors
-* Allow configure slave Mode: exclusive/inclusive
+* Allow configure agent Mode: exclusive/inclusive
 * Temp fix for tagging. Fixes container stop.
 * More help files
 * DockerJobProperty optional in job configuration
@@ -298,7 +301,7 @@ _2015-03-19_
 * Migration to java-docker library
 * Credentials support for docker connection
 * Fixed a race that may cause commit and push to fail
-* Wait for SSH port to be available on docker slave
+* Wait for SSH port to be available on docker agent
 * Be graceful on stop if container has already stopped
 
 ## 0.8
@@ -314,7 +317,7 @@ _2014-10-03_
 _2014-07-22_
 * Feature to delete images from repository when jenkins culls the job
 * Fixed #64 - storing of cloudName and templateId variables
-* Add timeout for a slave that gets provisioned but then has no work
+* Add timeout for a agent that gets provisioned but then has no work
 * Add a new feature that allows you to add a build step of constructing a docker image from a Dockerfile, and optionally push that image to a registry
 * Added 'volumes-from' functionality
 * Pull the image if we do not find it
