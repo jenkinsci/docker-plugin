@@ -122,7 +122,7 @@ for the Docker image to be used:
 
 -   [sshd](https://linux.die.net/man/8/sshd) server and a JDK installed.
     You can use
-    [jenkins/ssh-slave](https://hub.docker.com/r/jenkins/ssh-slave/)
+    [jenkins/ssh-agent](https://hub.docker.com/r/jenkins/ssh-agent/)
     as a basis for a custom image.
 -   a SSH key (based on unique Jenkins master instance identity) can be
     injected in container on startup, you don't need any credential set
@@ -139,7 +139,7 @@ for the Docker image to be used:
 
 -   a JDK installed.
     You can use
-    [jenkins/jnlp-slave](https://hub.docker.com/r/jenkins/jnlp-slave/)
+    [jenkins/inbound-agent](https://hub.docker.com/r/jenkins/inbound-agent/)
     as a basis for a custom image.
 -   Jenkins master URL has to be reachable from container.
 -   container will be configured automatically with agent's name and
@@ -154,12 +154,12 @@ for the Docker image to be used:
 
 To create a custom image and bundle your favorite tools,
 create a `Dockerfile` with the `FROM` to point to one of the
-jenkins/\*-slave or jenkins/agent
+jenkins/\*-agent
 reference images,
 and install everything needed for your own usage, e.g.
 
 ```
-FROM jenkins/ssh-slave
+FROM jenkins/inbound-agent
 RUN apt-get update && apt-get install XXX
 COPY your-favorite-tool-here
 ```

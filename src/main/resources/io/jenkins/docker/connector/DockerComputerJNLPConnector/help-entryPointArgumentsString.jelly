@@ -29,19 +29,19 @@
       and
       <tt>wget</tt>
       installed but does not have
-      <tt>slave.jar</tt>
+      <tt>agent.jar</tt>
       pre-installed then you could use the following instead:
       <blockquote>
         <tt>sh</tt><br/>
         <tt>-c</tt><br/>
-        <tt>wget $${JENKINS_URL}jnlpJars/slave.jar &amp;&amp; java -jar slave.jar -jnlpUrl $${JENKINS_URL}computer/$${NODE_NAME}/slave-agent.jnlp -secret $${JNLP_SECRET}</tt><br/>
+        <tt>wget $${JENKINS_URL}jnlpJars/agent.jar &amp;&amp; java -jar agent.jar -jnlpUrl $${JENKINS_URL}computer/$${NODE_NAME}/slave-agent.jnlp -secret $${JNLP_SECRET}</tt><br/>
       </blockquote>
     </p>
     <p>
       If this field is left blank then it defaults to arguments
       suitable for the standard
       Jenkins JNLP Agent Docker image, 
-      <a href="https://github.com/jenkinsci/docker-jnlp-slave">jenkins/jnlp-slave</a>,
+      <a href="https://github.com/jenkinsci/docker-inbound-agent">jenkins/inbound-agent</a>,
       which are:
       <blockquote>
         <j:forEach var="entry" items="${app.getDescriptor('io.jenkins.docker.connector.DockerComputerJNLPConnector').defaultEntryPointArguments}">
