@@ -70,6 +70,15 @@
       <f:number />
     </f:entry>
 
+     <f:entry title="${%CPU Period in us}" field="cpuPeriod">
+       <f:number clazz="positive-number" min="0" step="1"/>
+     </f:entry>
+
+     <f:entry title="${%CPU Quota in us}" field="cpuQuota">
+       <f:number clazz="positive-number" min="0" step="1"/>
+     </f:entry>
+
+
     <f:entry title="${%CPU Shares}" field="cpuShares">
       <f:number clazz="positive-number" min="0" step="1"/>
     </f:entry>
