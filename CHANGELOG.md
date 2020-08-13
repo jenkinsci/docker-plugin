@@ -9,6 +9,7 @@ A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docke
 * QA: Made SpotBugs mandatory [#793](https://github.com/jenkinsci/docker-plugin/issues/793), [#794](https://github.com/jenkinsci/docker-plugin/issues/794), [#798](https://github.com/jenkinsci/docker-plugin/issues/798)
 * Improve errors when folks specify cloud names we don't have [#796](https://github.com/jenkinsci/docker-plugin/issues/796)
 * Update terminology and reference non-deprecated image names [#802](https://github.com/jenkinsci/docker-plugin/issues/802), [#811](https://github.com/jenkinsci/docker-plugin/issues/811)
+* Enhancement: templates can now specify cpu period and cpu quota [#795](https://github.com/jenkinsci/docker-plugin/issues/795)
 
 ## 1.2.0
 _2020-04-02_
