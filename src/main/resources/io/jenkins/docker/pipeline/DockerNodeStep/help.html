@@ -2,7 +2,7 @@
     <p>
         Allocates a new Jenkins agent using a specified Docker image and runs tasks on it. Example:
     </p>
-    <pre>dockerNode('cloudbees/jnlp-slave-with-java-build-tools') {
+    <pre>dockerNode('jenkins/jnlp-agent-maven') {
     git 'https://github.com/jglick/simple-maven-project-with-tests'
     sh 'mvn -B -Dmaven.test.failure.ignore install'
     junit '**/target/surefire-reports/TEST-*.xml'

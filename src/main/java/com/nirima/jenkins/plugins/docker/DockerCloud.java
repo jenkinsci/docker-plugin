@@ -254,14 +254,14 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Decrease the count of slaves being "provisioned".
+     * Decrease the count of agents being "provisioned".
      */
     void decrementContainersInProgress(DockerTemplate template) {
         adjustContainersInProgress(this, template, -1);
     }
 
     /**
-     * Increase the count of slaves being "provisioned".
+     * Increase the count of agents being "provisioned".
      */
     void incrementContainersInProgress(DockerTemplate template) {
         adjustContainersInProgress(this, template, +1);
@@ -329,7 +329,7 @@ public class DockerCloud extends Cloud {
             return Collections.emptyList();
         }
         try {
-            LOGGER.info("Asked to provision {} slave(s) for: {}", numberOfExecutorsRequired, label);
+            LOGGER.debug("Asked to provision {} agent(s) for: {}", numberOfExecutorsRequired, label);
 
             final List<NodeProvisioner.PlannedNode> r = new ArrayList<>();
             final List<DockerTemplate> templates = getTemplates(label);
@@ -345,9 +345,9 @@ public class DockerCloud extends Cloud {
             if ( remainingWorkload != numberOfExecutorsRequired ) {
                 final int numberOfExecutorsInProgress = numberOfExecutorsRequired - remainingWorkload;
                 if( remainingWorkload<=0 ) {
-                    LOGGER.info("Not provisioning additional slaves for {}; we have {} executors being started already", label, numberOfExecutorsInProgress);
+                    LOGGER.debug("Not provisioning additional agents for {}; we have {} executors being started already", label, numberOfExecutorsInProgress);
                 } else {
-                    LOGGER.info("Only provisioning {} slaves for {}; we have {} executors being started already", remainingWorkload, label, numberOfExecutorsInProgress);
+                    LOGGER.debug("Only provisioning {} agents for {}; we have {} executors being started already", remainingWorkload, label, numberOfExecutorsInProgress);
                 }
             }
 
@@ -365,27 +365,27 @@ public class DockerCloud extends Cloud {
                 final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
                 r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors()));
 
-                final Runnable taskToCreateNewSlave = new Runnable() {
+                final Runnable taskToCreateNewAgent = new Runnable() {
                     @Override
                     public void run() {
-                        DockerTransientNode slave = null;
+                        DockerTransientNode agent = null;
                         try {
                             // TODO where can we log provisioning progress ?
                             final DockerAPI api = DockerCloud.this.getDockerApi();
-                            slave = t.provisionNode(api, TaskListener.NULL);
-                            slave.setDockerAPI(api);
-                            slave.setCloudId(DockerCloud.this.name);
-                            plannedNode.complete(slave);
+                            agent = t.provisionNode(api, TaskListener.NULL);
+                            agent.setDockerAPI(api);
+                            agent.setCloudId(DockerCloud.this.name);
+                            plannedNode.complete(agent);
 
                             // On provisioning completion, let's trigger NodeProvisioner
-                            robustlyAddNodeToJenkins(slave);
+                            robustlyAddNodeToJenkins(agent);
 
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                     t, getDisplayName(), ex);
                             plannedNode.completeExceptionally(ex);
-                            if (slave != null) {
-                                slave.terminate(LOGGER);
+                            if (agent != null) {
+                                agent.terminate(LOGGER);
                             }
                             throw Throwables.propagate(ex);
                         } finally {
@@ -393,13 +393,13 @@ public class DockerCloud extends Cloud {
                         }
                     }
                 };
-                boolean taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement = false;
+                boolean taskToCreateAgentHasBeenQueuedSoItWillDoTheDecrement = false;
                 incrementContainersInProgress(t);
                 try {
-                    Computer.threadPoolForRemoting.submit(taskToCreateNewSlave);
-                    taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement = true;
+                    Computer.threadPoolForRemoting.submit(taskToCreateNewAgent);
+                    taskToCreateAgentHasBeenQueuedSoItWillDoTheDecrement = true;
                 } finally {
-                    if (!taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement) {
+                    if (!taskToCreateAgentHasBeenQueuedSoItWillDoTheDecrement) {
                         decrementContainersInProgress(t);
                     }
                 }
@@ -430,19 +430,19 @@ public class DockerCloud extends Cloud {
      *      "https://github.com/jenkinsci/jenkins/blob/d2276c3c9b16fd46a3912ab8d58c418e67d8ce3e/core/src/main/java/jenkins/model/Nodes.java#L141">
      *      Nodes.java</a>
      * 
-     * @param slave
-     *            The slave to be added to Jenkins
+     * @param node
+     *            The agent to be added to Jenkins
      * @throws IOException
      *             if it all failed horribly every time we tried.
      */
-    private static void robustlyAddNodeToJenkins(DockerTransientNode slave) throws IOException {
+    private static void robustlyAddNodeToJenkins(DockerTransientNode node) throws IOException {
         // don't retry getInstance - fail immediately if that fails.
         final Jenkins jenkins = Jenkins.getInstance();
         final int maxAttempts = 10;
         for (int attempt = 1;; attempt++) {
             try {
                 // addNode can fail at random due to a race condition.
-                jenkins.addNode(slave);
+                jenkins.addNode(node);
                 return;
             } catch (IOException | RuntimeException ex) {
                 if (attempt > maxAttempts) {
@@ -547,7 +547,7 @@ public class DockerCloud extends Cloud {
     /**
      * Multiple amis can have the same label.
      *
-     * @return Templates matched to requested label assuming slave Mode
+     * @return Templates matched to requested label assuming agent Mode
      */
     public List<DockerTemplate> getTemplates(Label label) {
         final List<DockerTemplate> dockerTemplates = new ArrayList<>();
@@ -633,44 +633,44 @@ public class DockerCloud extends Cloud {
 
         final boolean haveCloudContainerCap = cloudContainerCap > 0 && cloudContainerCap != Integer.MAX_VALUE;
         final boolean haveTemplateContainerCap = templateContainerCap > 0 && templateContainerCap != Integer.MAX_VALUE;
-        final int estimatedTotalSlaves;
+        final int estimatedTotalAgents;
         if (haveCloudContainerCap) {
             final int totalContainersInCloud = countContainersInDocker(null);
             final int containersInProgress = countContainersInProgress();
-            estimatedTotalSlaves = totalContainersInCloud + containersInProgress;
-            if (estimatedTotalSlaves >= cloudContainerCap) {
-                LOGGER.info("Not Provisioning '{}'; Cloud '{}' full with '{}' container(s)", templateImage, name, cloudContainerCap);
+            estimatedTotalAgents = totalContainersInCloud + containersInProgress;
+            if (estimatedTotalAgents >= cloudContainerCap) {
+                LOGGER.debug("Not Provisioning '{}'; Cloud '{}' full with '{}' container(s)", templateImage, name, cloudContainerCap);
                 return false;      // maxed out
             }
         } else {
-            estimatedTotalSlaves = -1;
+            estimatedTotalAgents = -1;
         }
-        final int estimatedTemplateSlaves;
+        final int estimatedTemplateAgents;
         if (haveTemplateContainerCap) {
             final int totalContainersOfThisTemplateInCloud = countContainersInDocker(templateImage);
             final int containersInProgress = countContainersInProgress(t);
-            estimatedTemplateSlaves = totalContainersOfThisTemplateInCloud + containersInProgress;
-            if (estimatedTemplateSlaves >= templateContainerCap) {
-                LOGGER.info("Not Provisioning '{}'. Template instance limit of '{}' reached on cloud '{}'", templateImage, templateContainerCap, name);
+            estimatedTemplateAgents = totalContainersOfThisTemplateInCloud + containersInProgress;
+            if (estimatedTemplateAgents >= templateContainerCap) {
+                LOGGER.debug("Not Provisioning '{}'. Template instance limit of '{}' reached on cloud '{}'", templateImage, templateContainerCap, name);
                 return false;      // maxed out
             }
         } else {
-            estimatedTemplateSlaves = -1;
+            estimatedTemplateAgents = -1;
         }
 
         if (haveCloudContainerCap) {
             if (haveTemplateContainerCap) {
                 LOGGER.info("Provisioning '{}' number {} (of {}) on '{}'; Total containers: {} (of {})",
-                        templateImage, estimatedTemplateSlaves + 1, templateContainerCap, name,
-                        estimatedTotalSlaves, cloudContainerCap);
+                        templateImage, estimatedTemplateAgents + 1, templateContainerCap, name,
+                        estimatedTotalAgents, cloudContainerCap);
             } else {
                 LOGGER.info("Provisioning '{}' on '{}'; Total containers: {} (of {})", templateImage, name,
-                        estimatedTotalSlaves, cloudContainerCap);
+                        estimatedTotalAgents, cloudContainerCap);
             }
         } else {
             if (haveTemplateContainerCap) {
                 LOGGER.info("Provisioning '{}' number {} (of {}) on '{}'", templateImage,
-                        estimatedTemplateSlaves + 1, templateContainerCap, name);
+                        estimatedTemplateAgents + 1, templateContainerCap, name);
             } else {
                 LOGGER.info("Provisioning '{}' on '{}'", templateImage, name);
             }

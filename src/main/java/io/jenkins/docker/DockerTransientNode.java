@@ -287,7 +287,7 @@ public class DockerTransientNode extends Slave {
      * @param logger
      *            Where to log progress/results to.
      * @param containerDescription
-     *            What the container was, e.g. "for slave node 'docker-1234'" or
+     *            What the container was, e.g. "for node 'docker-1234'" or
      *            "for non-existent node". Used in logs.
      * @param removeVolumes
      *            If true then we'll ask docker to remove the container's

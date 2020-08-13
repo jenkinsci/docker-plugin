@@ -459,7 +459,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * We cannot be sure that DockerTransientNode really knows the right getCloudId() (or even 
              * have the right getCloud() instance). This is due to the fact that the - for example - the 
              * node might be left-over from a previous configuration, which no longer is valid (e.g. the
-             * slave was created with a DockerCloud configuration which did not work; that is why the admin
+             * agent was created with a DockerCloud configuration which did not work; that is why the admin
              * deleted that DockerCloud configuration while still the node was running; to clean up the mess,
              * he manually force-removed the containers from the docker instance). 
              * 

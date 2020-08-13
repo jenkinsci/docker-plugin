@@ -18,8 +18,8 @@ public class DockerTemplateTest {
     Integer memorySwap = 1280;
     Integer cpuShares = 1000;
     Integer shmSize = 1002;
-    String prefixStartSlaveCmd = "prefixStartSlaveCmd";
-    String suffixStartSlaveCmd = " suffixStartSlaveCmd";
+    String prefixStartAgentCmd = "prefixStartAgentCmd";
+    String suffixStartAgentCmd = " suffixStartAgentCmd";
     String instanceCapStr = "";
     String network = "";
 

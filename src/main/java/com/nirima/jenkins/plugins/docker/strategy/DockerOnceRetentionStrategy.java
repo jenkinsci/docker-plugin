@@ -28,7 +28,7 @@ import java.util.Objects;
  * Mix of {@link org.jenkinsci.plugins.durabletask.executors.OnceRetentionStrategy} (1.3) and {@link CloudRetentionStrategy}
  * that allows configure it parameters and has Descriptor.
  * <p>
- * Retention strategy that allows a cloud slave to run only a single build before disconnecting.
+ * Retention strategy that allows a cloud agent to run only a single build before disconnecting.
  * A {@link ContinuableExecutable} does not trigger termination.
  * </p>
  */
@@ -42,7 +42,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
     /**
      * Creates the retention strategy.
      *
-     * @param idleMinutes number of minutes of idleness after which to kill the slave; serves a backup in case the strategy fails to detect the end of a task
+     * @param idleMinutes number of minutes of idleness after which to kill the agent; serves a backup in case the strategy fails to detect the end of a task
      */
     @DataBoundConstructor
     public DockerOnceRetentionStrategy(int idleMinutes) {
@@ -58,7 +58,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
 
     @Override
     public long check(@Nonnull DockerComputer c) {
-        // When the slave is idle we should disable accepting tasks and check to see if it is already trying to
+        // When the agent is idle we should disable accepting tasks and check to see if it is already trying to
         // terminate. If it's not already trying to terminate then lets terminate manually.
         if (c.isIdle()) {
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();

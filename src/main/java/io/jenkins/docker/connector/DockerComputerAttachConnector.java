@@ -170,9 +170,9 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     enum ArgumentVariables {
         JavaExe("JAVA_EXE", "The Java Executable, e.g. java, /usr/bin/java etc."), //
         JvmArgs("JVM_ARGS", "Any arguments for the JVM itself, e.g. -Xmx250m."), //
-        JarName("JAR_NAME", "The name of the jar file the node must run, e.g. slave.jar."), //
+        JarName("JAR_NAME", "The name of the jar file the node must run, e.g. agent.jar."), //
         RemoteFs("FS_DIR",
-                "The filesystem folder in which the slave process is to be run."), //
+                "The filesystem folder in which the agent process is to be run."), //
         JenkinsUrl("JENKINS_URL", "The Jenkins root URL.");
         private final String name;
         private final String description;

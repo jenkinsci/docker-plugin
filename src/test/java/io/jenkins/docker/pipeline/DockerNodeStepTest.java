@@ -416,7 +416,7 @@ public class DockerNodeStepTest {
             private void runTest() throws Throwable {
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "dockerBuilderPublisher");
                 j.setDefinition(new CpsFlowDefinition(dockerNodeJenkinsAgent() + " {\n" +
-                        "  writeFile(file: 'Dockerfile', text: 'FROM jenkins/slave')\n" +
+                        "  writeFile(file: 'Dockerfile', text: 'FROM jenkins/agent')\n" +
                         "  step([$class: 'DockerBuilderPublisher', dockerFileDirectory: ''])\n" +
                         "}\n", true));
                 WorkflowRun r = story.j.buildAndAssertSuccess(j);

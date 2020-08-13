@@ -772,8 +772,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * @param templateName
      *            The template's {@link #getName()}. This is used as a prefix for
      *            the node name.
-     * @return A unique unused node name suitable for use as a slave name for a
-     *         slave created from this template.
+     * @return A unique unused node name suitable for use as an agent name for a
+     *         agent created from this template.
      */
     private static String calcUnusedNodeName(final String templateName) {
         final Jenkins jenkins = Jenkins.getInstanceOrNull();
@@ -781,7 +781,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             // make a should-be-unique ID
             final String uniqueId = ID_GENERATOR.getUniqueId();
             final String nodeName = templateName + '-' + uniqueId;
-            // now check it doesn't collide with any existing slaves that might
+            // now check it doesn't collide with any existing agents that might
             // have been made previously.
             if (jenkins == null || jenkins.getNode(nodeName) == null) {
                 return nodeName;

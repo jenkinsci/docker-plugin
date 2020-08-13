@@ -12,7 +12,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 
 public class DockerComputerAttachConnectorTest extends DockerComputerConnectorTest {
-    private static final String ATTACH_SLAVE_IMAGE_IMAGENAME = "jenkins/slave";
+    private static final String ATTACH_AGENT_IMAGE_IMAGENAME = "jenkins/agent";
 
     @Test
     public void connectAgentViaDirectAttach() throws Exception {
@@ -43,7 +43,7 @@ public class DockerComputerAttachConnectorTest extends DockerComputerConnectorTe
     private void testAgentCanStartAndConnect(final DockerComputerAttachConnector connector, final String testName)
             throws IOException, ExecutionException, InterruptedException, TimeoutException {
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase(ATTACH_SLAVE_IMAGE_IMAGENAME),
+                new DockerTemplateBase(ATTACH_AGENT_IMAGE_IMAGENAME),
                 connector,
                 LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );
