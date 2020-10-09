@@ -724,12 +724,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         LOGGER.info("Started container ID {} for node {} from image: {}", containerId, nodeName, ourImage);
 
         try {
-            ourConnector.beforeContainerStarted(api, effectiveRemoteFsDir, containerId);
-            client.startContainerCmd(containerId).exec();
-            ourConnector.afterContainerStarted(api, effectiveRemoteFsDir, containerId);
-
-            final ComputerLauncher nodeLauncher = ourConnector.createLauncher(api, containerId, effectiveRemoteFsDir, listener);
-            final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, effectiveRemoteFsDir, nodeLauncher);
+            final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, effectiveRemoteFsDir);
             node.setNodeDescription("Docker Agent [" + ourImage + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
             node.setMode(getMode());
             node.setLabelString(getLabelString());
@@ -738,6 +733,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             node.setRemoveVolumes(isRemoveVolumes());
             node.setStopTimeout(getStopTimeout());
             node.setDockerAPI(api);
+            ourConnector.beforeContainerStarted(api, effectiveRemoteFsDir, node);
+            client.startContainerCmd(containerId).exec();
+            ourConnector.afterContainerStarted(api, effectiveRemoteFsDir, node);
+            final ComputerLauncher nodeLauncher = ourConnector.createLauncher(api, containerId, effectiveRemoteFsDir, listener);
+            node.setLauncher(nodeLauncher);
             finallyRemoveTheContainer = false;
             return node;
         } finally {

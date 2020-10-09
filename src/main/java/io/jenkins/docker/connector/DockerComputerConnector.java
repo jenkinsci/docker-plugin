@@ -3,7 +3,6 @@ package io.jenkins.docker.connector;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.nirima.jenkins.plugins.docker.DockerSlave;
 import com.thoughtworks.xstream.InitializationException;
 
 import hudson.DescriptorExtensionList;
@@ -16,6 +15,7 @@ import hudson.remoting.Which;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.util.LogTaskListener;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.model.Jenkins;
 
@@ -31,7 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Create a {@link DockerSlave} based on a template. Container is created in detached mode so it can survive
+ * Create a {@link DockerTransientNode} based on a template. Container is created in detached mode so it can survive
  * a jenkins restart (typically when Pipelines are used) then a launcher can re-connect. In many cases this
  * means container is running a dummy command as main process, then launcher is establish with `docker exec`.
  *
@@ -40,9 +40,8 @@ import java.util.logging.Logger;
 public abstract class DockerComputerConnector extends AbstractDescribableImpl<DockerComputerConnector> {
     private static final Logger LOGGER = Logger.getLogger(DockerComputerConnector.class.getName());
     private static final TaskListener LOGGER_LISTENER = new LogTaskListener(LOGGER, Level.FINER);
-
+    /** Name of the remoting jar file */
     protected static final File remoting;
-
     static {
         try {
             remoting = Which.jarFile(Channel.class);
@@ -78,13 +77,13 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * using {@link #injectRemotingJar(String, String, DockerClient)}
      */
     @SuppressWarnings("unused")
-    public void beforeContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull String containerId) throws IOException, InterruptedException {}
+    public void beforeContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull DockerTransientNode node) throws IOException, InterruptedException {}
 
     /**
      * Container has started. Good place to check it's healthy before considering agent is ready to accept connexions
      */
     @SuppressWarnings("unused")
-    public void afterContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull String containerId) throws IOException, InterruptedException {}
+    public void afterContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull DockerTransientNode node) throws IOException, InterruptedException {}
 
 
     /**
@@ -98,6 +97,14 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
                .withTty(true)
                .withAttachStdin(false);
         }
+    }
+
+    /**
+     * Ensure that a DockerNode is known to Jenkins so that Jenkins will accept an incoming JNLP connection etc.
+     * @throws IOException if Jenkins is unable to persist the details.
+     */
+    protected void ensureNodeIsKnown(DockerTransientNode node) throws IOException {
+        Jenkins.getInstance().addNode(node);
     }
 
     /**

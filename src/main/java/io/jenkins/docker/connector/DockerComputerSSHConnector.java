@@ -27,6 +27,7 @@ import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
 import hudson.security.ACL;
 import hudson.slaves.ComputerLauncher;
 import hudson.util.ListBoxModel;
+import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
@@ -252,9 +253,10 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     }
 
     @Override
-    public void beforeContainerStarted(DockerAPI api, String workdir, String containerId) throws IOException, InterruptedException {
+    public void beforeContainerStarted(DockerAPI api, String workdir, DockerTransientNode node) throws IOException, InterruptedException {
         final String key = sshKeyStrategy.getInjectedKey();
         if (key != null) {
+            final String containerId = node.getContainerId();
             final String authorizedKeysCommand = "#!/bin/sh\n"
                     + "[ \"$1\" = \"" + sshKeyStrategy.getUser() + "\" ] "
                     + "&& echo '" + key + "'"
