@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
+* Fix JNLP (incoming-agent) connection bug [#789](https://github.com/jenkinsci/docker-plugin/pull/789), [#757](https://github.com/jenkinsci/docker-plugin/issues/757), [JENKINS-59790](https://issues.jenkins-ci.org/browse/JENKINS-59790)
+
 ## 1.2.1
 _2020-09-25_
 * Enhancement: container stop timeout now configurable [#732](https://github.com/jenkinsci/docker-plugin/issues/732)
