@@ -99,7 +99,7 @@ follow docker swarm standalone instructions and configure Jenkins with the swarm
 
 Docker plugin is a "Cloud" implementation.
 You'll need to edit Jenkins system configuration
-(Jenkins -> Manage -> System configuraiton)
+(Jenkins -> Manage -> System configuration)
 and add a new Cloud of type "Docker".
 
 ![](docs/images/add-new-docker-cloud.png)
