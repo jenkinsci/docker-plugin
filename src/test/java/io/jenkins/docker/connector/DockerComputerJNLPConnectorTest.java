@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
-    private static final String JNLP_SLAVE_IMAGE_IMAGENAME = "jenkins/jnlp-slave";
+    private static final String JNLP_AGENT_IMAGE_IMAGENAME = "jenkins/inbound-agent";
 
     @Test
     public void connectAgentViaJNLP() throws Exception {
@@ -36,7 +36,7 @@ public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest
         }
 
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase(JNLP_SLAVE_IMAGE_IMAGENAME),
+                new DockerTemplateBase(JNLP_AGENT_IMAGE_IMAGENAME),
                 new DockerComputerJNLPConnector(new JNLPLauncher(null, null)).withUser(COMMON_IMAGE_USERNAME)
                         .withJenkinsUrl(uri.toString()),
                         LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP

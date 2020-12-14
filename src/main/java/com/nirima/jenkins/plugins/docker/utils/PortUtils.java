@@ -1,6 +1,9 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
 import com.trilead.ssh2.Connection;
+
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +32,7 @@ public class PortUtils {
         return new ConnectionCheck(address.getHostString(), address.getPort());
     }
 
+    @Restricted(NoExternalUse.class)
     public static class ConnectionCheck {
         private final String host;
         private final int port;
@@ -115,6 +119,7 @@ public class PortUtils {
         }
     }
 
+    @Restricted(NoExternalUse.class)
     public static class ConnectionCheckSSH {
         private final ConnectionCheck parent;
         private int sshTimeoutMillis = (int) SECONDS.toMillis(2);

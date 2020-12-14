@@ -2,7 +2,6 @@ package com.nirima.jenkins.plugins.docker;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -44,15 +43,12 @@ public class DockerImagePullStrategyTest {
                 {true, "repo/name:latest", DockerImagePullStrategy.PULL_NEVER, false},
                 {false, "repo/name:1.0", DockerImagePullStrategy.PULL_NEVER, false},
                 {true, "repo/name:1.0", DockerImagePullStrategy.PULL_NEVER, false},
-
         });
     }
 
     @Test
     public void shouldPullImageTest() {
-
         DockerClient dockerClient = mockDockerClient();
-
         assertEquals(shouldPull, pullStrategy.shouldPullImage(dockerClient, imageName));
     }
 
@@ -63,29 +59,12 @@ public class DockerImagePullStrategyTest {
         this.shouldPull = shouldPull;
     }
 
-    // util methods
-    private DockerCloud createDockerCloud() {
-        return new DockerCloud("name",
-                Collections.<DockerTemplate>emptyList(), //templates
-                "http://localhost:4243", //serverUrl
-                100, //containerCap,
-                10, // connectTimeout,
-                10, // readTimeout,
-                null, // credentialsId,
-                null, //version
-                null); // dockerHostname
-    }
-
-
     private DockerClient mockDockerClient() {
-
         InspectImageCmd cmd = mock(InspectImageCmd.class);
-
         if (existedImage)
             when(cmd.exec()).thenReturn(mock(InspectImageResponse.class));
         else
             when(cmd.exec()).thenThrow(new NotFoundException("not found"));
-
         DockerClient dockerClient = mock(DockerClient.class);
         when(dockerClient.inspectImageCmd(imageName)).thenReturn(cmd);
 

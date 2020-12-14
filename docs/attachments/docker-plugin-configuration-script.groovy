@@ -9,13 +9,15 @@ import jenkins.model.Jenkins
 def dockerTemplateBaseParameters = [
   bindAllPorts:       false,
   bindPorts:          '',
+  cpuPeriod:          null,
+  cpuQuota:           null,
   cpuShares:          null,
   dnsString:          '',
   dockerCommand:      '',
   environmentsString: '',
   extraHostsString:   '',
   hostname:           '',
-  image:              'jenkinsci/slave:latest',
+  image:              'jenkins/agent:latest',
   macAddress:         '',
   memoryLimit:        null,
   memorySwap:         null,
@@ -30,7 +32,7 @@ def dockerTemplateBaseParameters = [
 
 def DockerTemplateParameters = [
   instanceCapStr: '4',
-  labelString:    'docker.local.jenkins.slave',
+  labelString:    'docker.local.jenkins.agent',
   remoteFs:       ''
 ]
 
@@ -58,6 +60,8 @@ DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(
   dockerTemplateBaseParameters.hostname,
   dockerTemplateBaseParameters.memoryLimit,
   dockerTemplateBaseParameters.memorySwap,
+  dockerTemplateBaseParameters.cpuPeriod,
+  dockerTemplateBaseParameters.cpuQuota,
   dockerTemplateBaseParameters.cpuShares,
   dockerTemplateBaseParameters.sharedMemorySize,
   dockerTemplateBaseParameters.bindPorts,

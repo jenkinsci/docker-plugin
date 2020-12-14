@@ -1,7 +1,9 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.Extension;
@@ -48,6 +50,7 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
         }
     }
 
+    @SuppressWarnings("unused")
     private void executeOnDocker(Run<?, ?> build, PrintStream llog, DockerClient client)
             throws DockerException {
         try {
@@ -62,7 +65,13 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
         if (remove) {
             LOG.info("Removing container {}...", containerId);
             llog.println("Removing container " + containerId + "...");
-            client.removeContainerCmd(containerId);
+            try {
+                client.removeContainerCmd(containerId).exec();
+            } catch (NotFoundException e) {
+                llog.println("Container '" + containerId + "' already gone.");
+            } catch (ConflictException e) {
+                llog.println("Container '" + containerId + "' removal already in progress.");
+            }
         }
     }
 

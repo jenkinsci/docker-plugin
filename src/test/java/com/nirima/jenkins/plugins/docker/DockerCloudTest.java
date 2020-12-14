@@ -28,6 +28,7 @@ public class DockerCloudTest {
     @Rule
     public JenkinsRule jenkins = new JenkinsRule();
 
+    @SuppressWarnings("unused")
     @Test
     public void testConstructor_0_10_2() {
         new DockerCloud("name",
@@ -51,15 +52,20 @@ public class DockerCloudTest {
         UsernamePasswordCredentials rc = new UsernamePasswordCredentialsImpl(SYSTEM, "pullCredentialsId", null, null, null);
         store.addCredentials(Domain.global(), rc);
 
+        final DockerTemplateBase templateBase = new DockerTemplateBase("image", "pullCredentialsId", "dnsString", "network",
+                "dockerCommand", "volumesString", "volumesFromString", "environmentString",
+                "hostname", "user1", "", 128, 256, 0L, 0L, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString");
+        templateBase.setCapabilitiesToAddString("SYS_ADMIN");
+        templateBase.setCapabilitiesToDropString("CHOWN");
+        templateBase.setSecurityOptsString("seccomp=unconfined");
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase("image", "pullCredentialsId", "dnsString", "network",
-                        "dockerCommand", "volumesString", "volumesFromString", "environmentString",
-                        "hostname", "user1", "", 128, 256, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString"),
+                templateBase,
                 new DockerComputerAttachConnector("jenkins"),
                 "labelString", "remoteFs", "10");
         template.setPullStrategy(DockerImagePullStrategy.PULL_NEVER);
         template.setMode(Node.Mode.NORMAL);
         template.setRemoveVolumes(true);
+        template.setStopTimeout(42);
         template.setRetentionStrategy(new DockerOnceRetentionStrategy(33));
 
         DockerCloud cloud = new DockerCloud("docker", new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")),

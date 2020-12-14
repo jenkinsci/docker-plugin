@@ -80,10 +80,9 @@ public class FastNodeProvisionerStrategy extends Strategy {
         if (availableCapacity >= currentDemand) {
             LOGGER.log(FINE, "Provisioning completed");
             return PROVISIONING_COMPLETED;
-        } else {
-            LOGGER.log(FINE, "Provisioning not complete, consulting remaining strategies");
-            return CONSULT_REMAINING_STRATEGIES;
         }
+        LOGGER.log(FINE, "Provisioning not complete, consulting remaining strategies");
+        return CONSULT_REMAINING_STRATEGIES;
     }
 
     /**

@@ -6,6 +6,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerOfflineCause;
+import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.model.Computer;
@@ -31,21 +32,57 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public class DockerTransientNode extends Slave {
+    private static final long serialVersionUID = 1349729340506926183L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTransientNode.class.getName());
 
-    //Keeping real containerId information, but using containerName as containerId
     private final String containerId;
 
     private transient DockerAPI dockerAPI;
 
     private boolean removeVolumes;
 
+    private int stopTimeout = DockerTemplate.DEFAULT_STOP_TIMEOUT;
+
     private String cloudId;
 
     private AtomicBoolean acceptingTasks = new AtomicBoolean(true);
 
-    public DockerTransientNode(@Nonnull String nodeName, String containerId, String workdir, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
-        super(nodeName, workdir, launcher);
+    /**
+     * @deprecated Use {@link #DockerTransientNode(String, String, String)} then
+     *             {@link #setLauncher(ComputerLauncher)}.
+     * @param nodeName    Passed to
+     *                    {@link #DockerTransientNode(String, String, String)}.
+     * @param containerId Passed to
+     *                    {@link #DockerTransientNode(String, String, String)}.
+     * @param workdir     Passed to
+     *                    {@link #DockerTransientNode(String, String, String)}.
+     * @param launcher    Passed to {@link #setLauncher(ComputerLauncher)}
+     * @throws             Descriptor.FormException See
+     *                     {@link #DockerTransientNode(String, String, String)}.
+     * @throws IOException See {@link #DockerTransientNode(String, String, String)}.
+     */
+    @Deprecated
+    public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
+        this(nodeName, containerId, workdir);
+        setLauncher(launcher);
+    }
+
+    /**
+     * Preferred constructor. Note that, unless this is a JNLP node, callers will
+     * later have to call {@link #setLauncher(ComputerLauncher)}.
+     * 
+     * @param nodeName    Name of the node; passed to
+     *                    {@link Slave#Slave(String, String, ComputerLauncher)}.
+     * @param containerId Docker container id.
+     * @param workdir     remoteFs home dir; passed to
+     *                    {@link Slave#Slave(String, String, ComputerLauncher)}.
+     * @throws             Descriptor.FormException See
+     *                     {@link Slave#Slave(String, String, ComputerLauncher)}.
+     * @throws IOException See
+     *                     {@link Slave#Slave(String, String, ComputerLauncher)}.
+     */
+    public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir) throws Descriptor.FormException, IOException {
+        super(nodeName, workdir, null);
         this.containerId = containerId;
         setNumExecutors(1);
         setMode(Mode.EXCLUSIVE);
@@ -61,6 +98,7 @@ public class DockerTransientNode extends Slave {
         this.acceptingTasks.set(acceptingTasks);
     }
 
+    @Nonnull
     public String getContainerId(){
         return containerId;
     }
@@ -94,6 +132,14 @@ public class DockerTransientNode extends Slave {
 
     public void setRemoveVolumes(boolean removeVolumes) {
         this.removeVolumes = removeVolumes;
+    }
+
+    public int getStopTimeout() {
+        return this.stopTimeout;
+    }
+
+    public void setStopTimeout(int timeout) {
+        this.stopTimeout = timeout;
     }
 
     public String getCloudId() {
@@ -194,7 +240,8 @@ public class DockerTransientNode extends Slave {
                     logger.error("Unable to stop and remove container '" + containerId + "' for node '" + name + "' due to exception:", ex);
                     return;
                 }
-                final boolean newValues[] = stopAndRemoveContainer(api, logger, "for node '" + name + "'", removeVolumes, containerId, containerStopped);
+                final boolean newValues[] = stopAndRemoveContainer(api, logger, "for node '" + name + "'",
+                    removeVolumes, stopTimeout, containerId, containerStopped);
                 containerStopped = newValues[0];
                 containerRemoved = newValues[1];
             }
@@ -215,7 +262,7 @@ public class DockerTransientNode extends Slave {
      *         second is true if the container no longer exists.
      */
     private static boolean[] stopAndRemoveContainer(final DockerAPI api, final ILogger logger,
-            final String containerDescription, final boolean removeVolumes, final String containerId,
+            final String containerDescription, final boolean removeVolumes, final int stopTimeout, final String containerId,
             final boolean containerAlreadyStopped) {
         boolean containerNowStopped = containerAlreadyStopped;
         boolean containerNowRemoved = false;
@@ -223,7 +270,7 @@ public class DockerTransientNode extends Slave {
         try(final DockerClient client = api.getClient()) {
             if( !containerNowStopped ) {
                 client.stopContainerCmd(containerId)
-                        .withTimeout(10)
+                        .withTimeout(stopTimeout > 0 ? stopTimeout : DockerTemplate.DEFAULT_STOP_TIMEOUT)
                         .exec();
                 containerNowStopped = true;
                 logger.println("Stopped container '"+ containerId + "' " + containerDescription + ".");
@@ -274,7 +321,7 @@ public class DockerTransientNode extends Slave {
      * @param logger
      *            Where to log progress/results to.
      * @param containerDescription
-     *            What the container was, e.g. "for slave node 'docker-1234'" or
+     *            What the container was, e.g. "for node 'docker-1234'" or
      *            "for non-existent node". Used in logs.
      * @param removeVolumes
      *            If true then we'll ask docker to remove the container's
@@ -295,7 +342,7 @@ public class DockerTransientNode extends Slave {
             final boolean removeVolumes, final String containerId, final boolean containerAlreadyStopped) {
         final ILogger tl = createILoggerForSLF4JLogger(logger);
         final boolean containerState[] = stopAndRemoveContainer(api, tl, containerDescription, removeVolumes,
-                containerId, containerAlreadyStopped);
+                DockerTemplate.DEFAULT_STOP_TIMEOUT, containerId, containerAlreadyStopped);
         return containerState[1];
     }
 

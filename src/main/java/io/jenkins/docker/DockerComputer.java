@@ -69,7 +69,7 @@ public class DockerComputer extends SlaveComputer {
     public String toString() {
         return Objects.toStringHelper(this)
                 .add("name", super.getName())
-                .add("slave", getNode())
+                .add("node", getNode())
                 .toString();
     }
 }

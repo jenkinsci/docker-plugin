@@ -18,11 +18,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-
-
 /**
- * Manage the docker images.
- * Docker page under "Manage Jenkins" page.
+ * Manage the docker images. Docker page under "Manage Jenkins" page.
  */
 @Extension
 public class DockerManagement extends ManagementLink implements StaplerProxy, Describable<DockerManagement>, Saveable {
@@ -39,18 +36,17 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public String getDisplayName() {
-        return Messages.DisplayName();
+        return Messages.displayName();
     }
 
     @Override
     public String getDescription() {
-        return Messages.PluginDescription();
+        return Messages.pluginDescription();
     }
 
     public static DockerManagement get() {
         return ManagementLink.all().get(DockerManagement.class);
     }
-
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -70,62 +66,55 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
         @Override
         public String getDisplayName() {
-            return null; // unused
+            return DockerManagement.class.getSimpleName(); // unused
         }
     }
 
-        public DockerManagementServer getServer(String serverName) {
-            return new DockerManagementServer(serverName);
+    public DockerManagementServer getServer(String serverName) {
+        return new DockerManagementServer(serverName);
+    }
+
+    @Override
+    public Object getTarget() {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        return this;
+    }
+
+    public Collection<String> getServerNames() {
+        return JenkinsUtils.getServerNames();
+    }
+
+    public static class ServerDetail {
+        final DockerCloud cloud;
+
+        public ServerDetail(DockerCloud cloud) {
+            this.cloud = cloud;
         }
 
-        @Override
-        public Object getTarget() {
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-            return this;
+        public String getName() {
+            return cloud.getDisplayName();
         }
 
-        public Collection<String> getServerNames() {
-            return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, String>() {
-                @Override
-                public String apply(@Nullable DockerCloud input) {
-                    return input.getDisplayName();
+        public String getActiveHosts() {
+            try {
+                final DockerAPI dockerApi = cloud.getDockerApi();
+                final List<?> containers;
+                try (final DockerClient client = dockerApi.getClient()) {
+                    containers = client.listContainersCmd().exec();
                 }
-            });
-        }
-
-        public static class ServerDetail {
-            final DockerCloud cloud;
-
-            public ServerDetail(DockerCloud cloud) {
-                this.cloud = cloud;
+                return "(" + containers.size() + ")";
+            } catch (Exception ex) {
+                return "Error: " + ex;
             }
-
-            public String getName() {
-                return cloud.getDisplayName();
-            }
-
-            public String getActiveHosts() {
-                try {
-                    final DockerAPI dockerApi = cloud.getDockerApi();
-                    final List<?> containers;
-                    try(final DockerClient client = dockerApi.getClient()) {
-                        containers = client.listContainersCmd().exec();
-                    }
-                    return "(" + containers.size() + ")";
-                } catch(Exception ex) {
-                    return "Error";
-                }
-            }
-
         }
+    }
 
-        public Collection<ServerDetail> getServers() {
-            return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, ServerDetail>() {
-                @Override
-                public ServerDetail apply(@Nullable DockerCloud input) {
-                    return new ServerDetail(input);
-                }
-            });
-        }
-
+    public Collection<ServerDetail> getServers() {
+        return Collections2.transform(DockerCloud.instances(), new Function<DockerCloud, ServerDetail>() {
+            @Override
+            public ServerDetail apply(@Nullable DockerCloud input) {
+                return new ServerDetail(input);
+            }
+        });
+    }
 }

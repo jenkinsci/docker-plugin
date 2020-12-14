@@ -1,0 +1,18 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+  <div>
+    <p>
+      Any arguments to be passed to the JVM executable.
+      <br/>
+      Defaults to &quot;<code>${app.getDescriptor('io.jenkins.docker.connector.DockerComputerAttachConnector').defaultJvmArgs}</code>&quot; if left unset.
+    </p>
+    <p>
+      <b>NOTE:</b>
+      This sets the value of the variable
+      ${app.getDescriptor('io.jenkins.docker.connector.DockerComputerAttachConnector').jvmArgsVariableName}
+      in the entry point command.
+      If you override the entry point command
+      but do <em>not</em> use this variable then this setting will have no effect.
+    </p>
+  </div>
+</j:jelly>

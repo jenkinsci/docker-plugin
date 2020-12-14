@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.Socket;
 import java.net.URI;
 import java.util.Collections;
@@ -40,16 +39,16 @@ import java.util.concurrent.TimeUnit;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Serializable {
+public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerAPI.class);
-
-    private static final long serialVersionUID = 1L;
-
 
     private DockerServerEndpoint dockerHost;
 
@@ -236,20 +235,47 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         }
     }
 
-    /** Creates a new {@link DockerClient} */
+    /**
+     * Creates a new {@link DockerClient}.
+     * It's the caller's responsibility to dispose of the result.
+     */
+    @SuppressWarnings("resource")
     private static SharableDockerClient makeClient(final String dockerUri, final String credentialsId,
             final Integer readTimeoutInMillisecondsOrNull, final Integer connectTimeoutInMillisecondsOrNull) {
-        final DockerClient actualClient = DockerClientBuilder.getInstance(
-            new DefaultDockerClientConfig.Builder()
-                .withDockerHost(dockerUri)
-                .withCustomSslConfig(toSSlConfig(credentialsId))
-            )
-            .withDockerCmdExecFactory(new NettyDockerCmdExecFactory()
-            .withReadTimeout(readTimeoutInMillisecondsOrNull)
-            .withConnectTimeout(connectTimeoutInMillisecondsOrNull))
-            .build();
-        final SharableDockerClient multiUsageClient = new SharableDockerClient(actualClient);
-        return multiUsageClient;
+        NettyDockerCmdExecFactory cmdExecFactory = null;
+        DockerClient actualClient = null;
+        try {
+            cmdExecFactory = new NettyDockerCmdExecFactory()
+                    .withReadTimeout(readTimeoutInMillisecondsOrNull)
+                    .withConnectTimeout(connectTimeoutInMillisecondsOrNull);
+            final DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
+                    .withDockerHost(dockerUri)
+                    .withCustomSslConfig(toSSlConfig(credentialsId));
+            actualClient = DockerClientBuilder.getInstance(configBuilder)
+                .withDockerCmdExecFactory(cmdExecFactory)
+                .build();
+            final SharableDockerClient multiUsageClient = new SharableDockerClient(actualClient);
+            // if we've got this far, we're going to succeed, so we need to ensure that we
+            // don't close the resources we're returning.
+            cmdExecFactory = null;
+            actualClient = null;
+            return multiUsageClient;
+        } finally {
+            // these will no-op if we're successfully returning a value, but in any error
+            // cases we should ensure that we don't leak precious resources.
+            closeAndLogAnyExceptions(cmdExecFactory);
+            closeAndLogAnyExceptions(actualClient);
+        }
+    }
+
+    private static void closeAndLogAnyExceptions(Closeable resource) {
+        if (resource != null) {
+            try {
+                resource.close();
+            } catch (Exception ex) {
+                LOGGER.error("Unable to close {}", resource.toString(), ex);
+            }
+        }
     }
 
     private static SSLConfig toSSlConfig(String credentialsId) {
@@ -273,7 +299,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         try {
             final URI uri = new URI(dockerHost.getUri());
             if ("unix".equals(uri.getScheme())) {
-                final AFUNIXSocketAddress unix = new AFUNIXSocketAddress(new File("/var/run/docker.sock"));
+                final String socketFileName = uri.getPath();
+                final AFUNIXSocketAddress unix = new AFUNIXSocketAddress(new File(socketFileName));
                 final Socket socket = AFUNIXSocket.newInstance();
                 socket.connect(unix);
                 return socket;
@@ -282,9 +309,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             final SSLConfig sslConfig = toSSlConfig(dockerHost.getCredentialsId());
             if (sslConfig != null) {
                 return sslConfig.getSSLContext().getSocketFactory().createSocket(uri.getHost(), uri.getPort());
-            } else {
-                return new Socket(uri.getHost(), uri.getPort());
             }
+            return new Socket(uri.getHost(), uri.getPort());
         } catch (Exception e) {
             throw new IOException("Failed to create a Socker for docker URI " + dockerHost.getUri(), e);
         }
@@ -313,6 +339,18 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
         result = 31 * result + (apiVersion != null ? apiVersion.hashCode() : 0);
         result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = startToString(this);
+        bldToString(sb, "dockerHost", dockerHost);
+        bldToString(sb, "connectTimeout", connectTimeout);
+        bldToString(sb, "readTimeout", readTimeout);
+        bldToString(sb, "apiVersion", apiVersion);
+        bldToString(sb, "hostname", hostname);
+        endToString(sb);
+        return sb.toString();
     }
 
     @Extension
@@ -373,7 +411,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             return optionIsAvailable(credentialsId, availableCredentials);
         }
 
-        private boolean optionIsAvailable(final String optionValue, final ListBoxModel available) {
+        private static boolean optionIsAvailable(final String optionValue, final ListBoxModel available) {
             for (ListBoxModel.Option o : available) {
                 if (o.value == null) {
                     if (optionValue == null) {
@@ -388,7 +426,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> implements Ser
             return false;
         }
 
-        private void throwIfNoPermission(Item context) {
+        private static void throwIfNoPermission(Item context) {
             if (context != null) {
                 context.checkPermission(Item.CONFIGURE);
             } else {

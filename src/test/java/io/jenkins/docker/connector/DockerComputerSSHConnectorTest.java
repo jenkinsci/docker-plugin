@@ -28,16 +28,16 @@ import java.util.Map;
 
 public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
 
-    private static final String SSH_SLAVE_IMAGE_IMAGENAME = "jenkins/ssh-slave";
-    private static final String SSH_SLAVE_IMAGE_JAVAPATH = "/usr/local/openjdk-8/bin/java";
+    private static final String SSH_AGENT_IMAGE_IMAGENAME = "jenkins/ssh-agent";
+    private static final String SSH_AGENT_IMAGE_JAVAPATH = "/usr/local/openjdk-8/bin/java";
 
     @Test
     public void connectAgentViaSSHUsingInjectSshKey() throws Exception {
         final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy = new DockerComputerSSHConnector.InjectSSHKey(COMMON_IMAGE_USERNAME);
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
-        connector.setJavaPath(SSH_SLAVE_IMAGE_JAVAPATH);
+        connector.setJavaPath(SSH_AGENT_IMAGE_JAVAPATH);
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase(SSH_SLAVE_IMAGE_IMAGENAME),
+                new DockerTemplateBase(SSH_AGENT_IMAGE_IMAGENAME),
                 connector,
                 LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );
@@ -55,9 +55,9 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         SystemCredentialsProvider.getInstance().getCredentials().add(credentials);
         final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy = new DockerComputerSSHConnector.ManuallyConfiguredSSHKey(credentialsId, new NonVerifyingKeyVerificationStrategy());
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
-        connector.setJavaPath(SSH_SLAVE_IMAGE_JAVAPATH);
+        connector.setJavaPath(SSH_AGENT_IMAGE_JAVAPATH);
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase(SSH_SLAVE_IMAGE_IMAGENAME),
+                new DockerTemplateBase(SSH_AGENT_IMAGE_IMAGENAME),
                 connector,
                 LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );

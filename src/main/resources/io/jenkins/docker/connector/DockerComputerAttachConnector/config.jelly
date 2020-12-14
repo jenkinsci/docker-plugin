@@ -8,18 +8,33 @@
                 Docker image must have <a href="https://go.java">Java</a> installed.
             </li>
             <li>
-                Entrypoint must be able to accept jenkins slave connection parameters.
-                See docker container
-                <a href="https://hub.docker.com/r/jenkins/jnlp-slave">jenkins/jnlp-slave</a>
-                and/or source
-                <a href="https://github.com/jenkinsci/docker-jnlp-slave">jenkinsci/docker-jnlp-slave</a>
-                as an example.
+                Docker image CMD must either be empty or simply sit and wait forever, e.g. /bin/bash.
             </li>
         </ul>
+        The Jenkins remote agent code will be copied into the container
+        and then run using the Java that's installed in the container.
+        <br/>
+        See docker container
+        <a href="https://hub.docker.com/r/jenkins/agent">jenkins/agent</a>
+        and/or source
+        <a href="https://github.com/jenkinsci/docker-agent">jenkinsci/docker-agent</a>
+        as an example.
     </f:block>
 
     <f:entry title="${%User}" field="user">
         <f:textbox/>
+    </f:entry>
+
+    <f:entry title="${%Java Executable}" field="javaExe">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="${%JVM Arguments}" field="jvmArgsString">
+        <f:expandableTextbox />
+    </f:entry>
+
+    <f:entry title="${%EntryPoint Cmd}" field="entryPointCmdString">
+        <f:expandableTextbox />
     </f:entry>
 
 </j:jelly>

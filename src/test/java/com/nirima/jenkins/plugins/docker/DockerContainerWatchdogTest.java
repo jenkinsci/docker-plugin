@@ -73,7 +73,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissing() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissing() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -111,7 +111,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingWrongNodeNameIsIgnored() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingWrongNodeNameIsIgnored() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -153,7 +153,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingTwoClouds() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingTwoClouds() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName1 = "unittest-12345";
@@ -228,7 +228,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingWithTemplate() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingWithTemplate() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -274,7 +274,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingTooEarly() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingTooEarly() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1527970544000L), ZoneId.of("UTC"));
@@ -325,7 +325,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingRemoveVolumesLabelMissing() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingRemoveVolumesLabelMissing() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -441,7 +441,7 @@ public class DockerContainerWatchdogTest {
 
 
     @Test
-    public void testSlaveExistsButNoContainer() throws IOException, InterruptedException {
+    public void testAgentExistsButNoContainer() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-78901";
@@ -476,7 +476,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testSlaveExistsButNoContainerCheckForTimeout() throws IOException, InterruptedException {
+    public void testAgentExistsButNoContainerCheckForTimeout() throws IOException, InterruptedException {
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1527970544000L), ZoneId.of("UTC"));
         TestableDockerContainerWatchdog subject = new RemovalTweakingTestableDockerContainerWatchdog(clock);
         subject.setClock(clock);

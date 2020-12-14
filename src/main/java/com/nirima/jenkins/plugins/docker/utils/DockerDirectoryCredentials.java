@@ -24,7 +24,6 @@ public class DockerDirectoryCredentials extends BaseStandardCredentials {
         super(scope, id, description);
     }
 
-
     public String getPath() {
         return path;
     }
@@ -47,6 +46,7 @@ public class DockerDirectoryCredentials extends BaseStandardCredentials {
         public DescriptorImpl() {
         }
 
+        @Override
         public String getDisplayName() {
             return "Docker Certificates Directory (Deprecated)";
         }

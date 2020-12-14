@@ -48,7 +48,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      * @param clock the clock which shall be used from now on
      */
     @Restricted(NoExternalUse.class)
-    public void setClock(Clock clock) {
+    void setClock(Clock clock) {
         this.clock = clock;
     }
 
@@ -109,8 +109,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      */
 
     private static class WatchdogProcessingTimeout extends Error {
-        private static final long serialVersionUID = 2162341066478288340L;
-
         public WatchdogProcessingTimeout() {
             super();
         }
@@ -220,9 +218,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         return csmMerged;
     }
 
-    private class ContainersRetrievalException extends Exception {
-        private static final long serialVersionUID = -3370783213009509440L;
-
+    private static class ContainersRetrievalException extends Exception {
         public ContainersRetrievalException(Throwable cause) {
             super(cause);
         }
@@ -334,11 +330,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         }
     }
 
-    private boolean isStillTooYoung(Long created, Instant snapshotInstant) {
+    private static boolean isStillTooYoung(Long created, Instant snapshotInstant) {
         final Instant createdInstant = Instant.ofEpochSecond(created.longValue());
-
         final Duration containerLifetime = Duration.between(createdInstant, snapshotInstant);
-
         /*
          * We allow containers to have a grace duration, during which is permitted for them 
          * to start/run without having a node attached.
@@ -348,9 +342,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          * is allowed to kill any container. 
          */
         final Duration graceDurationForContainers = Duration.ofSeconds(JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L));
-
         final Duration untilMayBeCleanedUp = containerLifetime.minus(graceDurationForContainers);
-
         return untilMayBeCleanedUp.isNegative();
     }
 
@@ -379,16 +371,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     private static class TerminationException extends Exception {
-        private static final long serialVersionUID = -7259431101547222511L;
-
         public TerminationException(String message) {
             super(message);
         }
     }
 
     private static class ContainerIsTaintedException extends Exception {
-        private static final long serialVersionUID = -8500246547989418166L;
-
         public ContainerIsTaintedException(String message) {
             super(message);
         }
@@ -412,8 +400,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.warn("Attempt to terminate container ID {} gracefully, but a node for it suddenly has appeared", container.getId());
             throw new ContainerIsTaintedException(String.format("Node for container ID %s has appeared", container.getId()));
         }
-
-        containerLabels.get(DockerContainerLabelKeys.REMOVE_VOLUMES);
 
         String removeVolumesString = containerLabels.get(DockerContainerLabelKeys.REMOVE_VOLUMES);
         if (removeVolumesString == null) {
@@ -473,7 +459,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * We cannot be sure that DockerTransientNode really knows the right getCloudId() (or even 
              * have the right getCloud() instance). This is due to the fact that the - for example - the 
              * node might be left-over from a previous configuration, which no longer is valid (e.g. the
-             * slave was created with a DockerCloud configuration which did not work; that is why the admin
+             * agent was created with a DockerCloud configuration which did not work; that is why the admin
              * deleted that DockerCloud configuration while still the node was running; to clean up the mess,
              * he manually force-removed the containers from the docker instance). 
              * 
@@ -607,7 +593,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         private void addOverallRuntime(long runtime) {
             overallRuntime += runtime;
         }
-        
+
         private void addRetrieveContainerRuntime(long runtime) {
             retrieveContainersRuntime += runtime;
             retrieveContainersCalls++;
@@ -617,28 +603,28 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             if (executions == 0) {
                 return "0";
             }
-            return new Long(overallRuntime / executions).toString();
+            return Long.toString(overallRuntime / executions);
         }
 
         private String getContainerRemovalAverageDurationForce() {
             if (containersRemovedForce == 0) {
                 return "0";
             }
-            return new Long(containersRemovedForceRuntimeSum / containersRemovedForce).toString();
+            return Long.toString(containersRemovedForceRuntimeSum / containersRemovedForce);
         }
 
         private String getContainerRemovalAverageDurationGracefully() {
             if (containersRemovedGracefully == 0) {
                 return "0";
             }
-            return new Long(containersRemovedGracefullyRuntimeSum / containersRemovedGracefully).toString();
+            return Long.toString(containersRemovedGracefullyRuntimeSum / containersRemovedGracefully);
         }
-        
+
         private String getAverageRetrieveContainerRuntime() {
             if (retrieveContainersCalls == 0) {
                 return "0";
             }
-            return new Long(retrieveContainersRuntime / retrieveContainersCalls).toString();
+            return Long.toString(retrieveContainersRuntime / retrieveContainersCalls);
         }
     }
 }

@@ -6,10 +6,10 @@ import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.command.PullImageResultCallback;
-import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
@@ -27,11 +27,11 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.slaves.RetentionStrategy;
-import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
+import io.jenkins.docker.connector.DockerComputerJNLPConnector;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
@@ -49,13 +49,25 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 public class DockerTemplate implements Describable<DockerTemplate> {
+    /**
+     * The default timeout in seconds ({@value #DEFAULT_STOP_TIMEOUT}s) to wait during container shutdown
+     * until it will be forcefully terminated.
+     */
+    public static final int DEFAULT_STOP_TIMEOUT = 10;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTemplate.class.getName());
 
     private static final UniqueIdGenerator ID_GENERATOR = new UniqueIdGenerator(36);
@@ -65,14 +77,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private int configVersion = 2;
 
-    private final String labelString;
+    private final @CheckForNull String labelString;
 
-    private DockerComputerConnector connector;
+    private @Nonnull DockerComputerConnector connector;
 
+    /** @deprecated Use {@link #connector} instead. */
     @Deprecated
     private transient DockerComputerLauncher launcher;
 
-    public String remoteFs;
+    public @CheckForNull String remoteFs;
 
     public final int instanceCap;
 
@@ -81,32 +94,36 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     // for backward compatibility reason can't declare this attribute as type DockerOnceRetentionStrategy
     private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(10);
 
-    private DockerTemplateBase dockerTemplateBase;
+    private @Nonnull DockerTemplateBase dockerTemplateBase;
 
     private boolean removeVolumes;
 
-    private transient /*almost final*/ Set<LabelAtom> labelSet;
+    private int stopTimeout = DEFAULT_STOP_TIMEOUT;
 
-    private @CheckForNull DockerImagePullStrategy pullStrategy = DockerImagePullStrategy.PULL_LATEST;
+    private @Nonnull transient /*almost final*/ Set<LabelAtom> labelSet;
+
+    private @CheckForNull DockerImagePullStrategy pullStrategy;
 
     private int pullTimeout;
 
-    private List<? extends NodeProperty<?>> nodeProperties = Collections.EMPTY_LIST;
+    private @CheckForNull List<? extends NodeProperty<?>> nodeProperties;
 
     private @CheckForNull DockerDisabled disabled;
 
     private @CheckForNull String name;
 
     /**
-     * fully default
+     * Default constructor; give an unusable instance.
+     * 
+     * @deprecated This gives an empty image name, which isn't valid.
      */
+    @Deprecated
     public DockerTemplate() {
-        this.labelString = "";
-        this.instanceCap = 1;
+        this(new DockerTemplateBase(""), new DockerComputerJNLPConnector(), null, "1");
     }
 
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
-                          DockerComputerConnector connector,
+                          @Nonnull DockerComputerConnector connector,
                           String labelString,
                           String remoteFs,
                           String instanceCapStr) {
@@ -117,13 +134,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @DataBoundConstructor
     public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
-                          DockerComputerConnector connector,
+                          @Nonnull DockerComputerConnector connector,
                           String labelString,
                           String instanceCapStr
     ) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.connector = connector;
-        this.labelString = Util.fixNull(labelString);
+        this.labelString = Util.fixEmpty(labelString);
 
         if (Strings.isNullOrEmpty(instanceCapStr)) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -135,10 +152,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     // -- DockerTemplateBase mixin
-
-    public static String[] filterStringArray(String[] arr) {
-        return DockerTemplateBase.filterStringArray(arr);
-    }
 
     public String getImage() {
         return dockerTemplateBase.getImage();
@@ -187,6 +200,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase.getMemorySwap();
     }
 
+    public Long getCpuPeriod() {
+        return dockerTemplateBase.getCpuPeriod();
+    }
+
+    public Long getCpuQuota() {
+        return dockerTemplateBase.getCpuQuota();
+    }
+
     public Integer getCpuShares() {
         return dockerTemplateBase.getCpuShares();
     }
@@ -225,6 +246,24 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase.getSecurityOptsString();
     }
 
+    @CheckForNull
+    public List<String> getCapabilitiesToAdd() {
+        return dockerTemplateBase.getCapabilitiesToAdd();
+    }
+
+    public String getCapabilitiesToAddString() {
+        return dockerTemplateBase.getCapabilitiesToAddString();
+    }
+
+    @CheckForNull
+    public List<String> getCapabilitiesToDrop() {
+        return dockerTemplateBase.getCapabilitiesToDrop();
+    }
+
+    public String getCapabilitiesToDropString() {
+        return dockerTemplateBase.getCapabilitiesToDropString();
+    }
+
     public DockerRegistryEndpoint getRegistry() {
         return dockerTemplateBase.getRegistry();
     }
@@ -232,9 +271,17 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
         final CreateContainerCmd result = dockerTemplateBase.fillContainerConfig(containerConfig);
         final String templateName = getName();
-        final Map<String, String> labels = result.getLabels();
+        final Map<String, String> existingLabels = containerConfig.getLabels();
+        final Map<String, String> labels;
+        if (existingLabels == null) {
+            labels = new HashMap<>();
+            containerConfig.withLabels(labels);
+        } else {
+            labels = existingLabels;
+        }
         labels.put(DockerContainerLabelKeys.REMOVE_VOLUMES, Boolean.toString(isRemoveVolumes()));
         labels.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
+        containerConfig.withLabels(labels);
         final String nodeName = calcUnusedNodeName(templateName);
         setNodeNameInContainerConfig(result, nodeName);
         return result;
@@ -242,7 +289,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Restricted(NoExternalUse.class) // public for tests only
     public static void setNodeNameInContainerConfig(CreateContainerCmd containerConfig, String nodeName) {
-        containerConfig.getLabels().put(DockerContainerLabelKeys.NODE_NAME, nodeName);
+        final Map<String, String> existingLabels = containerConfig.getLabels();
+        final Map<String, String> labels;
+        if (existingLabels == null) {
+            labels = new HashMap<>();
+            containerConfig.withLabels(labels);
+        } else {
+            labels = existingLabels;
+        }
+        labels.put(DockerContainerLabelKeys.NODE_NAME, nodeName);
     }
 
     /**
@@ -254,9 +309,17 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      *            {@link #fillContainerConfig(CreateContainerCmd)}.
      * @return The name that {@link Node#getNodeName()} should return for the
      *         node for the container that will be created by this command.
+     * @throws IllegalStateException if no label was found.
      */
+    @Nonnull
     public static String getNodeNameFromContainerConfig(CreateContainerCmd containerConfig) {
-        return containerConfig.getLabels().get(DockerContainerLabelKeys.NODE_NAME);
+        final Map<String, String> labels = containerConfig.getLabels();
+        final String result = labels == null ? null : labels.get(DockerContainerLabelKeys.NODE_NAME);
+        if (result == null) {
+            throw new IllegalStateException("Internal Error: containerConfig does not have a label "
+                    + DockerContainerLabelKeys.NODE_NAME + " set");
+        }
+        return result;
     }
 
     // --
@@ -278,6 +341,16 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.removeVolumes = removeVolumes;
     }
 
+    public int getStopTimeout() {
+        return stopTimeout;
+    }
+
+    @DataBoundSetter
+    public void setStopTimeout(int timeout) {
+        this.stopTimeout = timeout;
+    }
+
+    @CheckForNull
     public String getLabelString() {
         return labelString;
     }
@@ -304,17 +377,19 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return retentionStrategy;
     }
 
+    @Nonnull
     public DockerComputerConnector getConnector() {
         return connector;
     }
 
+    @CheckForNull
     public String getRemoteFs() {
-        return remoteFs;
+        return Util.fixEmpty(remoteFs);
     }
 
     @DataBoundSetter
     public void setRemoteFs(String remoteFs) {
-        this.remoteFs = remoteFs;
+        this.remoteFs = Util.fixEmpty(remoteFs);
     }
 
     public String getInstanceCapStr() {
@@ -328,17 +403,23 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return instanceCap;
     }
 
+    @Nonnull
     public Set<LabelAtom> getLabelSet() {
         return labelSet;
     }
 
+    @Nonnull
     public DockerImagePullStrategy getPullStrategy() {
-        return pullStrategy;
+        return pullStrategy != null ? pullStrategy : DockerImagePullStrategy.PULL_LATEST;
     }
 
     @DataBoundSetter
     public void setPullStrategy(DockerImagePullStrategy pullStrategy) {
-        this.pullStrategy = pullStrategy;
+        if (pullStrategy == DockerImagePullStrategy.PULL_LATEST) {
+            this.pullStrategy = null;
+        } else {
+            this.pullStrategy = pullStrategy;
+        }
     }
 
     public int getPullTimeout() {
@@ -350,13 +431,18 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this.pullTimeout = pullTimeout;
     }
 
+    @CheckForNull
     public List<? extends NodeProperty<?>> getNodeProperties() {
-        return Collections.unmodifiableList(nodeProperties);
+        final List<? extends NodeProperty<?>> nullOrNotEmpty = fixEmpty(nodeProperties);
+        if (nullOrNotEmpty == null) {
+            return null;
+        }
+        return Collections.unmodifiableList(nullOrNotEmpty);
     }
 
     @DataBoundSetter
     public void setNodeProperties(List<? extends NodeProperty<?>> nodeProperties) {
-        this.nodeProperties = nodeProperties;
+        this.nodeProperties = fixEmpty(nodeProperties);
     }
 
     public DockerDisabled getDisabled() {
@@ -383,6 +469,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
+    @Nonnull
     public String getName() {
         if( name==null || name.trim().isEmpty()) {
             return DEFAULT_NAME;
@@ -400,19 +487,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         if (retentionStrategy == null) {
             retentionStrategy = new DockerOnceRetentionStrategy(10);
         }
-        if (pullStrategy == null) {
-            pullStrategy = DockerImagePullStrategy.PULL_LATEST;
-        }
-        if (nodeProperties == null) {
-            nodeProperties = 
-                new DescribableList<NodeProperty<?>, NodePropertyDescriptor>(Jenkins.getInstance());
-        }
     }
 
     /**
      * Initializes data structure that we don't persist.
      */
-    public Object readResolve() {
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "This method's job is to ensure that things aren't null where they shouldn't be.")
+    protected Object readResolve() {
         try {
             // https://github.com/jenkinsci/docker-plugin/issues/270
             if (configVersion < 2) {
@@ -433,8 +514,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 LOGGER.error("Can't parse labels: ", t);
             }
 
-            if (connector == null && launcher != null) {
-                connector = launcher.convertToConnector();
+            if (connector == null ) {
+                if (launcher != null) {
+                    connector = launcher.convertToConnector();
+                } else {
+                    connector = new DockerComputerJNLPConnector();
+                }
             }
         } catch (Throwable t) {
             LOGGER.error("Can't convert old values to new (double conversion?): ", t);
@@ -446,48 +531,109 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public DockerTemplate cloneWithLabel(String label)  {
         final DockerTemplate template = new DockerTemplate(dockerTemplateBase, connector, label, remoteFs, "1");
         template.setMode(Node.Mode.EXCLUSIVE);
-        template.setPullStrategy(pullStrategy);
+        template.setPullStrategy(getPullStrategy());
         template.setRemoveVolumes(removeVolumes);
+        template.setStopTimeout(stopTimeout);
         template.setRetentionStrategy((DockerOnceRetentionStrategy) retentionStrategy);
-        template.setNodeProperties(makeCopyOfList(nodeProperties));
+        template.setNodeProperties(makeCopyOfList(getNodeProperties()));
         return template;
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final DockerTemplate other = (DockerTemplate) obj;
+        // Maintenance note: This should include all non-transient fields.
+        // Fields that are "usually unique" should go first.
+        // Primitive fields should be tested before objects.
+        // Computationally-expensive fields get tested last.
+        // Note: If modifying this code, remember to update hashCode() and toString()
+        return Objects.equals(name, other.name)
+                && Objects.equals(labelString, other.labelString)
+                && configVersion == other.configVersion
+                && instanceCap == other.instanceCap
+                && mode == other.mode
+                && pullTimeout == other.pullTimeout
+                && removeVolumes == other.removeVolumes
+                && stopTimeout == other.stopTimeout
+                && Objects.equals(connector, other.connector)
+                && Objects.equals(remoteFs, other.remoteFs)
+                && Objects.equals(dockerTemplateBase, other.dockerTemplateBase)
+                && Objects.equals(retentionStrategy, other.retentionStrategy)
+                && Objects.equals(getNodeProperties(), other.getNodeProperties())
+                && getPullStrategy() == other.getPullStrategy()
+                && Objects.equals(getDisabled(), other.getDisabled());
+    }
+
+    @Override
+    public int hashCode() {
+        // Maintenance node: This should list all the fields from the equals method,
+        // preferably in the same order.
+        // Note: If modifying this code, remember to update equals() and toString()
+        return Objects.hash(
+                name,
+                labelString,
+                configVersion,
+                instanceCap,
+                mode,
+                pullTimeout,
+                removeVolumes,
+                stopTimeout,
+                connector,
+                remoteFs,
+                dockerTemplateBase,
+                retentionStrategy,
+                getNodeProperties(),
+                getPullStrategy(),
+                getDisabled());
+    }
+
+    @Override
     public String toString() {
-        return "DockerTemplate{" +
-                "configVersion=" + configVersion +
-                ", labelString='" + labelString + '\'' +
-                ", connector=" + connector +
-                ", remoteFs='" + remoteFs + '\'' +
-                ", instanceCap=" + instanceCap +
-                ", mode=" + mode +
-                ", retentionStrategy=" + retentionStrategy +
-                ", dockerTemplateBase=" + dockerTemplateBase +
-                ", removeVolumes=" + removeVolumes +
-                ", pullStrategy=" + pullStrategy +
-                ", nodeProperties=" + nodeProperties +
-                ", disabled=" + disabled +
-                '}';
+        // Maintenance node: This should list all the data we use in the equals()
+        // method, but in the order the fields are declared in the class.
+        // Note: If modifying this code, remember to update hashCode() and toString()
+        final StringBuilder sb = startToString(this);
+        bldToString(sb, "configVersion", configVersion);
+        bldToString(sb, "labelString", labelString);
+        bldToString(sb, "connector", connector);
+        bldToString(sb, "remoteFs", remoteFs);
+        bldToString(sb, "instanceCap", instanceCap);
+        bldToString(sb, "mode", mode);
+        bldToString(sb, "retentionStrategy", retentionStrategy);
+        bldToString(sb, "dockerTemplateBase", dockerTemplateBase);
+        bldToString(sb, "removeVolumes", removeVolumes);
+        bldToString(sb, "stopTimeout", stopTimeout);
+        bldToString(sb, "pullStrategy", getPullStrategy());
+        bldToString(sb, "pullTimeout", pullTimeout);
+        bldToString(sb, "nodeProperties", getNodeProperties());
+        bldToString(sb, "disabled", getDisabled());
+        bldToString(sb, "name", name);
+        endToString(sb);
+        return sb.toString();
     }
 
     public String getShortDescription() {
-        return Objects.toStringHelper(this)
-                .add("image", dockerTemplateBase.getImage())
-                .toString();
+        return "DockerTemplate{image=" + dockerTemplateBase.getImage() + "}";
     }
 
     @Override
     public Descriptor<DockerTemplate> getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
+        return Jenkins.getInstance().getDescriptor(getClass());
     }
 
+    @Nonnull
     InspectImageResponse pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
         final String image = getFullImageId();
 
         final boolean shouldPullImage;
         try(final DockerClient client = api.getClient()) {
-            shouldPullImage = pullStrategy.shouldPullImage(client, image);
+            shouldPullImage = getPullStrategy().shouldPullImage(client, image);
         }
         if (shouldPullImage) {
             // TODO create a FlyWeightTask so end-user get visibility on pull operation progress
@@ -525,15 +671,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
         try {
             final InspectImageResponse image = pullImage(api, listener);
-            if (StringUtils.isBlank(remoteFs)) {
-                remoteFs = image.getContainerConfig().getWorkingDir();
-            }
-            if (StringUtils.isBlank(remoteFs)) {
-                remoteFs = "/";
-            }
-
+            final String effectiveRemoteFsDir = getEffectiveRemoteFs(image);
             try(final DockerClient client = api.getClient()) {
-                return doProvisionNode(api, client, listener);
+                return doProvisionNode(api, client, effectiveRemoteFsDir, listener);
             }
         } catch (IOException | Descriptor.FormException | InterruptedException | RuntimeException ex) {
             final DockerCloud ourCloud = DockerCloud.findCloudForTemplate(this);
@@ -549,37 +689,55 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
-    private DockerTransientNode doProvisionNode(DockerAPI api, DockerClient client, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
-        LOGGER.info("Trying to run container for {}", getImage());
-        final DockerComputerConnector connector = getConnector();
+    @Nonnull
+    private String getEffectiveRemoteFs(final InspectImageResponse image) {
+        final String remoteFsOrNull = getRemoteFs();
+        if (remoteFsOrNull != null) {
+            return remoteFsOrNull;
+        }
+        final ContainerConfig containerConfig = image.getContainerConfig();
+        final String containerWorkingDir = containerConfig == null ? null : containerConfig.getWorkingDir();
+        if (!StringUtils.isBlank(containerWorkingDir)) {
+            return containerWorkingDir;
+        }
+        return "/";
+    }
 
-        final CreateContainerCmd cmd = client.createContainerCmd(getImage());
+    private DockerTransientNode doProvisionNode(final DockerAPI api, final DockerClient client,
+            final String effectiveRemoteFsDir, final TaskListener listener)
+            throws IOException, Descriptor.FormException, InterruptedException {
+        final String ourImage = getImage(); // can't be null
+        LOGGER.info("Trying to run container for image \"{}\"", ourImage);
+        final DockerComputerConnector ourConnector = getConnector();
+
+        final CreateContainerCmd cmd = client.createContainerCmd(ourImage);
         fillContainerConfig(cmd);
 
-        connector.beforeContainerCreated(api, remoteFs, cmd);
+        ourConnector.beforeContainerCreated(api, effectiveRemoteFsDir, cmd);
 
         final String nodeName = getNodeNameFromContainerConfig(cmd);
-        LOGGER.info("Trying to run container for node {} from image: {}", nodeName, getImage());
+        LOGGER.info("Trying to run container for node {} from image: {}", nodeName, ourImage);
         boolean finallyRemoveTheContainer = true;
         final String containerId = cmd.exec().getId();
         // if we get this far, we have created the container so,
         // if we fail to return the node, we need to ensure it's cleaned up.
-        LOGGER.info("Started container ID {} for node {} from image: {}", containerId, nodeName, getImage());
+        LOGGER.info("Started container ID {} for node {} from image: {}", containerId, nodeName, ourImage);
 
         try {
-            connector.beforeContainerStarted(api, remoteFs, containerId);
-            client.startContainerCmd(containerId).exec();
-            connector.afterContainerStarted(api, remoteFs, containerId);
-
-            final ComputerLauncher launcher = connector.createLauncher(api, containerId, remoteFs, listener);
-            final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, remoteFs, launcher);
-            node.setNodeDescription("Docker Agent [" + getImage() + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
-            node.setMode(mode);
-            node.setLabelString(labelString);
-            node.setRetentionStrategy(retentionStrategy);
-            robustlySetNodeProperties(node, makeCopyOfList(nodeProperties));
-            node.setRemoveVolumes(removeVolumes);
+            final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, effectiveRemoteFsDir);
+            node.setNodeDescription("Docker Agent [" + ourImage + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
+            node.setMode(getMode());
+            node.setLabelString(getLabelString());
+            node.setRetentionStrategy(getRetentionStrategy());
+            robustlySetNodeProperties(node, makeCopyOfList(getNodeProperties()));
+            node.setRemoveVolumes(isRemoveVolumes());
+            node.setStopTimeout(getStopTimeout());
             node.setDockerAPI(api);
+            ourConnector.beforeContainerStarted(api, effectiveRemoteFsDir, node);
+            client.startContainerCmd(containerId).exec();
+            ourConnector.afterContainerStarted(api, effectiveRemoteFsDir, node);
+            final ComputerLauncher nodeLauncher = ourConnector.createLauncher(api, containerId, effectiveRemoteFsDir, listener);
+            node.setLauncher(nodeLauncher);
             finallyRemoveTheContainer = false;
             return node;
         } finally {
@@ -598,16 +756,17 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     private static <T> List<T> makeCopyOfList(List<? extends T> listOrNull) {
-        final List<? extends T> originalList = Util.fixNull(listOrNull);
-        final List<T> copyList = new ArrayList<T>(originalList.size());
-        for( final T originalElement : originalList) {
+        if (listOrNull == null) {
+            return null;
+        }
+        final List<T> copyList = new ArrayList<>(listOrNull.size());
+        for( final T originalElement : listOrNull) {
             final T copyOfElement = makeCopy(originalElement);
             copyList.add(copyOfElement);
         }
         return copyList;
     }
 
-    @SuppressWarnings("unchecked")
     private static <T> T makeCopy(final T original) {
         final String xml = Jenkins.XSTREAM.toXML(original);
         final Object copy = Jenkins.XSTREAM.fromXML(xml);
@@ -621,8 +780,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * @param templateName
      *            The template's {@link #getName()}. This is used as a prefix for
      *            the node name.
-     * @return A unique unused node name suitable for use as a slave name for a
-     *         slave created from this template.
+     * @return A unique unused node name suitable for use as an agent name for a
+     *         agent created from this template.
      */
     private static String calcUnusedNodeName(final String templateName) {
         final Jenkins jenkins = Jenkins.getInstanceOrNull();
@@ -630,7 +789,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             // make a should-be-unique ID
             final String uniqueId = ID_GENERATOR.getUniqueId();
             final String nodeName = templateName + '-' + uniqueId;
-            // now check it doesn't collide with any existing slaves that might
+            // now check it doesn't collide with any existing agents that might
             // have been made previously.
             if (jenkins == null || jenkins.getNode(nodeName) == null) {
                 return nodeName;
@@ -679,51 +838,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DockerTemplate template = (DockerTemplate) o;
-
-        if (configVersion != template.configVersion) return false;
-        if (instanceCap != template.instanceCap) return false;
-        if (removeVolumes != template.removeVolumes) return false;
-        if (!labelString.equals(template.labelString)) return false;
-        if (!connector.equals(template.connector)) return false;
-        if (!remoteFs.equals(template.remoteFs)) return false;
-        if (mode != template.mode) return false;
-        if (!retentionStrategy.equals(template.retentionStrategy)) return false;
-        if (!dockerTemplateBase.equals(template.dockerTemplateBase)) return false;
-        if (!pullStrategy.equals(template.pullStrategy)) return false;
-        if (!nodeProperties.equals(template.nodeProperties)) return false;
-        if (!getDisabled().equals(template.getDisabled())) return false;
-        return dockerTemplateBase.equals(template.dockerTemplateBase);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = configVersion;
-        result = 31 * result + labelString.hashCode();
-        result = 31 * result + connector.hashCode();
-        result = 31 * result + remoteFs.hashCode();
-        result = 31 * result + instanceCap;
-        result = 31 * result + mode.hashCode();
-        result = 31 * result + retentionStrategy.hashCode();
-        result = 31 * result + dockerTemplateBase.hashCode();
-        result = 31 * result + (removeVolumes ? 1 : 0);
-        result = 31 * result + labelSet.hashCode();
-        result = 31 * result + pullStrategy.hashCode();
-        result = 31 * result + nodeProperties.hashCode();
-        result = 31 * result + getDisabled().hashCode();
-        return result;
-    }
-
     @Extension
     public static final class DescriptorImpl extends Descriptor<DockerTemplate> {
         /**
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
          */
+        @SuppressWarnings("cast")
         public List<NodePropertyDescriptor> getNodePropertiesDescriptors() {
             // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
             List<NodePropertyDescriptor> result = new ArrayList<>();
@@ -750,6 +870,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         public FormValidation doCheckPullTimeout(@QueryParameter String value) {
+            return FormValidation.validateNonNegativeInteger(value);
+        }
+
+        public FormValidation doCheckStopTimeout(@QueryParameter String value) {
             return FormValidation.validateNonNegativeInteger(value);
         }
 

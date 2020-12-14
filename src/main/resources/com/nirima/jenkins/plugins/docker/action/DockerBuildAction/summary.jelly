@@ -1,10 +1,10 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
-	xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
-	xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-	<t:summary icon="/plugin/docker-plugin/images/48x48/docker.png">
+    xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
+    xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+    <t:summary icon="/plugin/docker-plugin/images/48x48/docker.png">
 
- 		<h1>Docker Build Data</h1>
+    <h1>Docker Build Data</h1>
 
     <ul>
       <j:choose>
@@ -21,5 +21,5 @@
       </j:if>
     </ul>
 
-	</t:summary>
+    </t:summary>
 </j:jelly>

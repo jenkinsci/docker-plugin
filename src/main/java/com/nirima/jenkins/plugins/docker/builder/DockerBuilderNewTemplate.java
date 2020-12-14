@@ -17,18 +17,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.Serializable;
-
 
 /**
  * Builder that adds template to all clouds.
  *
  * @author Jocelyn De La Rosa
  */
-public class DockerBuilderNewTemplate extends Builder implements Serializable {
+public class DockerBuilderNewTemplate extends Builder {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderNewTemplate.class);
 
     private DockerTemplate dockerTemplate;
+    @SuppressWarnings("unused")
     private int version = 1;
 
     @DataBoundConstructor
@@ -49,10 +48,8 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
             throws InterruptedException, IOException {
         final PrintStream llogger = listener.getLogger();
         final String dockerImage = dockerTemplate.getDockerTemplateBase().getImage();
-
         // Job must run as Admin as we are changing global cloud configuration here.
         build.getACL().checkPermission(Jenkins.ADMINISTER);
-
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (c instanceof DockerCloud && dockerImage != null) {
                 DockerCloud dockerCloud = (DockerCloud) c;
@@ -63,7 +60,6 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                 }
             }
         }
-
         return true;
     }
 

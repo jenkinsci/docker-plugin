@@ -180,7 +180,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
                     html.append(Util.escape(reason));
                     if (!exception.isEmpty()) {
                         html.append(" <a href='#' class='showDetails'>");
-                        html.append(Messages.ShowDetails());
+                        html.append(Messages.showDetails());
                         html.append("</a><pre style='display:none'>");
                         html.append(Util.escape(exception));
                         html.append("</pre>");

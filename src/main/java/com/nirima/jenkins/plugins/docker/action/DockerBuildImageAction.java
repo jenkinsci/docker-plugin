@@ -16,7 +16,7 @@ import java.util.List;
  * Created by magnayn on 10/01/2014.
  */
 @ExportedBean
-public class DockerBuildImageAction implements Action, Serializable, Cloneable, Describable<DockerBuildImageAction> {
+public class DockerBuildImageAction implements Action, Serializable, Describable<DockerBuildImageAction> {
 
     public final String containerHost;
     public final String containerId;
@@ -84,18 +84,22 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
         this.noCache = noCache;
     }
 
+    @Override
     public String getIconFileName() {
         return "/plugin/docker-plugin/images/24x24/docker.png";
     }
 
+    @Override
     public String getDisplayName() {
         return "Docker Image Build / Publish";
     }
 
+    @Override
     public String getUrlName() {
         return "docker";
     }
 
+    @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(getClass());
     }
@@ -105,6 +109,7 @@ public class DockerBuildImageAction implements Action, Serializable, Cloneable, 
      */
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerBuildImageAction> {
+        @Override
         public String getDisplayName() {
             return "Docker";
         }

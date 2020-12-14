@@ -8,6 +8,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 @Deprecated
+@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification="Deprecated; required for backwards compatibility only.")
 public class DockerRegistry  implements Describable<DockerRegistry> {
     public String registry;
     public String credentialsId;
@@ -33,9 +34,8 @@ public class DockerRegistry  implements Describable<DockerRegistry> {
 
     @Override
     public Descriptor<DockerRegistry> getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
+        return Jenkins.getInstance().getDescriptor(getClass());
     }
-
 
     private Object readResolve() {
         // TODO migrate to docker-commons' DockerRegistryEndpoint
@@ -43,16 +43,13 @@ public class DockerRegistry  implements Describable<DockerRegistry> {
         return this;
     }
 
-
     @Deprecated
     public static final class DescriptorImpl extends Descriptor<DockerRegistry> {
-
         @Override
         public String getDisplayName() {
-            return "Docker Registry";
+            return "Docker Registry [DEPRECATED]";
         }
     }
-
 }
 
 

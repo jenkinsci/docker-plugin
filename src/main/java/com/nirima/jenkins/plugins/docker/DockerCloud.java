@@ -40,7 +40,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,6 +55,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 /**
  * Docker Cloud configuration. Contains connection configuration,
@@ -67,7 +73,6 @@ public class DockerCloud extends Cloud {
      * Default value for {@link #getEffectiveErrorDurationInMilliseconds()}
      * used when {@link #errorDuration} is null.
      */
-    @Restricted(NoExternalUse.class)
     private static final int ERROR_DURATION_DEFAULT_SECONDS = 300; // 5min
 
     @CheckForNull
@@ -249,14 +254,14 @@ public class DockerCloud extends Cloud {
     }
 
     /**
-     * Decrease the count of slaves being "provisioned".
+     * Decrease the count of agents being "provisioned".
      */
     void decrementContainersInProgress(DockerTemplate template) {
         adjustContainersInProgress(this, template, -1);
     }
 
     /**
-     * Increase the count of slaves being "provisioned".
+     * Increase the count of agents being "provisioned".
      */
     void incrementContainersInProgress(DockerTemplate template) {
         adjustContainersInProgress(this, template, +1);
@@ -324,7 +329,7 @@ public class DockerCloud extends Cloud {
             return Collections.emptyList();
         }
         try {
-            LOGGER.info("Asked to provision {} slave(s) for: {}", numberOfExecutorsRequired, label);
+            LOGGER.debug("Asked to provision {} agent(s) for: {}", numberOfExecutorsRequired, label);
 
             final List<NodeProvisioner.PlannedNode> r = new ArrayList<>();
             final List<DockerTemplate> templates = getTemplates(label);
@@ -340,9 +345,9 @@ public class DockerCloud extends Cloud {
             if ( remainingWorkload != numberOfExecutorsRequired ) {
                 final int numberOfExecutorsInProgress = numberOfExecutorsRequired - remainingWorkload;
                 if( remainingWorkload<=0 ) {
-                    LOGGER.info("Not provisioning additional slaves for {}; we have {} executors being started already", label, numberOfExecutorsInProgress);
+                    LOGGER.debug("Not provisioning additional agents for {}; we have {} executors being started already", label, numberOfExecutorsInProgress);
                 } else {
-                    LOGGER.info("Only provisioning {} slaves for {}; we have {} executors being started already", remainingWorkload, label, numberOfExecutorsInProgress);
+                    LOGGER.debug("Only provisioning {} agents for {}; we have {} executors being started already", remainingWorkload, label, numberOfExecutorsInProgress);
                 }
             }
 
@@ -360,27 +365,27 @@ public class DockerCloud extends Cloud {
                 final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
                 r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors()));
 
-                final Runnable taskToCreateNewSlave = new Runnable() {
+                final Runnable taskToCreateNewAgent = new Runnable() {
                     @Override
                     public void run() {
-                        DockerTransientNode slave = null;
+                        DockerTransientNode agent = null;
                         try {
                             // TODO where can we log provisioning progress ?
                             final DockerAPI api = DockerCloud.this.getDockerApi();
-                            slave = t.provisionNode(api, TaskListener.NULL);
-                            slave.setDockerAPI(api);
-                            slave.setCloudId(DockerCloud.this.name);
-                            plannedNode.complete(slave);
+                            agent = t.provisionNode(api, TaskListener.NULL);
+                            agent.setDockerAPI(api);
+                            agent.setCloudId(DockerCloud.this.name);
+                            plannedNode.complete(agent);
 
                             // On provisioning completion, let's trigger NodeProvisioner
-                            robustlyAddNodeToJenkins(slave);
+                            robustlyAddNodeToJenkins(agent);
 
                         } catch (Exception ex) {
                             LOGGER.error("Error in provisioning; template='{}' for cloud='{}'",
                                     t, getDisplayName(), ex);
                             plannedNode.completeExceptionally(ex);
-                            if (slave != null) {
-                                slave.terminate(LOGGER);
+                            if (agent != null) {
+                                agent.terminate(LOGGER);
                             }
                             throw Throwables.propagate(ex);
                         } finally {
@@ -388,13 +393,13 @@ public class DockerCloud extends Cloud {
                         }
                     }
                 };
-                boolean taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement = false;
+                boolean taskToCreateAgentHasBeenQueuedSoItWillDoTheDecrement = false;
                 incrementContainersInProgress(t);
                 try {
-                    Computer.threadPoolForRemoting.submit(taskToCreateNewSlave);
-                    taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement = true;
+                    Computer.threadPoolForRemoting.submit(taskToCreateNewAgent);
+                    taskToCreateAgentHasBeenQueuedSoItWillDoTheDecrement = true;
                 } finally {
-                    if (!taskToCreateSlaveHasBeenQueuedSoItWillDoTheDecrement) {
+                    if (!taskToCreateAgentHasBeenQueuedSoItWillDoTheDecrement) {
                         decrementContainersInProgress(t);
                     }
                 }
@@ -425,19 +430,19 @@ public class DockerCloud extends Cloud {
      *      "https://github.com/jenkinsci/jenkins/blob/d2276c3c9b16fd46a3912ab8d58c418e67d8ce3e/core/src/main/java/jenkins/model/Nodes.java#L141">
      *      Nodes.java</a>
      * 
-     * @param slave
-     *            The slave to be added to Jenkins
+     * @param node
+     *            The agent to be added to Jenkins
      * @throws IOException
      *             if it all failed horribly every time we tried.
      */
-    private static void robustlyAddNodeToJenkins(DockerTransientNode slave) throws IOException {
+    private static void robustlyAddNodeToJenkins(DockerTransientNode node) throws IOException {
         // don't retry getInstance - fail immediately if that fails.
         final Jenkins jenkins = Jenkins.getInstance();
         final int maxAttempts = 10;
         for (int attempt = 1;; attempt++) {
             try {
                 // addNode can fail at random due to a race condition.
-                jenkins.addNode(slave);
+                jenkins.addNode(node);
                 return;
             } catch (IOException | RuntimeException ex) {
                 if (attempt > maxAttempts) {
@@ -542,7 +547,7 @@ public class DockerCloud extends Cloud {
     /**
      * Multiple amis can have the same label.
      *
-     * @return Templates matched to requested label assuming slave Mode
+     * @return Templates matched to requested label assuming agent Mode
      */
     public List<DockerTemplate> getTemplates(Label label) {
         final List<DockerTemplate> dockerTemplates = new ArrayList<>();
@@ -628,44 +633,44 @@ public class DockerCloud extends Cloud {
 
         final boolean haveCloudContainerCap = cloudContainerCap > 0 && cloudContainerCap != Integer.MAX_VALUE;
         final boolean haveTemplateContainerCap = templateContainerCap > 0 && templateContainerCap != Integer.MAX_VALUE;
-        final int estimatedTotalSlaves;
+        final int estimatedTotalAgents;
         if (haveCloudContainerCap) {
             final int totalContainersInCloud = countContainersInDocker(null);
             final int containersInProgress = countContainersInProgress();
-            estimatedTotalSlaves = totalContainersInCloud + containersInProgress;
-            if (estimatedTotalSlaves >= cloudContainerCap) {
-                LOGGER.info("Not Provisioning '{}'; Cloud '{}' full with '{}' container(s)", templateImage, name, cloudContainerCap);
+            estimatedTotalAgents = totalContainersInCloud + containersInProgress;
+            if (estimatedTotalAgents >= cloudContainerCap) {
+                LOGGER.debug("Not Provisioning '{}'; Cloud '{}' full with '{}' container(s)", templateImage, name, cloudContainerCap);
                 return false;      // maxed out
             }
         } else {
-            estimatedTotalSlaves = -1;
+            estimatedTotalAgents = -1;
         }
-        final int estimatedTemplateSlaves;
+        final int estimatedTemplateAgents;
         if (haveTemplateContainerCap) {
             final int totalContainersOfThisTemplateInCloud = countContainersInDocker(templateImage);
             final int containersInProgress = countContainersInProgress(t);
-            estimatedTemplateSlaves = totalContainersOfThisTemplateInCloud + containersInProgress;
-            if (estimatedTemplateSlaves >= templateContainerCap) {
-                LOGGER.info("Not Provisioning '{}'. Template instance limit of '{}' reached on cloud '{}'", templateImage, templateContainerCap, name);
+            estimatedTemplateAgents = totalContainersOfThisTemplateInCloud + containersInProgress;
+            if (estimatedTemplateAgents >= templateContainerCap) {
+                LOGGER.debug("Not Provisioning '{}'. Template instance limit of '{}' reached on cloud '{}'", templateImage, templateContainerCap, name);
                 return false;      // maxed out
             }
         } else {
-            estimatedTemplateSlaves = -1;
+            estimatedTemplateAgents = -1;
         }
 
         if (haveCloudContainerCap) {
             if (haveTemplateContainerCap) {
                 LOGGER.info("Provisioning '{}' number {} (of {}) on '{}'; Total containers: {} (of {})",
-                        templateImage, estimatedTemplateSlaves + 1, templateContainerCap, name,
-                        estimatedTotalSlaves, cloudContainerCap);
+                        templateImage, estimatedTemplateAgents + 1, templateContainerCap, name,
+                        estimatedTotalAgents, cloudContainerCap);
             } else {
                 LOGGER.info("Provisioning '{}' on '{}'; Total containers: {} (of {})", templateImage, name,
-                        estimatedTotalSlaves, cloudContainerCap);
+                        estimatedTotalAgents, cloudContainerCap);
             }
         } else {
             if (haveTemplateContainerCap) {
                 LOGGER.info("Provisioning '{}' number {} (of {}) on '{}'", templateImage,
-                        estimatedTemplateSlaves + 1, templateContainerCap, name);
+                        estimatedTemplateAgents + 1, templateContainerCap, name);
             } else {
                 LOGGER.info("Provisioning '{}' on '{}'", templateImage, name);
             }
@@ -673,11 +678,12 @@ public class DockerCloud extends Cloud {
         return true;
     }
 
+    @CheckForNull
     public static DockerCloud getCloudByName(String name) {
         return (DockerCloud) Jenkins.getInstance().getCloud(name);
     }
 
-    public Object readResolve() {
+    protected Object readResolve() {
         //Xstream is not calling readResolve() for nested Describable's
         for (DockerTemplate template : getTemplates()) {
             template.readResolve();
@@ -697,14 +703,17 @@ public class DockerCloud extends Cloud {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("DockerCloud{");
-        sb.append("name=").append(name);
-        sb.append(", dockerApi=").append(dockerApi);
-        sb.append(", containerCap=").append(containerCap);
-        sb.append(", exposeDockerHost=").append(exposeDockerHost);
-        sb.append(", disabled=").append(disabled);
-        sb.append(", templates='").append(templates).append('\'');
-        sb.append('}');
+        final StringBuilder sb = startToString(this);
+        // Maintenance node: This should list all the data we use in the equals()
+        // method, but in the order the fields are declared in the class.
+        // Note: If modifying this code, remember to update hashCode() and toString()
+        bldToString(sb, "name", name);
+        bldToString(sb, "dockerApi", dockerApi);
+        bldToString(sb, "containerCap", containerCap);
+        bldToString(sb, "exposeDockerHost", exposeDockerHost);
+        bldToString(sb, "disabled", getDisabled());
+        bldToString(sb, "templates", templates);
+        endToString(sb);
         return sb.toString();
     }
 
@@ -712,12 +721,15 @@ public class DockerCloud extends Cloud {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        // Maintenance node: This should list all the fields from the equals method,
+        // preferably in the same order.
+        // Note: If modifying this code, remember to update equals() and toString()
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((dockerApi == null) ? 0 : dockerApi.hashCode());
         result = prime * result + containerCap;
-        result = prime * result + ((templates == null) ? 0 : templates.hashCode());
         result = prime * result + (exposeDockerHost ? 1231 : 1237);
         result = prime * result + getDisabled().hashCode();
+        result = prime * result + ((templates == null) ? 0 : templates.hashCode());
         return result;
     }
 
@@ -727,13 +739,17 @@ public class DockerCloud extends Cloud {
         if (o == null || getClass() != o.getClass()) return false;
 
         DockerCloud that = (DockerCloud) o;
-
+        // Maintenance note: This should include all non-transient fields.
+        // Fields that are "usually unique" should go first.
+        // Primitive fields should be tested before objects.
+        // Computationally-expensive fields get tested last.
+        // Note: If modifying this code, remember to update hashCode() and toString()
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (dockerApi != null ? !dockerApi.equals(that.dockerApi) : that.dockerApi != null) return false;
         if (containerCap != that.containerCap) return false;
-        if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
         if (exposeDockerHost != that.exposeDockerHost)return false;
         if (!getDisabled().equals(that.getDisabled())) return false;
+        if (templates != null ? !templates.equals(that.templates) : that.templates != null) return false;
         return true;
     }
 
@@ -799,18 +815,19 @@ public class DockerCloud extends Cloud {
         return TimeUnit.SECONDS.toMillis(ERROR_DURATION_DEFAULT_SECONDS);
     }
 
+    @Nonnull
     public static List<DockerCloud> instances() {
         List<DockerCloud> instances = new ArrayList<>();
         for (Cloud cloud : Jenkins.getInstance().clouds) {
             if (cloud instanceof DockerCloud) {
                 instances.add((DockerCloud) cloud);
             }
-
         }
         return instances;
     }
 
     @Restricted(NoExternalUse.class)
+    @CheckForNull
     static DockerCloud findCloudForTemplate(final DockerTemplate template) {
         for (DockerCloud cloud : instances()) {
             if ( cloud.hasTemplate(template) ) {
@@ -871,20 +888,18 @@ public class DockerCloud extends Cloud {
         // we can't use DockerRegistryEndpoint#getToken as this one do check domainRequirement based on registry URL
         // but in some context (typically, passing registry auth for `docker build`) we just can't guess this one.
 
-        Credentials c = firstOrNull(CredentialsProvider.lookupCredentials(
+        final Credentials c = firstOrNull(CredentialsProvider.lookupCredentials(
                 IdCredentials.class, context, ACL.SYSTEM, Collections.EMPTY_LIST),
                 withId(registry.getCredentialsId()));
-
-        if (c == null) {
+        final DockerRegistryToken t = c == null ? null : AuthenticationTokens.convert(DockerRegistryToken.class, c);
+        if (t == null) {
             throw new IllegalArgumentException("Invalid Credential ID " + registry.getCredentialsId());
         }
-
-        final DockerRegistryToken t = AuthenticationTokens.convert(DockerRegistryToken.class, c);
         final String token = t.getToken();
         // What docker-commons claim to be a "token" is actually configuration storage
         // see https://github.com/docker/docker-ce/blob/v17.09.0-ce/components/cli/cli/config/configfile/file.go#L214
         // i.e base64 encoded username : password
-        final String decode = new String(Base64.decodeBase64(token));
+        final String decode = new String(Base64.decodeBase64(token), StandardCharsets.UTF_8);
         int i = decode.indexOf(':');
         if (i > 0) {
             String username = decode.substring(0, i);

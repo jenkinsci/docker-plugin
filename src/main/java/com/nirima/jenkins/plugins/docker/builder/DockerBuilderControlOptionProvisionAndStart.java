@@ -43,6 +43,10 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
 
         final DockerCloud cloud = getCloud(build, launcher);
         final DockerTemplate template = cloud.getTemplate(templateId);
+        if (template == null) {
+            throw new IllegalStateException(
+                    "Template with ID " + templateId + " no longer exists in cloud " + cloud.name);
+        }
         final DockerAPI dockerApi = cloud.getDockerApi();
         try(final DockerClient client = dockerApi.getClient()) {
             executeOnDocker(build, llog, cloud, template, client);

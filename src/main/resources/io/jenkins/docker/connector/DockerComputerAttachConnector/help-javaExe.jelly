@@ -1,0 +1,20 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+  <div>
+    <p>
+      The java command to be <code>exec</code>ed on the container in order to run the remote agent code.
+      <br/>
+      If this is not an absolute pathname then the executable must be on the container's PATH.
+      <br/>
+      Defaults to &quot;<code>${app.getDescriptor('io.jenkins.docker.connector.DockerComputerAttachConnector').defaultJavaExe}</code>&quot; if left unset.
+    </p>
+    <p>
+      <b>NOTE:</b>
+      This sets the value of the variable
+      ${app.getDescriptor('io.jenkins.docker.connector.DockerComputerAttachConnector').javaExeVariableName}
+      in the entry point command.
+      If you override the entry point command
+      but do <em>not</em> use this variable then this setting will have no effect.
+    </p>
+  </div>
+</j:jelly>
