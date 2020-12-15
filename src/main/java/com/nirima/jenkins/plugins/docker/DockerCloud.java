@@ -354,7 +354,7 @@ public class DockerCloud extends Cloud {
             while (remainingWorkload > 0 && !templates.isEmpty()) {
                 final DockerTemplate t = templates.get(0); // get first
 
-                final boolean thereIsCapacityToProvisionFromThisTemplate = canAddProvisionedSlave(t);
+                final boolean thereIsCapacityToProvisionFromThisTemplate = canAddProvisionedAgent(t);
                 if (!thereIsCapacityToProvisionFromThisTemplate) {
                     templates.remove(t);
                     continue;
@@ -626,7 +626,7 @@ public class DockerCloud extends Cloud {
     /**
      * Check not too many already running.
      */
-    private boolean canAddProvisionedSlave(DockerTemplate t) throws Exception {
+    private boolean canAddProvisionedAgent(DockerTemplate t) throws Exception {
         final String templateImage = t.getImage();
         final int templateContainerCap = t.instanceCap;
         final int cloudContainerCap = getContainerCap();
