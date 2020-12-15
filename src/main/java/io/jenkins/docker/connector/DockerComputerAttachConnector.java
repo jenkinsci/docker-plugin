@@ -201,7 +201,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
             + "${" + ArgumentVariables.RemoteFs.getName() + "}/${" + ArgumentVariables.JarName.getName() + "}\n"
             + "-noReconnect\n"
             + "-noKeepAlive\n"
-            + "-slaveLog\n"
+            + "-agentLog\n"
             + "${" + ArgumentVariables.RemoteFs.getName() + "}/agent.log";
 
     @Override
