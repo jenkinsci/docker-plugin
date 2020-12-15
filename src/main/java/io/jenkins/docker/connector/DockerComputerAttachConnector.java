@@ -316,7 +316,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
                 logger.println(line);
             }
 
-            final InputStream demux = new DockerMultiplexedInputStream(in);
+            final InputStream demux = new DockerMultiplexedInputStream(in, computer.getDisplayName()+" ("+containerId+")");
 
             computer.setChannel(demux, out, listener, new Channel.Listener() {
                 @Override

@@ -60,7 +60,7 @@ class DemuxTester implements AutoCloseable, Runnable {
         feeder_input_stream = new PipedInputStream();
         feeder_input_stream.connect(feeder);
         
-        stream = new DockerMultiplexedInputStream(feeder_input_stream);
+        stream = new DockerMultiplexedInputStream(feeder_input_stream, "DemuxTest");
         sink = new ByteArrayOutputStream();
         eof = false;
         exc = null;

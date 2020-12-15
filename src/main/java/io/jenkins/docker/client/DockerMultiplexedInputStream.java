@@ -17,12 +17,14 @@ import org.slf4j.LoggerFactory;
 public class DockerMultiplexedInputStream extends InputStream {
 
     private final InputStream multiplexed;
+    private final String name;
     int next;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerMultiplexedInputStream.class);
 
-    public DockerMultiplexedInputStream(InputStream in) {
+    public DockerMultiplexedInputStream(InputStream in, String streamName) {
         multiplexed = in;
+        name = streamName;
         next = 0;
     }
 
@@ -64,8 +66,13 @@ public class DockerMultiplexedInputStream extends InputStream {
                         if (i < 0) break; // EOF
                         received += i;
                     }
-                    LOGGER.warn("Unexpected data on container stderr: {}",
-                                new String(payload, 0, received, StandardCharsets.UTF_8));
+                    if (LOGGER.isInfoEnabled()) {
+                        final String dataAsString = new String(payload, 0, received, StandardCharsets.UTF_8);
+                        final String dataAsTrimmedString = dataAsString.replaceAll("\\s*$", "");
+                        if (!dataAsTrimmedString.isEmpty()) {
+                            LOGGER.info("stderr from {}: {}", name, dataAsTrimmedString);
+                        }
+                    }
                     break;
                 default:
                     throw new IOException("Unexpected application/vnd.docker.raw-stream frame type " + Arrays.toString(header));
