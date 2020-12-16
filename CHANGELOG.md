@@ -2,6 +2,7 @@
 
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
+* Fix groovy config script in docs [#799](https://github.com/jenkinsci/docker-plugin/issues/799)
 * Fix Attach connection issue with Jenkins 2.266 onwards [#818](https://github.com/jenkinsci/docker-plugin/issues/818), [JENKINS-64251](https://issues.jenkins-ci.org/browse/JENKINS-64251)
 * Fix JNLP (incoming-agent) connection bug [#789](https://github.com/jenkinsci/docker-plugin/pull/789), [#757](https://github.com/jenkinsci/docker-plugin/issues/757), [JENKINS-59790](https://issues.jenkins-ci.org/browse/JENKINS-59790)
 
