@@ -41,7 +41,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final String dnsString;
     public final String network;
     public final String dockerCommand;
-    public final String volumesString;
+    public final String mountsString;
     public final String volumesFrom;
     public final String environmentsString;
     public final boolean privileged;
@@ -67,7 +67,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String dnsString,
             String network,
             String dockerCommand,
-            String volumesString,
+            String mountsString,
             String volumesFrom,
             String environmentsString,
             String hostname,
@@ -90,7 +90,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.dnsString = dnsString;
         this.network = network;
         this.dockerCommand = dockerCommand;
-        this.volumesString = volumesString;
+        this.mountsString = mountsString;
         this.volumesFrom = volumesFrom;
         this.environmentsString = environmentsString;
         this.privileged = privileged;
@@ -173,7 +173,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         }
 
         DockerTemplateBase template = new DockerSimpleTemplate(
-                xImage, pullCredentialsId, dnsString, network, xCommand, volumesString, volumesFrom,
+                xImage, pullCredentialsId, dnsString, network, xCommand, mountsString, volumesFrom,
                 environmentsString, xHostname, xUser, extraGroupsString, memoryLimit, memorySwap, cpuPeriod, cpuQuota,
                 cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
 

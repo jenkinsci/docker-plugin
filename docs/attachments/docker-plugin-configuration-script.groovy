@@ -54,7 +54,7 @@ def templateBaseParameters = [
   tty:                         true,
   // user:                     '',
   // volumesFromString:        '',
-  // volumesString:            '',
+  // mountsString:             '',
 ]
 
 // Parameters listed here are used to create a
