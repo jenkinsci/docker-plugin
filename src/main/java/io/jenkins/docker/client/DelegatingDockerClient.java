@@ -17,6 +17,7 @@ import com.github.dockerjava.api.command.CopyFileFromContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateImageCmd;
 import com.github.dockerjava.api.command.CreateNetworkCmd;
+import com.github.dockerjava.api.command.CreateSecretCmd;
 import com.github.dockerjava.api.command.CreateServiceCmd;
 import com.github.dockerjava.api.command.CreateVolumeCmd;
 import com.github.dockerjava.api.command.DisconnectFromNetworkCmd;
@@ -29,6 +30,7 @@ import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectNetworkCmd;
+import com.github.dockerjava.api.command.ListSecretsCmd;
 import com.github.dockerjava.api.command.InspectServiceCmd;
 import com.github.dockerjava.api.command.InspectSwarmCmd;
 import com.github.dockerjava.api.command.InspectVolumeCmd;
@@ -53,11 +55,15 @@ import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.RemoveNetworkCmd;
+import com.github.dockerjava.api.command.RemoveSecretCmd;
 import com.github.dockerjava.api.command.RemoveServiceCmd;
 import com.github.dockerjava.api.command.RemoveVolumeCmd;
 import com.github.dockerjava.api.command.RenameContainerCmd;
+import com.github.dockerjava.api.command.ResizeContainerCmd;
+import com.github.dockerjava.api.command.ResizeExecCmd;
 import com.github.dockerjava.api.command.RestartContainerCmd;
 import com.github.dockerjava.api.command.SaveImageCmd;
+import com.github.dockerjava.api.command.SaveImagesCmd;
 import com.github.dockerjava.api.command.SearchImagesCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.StatsCmd;
@@ -75,6 +81,7 @@ import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PruneType;
+import com.github.dockerjava.api.model.SecretSpec;
 import com.github.dockerjava.api.model.ServiceSpec;
 import com.github.dockerjava.api.model.SwarmSpec;
 
@@ -316,6 +323,16 @@ public class DelegatingDockerClient implements DockerClient {
     }
 
     @Override
+    public ResizeContainerCmd resizeContainerCmd(String containerId) {
+        return getDelegate().resizeContainerCmd(containerId);
+    }
+
+    @Override
+    public ResizeExecCmd resizeExecCmd(String execId) {
+        return getDelegate().resizeExecCmd(execId);
+    }
+
+    @Override
     public RestartContainerCmd restartContainerCmd(String arg0) {
         return getDelegate().restartContainerCmd(arg0);
     }
@@ -323,6 +340,11 @@ public class DelegatingDockerClient implements DockerClient {
     @Override
     public SaveImageCmd saveImageCmd(String arg0) {
         return getDelegate().saveImageCmd(arg0);
+    }
+
+    @Override
+    public SaveImagesCmd saveImagesCmd() {
+        return getDelegate().saveImagesCmd();
     }
 
     @Override
@@ -454,4 +476,19 @@ public class DelegatingDockerClient implements DockerClient {
     public PruneCmd pruneCmd(PruneType pruneType) {
         return getDelegate().pruneCmd(pruneType);
     }
+
+    @Override
+    public ListSecretsCmd listSecretsCmd() {
+        return getDelegate().listSecretsCmd();
+    }
+
+    @Override
+    public CreateSecretCmd createSecretCmd(SecretSpec secretSpec) {
+        return getDelegate().createSecretCmd(secretSpec);
+    }
+
+    @Override
+    public RemoveSecretCmd removeSecretCmd(String secretId) {
+        return getDelegate().removeSecretCmd(secretId);
+      }
 }
