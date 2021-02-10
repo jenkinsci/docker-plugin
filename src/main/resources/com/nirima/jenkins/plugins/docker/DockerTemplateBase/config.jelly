@@ -70,6 +70,10 @@
       <f:number />
     </f:entry>
 
+     <f:entry title="${%CPU Set}" field="cpusetCpus">
+       <f:textbox />
+     </f:entry>
+
      <f:entry title="${%CPU Period in us}" field="cpuPeriod">
        <f:number clazz="positive-number" min="0" step="1"/>
      </f:entry>
