@@ -419,12 +419,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @CheckForNull
     public String getCpusetCpus() {
-        return cpusetCpus;
+        return Util.fixEmpty(cpusetCpus);
     }
 
     @DataBoundSetter
     public void setCpusetCpus(String cpusetCpus) {
-        this.cpusetCpus = cpusetCpus;
+        this.cpusetCpus = Util.fixEmpty(cpusetCpus);
     }
 
     @CheckForNull
@@ -701,7 +701,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         labels.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
 
         final String cpusetCpusOrNull = getCpusetCpus();
-        if (cpusetCpusOrNull != null && cpusetCpusOrNull.length() > 0) {
+        if (cpusetCpusOrNull != null && !cpusetCpusOrNull.isEmpty()) {
             hostConfig(containerConfig).withCpusetCpus(cpusetCpusOrNull);
         }
 
