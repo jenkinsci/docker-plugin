@@ -1,22 +1,21 @@
 package io.jenkins.docker.client;
 
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.VersionCmd;
-import com.github.dockerjava.api.model.Version;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.SSLConfig;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
+import static org.apache.commons.lang.StringUtils.trimToNull;
 
-import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
-import hudson.model.Item;
-import hudson.security.ACL;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.URI;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
@@ -29,20 +28,23 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.URI;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.VersionCmd;
+import com.github.dockerjava.api.model.Version;
+import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.SSLConfig;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
-import static org.apache.commons.lang.StringUtils.trimToNull;
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.model.Item;
+import hudson.security.ACL;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -72,7 +74,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         this.dockerHost = dockerHost;
     }
 
-    public DockerAPI(DockerServerEndpoint dockerHost, int connectTimeout, int readTimeout, String apiVersion, String hostname) {
+    public DockerAPI(DockerServerEndpoint dockerHost, int connectTimeout, int readTimeout, String apiVersion,
+            String hostname) {
         this.dockerHost = dockerHost;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
@@ -122,7 +125,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
 
     public boolean isSwarm() {
         if (_isSwarm == null) {
-            try(final DockerClient client = getClient()) {
+            try (final DockerClient client = getClient()) {
                 Version remoteVersion = client.versionCmd().exec();
                 // Cache the return.
                 _isSwarm = remoteVersion.getVersion().startsWith("swarm");
@@ -134,35 +137,32 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     }
 
     /**
-     * Obtains a raw {@link DockerClient} pointing at our docker service
-     * endpoint. You <em>MUST</em> ensure that you call
-     * {@link Closeable#close()} on the returned instance after you are finished
-     * with it, otherwise we will leak resources.
+     * Obtains a raw {@link DockerClient} pointing at our docker service endpoint.
+     * You <em>MUST</em> ensure that you call {@link Closeable#close()} on the
+     * returned instance after you are finished with it, otherwise we will leak
+     * resources.
      * <p>
-     * Note: {@link DockerClient}s are cached and shared between threads, so
-     * taking and releasing is relatively cheap. They're not closed "for real"
-     * until they've been unused for some time.
+     * Note: {@link DockerClient}s are cached and shared between threads, so taking
+     * and releasing is relatively cheap. They're not closed "for real" until
+     * they've been unused for some time.
      * </p>
      * 
-     * @return A raw {@link DockerClient} pointing at our docker service
-     *         endpoint.
+     * @return A raw {@link DockerClient} pointing at our docker service endpoint.
      */
     public DockerClient getClient() {
         return getClient(readTimeout);
     }
 
     /**
-     * As {@link #getClient()}, but overriding the default
-     * <code>readTimeout</code>. This is typically used when running
-     * long-duration activities that can "go quiet" for a long period of time,
-     * e.g. pulling a docker image from a registry or building a docker image.
-     * Most users should just call {@link #getClient()} instead.
+     * As {@link #getClient()}, but overriding the default <code>readTimeout</code>.
+     * This is typically used when running long-duration activities that can "go
+     * quiet" for a long period of time, e.g. pulling a docker image from a registry
+     * or building a docker image. Most users should just call {@link #getClient()}
+     * instead.
      * 
-     * @param activityTimeoutInSeconds
-     *            The activity timeout, in seconds. A value less than one means
-     *            no timeout.
-     * @return A raw {@link DockerClient} pointing at our docker service
-     *         endpoint.
+     * @param activityTimeoutInSeconds The activity timeout, in seconds. A value
+     *                                 less than one means no timeout.
+     * @return A raw {@link DockerClient} pointing at our docker service endpoint.
      */
     public DockerClient getClient(int activityTimeoutInSeconds) {
         return getOrMakeClient(dockerHost.getUri(), dockerHost.getCredentialsId(), activityTimeoutInSeconds,
@@ -187,15 +187,19 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         CLIENT_CACHE = new UsageTrackingCache(5, TimeUnit.MINUTES, expiryHandler);
     }
 
-    /** Obtains a {@link DockerClient} from the cache, or makes one and puts it in the cache, implicitly telling the cache we need it. */
+    /**
+     * Obtains a {@link DockerClient} from the cache, or makes one and puts it in
+     * the cache, implicitly telling the cache we need it.
+     */
     private static DockerClient getOrMakeClient(final String dockerUri, final String credentialsId,
             final int readTimeout, final int connectTimeout) {
         final Integer readTimeoutInMillisecondsOrNull = readTimeout > 0 ? readTimeout * 1000 : null;
         final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? connectTimeout * 1000 : null;
-        final DockerClientParameters cacheKey = new DockerClientParameters(dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
-        synchronized(CLIENT_CACHE) {
+        final DockerClientParameters cacheKey = new DockerClientParameters(dockerUri, credentialsId,
+                readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
+        synchronized (CLIENT_CACHE) {
             SharableDockerClient client = CLIENT_CACHE.getAndIncrementUsage(cacheKey);
-            if ( client==null ) {
+            if (client == null) {
                 client = makeClient(dockerUri, credentialsId, readTimeoutInMillisecondsOrNull,
                         connectTimeoutInMillisecondsOrNull);
                 LOGGER.info("Cached connection {} to {}", client, cacheKey);
@@ -207,8 +211,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
 
     /**
      * A docker-client that, when {@link Closeable#close()} is called, merely
-     * decrements the usage count. It'll only get properly closed once it's
-     * purged from the cache.
+     * decrements the usage count. It'll only get properly closed once it's purged
+     * from the cache.
      */
     private static class SharableDockerClient extends DelegatingDockerClient {
 
@@ -217,8 +221,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         }
 
         /**
-         * Tell the cache we no longer need the {@link DockerClient} and it can
-         * be thrown away if it remains unused.
+         * Tell the cache we no longer need the {@link DockerClient} and it can be
+         * thrown away if it remains unused.
          */
         @Override
         public void close() {
@@ -236,34 +240,25 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     }
 
     /**
-     * Creates a new {@link DockerClient}.
-     * It's the caller's responsibility to dispose of the result.
+     * Creates a new {@link DockerClient}. It's the caller's responsibility to
+     * dispose of the result.
      */
     @SuppressWarnings("resource")
     private static SharableDockerClient makeClient(final String dockerUri, final String credentialsId,
             final Integer readTimeoutInMillisecondsOrNull, final Integer connectTimeoutInMillisecondsOrNull) {
-        NettyDockerCmdExecFactory cmdExecFactory = null;
         DockerClient actualClient = null;
         try {
-            cmdExecFactory = new NettyDockerCmdExecFactory()
-                    .withReadTimeout(readTimeoutInMillisecondsOrNull)
-                    .withConnectTimeout(connectTimeoutInMillisecondsOrNull);
-            final DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
-                    .withDockerHost(dockerUri)
-                    .withCustomSslConfig(toSSlConfig(credentialsId));
-            actualClient = DockerClientBuilder.getInstance(configBuilder)
-                .withDockerCmdExecFactory(cmdExecFactory)
-                .build();
+            DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(URI.create(dockerUri))
+                    .sslConfig(toSSlConfig(credentialsId)).build();
+            actualClient = DockerClientBuilder.getInstance().withDockerHttpClient(httpClient).build();
             final SharableDockerClient multiUsageClient = new SharableDockerClient(actualClient);
             // if we've got this far, we're going to succeed, so we need to ensure that we
             // don't close the resources we're returning.
-            cmdExecFactory = null;
             actualClient = null;
             return multiUsageClient;
         } finally {
             // these will no-op if we're successfully returning a value, but in any error
             // cases we should ensure that we don't leak precious resources.
-            closeAndLogAnyExceptions(cmdExecFactory);
             closeAndLogAnyExceptions(actualClient);
         }
     }
@@ -279,17 +274,12 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     }
 
     private static SSLConfig toSSlConfig(String credentialsId) {
-        if (credentialsId == null) return null;
+        if (credentialsId == null)
+            return null;
 
-        DockerServerCredentials credentials = firstOrNull(
-            lookupCredentials(
-                DockerServerCredentials.class,
-                Jenkins.getInstance(),
-                ACL.SYSTEM,
-                Collections.<DomainRequirement>emptyList()),
-            withId(credentialsId));
-        return credentials == null ? null :
-            new DockerServerCredentialsSSLConfig(credentials);
+        DockerServerCredentials credentials = firstOrNull(lookupCredentials(DockerServerCredentials.class,
+                Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList()), withId(credentialsId));
+        return credentials == null ? null : new DockerServerCredentialsSSLConfig(credentials);
     }
 
     /**
@@ -318,16 +308,23 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         DockerAPI dockerAPI = (DockerAPI) o;
 
-        if (connectTimeout != dockerAPI.connectTimeout) return false;
-        if (readTimeout != dockerAPI.readTimeout) return false;
-        if (dockerHost != null ? !dockerHost.equals(dockerAPI.dockerHost) : dockerAPI.dockerHost != null) return false;
-        if (apiVersion != null ? !apiVersion.equals(dockerAPI.apiVersion) : dockerAPI.apiVersion != null) return false;
-        if (hostname != null ? !hostname.equals(dockerAPI.hostname) : dockerAPI.hostname != null) return false;
+        if (connectTimeout != dockerAPI.connectTimeout)
+            return false;
+        if (readTimeout != dockerAPI.readTimeout)
+            return false;
+        if (dockerHost != null ? !dockerHost.equals(dockerAPI.dockerHost) : dockerAPI.dockerHost != null)
+            return false;
+        if (apiVersion != null ? !apiVersion.equals(dockerAPI.apiVersion) : dockerAPI.apiVersion != null)
+            return false;
+        if (hostname != null ? !hostname.equals(dockerAPI.hostname) : dockerAPI.hostname != null)
+            return false;
         return true;
     }
 
@@ -357,13 +354,15 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     public static class DescriptorImpl extends Descriptor<DockerAPI> {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String uri) {
-            final DockerServerEndpoint.DescriptorImpl descriptor = (DockerServerEndpoint.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(DockerServerEndpoint.class);
+            final DockerServerEndpoint.DescriptorImpl descriptor = (DockerServerEndpoint.DescriptorImpl) Jenkins
+                    .getInstance().getDescriptorOrDie(DockerServerEndpoint.class);
             return descriptor.doFillCredentialsIdItems(context, uri);
         }
 
-        public FormValidation doCheckCredentialsId(@AncestorInPath Item context, @QueryParameter String uri, @QueryParameter String value) {
+        public FormValidation doCheckCredentialsId(@AncestorInPath Item context, @QueryParameter String uri,
+                @QueryParameter String value) {
             final String credentialsOrNull = trimToNull(value);
-            if ( credentialsOrNull==null || credentialsAreValid(context, uri, credentialsOrNull)) {
+            if (credentialsOrNull == null || credentialsAreValid(context, uri, credentialsOrNull)) {
                 return FormValidation.ok();
             }
             return FormValidation.error("Invalid credentials for URI " + uri);
@@ -378,14 +377,9 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         }
 
         @RequirePOST
-        public FormValidation doTestConnection(
-                @AncestorInPath Item context,
-                @QueryParameter String uri,
-                @QueryParameter String credentialsId,
-                @QueryParameter String apiVersion,
-                @QueryParameter int connectTimeout,
-                @QueryParameter int readTimeout
-        ) {
+        public FormValidation doTestConnection(@AncestorInPath Item context, @QueryParameter String uri,
+                @QueryParameter String credentialsId, @QueryParameter String apiVersion,
+                @QueryParameter int connectTimeout, @QueryParameter int readTimeout) {
             throwIfNoPermission(context);
             final FormValidation credentialsIdCheckResult = doCheckCredentialsId(context, uri, credentialsId);
             if (credentialsIdCheckResult != FormValidation.ok()) {
@@ -394,7 +388,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
             try {
                 final DockerServerEndpoint dsep = new DockerServerEndpoint(uri, credentialsId);
                 final DockerAPI dapi = new DockerAPI(dsep, connectTimeout, readTimeout, apiVersion, null);
-                try(final DockerClient dc = dapi.getClient()) {
+                try (final DockerClient dc = dapi.getClient()) {
                     final VersionCmd vc = dc.versionCmd();
                     final Version v = vc.exec();
                     final String actualVersion = v.getVersion();
