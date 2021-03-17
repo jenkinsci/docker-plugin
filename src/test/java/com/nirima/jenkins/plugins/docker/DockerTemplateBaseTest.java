@@ -247,6 +247,18 @@ public class DockerTemplateBaseTest {
         );
 
         assertThat(
+            "handle missing tag but existing colon",
+            new DockerTemplateBase(simpleBaseImage+":").getFullImageId(),
+            endsWithIgnoringCase(":latest")
+        );
+
+        assertThat(
+            "do not fix missing sha256 checksum with a tag",
+            new DockerTemplateBase(simpleBaseImage+"@sha256:").getFullImageId(),
+            not(endsWithIgnoringCase("latest"))
+        );
+
+        assertThat(
             "fall back to latest tag if none given",
             new DockerTemplateBase(imageWithRegistry).getFullImageId(),
             endsWithIgnoringCase(":latest")
