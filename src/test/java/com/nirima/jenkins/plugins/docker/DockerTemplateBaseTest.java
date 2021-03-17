@@ -1,5 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyLong;
@@ -228,5 +231,49 @@ public class DockerTemplateBaseTest {
         } else {
             verify(mockCmd, never()).withCapDrop(anyList());
         }
+    }
+
+    @Test
+    public void doNotOverrideDigestsWhenCalculatingFullName(){
+        String simpleBaseImage = "jenkins/inbound-agent";
+        String imageWithRegistry = "registry.example.org/"+simpleBaseImage;
+        String tag = ":4.3-9-jdk8-nanoserver-1809";
+        String digest = "@sha256:3e64707b1244724e6d958f8aea840cc307fc2777c0bff4b236757f636a83da46";
+
+        assertThat(
+            "fall back to latest tag if none given",
+            new DockerTemplateBase(simpleBaseImage).getFullImageId(),
+            endsWithIgnoringCase(":latest")
+        );
+
+        assertThat(
+            "fall back to latest tag if none given",
+            new DockerTemplateBase(imageWithRegistry).getFullImageId(),
+            endsWithIgnoringCase(":latest")
+        );
+
+        assertThat(
+            "preserve provided tags",
+            new DockerTemplateBase(simpleBaseImage+tag).getFullImageId(),
+            endsWithIgnoringCase(tag)
+        );
+
+        assertThat(
+            "preserve provided tags",
+            new DockerTemplateBase(imageWithRegistry+tag).getFullImageId(),
+            endsWithIgnoringCase(tag)
+        );
+
+        assertThat(
+            "preserve provided digest",
+            new DockerTemplateBase(simpleBaseImage+digest).getFullImageId(),
+            endsWithIgnoringCase(digest)
+        );
+
+        assertThat(
+            "preserve provided digest",
+            new DockerTemplateBase(imageWithRegistry+digest).getFullImageId(),
+            endsWithIgnoringCase(digest)
+        );
     }
 }
