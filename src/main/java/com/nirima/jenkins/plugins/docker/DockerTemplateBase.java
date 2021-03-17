@@ -898,7 +898,18 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     public String getFullImageId() {
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(image);
         // if image was specified without tag, then treat as latest
-        return repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+        if(repostag.tag.isEmpty()){
+            if(repostag.repos.contains("@sha256:")){
+                // image has no tag but instead use a digest, do not append anything!
+                return  repostag.repos;
+            }else{
+                // no tag provided, append latest as tag
+                return repostag.repos + ":" + "latest";
+            }
+        }else{
+            // use declared tag:
+            return repostag.repos + ":" + repostag.tag;
+        }
     }
 
     @Override
