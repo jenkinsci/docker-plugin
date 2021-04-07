@@ -29,12 +29,12 @@ public class DockerComputerSSHLauncher extends DockerComputerLauncher {
                 isUseSSHKey() ? new DockerComputerSSHConnector.InjectSSHKey(user)
                           : new DockerComputerSSHConnector.ManuallyConfiguredSSHKey(sshConnector.getCredentialsId(), null);
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(strategy);
-        connector.setJavaPath(sshConnector.javaPath);
-        connector.setJvmOptions(sshConnector.jvmOptions);
-        connector.setLaunchTimeoutSeconds(sshConnector.launchTimeoutSeconds);
+        connector.setJavaPath(sshConnector.getJavaPath());
+        connector.setJvmOptions(sshConnector.getJvmOptions());
+        connector.setLaunchTimeoutSeconds(sshConnector.getLaunchTimeoutSeconds());
         connector.setPort(sshConnector.port);
-        connector.setPrefixStartSlaveCmd(sshConnector.prefixStartSlaveCmd);
-        connector.setSuffixStartSlaveCmd(sshConnector.suffixStartSlaveCmd);
+        connector.setPrefixStartSlaveCmd(sshConnector.getPrefixStartSlaveCmd());
+        connector.setSuffixStartSlaveCmd(sshConnector.getSuffixStartSlaveCmd());
 
         return connector;
     }

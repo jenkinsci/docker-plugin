@@ -2,6 +2,7 @@ package io.jenkins.docker.client;
 
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.DockerCmdExecFactory;
 import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.model.Version;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -242,7 +243,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     @SuppressWarnings("resource")
     private static SharableDockerClient makeClient(final String dockerUri, final String credentialsId,
             final Integer readTimeoutInMillisecondsOrNull, final Integer connectTimeoutInMillisecondsOrNull) {
-        NettyDockerCmdExecFactory cmdExecFactory = null;
+        DockerCmdExecFactory cmdExecFactory = null;
         DockerClient actualClient = null;
         try {
             cmdExecFactory = new NettyDockerCmdExecFactory()
