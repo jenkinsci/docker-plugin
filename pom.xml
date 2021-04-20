@@ -55,7 +55,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
         <groovy.version>2.4.7</groovy.version>
-        <jenkins.version>2.73.3</jenkins.version>
+        <jenkins.version>2.204.4</jenkins.version>
     </properties>
 
     <dependencies>
