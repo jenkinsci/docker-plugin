@@ -7,6 +7,7 @@ import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.model.Node;
+import hudson.util.Secret;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
@@ -47,7 +48,7 @@ public class DockerCloudTest {
 
         // Create fake credentials, so they are selectable on configuration for during configuration roundtrip
         final CredentialsStore store = CredentialsProvider.lookupStores(jenkins.getInstance()).iterator().next();
-        DockerServerCredentials dc = new DockerServerCredentials(SYSTEM, "credentialsId", "test", null, null, null);
+        DockerServerCredentials dc = new DockerServerCredentials(SYSTEM, "credentialsId", "test", (Secret)null, null, null);
         store.addCredentials(Domain.global(), dc);
         UsernamePasswordCredentials rc = new UsernamePasswordCredentialsImpl(SYSTEM, "pullCredentialsId", null, null, null);
         store.addCredentials(Domain.global(), rc);
