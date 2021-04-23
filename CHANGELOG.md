@@ -2,7 +2,7 @@
 
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
-* Fix DockerNodeStepTest unit test by bumping min Jenkins version from 2.73.3 to 2.204.4
+* Fix DockerNodeStepTest unit test by bumping min Jenkins version from 2.73.3 to 2.204.4 [#836](https://github.com/jenkinsci/docker-plugin/pull/836)
 
 ## 1.2.2
 _2021-01-25_
