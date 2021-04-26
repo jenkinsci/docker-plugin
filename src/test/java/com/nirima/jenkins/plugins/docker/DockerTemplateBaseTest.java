@@ -18,8 +18,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.BindOptions;
+import com.github.dockerjava.api.model.BindPropagation;
 import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
+import com.github.dockerjava.api.model.TmpfsOptions;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
 import java.util.Arrays;
@@ -287,5 +292,75 @@ public class DockerTemplateBaseTest {
             new DockerTemplateBase(imageWithRegistry+digest).getFullImageId(),
             endsWithIgnoringCase(digest)
         );
+    }
+
+    @Test
+    public void fillContainerConfigGivenVolumes() {
+        testFillContainerVolume("randomVolume", "/some/path",
+                new Mount().withType(MountType.VOLUME).withTarget("/some/path"));
+
+        testFillContainerVolume("namedVolume", "aVolume:/aTarget",
+                new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("/aTarget"));
+        testFillContainerVolume("file", "aVolume:aFile",
+                new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile"));
+        testFillContainerVolume("readOnlyFile", "aVolume:aFile:ro",
+                new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile").withReadOnly(true));
+
+        testFillContainerVolume("bind", "/aSource:/aTarget",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget"));
+        testFillContainerVolume("readOnlyBind", "/aSource:/aTarget:ro",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerVolume("bindWithPropagation", "/aSource:/aTarget:slave",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withBindOptions(new BindOptions().withPropagation(BindPropagation.SLAVE)));
+    }
+
+    private static void testFillContainerVolume(String imageName, String volumeStringToSet, Mount... expectedMountsSet) {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.volumes = new String[] {volumeStringToSet};
+
+        instanceUnderTest.readResolve();
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        verify(mockHostConfig).withMounts(Arrays.asList(expectedMountsSet));
+    }
+
+    @Test
+    public void fillContainerConfigGivenMounts() {
+        testFillContainerMount("randomVolume", "dst=/some/path",
+                new Mount().withType(MountType.VOLUME).withTarget("/some/path"));
+
+        testFillContainerMount("namedVolume", "source=aVolume,target=/aTarget",
+                new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("/aTarget"));
+        testFillContainerMount("file", "type=volume,source=aVolume,destination=aFile",
+                new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile"));
+        testFillContainerMount("readOnlyFile", "source=aVolume,destination=aFile,readonly",
+                new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile").withReadOnly(true));
+
+        testFillContainerMount("bind", "type=bind,source=/aSource,target=/aTarget",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget"));
+        testFillContainerMount("readOnlyBind", "type=bind,source=/aSource,target=/aTarget,readonly",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("bindWithPropagation", "type=bind,source=/aSource,target=/aTarget,bind-propagation=rslave",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withBindOptions(new BindOptions().withPropagation(BindPropagation.R_SLAVE)));
+
+        testFillContainerMount("tmpfs", "type=tmpfs,destination=/aTarget",
+                new Mount().withType(MountType.TMPFS).withTarget("/aTarget"));
+        testFillContainerMount("tmpfsWithOption", "type=tmpfs,destination=/aTarget,tmpfs-mode=0700",
+                new Mount().withType(MountType.TMPFS).withTarget("/aTarget").withTmpfsOptions(new TmpfsOptions().withMode(448)));
+    }
+
+    private static void testFillContainerMount(String imageName, String mountStringToSet, Mount... expectedMountsSet) {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setMountsString(mountStringToSet);
+
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        verify(mockHostConfig).withMounts(Arrays.asList(expectedMountsSet));
     }
 }
