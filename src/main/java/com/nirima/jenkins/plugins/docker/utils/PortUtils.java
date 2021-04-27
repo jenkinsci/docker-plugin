@@ -88,6 +88,7 @@ public class PortUtils {
             try (Socket ignored = new Socket(host, port)) {
                 return true;
             } catch (IOException e) {
+                LOGGER.warn("Socket to host: " + host + " with port: " + String.valueOf(port) + " couldn't be opened", e);
                 return false;
             }
         }

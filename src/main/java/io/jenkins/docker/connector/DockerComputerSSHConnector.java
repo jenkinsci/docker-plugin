@@ -123,7 +123,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
     public String getJavaPath() {
         return Util.fixEmptyAndTrim(javaPath);
     }
-
+ 
     @DataBoundSetter
     public void setJavaPath(String javaPath) {
         this.javaPath = Util.fixEmptyAndTrim(javaPath);
@@ -368,7 +368,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         final URI uri = URI.create(api.getDockerHost().getUri());
         if(uri.getScheme().equals("unix")) {
             // Communicating with unix domain socket. so we assume localhost
-            return "0.0.0.0";
+            return "127.0.0.1";
         }
         return uri.getHost();
     }
