@@ -98,7 +98,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         Mockito.when(listContainerCmd.withLabelFilter(Matchers.anyMap())).thenAnswer( new Answer<ListContainersCmd>() {
             @Override
             public ListContainersCmd answer(InvocationOnMock invocation) throws Throwable {
-                Map<String, String> arg = invocation.getArgumentAt(0, Map.class);
+                Map<String, String> arg = invocation.getArgument(0);
                 String jenkinsInstanceIdInFilter = arg.get(DockerContainerLabelKeys.JENKINS_INSTANCE_ID);
                 Assert.assertEquals(UNITTEST_JENKINS_ID, jenkinsInstanceIdInFilter);
                 return listContainerCmd;
