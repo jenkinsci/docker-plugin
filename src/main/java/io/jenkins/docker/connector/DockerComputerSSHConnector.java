@@ -20,12 +20,15 @@ import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
 import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.slaves.ComputerLauncher;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
@@ -439,7 +442,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         public ComputerLauncher getSSHLauncher(InetSocketAddress address, DockerComputerSSHConnector connector) throws IOException {
             final InstanceIdentity id = InstanceIdentity.get();
             final String pem = PEMEncodable.create(id.getPrivate()).encode();
-            return new DockerSSHLauncher(address.getHostString(), address.getPort(), user, pem,
+            return new InjectKeySSHLauncher(address.getHostString(), address.getPort(), user, pem,
                     connector.getJvmOptions(), connector.getJavaPath(), connector.getPrefixStartSlaveCmd(), connector.getSuffixStartSlaveCmd(),
                     connector.getLaunchTimeoutSeconds(), connector.getMaxNumRetries(), connector.getRetryWaitTime(),
                     new NonVerifyingKeyVerificationStrategy()
@@ -564,12 +567,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
      * Custom flavour of SSHLauncher which allows to inject some custom credentials without this one being stored
      * in a CredentialStore
      */
-    private static class DockerSSHLauncher extends SSHLauncher {
+    private static class InjectKeySSHLauncher extends SSHLauncher {
         private static final String CREDENTIAL_ID = "InstanceIdentity";
         private String user;
         private String privateKey;
 
-        public DockerSSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds, Integer maxNumRetries, Integer retryWaitTime, SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy) {
+        public InjectKeySSHLauncher(String host, int port, String user, String privateKey, String jvmOptions, String javaPath, String prefixStartSlaveCmd, String suffixStartSlaveCmd, Integer launchTimeoutSeconds, Integer maxNumRetries, Integer retryWaitTime, SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy) {
             super(host, port, CREDENTIAL_ID, jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
             this.user = user;
             this.privateKey = privateKey;
@@ -578,6 +581,22 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         @Override
         public StandardUsernameCredentials getCredentials() {
             return makeCredentials(CREDENTIAL_ID, user, privateKey);
+        }
+
+        @Extension
+        public static final class DescriptorImpl extends SSHLauncher.DescriptorImpl {
+            @Nonnull
+            @Override
+            public String getDisplayName() {
+                return "Docker variant of " + super.getDisplayName() + " with SSH key injection";
+            }
+
+            @Override
+            public FormValidation doCheckCredentialsId(ItemGroup context, AccessControlled _context, String host,
+                    String port, String value) {
+                // Disable validation of credentials-id as we're using a fake ID which only we know
+                return FormValidation.ok();
+            }
         }
     }
 
