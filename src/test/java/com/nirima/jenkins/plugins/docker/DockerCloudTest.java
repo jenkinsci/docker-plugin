@@ -54,7 +54,7 @@ public class DockerCloudTest {
         store.addCredentials(Domain.global(), rc);
 
         final DockerTemplateBase templateBase = new DockerTemplateBase("image", "pullCredentialsId", "dnsString", "network",
-                "dockerCommand", "volumesString", "volumesFromString", "environmentString",
+                "dockerCommand", "mountsString", "volumesFromString", "environmentString",
                 "hostname", "user1", "", 128, 256, 0L, 0L, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString");
         templateBase.setCapabilitiesToAddString("SYS_ADMIN");
         templateBase.setCapabilitiesToDropString("CHOWN");
