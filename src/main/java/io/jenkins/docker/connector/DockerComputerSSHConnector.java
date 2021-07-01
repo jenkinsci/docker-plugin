@@ -20,12 +20,15 @@ import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
 import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
 import hudson.security.ACL;
+import hudson.security.AccessControlled;
 import hudson.slaves.ComputerLauncher;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
@@ -586,6 +589,13 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             @Override
             public String getDisplayName() {
                 return "Docker variant of " + super.getDisplayName() + " with SSH key injection";
+            }
+
+            @Override
+            public FormValidation doCheckCredentialsId(ItemGroup context, AccessControlled _context, String host,
+                    String port, String value) {
+                // Disable validation of credentials-id as we're using a fake ID which only we know
+                return FormValidation.ok();
             }
         }
     }
