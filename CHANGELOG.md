@@ -6,6 +6,7 @@ A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docke
 * Fix DockerNodeStepTest unit test by bumping min Jenkins version from 2.73.3 to 2.204.4 [#836](https://github.com/jenkinsci/docker-plugin/pull/836)
 * Enhancement: volumes have been replaced by mounts, allowing use of tmpdir etc [#714](https://github.com/jenkinsci/docker-plugin/issues/714)
 * Prepare plugin for core Guava upgrade [JENKINS-66320](https://issues.jenkins.io/browse/JENKINS-66320), [PR#846](https://github.com/jenkinsci/docker-plugin/pull/846)
+* Added descriptor to SSH launcher used by InjectSSHKey strategy. [#834](https://github.com/jenkinsci/docker-plugin/issues/834)
 
 ## 1.2.2
 _2021-01-25_
