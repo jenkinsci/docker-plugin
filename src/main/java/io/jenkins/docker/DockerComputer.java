@@ -1,6 +1,5 @@
 package io.jenkins.docker;
 
-import com.google.common.base.Objects;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.EnvVars;
 import hudson.slaves.SlaveComputer;
@@ -67,9 +66,9 @@ public class DockerComputer extends SlaveComputer {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
-                .add("name", super.getName())
-                .add("node", getNode())
-                .toString();
+        return "DockerComputer{" +
+                "name='" + super.getName() + '\'' +
+                ", node='" + nodeName + '\'' +
+                '}';
     }
 }

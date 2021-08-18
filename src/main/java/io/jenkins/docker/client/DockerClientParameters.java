@@ -53,8 +53,11 @@ class DockerClientParameters {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).add("dockerUri", dockerUri).add("credentialsId", credentialsId)
-                .add("readTimeoutInMsOrNull", readTimeoutInMsOrNull)
-                .add("connectTimeoutInMsOrNull", connectTimeoutInMsOrNull).toString();
+        return "DockerClientParameters{" +
+                "dockerUri='" + dockerUri + '\'' +
+                ", credentialsId='" + credentialsId + '\'' +
+                ", readTimeoutInMsOrNull=" + readTimeoutInMsOrNull +
+                ", connectTimeoutInMsOrNull=" + connectTimeoutInMsOrNull +
+                '}';
     }
 }
