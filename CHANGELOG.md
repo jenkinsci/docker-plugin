@@ -2,6 +2,10 @@
 
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
+* Fix PortUtilsTest unit test [#847](https://github.com/jenkinsci/docker-plugin/pull/847)
+
+## 1.2.3
+_2021-08-19_
 * Enhancement: Can now pull images by digest [#709](https://github.com/jenkinsci/docker-plugin/issues/709)
 * Fix DockerNodeStepTest unit test by bumping min Jenkins version from 2.73.3 to 2.204.4 [#836](https://github.com/jenkinsci/docker-plugin/pull/836)
 * Enhancement: volumes have been replaced by mounts, allowing use of tmpdir etc [#714](https://github.com/jenkinsci/docker-plugin/issues/714)
