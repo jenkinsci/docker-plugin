@@ -43,7 +43,7 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
 
     @Override
     public Descriptor<DockerBuilderControlOption> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorOrDie(getClass());
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     public static abstract class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption> {

@@ -26,7 +26,7 @@ class DockerDelegatingComputerLauncher extends DelegatingComputerLauncher {
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
         try(final DockerClient client = api.getClient()) {
             client.inspectContainerCmd(containerId).exec();
-        } catch (NotFoundException e) {
+        } catch (NotFoundException handledByCode) {
             // Container has been removed
             Queue.withLock(() -> {
                 DockerTransientNode node = (DockerTransientNode) computer.getNode();

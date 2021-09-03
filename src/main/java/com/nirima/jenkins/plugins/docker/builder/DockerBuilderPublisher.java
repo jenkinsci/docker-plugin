@@ -249,7 +249,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             theCloud = JenkinsUtils.getCloudByNameOrThrow(cloud);
         } else {
             if(channel instanceof Channel) {
-                final Node node = Jenkins.getInstance().getNode(((Channel)channel).getName() );
+                final Node node = Jenkins.get().getNode(((Channel)channel).getName() );
                 if (node instanceof DockerTransientNode) {
                     return ((DockerTransientNode) node).getDockerAPI();
                 }
@@ -499,7 +499,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         private ListBoxModel doFillRegistryCredentialsIdItems(@AncestorInPath Item item) {
             final DockerRegistryEndpoint.DescriptorImpl descriptor =
                     (DockerRegistryEndpoint.DescriptorImpl)
-                    Jenkins.getInstance().getDescriptorOrDie(DockerRegistryEndpoint.class);
+                    Jenkins.get().getDescriptorOrDie(DockerRegistryEndpoint.class);
             return descriptor.doFillCredentialsIdItems(item);
         }
 

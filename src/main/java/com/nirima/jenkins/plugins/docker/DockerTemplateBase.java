@@ -9,7 +9,6 @@ import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PropagationMode;
 import com.github.dockerjava.api.model.TmpfsOptions;
-import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
 import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.api.model.HostConfig;
@@ -941,11 +940,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * container we make, so that we can recognize our own containers later.
      */
     @Nonnull
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "It can be null during unit tests.")
     static String getJenkinsUrlForContainerLabel() {
-        final Jenkins jenkins = Jenkins.getInstance();
-        // Note: While Jenkins.getInstance() claims to be @Nonnull it can
-        // return null during unit-tests, so we need to null-proof here.
+        final Jenkins jenkins = Jenkins.getInstanceOrNull();
+        // Note: Jenkins.getInstanceOrNull() can return null during unit-tests.
         final String rootUrl = jenkins == null ? null : jenkins.getRootUrl();
         return Util.fixNull(rootUrl);
     }
@@ -972,14 +969,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             if(repostag.repos.contains("@sha256:")){
                 // image has no tag but instead use a digest, do not append anything!
                 return  repostag.repos;
-            }else{
-                // no tag provided, append latest as tag
-                return repostag.repos + ":" + "latest";
             }
-        }else{
-            // use declared tag:
-            return repostag.repos + ":" + repostag.tag;
+            // else no tag provided, append latest as tag
+            return repostag.repos + ":" + "latest";
         }
+        // else use declared tag:
+        return repostag.repos + ":" + repostag.tag;
     }
 
     @Override
@@ -1157,7 +1152,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String capability : capabilities) {
                 try {
                     Capability.valueOf(capability);
-                } catch(IllegalArgumentException e) {
+                } catch(IllegalArgumentException handledByCode) {
                     return FormValidation.error("Wrong capability : %s", capability);
                 }
             }
@@ -1188,7 +1183,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         public ListBoxModel doFillPullCredentialsIdItems(@AncestorInPath Item context) {
             final DockerRegistryEndpoint.DescriptorImpl descriptor =
                     (DockerRegistryEndpoint.DescriptorImpl)
-                            Jenkins.getInstance().getDescriptorOrDie(DockerRegistryEndpoint.class);
+                            Jenkins.get().getDescriptorOrDie(DockerRegistryEndpoint.class);
             return descriptor.doFillCredentialsIdItems(context);
         }
 

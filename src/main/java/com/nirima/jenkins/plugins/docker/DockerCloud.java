@@ -332,12 +332,12 @@ public class DockerCloud extends Cloud {
             LOGGER.debug("Asked to provision {} agent(s) for: {}", numberOfExecutorsRequired, label);
 
             final List<NodeProvisioner.PlannedNode> r = new ArrayList<>();
-            final List<DockerTemplate> templates = getTemplates(label);
+            final List<DockerTemplate> matchingTemplates = getTemplates(label);
             int remainingWorkload = numberOfExecutorsRequired;
 
             // Take account of the executors that will result from the containers which we
             // are already committed to starting but which have yet to be given to Jenkins
-            for ( final DockerTemplate t : templates ) {
+            for ( final DockerTemplate t : matchingTemplates ) {
                 final int numberOfContainersInProgress = countContainersInProgress(t);
                 final int numberOfExecutorsInProgress = t.getNumExecutors() * numberOfContainersInProgress;
                 remainingWorkload -= numberOfExecutorsInProgress;
@@ -351,12 +351,12 @@ public class DockerCloud extends Cloud {
                 }
             }
 
-            while (remainingWorkload > 0 && !templates.isEmpty()) {
-                final DockerTemplate t = templates.get(0); // get first
+            while (remainingWorkload > 0 && !matchingTemplates.isEmpty()) {
+                final DockerTemplate t = matchingTemplates.get(0); // get first
 
                 final boolean thereIsCapacityToProvisionFromThisTemplate = canAddProvisionedAgent(t);
                 if (!thereIsCapacityToProvisionFromThisTemplate) {
-                    templates.remove(t);
+                    matchingTemplates.remove(t);
                     continue;
                 }
                 LOGGER.info("Will provision '{}', for label: '{}', in cloud: '{}'",
@@ -437,7 +437,7 @@ public class DockerCloud extends Cloud {
      */
     private static void robustlyAddNodeToJenkins(DockerTransientNode node) throws IOException {
         // don't retry getInstance - fail immediately if that fails.
-        final Jenkins jenkins = Jenkins.getInstance();
+        final Jenkins jenkins = Jenkins.get();
         final int maxAttempts = 10;
         for (int attempt = 1;; attempt++) {
             try {
@@ -501,9 +501,9 @@ public class DockerCloud extends Cloud {
      */
     @CheckForNull
     public DockerTemplate getTemplate(Label label) {
-        List<DockerTemplate> templates = getTemplates(label);
-        if (!templates.isEmpty()) {
-            return templates.get(0);
+        List<DockerTemplate> matchingTemplates = getTemplates(label);
+        if (!matchingTemplates.isEmpty()) {
+            return matchingTemplates.get(0);
         }
 
         return null;
@@ -680,7 +680,7 @@ public class DockerCloud extends Cloud {
 
     @CheckForNull
     public static DockerCloud getCloudByName(String name) {
-        return (DockerCloud) Jenkins.getInstance().getCloud(name);
+        return (DockerCloud) Jenkins.get().getCloud(name);
     }
 
     protected Object readResolve() {
@@ -818,7 +818,7 @@ public class DockerCloud extends Cloud {
     @Nonnull
     public static List<DockerCloud> instances() {
         List<DockerCloud> instances = new ArrayList<>();
-        for (Cloud cloud : Jenkins.getInstance().clouds) {
+        for (Cloud cloud : Jenkins.get().clouds) {
             if (cloud instanceof DockerCloud) {
                 instances.add((DockerCloud) cloud);
             }

@@ -27,7 +27,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
 
     @Override
     public Descriptor<DockerManagementServer> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
+        return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
     }
 
     public String getUrl() {
@@ -40,7 +40,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
     }
 
     public Collection getImages(){
-        if ( !Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER) ) {
+        if ( !Jenkins.get().hasPermission(Jenkins.ADMINISTER) ) {
             return Collections.emptyList();
         }
         final DockerAPI dockerApi = theCloud.getDockerApi();
@@ -52,7 +52,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
     }
 
     public Collection getProcesses() {
-        if ( !Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER) ) {
+        if ( !Jenkins.get().hasPermission(Jenkins.ADMINISTER) ) {
             return Collections.emptyList();
         }
         final DockerAPI dockerApi = theCloud.getDockerApi();
@@ -78,7 +78,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
     @SuppressWarnings("unused")
     @RequirePOST
     public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest req, StaplerResponse rsp) throws IOException {
-        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         final DockerAPI dockerApi = theCloud.getDockerApi();
         try(final DockerClient client = dockerApi.getClient()) {
             client.stopContainerCmd(stopId).exec();

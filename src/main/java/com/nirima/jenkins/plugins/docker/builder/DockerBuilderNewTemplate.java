@@ -50,7 +50,7 @@ public class DockerBuilderNewTemplate extends Builder {
         final String dockerImage = dockerTemplate.getDockerTemplateBase().getImage();
         // Job must run as Admin as we are changing global cloud configuration here.
         build.getACL().checkPermission(Jenkins.ADMINISTER);
-        for (Cloud c : Jenkins.getInstance().clouds) {
+        for (Cloud c : Jenkins.get().clouds) {
             if (c instanceof DockerCloud && dockerImage != null) {
                 DockerCloud dockerCloud = (DockerCloud) c;
                 if (dockerCloud.getTemplate(dockerImage) == null) {

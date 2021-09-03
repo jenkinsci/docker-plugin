@@ -384,7 +384,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
 
         public List getSSHKeyStrategyDescriptors() {
-            return Jenkins.getInstance().getDescriptorList(SSHKeyStrategy.class);
+            return Jenkins.get().getDescriptorList(SSHKeyStrategy.class);
         }
     }
 
@@ -558,7 +558,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 if (context != null) {
                     return context.hasPermission(Item.CONFIGURE);
                 }
-                return Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER);
+                return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
             }
         }
     }

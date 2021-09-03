@@ -187,7 +187,7 @@ public class PortUtilsTest {
         protected void after() {
             try {
                 socket.close();
-            } catch (IOException e) {
+            } catch (IOException ignored) {
                 // ignore
             }
         }

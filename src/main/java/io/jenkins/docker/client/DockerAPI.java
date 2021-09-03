@@ -284,7 +284,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         DockerServerCredentials credentials = firstOrNull(
             lookupCredentials(
                 DockerServerCredentials.class,
-                Jenkins.getInstance(),
+                Jenkins.get(),
                 ACL.SYSTEM,
                 Collections.<DomainRequirement>emptyList()),
             withId(credentialsId));
@@ -357,7 +357,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     public static class DescriptorImpl extends Descriptor<DockerAPI> {
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String uri) {
-            final DockerServerEndpoint.DescriptorImpl descriptor = (DockerServerEndpoint.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(DockerServerEndpoint.class);
+            final DockerServerEndpoint.DescriptorImpl descriptor = (DockerServerEndpoint.DescriptorImpl) Jenkins.get().getDescriptorOrDie(DockerServerEndpoint.class);
             return descriptor.doFillCredentialsIdItems(context, uri);
         }
 
@@ -430,7 +430,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
             if (context != null) {
                 context.checkPermission(Item.CONFIGURE);
             } else {
-                Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             }
         }
     }

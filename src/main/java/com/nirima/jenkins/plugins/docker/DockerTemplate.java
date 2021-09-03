@@ -624,7 +624,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Override
     public Descriptor<DockerTemplate> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(getClass());
+        return Jenkins.get().getDescriptor(getClass());
     }
 
     @Nonnull
@@ -644,7 +644,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             try(final DockerClient client = api.getClient(pullTimeout)) {
                 final PullImageCmd cmd =  client.pullImageCmd(image);
                 final DockerRegistryEndpoint registry = getRegistry();
-                DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
+                DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.get());
                 cmd.exec(new PullImageResultCallback() {
                     @Override
                     public void onNext(PullResponseItem item) {
@@ -746,7 +746,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             if ( finallyRemoveTheContainer ) {
                 try {
                     client.removeContainerCmd(containerId).withForce(true).exec();
-                } catch (NotFoundException ex) {
+                } catch (NotFoundException handledByCode) {
                     LOGGER.info("Unable to remove container '" + containerId + "' as it had already gone.");
                 } catch (Throwable ex) {
                     LOGGER.error("Unable to remove container '" + containerId + "' due to exception:", ex);
@@ -848,7 +848,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
             List<NodePropertyDescriptor> result = new ArrayList<>();
             Collection<NodePropertyDescriptor> list =
-                    (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
+                    (Collection) Jenkins.get().getDescriptorList(NodeProperty.class);
             for (NodePropertyDescriptor npd : DescriptorVisibilityFilter.applyType(DockerTransientNode.class, list)) {
                 if (npd.isApplicable(DockerTransientNode.class)) {
                     result.add(npd);
@@ -866,7 +866,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         public Descriptor getRetentionStrategyDescriptor() {
-            return Jenkins.getInstance().getDescriptor(DockerOnceRetentionStrategy.class);
+            return Jenkins.get().getDescriptor(DockerOnceRetentionStrategy.class);
         }
 
         public FormValidation doCheckPullTimeout(@QueryParameter String value) {
