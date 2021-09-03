@@ -96,13 +96,13 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         this.entryPointArguments = fixEmpty(entryPointArguments);
     }
 
-    public DockerComputerJNLPConnector withUser(String user) {
-        setUser(user);
+    public DockerComputerJNLPConnector withUser(String value) {
+        setUser(value);
         return this;
     }
 
-    public DockerComputerJNLPConnector withJenkinsUrl(String jenkinsUrl) {
-        setJenkinsUrl(jenkinsUrl);
+    public DockerComputerJNLPConnector withJenkinsUrl(String value) {
+        setJenkinsUrl(value);
         return this;
     }
 

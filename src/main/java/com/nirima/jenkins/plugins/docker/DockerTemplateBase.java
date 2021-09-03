@@ -9,7 +9,6 @@ import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PropagationMode;
 import com.github.dockerjava.api.model.TmpfsOptions;
-import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
 import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.api.model.HostConfig;
@@ -970,14 +969,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             if(repostag.repos.contains("@sha256:")){
                 // image has no tag but instead use a digest, do not append anything!
                 return  repostag.repos;
-            }else{
-                // no tag provided, append latest as tag
-                return repostag.repos + ":" + "latest";
             }
-        }else{
-            // use declared tag:
-            return repostag.repos + ":" + repostag.tag;
+            // else no tag provided, append latest as tag
+            return repostag.repos + ":" + "latest";
         }
+        // else use declared tag:
+        return repostag.repos + ":" + repostag.tag;
     }
 
     @Override
@@ -1155,7 +1152,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String capability : capabilities) {
                 try {
                     Capability.valueOf(capability);
-                } catch(IllegalArgumentException e) {
+                } catch(IllegalArgumentException handledByCode) {
                     return FormValidation.error("Wrong capability : %s", capability);
                 }
             }

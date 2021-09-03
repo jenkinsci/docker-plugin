@@ -746,7 +746,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             if ( finallyRemoveTheContainer ) {
                 try {
                     client.removeContainerCmd(containerId).withForce(true).exec();
-                } catch (NotFoundException ex) {
+                } catch (NotFoundException handledByCode) {
                     LOGGER.info("Unable to remove container '" + containerId + "' as it had already gone.");
                 } catch (Throwable ex) {
                     LOGGER.error("Unable to remove container '" + containerId + "' due to exception:", ex);

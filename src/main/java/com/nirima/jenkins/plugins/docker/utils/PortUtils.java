@@ -52,13 +52,13 @@ public class PortUtils {
          * once more than this. If this is not set then a default of
          * {@value #DEFAULT_RETRIES} will be used.
          * 
-         * @param retries
+         * @param numberOfRetries
          *            Number of retries. Negative values will be treated as
          *            zero.
          * @return this
          */
-        public ConnectionCheck withRetries(int retries) {
-            this.retries = retries;
+        public ConnectionCheck withRetries(int numberOfRetries) {
+            this.retries = numberOfRetries;
             return this;
         }
 
@@ -87,7 +87,7 @@ public class PortUtils {
         public boolean executeOnce() {
             try (Socket ignored = new Socket(host, port)) {
                 return true;
-            } catch (IOException e) {
+            } catch (IOException handledByCode) {
                 return false;
             }
         }

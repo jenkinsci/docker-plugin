@@ -57,7 +57,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     }
 
     @Override
-    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description,
+    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger aLogger, String description,
             boolean removeVolumes, String containerId, boolean stop) {
         containersRemoved.add(containerId);
         return true;

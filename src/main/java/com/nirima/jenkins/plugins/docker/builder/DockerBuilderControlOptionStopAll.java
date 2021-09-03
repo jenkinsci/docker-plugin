@@ -50,9 +50,9 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
 
                 try {
                     containerItem.client.removeContainerCmd(containerId).exec();
-                } catch (NotFoundException e) {
+                } catch (NotFoundException handledByCode) {
                     llog.println("Container '" + containerId + "' already gone.");
-                } catch (ConflictException e) {
+                } catch (ConflictException handledByCode) {
                     llog.println("Container '" + containerId + "' removal already in progress.");
                 }
             }

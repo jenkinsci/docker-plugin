@@ -60,7 +60,7 @@ public class UniqueIdGeneratorTest {
                     synchronized (results) {
                         results.add(actual);
                     }
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignored) {
                     // should not happen
                 }
             }

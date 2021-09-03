@@ -227,7 +227,7 @@ public class DockerTransientNode extends Slave {
             logger.error("Can't disconnect computer for node '" + name + "' due to exception:", ex);
         }
 
-        final String containerId = getContainerId();
+        final String ourContainerId = getContainerId();
         Computer.threadPoolForRemoting.submit(() -> {
             synchronized(DockerTransientNode.this) {
                 if( containerRemoved ) {
@@ -237,11 +237,11 @@ public class DockerTransientNode extends Slave {
                 try {
                     api = getDockerAPI();
                 } catch (RuntimeException ex) {
-                    logger.error("Unable to stop and remove container '" + containerId + "' for node '" + name + "' due to exception:", ex);
+                    logger.error("Unable to stop and remove container '" + ourContainerId + "' for node '" + name + "' due to exception:", ex);
                     return;
                 }
                 final boolean newValues[] = stopAndRemoveContainer(api, logger, "for node '" + name + "'",
-                    removeVolumes, stopTimeout, containerId, containerStopped);
+                    removeVolumes, stopTimeout, ourContainerId, containerStopped);
                 containerStopped = newValues[0];
                 containerRemoved = newValues[1];
             }
@@ -275,11 +275,11 @@ public class DockerTransientNode extends Slave {
                 containerNowStopped = true;
                 logger.println("Stopped container '"+ containerId + "' " + containerDescription + ".");
             }
-        } catch(NotFoundException e) {
+        } catch(NotFoundException handledByCode) {
             logger.println("Can't stop container '" + containerId + "' " + containerDescription + " as it does not exist.");
             containerNowStopped = true;
             containerNowRemoved = true; // no point trying to remove the container if it's already gone.
-        } catch(NotModifiedException e) {
+        } catch(NotModifiedException handledByCode) {
             logger.println("Container '" + containerId + "' already stopped" + containerDescription + ".");
             containerNowStopped = true;
         } catch (Exception ex) {
@@ -294,10 +294,10 @@ public class DockerTransientNode extends Slave {
                 containerNowRemoved = true;
                 logger.println("Removed container '" + containerId + "' " + containerDescription + ".");
             }
-        } catch (NotFoundException e) {
+        } catch (NotFoundException handledByCode) {
             logger.println("Container '" + containerId + "' already gone " + containerDescription + ".");
             containerNowRemoved = true;
-        } catch (ConflictException e) {
+        } catch (ConflictException handledByCode) {
             logger.println("Container '" + containerId + "' removal already in progress.");
             containerNowRemoved = true;
         } catch (Exception ex) {

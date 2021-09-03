@@ -98,9 +98,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         Jenkins.get().removeNode(dtn);
     }
 
-    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description, boolean removeVolumes, String containerId,
+    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger aLogger, String description, boolean removeVolumes, String containerId,
             boolean stop) {
-        return DockerTransientNode.stopAndRemoveContainer(dockerApi, logger, description, removeVolumes, containerId, stop);
+        return DockerTransientNode.stopAndRemoveContainer(dockerApi, aLogger, description, removeVolumes, containerId, stop);
     }
 
 
@@ -211,7 +211,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             csmMerged = csmMerged.merge(csm);
         } catch (IOException e) {
             LOGGER.warn("Failed to properly close a DockerClient instance after reading the list of containers and cleaning them up; ignoring", e);
-        } catch (ContainersRetrievalException e) {
+        } catch (ContainersRetrievalException handledByCode) {
             csmMerged.setContainerListIncomplete(true);
         }
 
@@ -350,7 +350,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         boolean gracefulFailed = false;
         try {
             terminateContainerGracefully(dc, container);
-        } catch (TerminationException e) {
+        } catch (TerminationException handledByCode) {
             gracefulFailed = true;
         } catch (ContainerIsTaintedException e) {
             LOGGER.warn("Container {} has been tampered with; skipping cleanup", container.getId(), e);
