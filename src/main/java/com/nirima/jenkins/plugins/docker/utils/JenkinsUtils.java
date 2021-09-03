@@ -61,7 +61,7 @@ public class JenkinsUtils {
     public static Optional<DockerCloud> getCloudForChannel(VirtualChannel channel) {
         if (channel instanceof Channel) {
             Channel c = (Channel) channel;
-            Node node = Jenkins.getInstance().getNode(c.getName());
+            Node node = Jenkins.get().getNode(c.getName());
             if (node instanceof DockerTransientNode) {
                 return Optional.of(((DockerTransientNode) node).getCloud());
             }

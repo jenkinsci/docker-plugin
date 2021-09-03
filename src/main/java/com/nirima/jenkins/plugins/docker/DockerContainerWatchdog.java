@@ -87,7 +87,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     protected List<Node> getAllNodes() {
-        return Jenkins.getInstance().getNodes();
+        return Jenkins.get().getNodes();
     }
 
     protected String getJenkinsInstanceId() {
@@ -95,7 +95,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     protected void removeNode(DockerTransientNode dtn) throws IOException {
-        Jenkins.getInstance().removeNode(dtn);
+        Jenkins.get().removeNode(dtn);
     }
 
     protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description, boolean removeVolumes, String containerId,

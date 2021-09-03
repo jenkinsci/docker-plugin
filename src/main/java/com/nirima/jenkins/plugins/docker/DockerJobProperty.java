@@ -130,7 +130,7 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
                     };
                     try {
                         PushImageCmd cmd = client.pushImageCmd(identifier);
-                        DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
+                        DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.get());
                         cmd.exec(resultCallback).awaitSuccess();
                     } catch(DockerException ex) {
                         LOGGER.error("Exception pushing docker image. Check that the destination registry is building.", ex);

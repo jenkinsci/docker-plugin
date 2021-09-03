@@ -248,7 +248,7 @@ public class DockerTransientNode extends Slave {
         });
 
         try {
-            Jenkins.getInstance().removeNode(this);
+            Jenkins.get().removeNode(this);
             logger.println("Removed Node for node '" + name + "'.");
         } catch (IOException ex) {
             logger.error("Failed to remove Node for node '" + name + "' due to exception:", ex);
@@ -348,7 +348,7 @@ public class DockerTransientNode extends Slave {
 
     public DockerCloud getCloud() {
         if (cloudId == null) return null;
-        final Cloud cloud = Jenkins.getInstance().getCloud(cloudId);
+        final Cloud cloud = Jenkins.get().getCloud(cloudId);
 
         if (cloud == null) {
             throw new RuntimeException("Failed to retrieve Cloud " + cloudId);

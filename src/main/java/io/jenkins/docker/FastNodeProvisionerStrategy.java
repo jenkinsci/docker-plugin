@@ -34,12 +34,12 @@ public class FastNodeProvisionerStrategy extends Strategy {
     @Nonnull
     @Override
     public StrategyDecision apply(@Nonnull NodeProvisioner.StrategyState state) {
-        if (Jenkins.getInstance().isQuietingDown()) {
+        if (Jenkins.get().isQuietingDown()) {
             return CONSULT_REMAINING_STRATEGIES;
         }
 
 
-        for (Cloud cloud : Jenkins.getInstance().clouds) {
+        for (Cloud cloud : Jenkins.get().clouds) {
             if (cloud instanceof DockerCloud) {
                 final StrategyDecision decision = applyFoCloud(state, (DockerCloud) cloud);
                 if (decision == PROVISIONING_COMPLETED) return decision;
@@ -93,9 +93,9 @@ public class FastNodeProvisionerStrategy extends Strategy {
 
         @Override
         public void onEnterBuildable(Queue.BuildableItem item) {
-            final Jenkins jenkins = Jenkins.getInstance();
+            final Jenkins jenkins = Jenkins.get();
             final Label label = item.getAssignedLabel();
-            for (Cloud cloud : Jenkins.getInstance().clouds) {
+            for (Cloud cloud : jenkins.clouds) {
                 if (cloud instanceof DockerCloud && cloud.canProvision(label)) {
                     final NodeProvisioner provisioner = (label == null
                             ? jenkins.unlabeledNodeProvisioner

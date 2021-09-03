@@ -437,7 +437,7 @@ public class DockerCloud extends Cloud {
      */
     private static void robustlyAddNodeToJenkins(DockerTransientNode node) throws IOException {
         // don't retry getInstance - fail immediately if that fails.
-        final Jenkins jenkins = Jenkins.getInstance();
+        final Jenkins jenkins = Jenkins.get();
         final int maxAttempts = 10;
         for (int attempt = 1;; attempt++) {
             try {
@@ -680,7 +680,7 @@ public class DockerCloud extends Cloud {
 
     @CheckForNull
     public static DockerCloud getCloudByName(String name) {
-        return (DockerCloud) Jenkins.getInstance().getCloud(name);
+        return (DockerCloud) Jenkins.get().getCloud(name);
     }
 
     protected Object readResolve() {
@@ -818,7 +818,7 @@ public class DockerCloud extends Cloud {
     @Nonnull
     public static List<DockerCloud> instances() {
         List<DockerCloud> instances = new ArrayList<>();
-        for (Cloud cloud : Jenkins.getInstance().clouds) {
+        for (Cloud cloud : Jenkins.get().clouds) {
             if (cloud instanceof DockerCloud) {
                 instances.add((DockerCloud) cloud);
             }
