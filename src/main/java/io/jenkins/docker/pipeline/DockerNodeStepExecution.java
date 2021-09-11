@@ -5,7 +5,6 @@ import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.Util;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -31,6 +30,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -193,7 +193,7 @@ class DockerNodeStepExecution extends StepExecution {
             env.overrideExpandingAll(computer.buildEnvironment(listener));
             env.put("NODE_NAME", computer.getName());
             env.put("EXECUTOR_NUMBER", "0");
-            env.put("NODE_LABELS", Util.join(node.getAssignedLabels(), " "));
+            env.put("NODE_LABELS", node.getAssignedLabels().stream().map(Object::toString).collect(Collectors.joining(" ")));
             env.put("WORKSPACE", ws.getRemote());
         } catch (IOException | InterruptedException e) {
             getContext().onFailure(e);
