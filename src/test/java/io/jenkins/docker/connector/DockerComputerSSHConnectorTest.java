@@ -29,7 +29,20 @@ import java.util.Map;
 public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
 
     private static final String SSH_AGENT_IMAGE_IMAGENAME = "jenkins/ssh-agent";
-    private static final String SSH_AGENT_IMAGE_JAVAPATH = "/usr/local/openjdk-8/bin/java";
+    /**
+     * Where the JDK can be found.
+     * <p>
+     * <b>MAINTENANCE NOTE:</b> Originally, Java was on the PATH and the SSH
+     * connector found it there. Then, the image changed and java wasn't on the path
+     * anymore and had to be set in the unit-tests to
+     * <code>"/usr/local/openjdk-8/bin/java"</code>. Then, the image changed again
+     * and java was on the path again but had moved.
+     * </p>
+     * TL;DR: If java is on the path then this can (and should) be null, but if it
+     * isn't on the path then we'll need to set this to where java has been moved
+     * to.
+     */
+    private static final String SSH_AGENT_IMAGE_JAVAPATH = null;
 
     @Test
     public void connectAgentViaSSHUsingInjectSshKey() throws Exception {
