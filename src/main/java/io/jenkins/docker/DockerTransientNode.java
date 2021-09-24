@@ -11,8 +11,8 @@ import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.Slave;
 import hudson.model.TaskListener;
+import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.client.DockerAPI;
@@ -27,11 +27,11 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * A {@link Slave} node designed to be used only once for a build.
+ * A {@link AbstractCloudSlave} node designed to be used only once for a build.
  * 
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class DockerTransientNode extends Slave {
+public class DockerTransientNode extends AbstractCloudSlave {
     private static final long serialVersionUID = 1349729340506926183L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTransientNode.class.getName());
 
@@ -72,14 +72,14 @@ public class DockerTransientNode extends Slave {
      * later have to call {@link #setLauncher(ComputerLauncher)}.
      * 
      * @param nodeName    Name of the node; passed to
-     *                    {@link Slave#Slave(String, String, ComputerLauncher)}.
+     *                    {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
      * @param containerId Docker container id.
      * @param workdir     remoteFs home dir; passed to
-     *                    {@link Slave#Slave(String, String, ComputerLauncher)}.
-     * @throws             Descriptor.FormException See
-     *                     {@link Slave#Slave(String, String, ComputerLauncher)}.
-     * @throws IOException See
-     *                     {@link Slave#Slave(String, String, ComputerLauncher)}.
+     *                    {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
+     * @throws            Descriptor.FormException See
+     *                     {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
+     * @throws            IOException See
+     *                     {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
      */
     public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir) throws Descriptor.FormException, IOException {
         super(nodeName, workdir, null);
@@ -161,7 +161,18 @@ public class DockerTransientNode extends Slave {
         void error(String msg, Throwable ex);
     }
 
-    public void terminate(final TaskListener listener) {
+    @Override
+    @Restricted(NoExternalUse.class)
+    public void _terminate(final TaskListener listener) {
+        final ILogger tl = createILoggerForTaskListener(listener);
+        try {
+            terminate(tl);
+        } catch (Throwable ex) {
+            tl.error("Failure while terminating '" + name + "':", ex);
+        }
+    }
+
+    private static ILogger createILoggerForTaskListener(final TaskListener listener) {
         final ILogger tl = new ILogger() {
             @Override
             public void println(String msg) {
@@ -175,11 +186,7 @@ public class DockerTransientNode extends Slave {
                 LOGGER.error(msg, ex);
             }
         };
-        try {
-            terminate(tl);
-        } catch (Throwable ex) {
-            tl.error("Failure while terminating '" + name + "':", ex);
-        }
+        return tl;
     }
 
     /**
@@ -219,7 +226,7 @@ public class DockerTransientNode extends Slave {
     private void terminate(ILogger logger) {
         try {
             final Computer computer = toComputer();
-            if (computer != null) {
+            if (computer != null && !(computer.getOfflineCause() instanceof DockerOfflineCause)) {
                 computer.disconnect(new DockerOfflineCause());
                 logger.println("Disconnected computer for node '" + name + "'.");
             }
