@@ -6,14 +6,15 @@ import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Executor;
 import hudson.model.ExecutorListener;
+import hudson.model.OneOffExecutor;
 import hudson.model.Queue;
 import hudson.slaves.CloudRetentionStrategy;
-import hudson.slaves.EphemeralNode;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
@@ -38,6 +39,8 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
     private static int DEFAULT_IDLEMINUTES = 10;
 
     private int idleMinutes = DEFAULT_IDLEMINUTES;
+    private Boolean terminateOnceDone;
+    private Integer numberOfTasksInProgress;
 
     /**
      * Creates the retention strategy.
@@ -47,6 +50,26 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
     @DataBoundConstructor
     public DockerOnceRetentionStrategy(int idleMinutes) {
         this.idleMinutes = idleMinutes;
+        this.terminateOnceDone = null;
+        this.numberOfTasksInProgress = null;
+    }
+
+    @DataBoundSetter
+    public void setTerminateOnceDone(Boolean terminateOnceDone) {
+        if (terminateOnceDone != null && terminateOnceDone.booleanValue()) {
+            this.terminateOnceDone = Boolean.TRUE;
+        } else {
+            this.terminateOnceDone = null;
+        }
+    }
+
+    @DataBoundSetter
+    public void setNumberOfTasksInProgress(Integer numberOfTasksInProgress) {
+        if (numberOfTasksInProgress != null && numberOfTasksInProgress.intValue() != 0) {
+            this.numberOfTasksInProgress = numberOfTasksInProgress;
+        } else {
+            this.numberOfTasksInProgress = null;
+        }
     }
 
     public int getIdleMinutes() {
@@ -54,6 +77,14 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
             idleMinutes = DEFAULT_IDLEMINUTES;
         }
         return idleMinutes;
+    }
+
+    public boolean getTerminateOnceDone() {
+        return terminateOnceDone != null && terminateOnceDone.booleanValue();
+    }
+
+    public int getNumberOfTasksInProgress() {
+        return numberOfTasksInProgress == null ? 0 : numberOfTasksInProgress.intValue();
     }
 
     @Override
@@ -64,7 +95,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
             if (idleMilliseconds > MINUTES.toMillis(getIdleMinutes())) {
                 LOGGER.log(Level.FINE, "Disconnecting {0}", c.getName());
-                done(c);
+                terminateContainer(c);
             }
         }
 
@@ -74,38 +105,58 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
 
     @Override
     public void start(DockerComputer c) {
-        if (c.getNode() instanceof EphemeralNode) {
-            throw new IllegalStateException("May not use OnceRetentionStrategy on an EphemeralNode: " + c);
-        }
-        c.connect(true);
+        c.connect(false);
     }
 
     @Override
-    public void taskAccepted(Executor executor, Queue.Task task) {
-    }
-
-    @Override
-    public void taskCompleted(Executor executor, Queue.Task task, long durationMS) {
-        done(executor);
-    }
-
-    @Override
-    public void taskCompletedWithProblems(Executor executor, Queue.Task task, long durationMS, Throwable problems) {
-        done(executor);
-    }
-
-    private void done(Executor executor) {
-        final DockerComputer c = (DockerComputer) executor.getOwner();
-        Queue.Executable exec = executor.getCurrentExecutable();
-        if (exec instanceof ContinuableExecutable && ((ContinuableExecutable) exec).willContinue()) {
-            LOGGER.log(Level.FINE, "not terminating {0} because {1} says it will be continued", new Object[]{c.getName(), exec});
+    public synchronized void taskAccepted(Executor executor, Queue.Task task) {
+        final int oldNumberOfTasksInProgress = getNumberOfTasksInProgress();
+        final int newNumberOfTasksInProgress = oldNumberOfTasksInProgress + 1;
+        setNumberOfTasksInProgress(newNumberOfTasksInProgress);
+        if (task instanceof Queue.FlyweightTask || executor instanceof OneOffExecutor) {
+            // these don't "consume" an executor so they don't trigger our "only use it once" behaviour.
+            LOGGER.log(Level.FINER, "Node {0} has started FlyweightTask {1}. Tasks in progress now={2}", new Object[]{executor.getOwner().getName(), task, newNumberOfTasksInProgress});
             return;
         }
-        LOGGER.log(Level.FINE, "terminating {0} since {1} seems to be finished", new Object[]{c.getName(), exec});
-        done(c);
+        if (executor instanceof ContinuableExecutable && ((ContinuableExecutable) executor).willContinue() ) {
+            // this isn't Flyweight so it will consume an executor and leave us "dirty" and in need of termination once we're done...
+            // ... BUT this task is the first of a series and we don't want to terminate before it's completed so we don't trigger our "only use it once" behaviour here either.
+            LOGGER.log(Level.FINER, "Node {0} has started non-FlyweightTask {1}. Tasks in progress now={2}. This is-a ContinuableExecutable where willContinue()=true so we leave ourselves open to the follow-on task(s).", new Object[]{executor.getOwner().getName(), task, newNumberOfTasksInProgress});
+            return;
+        }
+        // anything else will stop us accepting new stuff and ensure we terminate once we're idle.
+        setTerminateOnceDone(true);
+        LOGGER.log(Level.FINER, "Node {0} has started non-FlyweightTask {1}. Tasks in progress now={2}. Container will be terminated once idle.", new Object[]{executor.getOwner().getName(), task, newNumberOfTasksInProgress});
     }
 
-    private synchronized void done(final DockerComputer c) {
+    @Override
+    public synchronized void taskCompleted(Executor executor, Queue.Task task, long durationMS) {
+        done(executor, task);
+    }
+
+    @Override
+    public synchronized void taskCompletedWithProblems(Executor executor, Queue.Task task, long durationMS, Throwable problems) {
+        done(executor, task);
+    }
+
+    private void done(Executor executor, Queue.Task task) {
+        final int oldNumberOfTasksInProgress = getNumberOfTasksInProgress();
+        final int newNumberOfTasksInProgress = oldNumberOfTasksInProgress - 1;
+        setNumberOfTasksInProgress(newNumberOfTasksInProgress);
+        if ( newNumberOfTasksInProgress!=0 ) {
+            LOGGER.log(Level.FINER, "Node {0} has completed Task {1}. Tasks in progress now={2}", new Object[]{executor.getOwner().getName(), task, newNumberOfTasksInProgress});
+            return;
+        }
+        final boolean shouldTerminateOnceDone = getTerminateOnceDone();
+        if ( !shouldTerminateOnceDone ) {
+            LOGGER.log(Level.FINER, "Node {0} has completed Task {1}. Tasks in progress now={2}. Not terminating yet as only Flyweight and/or Continuable work has been done.", new Object[]{executor.getOwner().getName(), task, newNumberOfTasksInProgress});
+        }
+        final DockerComputer c = (DockerComputer) executor.getOwner();
+        LOGGER.log(Level.FINE, "Node {0} has completed Task {1}. Tasks in progress now={2}. Terminating as non-FlyweightTask work has been done.", new Object[]{executor.getOwner().getName(), task, newNumberOfTasksInProgress});
+        terminateContainer(c);
+    }
+
+    private static void terminateContainer(final DockerComputer c) {
         c.setAcceptingTasks(false); // just in case
         Computer.threadPoolForRemoting.submit(() -> {
             Queue.withLock( () -> {
@@ -115,6 +166,11 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
                 }
             });
         });
+    }
+
+    @Override
+    public synchronized boolean isAcceptingTasks(DockerComputer c) {
+        return !getTerminateOnceDone();
     }
 
     @Override
