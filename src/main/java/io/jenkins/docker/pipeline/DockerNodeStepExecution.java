@@ -5,7 +5,6 @@ import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.Util;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -29,8 +28,10 @@ import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -193,13 +194,19 @@ class DockerNodeStepExecution extends StepExecution {
             env.overrideExpandingAll(computer.buildEnvironment(listener));
             env.put("NODE_NAME", computer.getName());
             env.put("EXECUTOR_NUMBER", "0");
-            env.put("NODE_LABELS", Util.join(node.getAssignedLabels(), " "));
+            env.put("NODE_LABELS", join(node.getAssignedLabels(), " "));
             env.put("WORKSPACE", ws.getRemote());
         } catch (IOException | InterruptedException e) {
             getContext().onFailure(e);
         }
 
         getContext().newBodyInvoker().withCallback(new Callback(node)).withContexts(computer, env, ws).start();
+    }
+
+    private static String join(Collection<?> objects, String delimiter) {
+        return objects.stream()
+                      .map(Object::toString)
+                      .collect(Collectors.joining(delimiter));
     }
 
     @Override
