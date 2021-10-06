@@ -9,7 +9,7 @@ import java.util.Map;
 
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.Assert;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -95,7 +95,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         ListContainersCmd listContainerCmd = Mockito.mock(ListContainersCmd.class);
         Mockito.when(client.listContainersCmd()).thenReturn(listContainerCmd);
         Mockito.when(listContainerCmd.withShowAll(true)).thenReturn(listContainerCmd);
-        Mockito.when(listContainerCmd.withLabelFilter(Matchers.anyMap())).thenAnswer( new Answer<ListContainersCmd>() {
+        Mockito.when(listContainerCmd.withLabelFilter(ArgumentMatchers.anyMap())).thenAnswer( new Answer<ListContainersCmd>() {
             @Override
             public ListContainersCmd answer(InvocationOnMock invocation) throws Throwable {
                 Map<String, String> arg = invocation.getArgument(0);

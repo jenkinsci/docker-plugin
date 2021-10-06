@@ -162,12 +162,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @CheckForNull
-    public String[] getVolumes() {
-        return dockerTemplateBase.getVolumes();
+    public String[] getMounts() {
+        return dockerTemplateBase.getMounts();
     }
 
-    public String getVolumesString() {
-        return dockerTemplateBase.getVolumesString();
+    public String getMountsString() {
+        return dockerTemplateBase.getMountsString();
     }
 
     @Deprecated

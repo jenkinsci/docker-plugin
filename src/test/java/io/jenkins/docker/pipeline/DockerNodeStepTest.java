@@ -244,7 +244,7 @@ public class DockerNodeStepTest {
                 story.j.jenkins.getDescriptorByType(Maven.DescriptorImpl.class).setInstallations(mvnInst);
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "toolInstall");
                 j.setDefinition(new CpsFlowDefinition(dockerNodeJenkinsAgent() + " {\n" +
-                        "  def mvnHome = tool id: 'maven', name: 'myMaven'\n" +
+                        "  def mvnHome = tool name: 'myMaven'\n" +
                         "  assert fileExists(mvnHome + '/bin/mvn')\n" +
                         "}\n", true));
                 story.j.buildAndAssertSuccess(j);

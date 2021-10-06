@@ -1,13 +1,20 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.BindOptions;
+import com.github.dockerjava.api.model.BindPropagation;
 import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.PropagationMode;
+import com.github.dockerjava.api.model.TmpfsOptions;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.VolumesFrom;
 import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.core.NameParser;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -87,9 +94,15 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     public @CheckForNull String network;
 
     /**
-     * Every String is volume specification
+     * @deprecated use {@link #mounts}
      */
+    @Deprecated
     public @CheckForNull String[] volumes;
+
+    /**
+     * Every String is mount specification
+     */
+    public @CheckForNull String[] mounts;
 
     /**
      * @deprecated use {@link #volumesFrom2}
@@ -150,7 +163,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                               String dnsString,
                               String network,
                               String dockerCommand,
-                              String volumesString,
+                              String mountsString,
                               String volumesFromString,
                               String environmentsString,
                               String hostname,
@@ -174,7 +187,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setDnsString(dnsString);
         setNetwork(network);
         setDockerCommand(dockerCommand);
-        setVolumesString(volumesString);
+        setMountsString(mountsString);
         setVolumesFromString(volumesFromString);
         setEnvironmentsString(environmentsString);
         setHostname(hostname);
@@ -200,6 +213,42 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                 setVolumesFrom2(new String[]{volumesFrom});
             }
             volumesFrom = null;
+        }
+        if (volumes != null && volumes.length > 0) {
+            List<String> mnts = new ArrayList<>();
+            for (String vol : volumes) {
+                if (!vol.contains(":")) {
+                    mnts.add("type=volume,destination=" + vol);
+                } else {
+                    StringBuilder builder = new StringBuilder();
+                    if (vol.startsWith("/")) {
+                        Bind bind = Bind.parse(vol);
+                        builder.append("type=bind,source=");
+                        builder.append(bind.getPath());
+                        builder.append(",destination=");
+                        builder.append(bind.getVolume().getPath());
+                        if (bind.getAccessMode() == AccessMode.ro) {
+                            builder.append(",readonly");
+                        }
+                        if (bind.getPropagationMode() != PropagationMode.DEFAULT) {
+                            builder.append(",bind-propagation=");
+                            builder.append(bind.getPropagationMode().toString());
+                        }
+                    } else {
+                        String[] parts = vol.split(":");
+                        builder.append("type=volume,source=");
+                        builder.append(parts[0]);
+                        builder.append(",destination=");
+                        builder.append(parts[1]);
+                        if (parts.length == 3 && ("readonly".equalsIgnoreCase(parts[2]) || "ro".equalsIgnoreCase(parts[2]))) {
+                            builder.append(",readonly");
+                        }
+                    }
+                    mnts.add(builder.toString());
+                }
+            }
+            setMounts(mnts.toArray(new String[mnts.size()]));
+            volumes = null;
         }
         if (pullCredentialsId == null && registry != null) {
             pullCredentialsId = registry.getCredentialsId();
@@ -305,23 +354,23 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     @CheckForNull
-    public String[] getVolumes() {
-        return fixEmpty(filterStringArray(volumes));
+    public String[] getMounts() {
+        return fixEmpty(filterStringArray(mounts));
     }
 
-    public void setVolumes(String[] volumes) {
-        this.volumes = fixEmpty(volumes);
+    public void setMounts(String[] mounts) {
+        this.mounts = fixEmpty(mounts);
     }
 
     @Nonnull
-    public String getVolumesString() {
-        if (volumes == null) return "";
-        return Joiner.on("\n").join(volumes);
+    public String getMountsString() {
+        if (mounts == null) return "";
+        return Joiner.on("\n").join(mounts);
     }
 
     @DataBoundSetter
-    public void setVolumesString(String volumesString) {
-        setVolumes(splitAndFilterEmpty(volumesString, "\n"));
+    public void setMountsString(String mountsString) {
+        setMounts(splitAndFilterEmpty(mountsString, "\n"));
     }
 
     @Nonnull
@@ -611,8 +660,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(filterStringArray(volumesFrom2));
     }
 
-    public void setVolumesFrom2(String[] volumes) {
-        this.volumesFrom2 = fixEmpty(volumes);
+    public void setVolumesFrom2(String[] volumesFrom) {
+        this.volumesFrom2 = fixEmpty(volumesFrom);
     }
 
     public String getDisplayName() {
@@ -731,13 +780,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         }
 
         // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196
-        final String[] volumesOrNull = getVolumes();
-        if (volumesOrNull !=null && volumesOrNull.length > 0) {
-            ArrayList<Volume> vols = new ArrayList<>();
-            ArrayList<Bind> binds = new ArrayList<>();
-            parseVolumesStrings(volumesOrNull, vols, binds);
-            containerConfig.withVolumes(vols.toArray(new Volume[vols.size()]));
-            containerConfig.withBinds(binds.toArray(new Bind[binds.size()]));
+        final String[] mountsOrNull = getMounts();
+        if (mountsOrNull !=null && mountsOrNull.length > 0) {
+            ArrayList<Mount> mnts = new ArrayList<>();
+            parseMountsStrings(mountsOrNull, mnts);
+            hostConfig(containerConfig).withMounts(mnts);
         }
 
         final String[] volumesFrom2OrNull = getVolumesFrom2();
@@ -800,47 +847,70 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     /**
-     * Parses a given volumesString value, appending any {@link Volume}s and {@link Bind}s to the specified lists.
-     * @param volumes The strings to be parsed.
-     * @param volumeListResult List to which any {@link Volume}s should be stored in.
-     * @param bindListResult List to which any {@link Bind}s should be stored in.
+     * Parses a given mountsString value, appending any {@link Mount}s to the specified lists.
+     * @param mounts The strings to be parsed.
+     * @param mountListResult List to which any {@link Mount}s should be stored in.
      * @throws IllegalArgumentException if anything is invalid.
      */
-    private static void parseVolumesStrings(final String[] volumes, List<Volume> volumeListResult, List<Bind> bindListResult) {
-        for (String vol : volumes) {
-            parseVolumesString(vol, volumeListResult, bindListResult);
+    private static void parseMountsStrings(final String[] mounts, List<Mount> mountListResult) {
+        for (String mnt : mounts) {
+            parseMountsString(mnt, mountListResult);
         }
     }
 
-    private static void parseVolumesString(String vol, List<Volume> volumeListResult, List<Bind> bindListResult) {
-        final String[] group = vol.split(":");
-        final int length = group.length;
-        if (length > 3) {
-            throw new IllegalArgumentException("Invalid bind syntax, '" + vol + "'. Must be x:y or x:y:z.");
-        }
-        if (length > 1) {
-            if (group[1].equals("/")) {
-                throw new IllegalArgumentException("Invalid bind mount, '"+vol+"'. Destination may not be '/'");
+    private static void parseMountsString(String mnt, List<Mount> mountListResult) {
+        Mount mount = new Mount().withType(MountType.VOLUME);
+        BindOptions bindOptions = null;
+        TmpfsOptions tmpfsOptions = null;
+
+        final String[] tokens = mnt.split(",");
+        for (String token : tokens) {
+            final String[] parts = token.split("=");
+            if (!(parts.length == 2 || parts.length == 1 && "readonly".equals(parts[0]))) {
+                throw new IllegalArgumentException("Invalid mount: expected key=value comma separated pairs, or 'readonly' keyword");
             }
-            final Bind result;
-            try {
-                result = Bind.parse(vol);
-            } catch ( RuntimeException ex ) {
-                throw new IllegalArgumentException("Invalid bind mount, '" + vol + "'. " + ex.getMessage(), ex);
+
+            switch (parts[0]) {
+                case "type":
+                    mount.withType(MountType.valueOf(parts[1].toUpperCase()));
+                    break;
+                case "src":
+                case "source":
+                    mount.withSource(parts[1]);
+                    break;
+                case "target":
+                case "destination":
+                case "dst":
+                    mount.withTarget(parts[1]);
+                    break;
+                case "ro":
+                case "readonly":
+                    mount.withReadOnly(true);
+                    break;
+                case "bind-propagation":
+                    bindOptions = new BindOptions().withPropagation(BindPropagation.valueOf((parts[1].startsWith("r") ? "R_" + parts[1].substring(1) : parts[1]).toUpperCase()));
+                    break;
+                case "tmpfs-mode":
+                    if (tmpfsOptions == null) tmpfsOptions = new TmpfsOptions();
+                    tmpfsOptions.withMode(Integer.parseInt(parts[1], 8));
+                    break;
+                case "tmpfs-size":
+                    if (tmpfsOptions == null) tmpfsOptions = new TmpfsOptions();
+                    tmpfsOptions.withSizeBytes(Long.parseLong(parts[1]));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported keyword: " + parts[0]);
             }
-            bindListResult.add(result);
-            return;
         }
-        if (vol.equals("/")) {
-            throw new IllegalArgumentException("Invalid volume: path may not be '/'");
+
+        String target = mount.getTarget();
+        if (target == null || target.isEmpty()) {
+            throw new IllegalArgumentException("Invalid mount: target/destination must be set");
         }
-        final Volume result;
-        try {
-            result = new Volume(vol);
-        } catch ( RuntimeException ex ) {
-            throw new IllegalArgumentException("Invalid volume, '" + vol + "'. " + ex.getMessage(), ex);
-        }
-        volumeListResult.add(result);
+
+        if (bindOptions != null) mount.withBindOptions(bindOptions);
+        if (tmpfsOptions != null) mount.withTmpfsOptions(tmpfsOptions);
+        mountListResult.add(mount);
     }
 
     @Nonnull
@@ -898,7 +968,18 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     public String getFullImageId() {
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(image);
         // if image was specified without tag, then treat as latest
-        return repostag.repos + ":" + (repostag.tag.isEmpty() ? "latest" : repostag.tag);
+        if(repostag.tag.isEmpty()){
+            if(repostag.repos.contains("@sha256:")){
+                // image has no tag but instead use a digest, do not append anything!
+                return  repostag.repos;
+            }else{
+                // no tag provided, append latest as tag
+                return repostag.repos + ":" + "latest";
+            }
+        }else{
+            // use declared tag:
+            return repostag.repos + ":" + repostag.tag;
+        }
     }
 
     @Override
@@ -924,7 +1005,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (extraGroups != null ? !extraGroups.equals(that.extraGroups) : that.extraGroups != null) return false;
         if (!Arrays.equals(dnsHosts, that.dnsHosts)) return false;
         if (network != null ? !network.equals(that.network) : that.network != null) return false;
-        if (!Arrays.equals(volumes, that.volumes)) return false;
+        if (!Arrays.equals(mounts, that.mounts)) return false;
         if (!Arrays.equals(volumesFrom2, that.volumesFrom2)) return false;
         if (!Arrays.equals(devices, that.devices)) return false;
         if (!Arrays.equals(environment, that.environment)) return false;
@@ -957,7 +1038,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (extraGroups != null ? extraGroups.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(dnsHosts);
         result = 31 * result + (network != null ? network.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(volumes);
+        result = 31 * result + Arrays.hashCode(mounts);
         result = 31 * result + Arrays.hashCode(volumesFrom2);
         result = 31 * result + Arrays.hashCode(devices);
         result = 31 * result + Arrays.hashCode(environment);
@@ -994,7 +1075,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "extraGroups", extraGroups);
         bldToString(sb, "dnsHosts", dnsHosts);
         bldToString(sb, "network'", network);
-        bldToString(sb, "volumes", volumes);
+        bldToString(sb, "mounts", mounts);
         bldToString(sb, "volumesFrom2", volumesFrom2);
         bldToString(sb, "devices", devices);
         bldToString(sb, "environment", environment);
@@ -1021,10 +1102,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerTemplateBase> {
 
-        public FormValidation doCheckVolumesString(@QueryParameter String volumesString) {
+        public FormValidation doCheckMountsString(@QueryParameter String mountsString) {
             try {
-                final String[] volumes = splitAndFilterEmpty(volumesString, "\n");
-                parseVolumesStrings(volumes, new ArrayList<>(), new ArrayList<>());
+                final String[] mounts = splitAndFilterEmpty(mountsString, "\n");
+                parseMountsStrings(mounts, new ArrayList<>());
             } catch (Throwable t) {
                 return FormValidation.error(t.getMessage());
             }

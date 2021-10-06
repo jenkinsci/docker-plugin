@@ -11,7 +11,7 @@
 
     <groupId>io.jenkins.docker</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>1.2.3</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>bouncycastle-api</artifactId>
-            <version>2.16.2</version>
+            <version>2.18</version>
         </dependency>
 
         <dependency>
@@ -73,13 +73,8 @@
 
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>apache-httpcomponents-client-4-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-commons</artifactId>
-            <version>1.9</version>
+            <version>1.16</version>
         </dependency>
 
         <dependency>
@@ -113,39 +108,29 @@
 
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-durable-task-step</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-job</artifactId>
-            <optional>true</optional>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-cps</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>script-security</artifactId>
-            <optional>true</optional>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.kohlschutter.junixsocket</groupId>
             <artifactId>junixsocket-common</artifactId>
-            <version>2.0.4</version>
+            <version>2.3.0</version>
         </dependency>
         <dependency>
             <groupId>com.kohlschutter.junixsocket</groupId>
             <artifactId>junixsocket-native-common</artifactId>
-            <version>2.0.4</version>
+            <version>2.3.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
+            <artifactId>hamcrest</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -157,19 +142,12 @@
         <dependency>
             <groupId>org.jenkins-ci.modules</groupId>
             <artifactId>instance-identity</artifactId>
-            <version>2.1</version>
+            <version>2.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
             <version>3.0.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness-tools</artifactId>
-            <version>2.2</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -226,49 +204,11 @@
         </plugins>
     </build>
 
-    <profiles>
-      <!-- Workaround to add new dependency for Jenkins Version 2.86+ as it's removed from Jenkins Core  -->
-      <profile>
-        <id>jenkins_2_89</id>
-        <activation>
-            <property>
-                <name>jenkins.version</name>
-                <value>2.89.4</value>
-            </property>
-        </activation>
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>command-launcher</artifactId>
-                <version>1.2</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-      </profile>
-      <profile>
-        <id>jenkins_2_107</id>
-        <activation>
-            <property>
-                <name>jenkins.version</name>
-                <value>2.107.1</value>
-            </property>
-        </activation>
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>command-launcher</artifactId>
-                <version>1.2</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-      </profile>
-    </profiles>
-
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/docker-plugin</url>
-        <tag>${scmTag}</tag>
+        <tag>docker-plugin-1.2.3</tag>
     </scm>
 
     <repositories>
