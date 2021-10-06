@@ -11,7 +11,7 @@
 
     <groupId>io.jenkins.docker</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.3-EDF</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-java-api</artifactId>
-            <version>3.2.7.3-SNAPSHOT</version>
+            <version>3.2.7-EDF</version>
         </dependency>
 
         <dependency>
@@ -130,7 +130,7 @@
 
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
+            <artifactId>hamcrest-core</artifactId>
             <scope>test</scope>
         </dependency>
 
