@@ -11,7 +11,7 @@
 
     <groupId>io.jenkins.docker</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>1.2.3-EDF</version>
+    <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -50,7 +50,7 @@
     </developers>
 
     <properties>
-        <revision>1.2.3</revision>
+        <revision>1.2.4</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-java-api</artifactId>
-            <version>3.2.7-EDF</version>
+            <version>3.2.7-SNAPSHOT</version>
         </dependency>
 
         <dependency>
