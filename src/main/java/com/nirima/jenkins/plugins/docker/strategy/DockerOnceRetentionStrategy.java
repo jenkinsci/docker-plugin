@@ -111,7 +111,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
             Queue.withLock( () -> {
                 DockerTransientNode node = c.getNode();
                 if (node != null) {
-                    node.terminate(c.getListener());
+                    node._terminate(c.getListener());
                 }
             });
         });

@@ -78,7 +78,7 @@ public abstract class DockerComputerConnectorTest {
         for( final Node n : j.jenkins.getNodes() ) {
             if( n instanceof DockerTransientNode ) {
                 final DockerTransientNode dn = (DockerTransientNode)n;
-                dn.terminate(tl);
+                dn._terminate(tl);
             }
         }
     }

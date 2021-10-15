@@ -229,7 +229,7 @@ class DockerNodeStepExecution extends StepExecution {
             if (node != null) {
                 TaskListener listener = context.get(TaskListener.class);
                 listener.getLogger().println("Terminating docker node ...");
-                node.terminate(listener);
+                node._terminate(listener);
                 Jenkins.get().removeNode(node);
             }
         }

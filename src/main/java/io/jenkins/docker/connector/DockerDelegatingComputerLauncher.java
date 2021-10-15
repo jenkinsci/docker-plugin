@@ -30,7 +30,7 @@ class DockerDelegatingComputerLauncher extends DelegatingComputerLauncher {
             // Container has been removed
             Queue.withLock(() -> {
                 DockerTransientNode node = (DockerTransientNode) computer.getNode();
-                node.terminate(listener);
+                node._terminate(listener);
             });
             return;
         }
