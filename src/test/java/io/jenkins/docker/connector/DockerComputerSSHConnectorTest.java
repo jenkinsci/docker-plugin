@@ -21,9 +21,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static hudson.remoting.Base64.encode;
-
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Map;
 
 public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
@@ -62,7 +61,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
     public void connectAgentViaSSHUsingCredentialsKey() throws Exception {
         final InstanceIdentity id = InstanceIdentity.get();
         final String privateKey = PEMEncodable.create(id.getPrivate()).encode();
-        final String publicKey = "ssh-rsa " + encode(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
+        final String publicKey = "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
         final String credentialsId = "tempCredId";
         final StandardUsernameCredentials credentials = DockerComputerSSHConnector.makeCredentials(credentialsId, COMMON_IMAGE_USERNAME, privateKey);
         SystemCredentialsProvider.getInstance().getCredentials().add(credentials);

@@ -27,7 +27,6 @@ import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
-import org.apache.commons.codec.binary.Base64;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -45,6 +44,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -899,7 +899,7 @@ public class DockerCloud extends Cloud {
         // What docker-commons claim to be a "token" is actually configuration storage
         // see https://github.com/docker/docker-ce/blob/v17.09.0-ce/components/cli/cli/config/configfile/file.go#L214
         // i.e base64 encoded username : password
-        final String decode = new String(Base64.decodeBase64(token), StandardCharsets.UTF_8);
+        final String decode = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
         int i = decode.indexOf(':');
         if (i > 0) {
             String username = decode.substring(0, i);

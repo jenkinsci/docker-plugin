@@ -57,6 +57,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,6 @@ import java.util.concurrent.TimeUnit;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
-import static hudson.remoting.Base64.encode;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -452,7 +452,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         @Override
         public String getInjectedKey() throws IOException {
             InstanceIdentity id = InstanceIdentity.get();
-            return "ssh-rsa " + encode(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
+            return "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
         }
 
         @Extension
