@@ -116,7 +116,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
         return false;
     }
 
-    /** How long ago this was disabled by the system, e.g. "3 min 0 sec". */
+    /** @return How long ago this was disabled by the system, e.g. "3 min 0 sec". */
     public String getWhenDisabledBySystemString() {
         if (!getDisabledBySystem()) {
             return "";
@@ -128,7 +128,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
     }
 
     /**
-     * How long ago this will remain disabled by the system, e.g. "2 min 0 sec".
+     * @return How long ago this will remain disabled by the system, e.g. "2 min 0 sec".
      */
     public String getWhenReEnableBySystemString() {
         final long now = readTimeNowInNanoseconds();

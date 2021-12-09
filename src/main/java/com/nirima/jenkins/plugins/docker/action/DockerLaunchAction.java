@@ -50,6 +50,8 @@ public class DockerLaunchAction implements Action, Serializable {
 
     /**
      * Initializes data structure that we don't persist.
+     * 
+     * @return us, but populated.
      */
     private Object readResolve() {
         running = new ArrayList<>();

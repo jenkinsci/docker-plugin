@@ -67,27 +67,49 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     }
 
     /**
-     * Can be overridden by concrete implementations to provide some customization to the container creation command
+     * Called just before the container is created. Can provide some customization
+     * to the container creation command.
+     * 
+     * @param api     The {@link DockerAPI} that this container belongs to.
+     * @param workdir The filesystem path to the Jenkins agent working directory.
+     * @param cmd     The {@link CreateContainerCmd} that's about to be used.
+     * @throws IOException          If anything goes wrong.
+     * @throws InterruptedException If interrupted while doing things.
      */
-    @SuppressWarnings("unused")
     public void beforeContainerCreated(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull CreateContainerCmd cmd) throws IOException, InterruptedException {}
 
     /**
-     * Container has been created but not started yet, that's a good opportunity to inject <code>remoting.jar</code>
-     * using {@link #injectRemotingJar(String, String, DockerClient)}
+     * Called once the container has been created but not started yet, that's a good
+     * opportunity to inject <code>remoting.jar</code> using
+     * {@link #injectRemotingJar(String, String, DockerClient)}
+     * 
+     * @param api     The {@link DockerAPI} that this container belongs to.
+     * @param workdir The filesystem path to the Jenkins agent working directory.
+     * @param node    The Jenkins node.
+     * @throws IOException          If anything goes wrong.
+     * @throws InterruptedException If interrupted while doing things.
      */
-    @SuppressWarnings("unused")
     public void beforeContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull DockerTransientNode node) throws IOException, InterruptedException {}
 
     /**
-     * Container has started. Good place to check it's healthy before considering agent is ready to accept connexions
+     * Called once the container has started. For some connection methods this can
+     * be a good place to check it's healthy before considering agent is ready to
+     * accept connections.
+     * 
+     * @param api     The {@link DockerAPI} that this container belongs to.
+     * @param workdir The filesystem path to the Jenkins agent working directory.
+     * @param node    The Jenkins node.
+     * @throws IOException          If anything goes wrong.
+     * @throws InterruptedException If interrupted while doing things.
      */
-    @SuppressWarnings("unused")
     public void afterContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull DockerTransientNode node) throws IOException, InterruptedException {}
 
 
     /**
-     * Ensure container is already set with a command, or set one to make it wait indefinitely
+     * Ensure container is already set with a command, or set one to make it wait
+     * indefinitely
+     * 
+     * @param cmd The {@link CreateContainerCmd} to be adjusted.
      */
     protected void ensureWaiting(@Nonnull CreateContainerCmd cmd) {
         final String[] cmdAlreadySet = cmd.getCmd();
@@ -100,7 +122,11 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     }
 
     /**
-     * Ensure that a DockerNode is known to Jenkins so that Jenkins will accept an incoming JNLP connection etc.
+     * Ensure that a DockerNode is known to Jenkins so that Jenkins will accept an
+     * incoming JNLP connection etc.
+     * 
+     * @param node The {@link DockerTransientNode} that's about to try connecting
+     *             via JNLP.
      * @throws IOException if Jenkins is unable to persist the details.
      */
     protected void ensureNodeIsKnown(DockerTransientNode node) throws IOException {
@@ -108,7 +134,15 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     }
 
     /**
-     * Utility method to copy remoting runtime into container on specified working directory
+     * Utility method to copy remoting runtime into container on specified working
+     * directory
+     * 
+     * @param containerId The docker container ID
+     * @param workdir     The filesystem path to the Jenkins agent working
+     *                    directory.
+     * @param client      The {@link DockerClient} for the cloud this container
+     *                    belongs to.
+     * @return The filesystem path to the remoting jar file.
      */
     protected String injectRemotingJar(@Nonnull String containerId, @Nonnull String workdir, @Nonnull DockerClient client) {
         // Copy agent.jar into container
@@ -151,14 +185,23 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     }
 
     /**
-     * Create a Launcher to create an Agent with this container. Can assume container has been created by this
-     * DockerAgentConnector so adequate setup did take place.
+     * Create a Launcher to create an Agent with this container. Can assume
+     * container has been created by this DockerAgentConnector so adequate setup did
+     * take place.
+     * 
+     * @param api      The {@link DockerAPI} for the cloud this agent is running on.
+     * @param workdir  The filesystem path to the Jenkins agent working directory.
+     * @param inspect  Information from the docker daemon about our container.
+     * @param listener Where to output any issues.
+     * @return A configured {@link ComputerLauncher}.
+     * @throws IOException          If anything goes wrong, e.g. talking to docker.
+     * @throws InterruptedException If we're interrupted while waiting.
      */
     @Nonnull
     protected abstract ComputerLauncher createLauncher(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull InspectContainerResponse inspect, @Nonnull TaskListener listener) throws IOException, InterruptedException;
 
     /**
-     * Returns all the registered {@link DockerComputerConnector} descriptors.
+     * @return all the registered {@link DockerComputerConnector} descriptors.
      */
     public static DescriptorExtensionList<DockerComputerConnector, Descriptor<DockerComputerConnector>> all() {
         final Jenkins j = Jenkins.get();

@@ -203,6 +203,7 @@ public class DockerCloud extends Cloud {
 
     /**
      * @deprecated use {@link #getContainerCap()}
+     * @return {@link #getContainerCap()} as a {@link String}.
      */
     @Deprecated
     public String getContainerCapStr() {
@@ -458,7 +459,7 @@ public class DockerCloud extends Cloud {
         }
     }
 
-    /**
+    /*
      * for publishers/builders. Simply runs container in docker cloud
      */
     public static String runContainer(DockerTemplateBase dockerTemplateBase,
@@ -498,6 +499,9 @@ public class DockerCloud extends Cloud {
 
     /**
      * Gets first {@link DockerTemplate} that has the matching {@link Label}.
+     * 
+     * @param label The label we're looking to match.
+     * @return The first {@link DockerTemplate} that has the matching {@link Label}, or null if not found.
      */
     @CheckForNull
     public DockerTemplate getTemplate(Label label) {
@@ -511,6 +515,8 @@ public class DockerCloud extends Cloud {
 
     /**
      * Add a new template to the cloud
+     * 
+     * @param t The template to be added.
      */
     public synchronized void addTemplate(DockerTemplate t) {
         if ( templates == null ) {
@@ -547,6 +553,7 @@ public class DockerCloud extends Cloud {
     /**
      * Multiple amis can have the same label.
      *
+     * @param label The label to be matched, or null if no label was provided.
      * @return Templates matched to requested label assuming agent Mode
      */
     public List<DockerTemplate> getTemplates(Label label) {
@@ -590,6 +597,8 @@ public class DockerCloud extends Cloud {
 
     /**
      * Remove Docker template
+     * 
+     * @param t The template to be removed.
      */
     public synchronized void removeTemplate(DockerTemplate t) {
         if ( templates != null ) {
@@ -607,6 +616,8 @@ public class DockerCloud extends Cloud {
      *            If null, then all instances belonging to this Jenkins instance
      *            are counted. Otherwise, only those started with the specified
      *            image are counted.
+     * @return The number of containers.
+     * @throws Exception if anything went wrong.
      */
     public int countContainersInDocker(final String imageName) throws Exception {
         final Map<String, String> labelFilter = new HashMap<>();

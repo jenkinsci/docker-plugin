@@ -8,6 +8,7 @@ A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docke
 * QA: Stop using deprecated methods [#848](https://github.com/jenkinsci/docker-plugin/pull/848), [#851](https://github.com/jenkinsci/docker-plugin/pull/851),  [#862](https://github.com/jenkinsci/docker-plugin/pull/862),  [#865](https://github.com/jenkinsci/docker-plugin/pull/865)
 * QA: Update SSH-Connector unit test to work with new container [#858](https://github.com/jenkinsci/docker-plugin/pull/858)
 * QA: Fix PortUtilsTest unit test [#847](https://github.com/jenkinsci/docker-plugin/pull/847)
+* QA: Fix Javadoc warnings [#869](https://github.com/jenkinsci/docker-plugin/pull/869)
 
 ## 1.2.3
 _2021-08-19_

@@ -27,6 +27,7 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
             throws DockerException, IOException;
 
     /**
+     * @param build The build being inspected
      * @return first DockerLaunchAction attached to build
      */
     protected DockerLaunchAction getLaunchAction(Run<?, ?> build) {
