@@ -193,6 +193,8 @@ public class DockerTransientNode extends AbstractCloudSlave {
      * Tries to remove all trace of this node, logging anything that goes wrong.
      * <p>
      * Note: This is not intended for use outside the plugin.
+     * 
+     * @param logger Where to log any progress messages, exceptions etc.
      */
     @Restricted(NoExternalUse.class)
     public void terminate(final Logger logger) {
