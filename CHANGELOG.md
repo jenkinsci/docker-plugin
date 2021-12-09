@@ -2,13 +2,19 @@
 
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
+
+## 1.2.5
+_2021-12-09_
+* QA: Fix Javadoc warnings [#869](https://github.com/jenkinsci/docker-plugin/pull/869)
+
+## 1.2.4
+_2021-12-09_
 * Enhancement: Improve compatibility with jobConfigHistory plugin [#861](https://github.com/jenkinsci/docker-plugin/pull/861)
 * Enhancement: Watchdog logging improvements [#860](https://github.com/jenkinsci/docker-plugin/pull/860)
 * Enhancement: Documentation improvements [#857](https://github.com/jenkinsci/docker-plugin/pull/857),  [#864](https://github.com/jenkinsci/docker-plugin/pull/864)
 * QA: Stop using deprecated methods [#848](https://github.com/jenkinsci/docker-plugin/pull/848), [#851](https://github.com/jenkinsci/docker-plugin/pull/851),  [#862](https://github.com/jenkinsci/docker-plugin/pull/862),  [#865](https://github.com/jenkinsci/docker-plugin/pull/865)
 * QA: Update SSH-Connector unit test to work with new container [#858](https://github.com/jenkinsci/docker-plugin/pull/858)
 * QA: Fix PortUtilsTest unit test [#847](https://github.com/jenkinsci/docker-plugin/pull/847)
-* QA: Fix Javadoc warnings [#869](https://github.com/jenkinsci/docker-plugin/pull/869)
 
 ## 1.2.3
 _2021-08-19_
