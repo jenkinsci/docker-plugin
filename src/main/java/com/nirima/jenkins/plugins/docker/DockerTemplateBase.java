@@ -154,7 +154,30 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     /**
-     * @deprecated use DataBoundSetters
+     * @deprecated Call {@link #DockerTemplateBase(String)} then use DataBoundSetters
+     * @param image              See {@link #DockerTemplateBase(String)}
+     * @param pullCredentialsId  See {@link #setPullCredentialsId(String)}
+     * @param dnsString          See {@link #setDnsString(String)}
+     * @param network            See {@link #setNetwork(String)}
+     * @param dockerCommand      See {@link #setDockerCommand(String)}
+     * @param mountsString       See {@link #setMountsString(String)}
+     * @param volumesFromString  See {@link #setVolumesFromString(String)}
+     * @param environmentsString See {@link #setEnvironmentsString(String)}
+     * @param hostname           See {@link #setHostname(String)}
+     * @param user               See {@link #setUser(String)}
+     * @param extraGroupsString  See {@link #setExtraGroupsString(String)}
+     * @param memoryLimit        See {@link #setMemoryLimit(Integer)}
+     * @param memorySwap         See {@link #setMemorySwap(Integer)}
+     * @param cpuPeriod          See {@link #setCpuPeriod(Long)}
+     * @param cpuQuota           See {@link #setCpuQuota(Long)}
+     * @param cpuShares          See {@link #setCpuShares(Integer)}
+     * @param shmSize            See {@link #setShmSize(Integer)}
+     * @param bindPorts          See {@link #setBindPorts(String)}
+     * @param bindAllPorts       See {@link #setBindAllPorts(boolean)}
+     * @param privileged         See {@link #setPrivileged(boolean)}
+     * @param tty                See {@link #setTty(boolean)}
+     * @param macAddress         See {@link #setMacAddress(String)}
+     * @param extraHostsString   See {@link #setExtraHostsString(String)}
      */
     @Deprecated
     public DockerTemplateBase(String image,
@@ -648,6 +671,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     /**
      * @deprecated use {@link #getVolumesFrom2()}
+     * @return unused field
      */
     @Deprecated
     public String getVolumesFrom() {

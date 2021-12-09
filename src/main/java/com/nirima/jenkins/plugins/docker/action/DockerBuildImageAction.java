@@ -60,7 +60,7 @@ public class DockerBuildImageAction implements Action, Serializable, Describable
         this.tags = tags;
     }
 
-    /**
+    /*
      * For internal use only, use {@link #DockerBuildImageAction(String, String, List, boolean, boolean)} instead.
      */
     @Restricted(NoExternalUse.class)

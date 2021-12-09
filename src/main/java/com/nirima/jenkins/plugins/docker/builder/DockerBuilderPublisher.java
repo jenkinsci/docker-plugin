@@ -174,7 +174,10 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         return registry;
     }
 
-    /** @deprecated See {@link #getFromRegistry()} */
+    /**
+     * @deprecated See {@link #getFromRegistry()}
+     * @return old field no longer in use
+     */
     @Deprecated
     @CheckForNull
     public String getPullCredentialsId() {

@@ -294,6 +294,9 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
 
     /**
      * Create a plain {@link Socket} to docker API endpoint
+     * 
+     * @return The {@link Socket} direct to the docker daemon.
+     * @throws IOException if anything goes wrong.
      */
     public Socket getSocket() throws IOException {
         try {
