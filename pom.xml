@@ -11,7 +11,7 @@
 
     <groupId>io.jenkins.docker</groupId>
     <artifactId>docker-plugin</artifactId>
-    <version>1.2.5</version>
+    <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
 
     <name>Docker plugin</name>
@@ -50,7 +50,7 @@
     </developers>
 
     <properties>
-        <revision>1.2.5</revision>
+        <revision>1.2.6</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.level>8</java.level>
@@ -198,7 +198,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/docker-plugin</url>
-        <tag>docker-plugin-1.2.5</tag>
+        <tag>${scmTag}</tag>
     </scm>
 
     <repositories>
