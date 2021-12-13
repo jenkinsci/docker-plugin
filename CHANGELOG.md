@@ -2,6 +2,7 @@
 
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
+* Prepare for sunset icon removal from core [#870](https://github.com/jenkinsci/docker-plugin/pull/870)
 
 ## 1.2.5
 _2021-12-09_
