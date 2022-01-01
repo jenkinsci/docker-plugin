@@ -27,6 +27,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -108,16 +109,35 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
     /**
      * Ensure container is already set with a command, or set one to make it wait
      * indefinitely
-     * 
+     *
+     * @param workdir
      * @param cmd The {@link CreateContainerCmd} to be adjusted.
      */
-    protected void ensureWaiting(@Nonnull CreateContainerCmd cmd) {
+    protected void ensureWaiting(String workdir, @Nonnull CreateContainerCmd cmd) {
         final String[] cmdAlreadySet = cmd.getCmd();
+
         if (cmdAlreadySet == null || cmdAlreadySet.length == 0) {
-            // no command has been set, we need one that will just hang. Typically "sh" waiting for stdin
-            cmd.withCmd("/bin/sh")
-               .withTty(true)
-               .withAttachStdin(false);
+            // on windows we can't rely on /bin/sh being present, so we use cmd.exe to ensure a process is waiting
+            // TODO: same here, refined detection mechanism if possible
+            if(workdir.matches("^.:.*")) {
+                LOGGER.info("This appears to be a windows container, so we ensure waiting with cmd.exe");
+
+                cmd.withCmd("cmd.exe", "/K", "echo", "running")
+                        .withTty(true)
+                        .withAttachStdin(false);
+            }
+            else {
+                LOGGER.info("ensure waiting with sh cmd");
+                // no command has been set, we need one that will just hang. Typically "sh" waiting for stdin
+
+                cmd.withCmd("/bin/sh")
+                        .withTty(true)
+                        .withAttachStdin(false);
+            }
+        }
+        else
+        {
+            LOGGER.info(String.format("ensure waiting cmd: '%s'", Arrays.toString(cmdAlreadySet)));
         }
     }
 
@@ -146,11 +166,18 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      */
     protected String injectRemotingJar(@Nonnull String containerId, @Nonnull String workdir, @Nonnull DockerClient client) {
         // Copy agent.jar into container
+        String resultingPath = workdir + '/' + remoting.getName();
+
+        LOGGER.info(String.format("COPYING REMOTING containerId: '%s' absolutePath: '%s' workdir: '%s' result: '%s'", containerId, remoting.getAbsolutePath(), workdir, resultingPath));
+
         client.copyArchiveToContainerCmd(containerId)
                 .withHostResource(remoting.getAbsolutePath())
                 .withRemotePath(workdir)
                 .exec();
-        return workdir + '/' + remoting.getName();
+
+        LOGGER.info("finsihed copying remoting");
+
+        return resultingPath;
     }
 
     @Restricted(NoExternalUse.class)
