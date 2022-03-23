@@ -292,7 +292,7 @@ public class DockerCloud extends Cloud {
     }
 
     private static String getTemplateId(DockerTemplate template) {
-        final String templateId = (String)template.hashCode();
+        final String templateId = String.valueOf(template.hashCode());
         return templateId;
     }
 
