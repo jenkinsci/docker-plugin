@@ -729,7 +729,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             node.setNodeDescription("Docker Agent [" + ourImage + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
             node.setMode(getMode());
             node.setLabelString(getLabelString());
-            node.setRetentionStrategy(getRetentionStrategy());
+            node.setRetentionStrategy(makeCopy(getRetentionStrategy()));
             robustlySetNodeProperties(node, makeCopyOfList(getNodeProperties()));
             node.setRemoveVolumes(isRemoveVolumes());
             node.setStopTimeout(getStopTimeout());
