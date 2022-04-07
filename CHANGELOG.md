@@ -2,6 +2,9 @@
 
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
+
+## 1.2.7
+_2022-07-04_
 * Enhancement: Add support for build-time variables (build args) [#730](https://github.com/jenkinsci/docker-plugin/issues/730), [JENKINS-48512](https://issues.jenkins.io/browse/JENKINS-48512)
 * Fix DockerOnceRetentionStrategy [#859](https://github.com/jenkinsci/docker-plugin/pull/859)
 
