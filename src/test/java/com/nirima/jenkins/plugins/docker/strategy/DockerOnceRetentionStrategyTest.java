@@ -330,7 +330,7 @@ public class DockerOnceRetentionStrategyTest {
         }
     }
 
-    private interface IClassUnderTest {
+    public interface IClassUnderTest {
         long currentMilliseconds();
 
         boolean computerIsIdle(DockerComputer c);
@@ -342,7 +342,7 @@ public class DockerOnceRetentionStrategyTest {
         String computerName(DockerComputer c);
     }
 
-    private static class ClassUnderTest extends DockerOnceRetentionStrategy {
+    public static class ClassUnderTest extends DockerOnceRetentionStrategy {
         private final IClassUnderTest mock;
 
         public ClassUnderTest(int idleMinutes) {
