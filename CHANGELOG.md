@@ -4,10 +4,13 @@
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 
 * More loosening of the dependency on the exact docker-java version [#884](https://github.com/jenkinsci/docker-plugin/issues/884)
+* :warning: MAY now be compatible with docker-java-api-plugin 3.2.x
 
 ## 1.2.8
 _2022-14-04_
 * Loosen the dependency on the exact docker-java version [#882](https://github.com/jenkinsci/docker-plugin/pull/882) and [dockder-java-api-plugin#9](https://github.com/jenkinsci/docker-java-api-plugin/pull/9)
+* :warning: Now requires [docker-java-api-plugin 3.1.5-31](https://github.com/jenkinsci/docker-java-api-plugin/releases/tag/3.1.5-31.v70b0ca3e8310) or later.
+* :warning: NOT compatible with docker-java-api-plugin 3.2.x (not yet).
 
 ## 1.2.7
 _2022-07-04_
