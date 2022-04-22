@@ -350,6 +350,9 @@ public class DockerTemplateBaseTest {
                 new Mount().withType(MountType.TMPFS).withTarget("/aTarget"));
         testFillContainerMount("tmpfsWithOption", "type=tmpfs,destination=/aTarget,tmpfs-mode=0700",
                 new Mount().withType(MountType.TMPFS).withTarget("/aTarget").withTmpfsOptions(new TmpfsOptions().withMode(448)));
+
+        testFillContainerMount("npipe", "type=npipe,source=\\\\.\\pipe\\docker_engine,destination=\\\\.\\pipe\\docker_engine",
+                new Mount().withType(MountType.NPIPE).withSource("\\\\.\\pipe\\docker_engine").withTarget("\\\\.\\pipe\\docker_engine"));
     }
 
     private static void testFillContainerMount(String imageName, String mountStringToSet, Mount... expectedMountsSet) {
