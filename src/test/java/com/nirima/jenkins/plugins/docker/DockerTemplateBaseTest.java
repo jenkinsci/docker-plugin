@@ -18,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.BindOptions;
 import com.github.dockerjava.api.model.BindPropagation;
 import com.github.dockerjava.api.model.Capability;
@@ -25,6 +26,7 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.TmpfsOptions;
+import com.github.dockerjava.api.model.VolumesFrom;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
 import java.util.Arrays;
@@ -362,5 +364,22 @@ public class DockerTemplateBaseTest {
         instanceUnderTest.fillContainerConfig(mockCmd);
 
         verify(mockHostConfig).withMounts(Arrays.asList(expectedMountsSet));
+    }
+
+    @Test
+    public void fillContainerConfigGivenVolumesFrom() {
+        testFillContainerVolumesFrom("randomContainer", "aContainer", new VolumesFrom("aContainer"));
+        testFillContainerVolumesFrom("containerRO", "aContainer:ro", new VolumesFrom("aContainer", AccessMode.ro));
+        testFillContainerVolumesFrom("containerRW", "aContainer:rw", new VolumesFrom("aContainer", AccessMode.rw));
+    }
+
+    private static void testFillContainerVolumesFrom(String imageName, String volumesFromStringToSet, VolumesFrom... expectedVolumesFromSet) {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setVolumesFromString(volumesFromStringToSet);
+
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        verify(mockCmd).withVolumesFrom(expectedVolumesFromSet);
     }
 }
