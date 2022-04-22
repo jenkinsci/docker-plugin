@@ -8,7 +8,6 @@ import com.github.dockerjava.core.AbstractDockerCmdExecFactory;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.SSLConfig;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -244,12 +243,12 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     @SuppressWarnings("resource")
     private static SharableDockerClient makeClient(final String dockerUri, final String credentialsId,
             final Integer readTimeoutInMillisecondsOrNull, final Integer connectTimeoutInMillisecondsOrNull) {
-    	AbstractDockerCmdExecFactory cmdExecFactory = null;
+        NettyDockerCmdExecFactoryCompat cmdExecFactory = null;
         DockerClient actualClient = null;
         try {
-            cmdExecFactory = new NettyDockerCmdExecFactory()
-                    .withReadTimeout(readTimeoutInMillisecondsOrNull)
-                    .withConnectTimeout(connectTimeoutInMillisecondsOrNull);
+            cmdExecFactory = new NettyDockerCmdExecFactoryCompat()
+                .withReadTimeoutCompat(readTimeoutInMillisecondsOrNull)
+                .withConnectTimeoutCompat(connectTimeoutInMillisecondsOrNull);
             final DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
                     .withDockerHost(dockerUri)
                     .withCustomSslConfig(toSSlConfig(credentialsId));
