@@ -238,39 +238,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             volumesFrom = null;
         }
         if (volumes != null && volumes.length > 0) {
-            List<String> mnts = new ArrayList<>();
-            for (String vol : volumes) {
-                if (!vol.contains(":")) {
-                    mnts.add("type=volume,destination=" + vol);
-                } else {
-                    StringBuilder builder = new StringBuilder();
-                    if (vol.startsWith("/")) {
-                        Bind bind = Bind.parse(vol);
-                        builder.append("type=bind,source=");
-                        builder.append(bind.getPath());
-                        builder.append(",destination=");
-                        builder.append(bind.getVolume().getPath());
-                        if (bind.getAccessMode() == AccessMode.ro) {
-                            builder.append(",readonly");
-                        }
-                        if (bind.getPropagationMode() != PropagationMode.DEFAULT) {
-                            builder.append(",bind-propagation=");
-                            builder.append(bind.getPropagationMode().toString());
-                        }
-                    } else {
-                        String[] parts = vol.split(":");
-                        builder.append("type=volume,source=");
-                        builder.append(parts[0]);
-                        builder.append(",destination=");
-                        builder.append(parts[1]);
-                        if (parts.length == 3 && ("readonly".equalsIgnoreCase(parts[2]) || "ro".equalsIgnoreCase(parts[2]))) {
-                            builder.append(",readonly");
-                        }
-                    }
-                    mnts.add(builder.toString());
-                }
-            }
-            setMounts(mnts.toArray(new String[mnts.size()]));
+            setMounts(convertVolumes(volumes));
             volumes = null;
         }
         if (pullCredentialsId == null && registry != null) {
@@ -698,6 +666,45 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.volumesFrom2 = fixEmpty(volumesFrom);
     }
 
+    /**
+     * For ConfigurationAsCode compatibility
+     * @deprecated use {@link #setMounts()}
+     */
+    @Deprecated
+    public void setVolumes(String[] vols) {
+        String[] fixed = fixEmpty(vols);
+        this.mounts = fixed != null && fixed.length > 0 ? convertVolumes(fixed) : new String[0];
+    }
+
+    /**
+     * For ConfigurationAsCode compatibility
+     * @deprecated use {@link #getMounts()}
+     */
+    @Deprecated
+    @CheckForNull
+    public String[] getVolumes() {
+        return getMounts();
+    }
+
+    /**
+     * For ConfigurationAsCode compatibility
+     * @deprecated use {@link #setMountsString()}
+     */
+    @Deprecated
+    public void setVolumesString(String volumesString) {
+        setMounts(convertVolumes(splitAndFilterEmpty(volumesString, "\n")));
+    }
+
+    /**
+     * For ConfigurationAsCode compatibility
+     * @deprecated use {@link #getMountsString()}
+     */
+    @Deprecated
+    @Nonnull
+    public String getVolumesString() {
+        return getMountsString();
+    }
+
     public String getDisplayName() {
         return "Image of " + getImage();
     }
@@ -957,6 +964,42 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (bindOptions != null) mount.withBindOptions(bindOptions);
         if (tmpfsOptions != null) mount.withTmpfsOptions(tmpfsOptions);
         mountListResult.add(mount);
+    }
+
+    private static String[] convertVolumes(String[] vols) {
+        List<String> mnts = new ArrayList<>();
+        for (String vol : vols) {
+            if (!vol.contains(":")) {
+                mnts.add("type=volume,destination=" + vol);
+            } else {
+                StringBuilder builder = new StringBuilder();
+                if (vol.startsWith("/")) {
+                    Bind bind = Bind.parse(vol);
+                    builder.append("type=bind,source=");
+                    builder.append(bind.getPath());
+                    builder.append(",destination=");
+                    builder.append(bind.getVolume().getPath());
+                    if (bind.getAccessMode() == AccessMode.ro) {
+                        builder.append(",readonly");
+                    }
+                    if (bind.getPropagationMode() != PropagationMode.DEFAULT) {
+                        builder.append(",bind-propagation=");
+                        builder.append(bind.getPropagationMode().toString());
+                    }
+                } else {
+                    String[] parts = vol.split(":");
+                    builder.append("type=volume,source=");
+                    builder.append(parts[0]);
+                    builder.append(",destination=");
+                    builder.append(parts[1]);
+                    if (parts.length == 3 && ("readonly".equalsIgnoreCase(parts[2]) || "ro".equalsIgnoreCase(parts[2]))) {
+                        builder.append(",readonly");
+                    }
+                }
+                mnts.add(builder.toString());
+            }
+        }
+        return mnts.toArray(new String[mnts.size()]);
     }
 
     @Nonnull
