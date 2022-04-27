@@ -3,19 +3,22 @@
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 
+## 1.2.9
+_2022-04-27_
 * More loosening of the dependency on the exact docker-java version [#884](https://github.com/jenkinsci/docker-plugin/issues/884)
 * :warning: MAY now be compatible with docker-java-api-plugin 3.2.x
 
 ## 1.2.8
-_2022-14-04_
+_2022-04-14_
 * Loosen the dependency on the exact docker-java version [#882](https://github.com/jenkinsci/docker-plugin/pull/882) and [dockder-java-api-plugin#9](https://github.com/jenkinsci/docker-java-api-plugin/pull/9)
 * :warning: Now requires [docker-java-api-plugin 3.1.5-31](https://github.com/jenkinsci/docker-java-api-plugin/releases/tag/3.1.5-31.v70b0ca3e8310) or later.
 * :warning: NOT compatible with docker-java-api-plugin 3.2.x (not yet).
 
 ## 1.2.7
-_2022-07-04_
+_2022-04-07_
 * Enhancement: Add support for build-time variables (build args) [#730](https://github.com/jenkinsci/docker-plugin/issues/730), [JENKINS-48512](https://issues.jenkins.io/browse/JENKINS-48512)
 * Fix DockerOnceRetentionStrategy [#859](https://github.com/jenkinsci/docker-plugin/pull/859)
+* :information_source: Causes cosmetic issue on Jenkins Web-UI [#881](https://github.com/jenkinsci/docker-plugin/issues/881)
 
 ## 1.2.6
 _2021-12-13_
