@@ -3,15 +3,17 @@
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 
+* Fix volumes-from parsing [#878](https://github.com/jenkinsci/docker-plugin/issues/878)
+
 ## 1.2.9
 _2022-04-27_
 * More loosening of the dependency on the exact docker-java version [#884](https://github.com/jenkinsci/docker-plugin/issues/884)
-* :warning: MAY now be compatible with docker-java-api-plugin 3.2.x
+* :warning: Compatible with both docker-java-api-plugin 3.2.x and 3.1.x
 
 ## 1.2.8
 _2022-04-14_
 * Loosen the dependency on the exact docker-java version [#882](https://github.com/jenkinsci/docker-plugin/pull/882) and [dockder-java-api-plugin#9](https://github.com/jenkinsci/docker-java-api-plugin/pull/9)
-* :warning: Now requires [docker-java-api-plugin 3.1.5-31](https://github.com/jenkinsci/docker-java-api-plugin/releases/tag/3.1.5-31.v70b0ca3e8310) or later.
+* :warning: Requires [docker-java-api-plugin 3.1.5-31](https://github.com/jenkinsci/docker-java-api-plugin/releases/tag/3.1.5-31.v70b0ca3e8310) or any later 3.1.x.
 * :warning: NOT compatible with docker-java-api-plugin 3.2.x (not yet).
 
 ## 1.2.7
