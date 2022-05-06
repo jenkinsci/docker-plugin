@@ -814,7 +814,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (volumesFrom2OrNull != null && volumesFrom2OrNull.length > 0) {
             ArrayList<VolumesFrom> volFrom = new ArrayList<>();
             for (String volFromStr : volumesFrom2OrNull) {
-                volFrom.add(new VolumesFrom(volFromStr));
+                volFrom.add(VolumesFrom.parse(volFromStr));
             }
             containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
         }
