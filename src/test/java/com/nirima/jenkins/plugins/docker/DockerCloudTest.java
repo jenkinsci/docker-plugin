@@ -55,7 +55,7 @@ public class DockerCloudTest {
 
         final DockerTemplateBase templateBase = new DockerTemplateBase("image", "pullCredentialsId", "dnsString", "network",
                 "dockerCommand", "mountsString", "volumesFromString", "environmentString",
-                "hostname", "user1", "", 128, 256, 0L, 0L, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString");
+                "hostname", "user1", "", 128, 256, "", 0L, 0L, 42, 102, "bindPorts", true, true, true, "macAddress", "extraHostsString");
         templateBase.setCapabilitiesToAddString("SYS_ADMIN");
         templateBase.setCapabilitiesToDropString("CHOWN");
         templateBase.setSecurityOptsString("seccomp=unconfined");

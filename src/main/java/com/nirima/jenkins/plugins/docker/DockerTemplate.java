@@ -114,7 +114,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     /**
      * Default constructor; give an unusable instance.
-     * 
+     *
      * @deprecated This gives an empty image name, which isn't valid.
      */
     @Deprecated
@@ -198,6 +198,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public Integer getMemorySwap() {
         return dockerTemplateBase.getMemorySwap();
+    }
+
+    public String getCpus() {
+        return dockerTemplateBase.getCpus();
     }
 
     public Long getCpuPeriod() {
@@ -303,7 +307,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     /**
      * Retrieves the {@link Node} name chosen by
      * {@link #fillContainerConfig(CreateContainerCmd)}.
-     * 
+     *
      * @param containerConfig
      *            The {@link CreateContainerCmd} previously returned by
      *            {@link #fillContainerConfig(CreateContainerCmd)}.
@@ -777,7 +781,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     /**
      * Returns a node name for a new node that doesn't clash with any we've
      * currently got.
-     * 
+     *
      * @param templateName
      *            The template's {@link #getName()}. This is used as a prefix for
      *            the node name.
@@ -802,7 +806,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Workaround for JENKINS-51203. Retries setting node properties until we
      * either give up or we succeed. If we give up, the exception thrown will be
      * the last one encountered.
-     * 
+     *
      * @param node
      *            The node whose nodeProperties are to be set.
      * @param nodeProperties
