@@ -1165,6 +1165,14 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             return FormValidation.ok();
         }
 
+        public FormValidation doCheckCpus(@QueryParameter String cpusString) {
+            Pattern pat = Pattern.compile("^(\\d+(\\.\\d+)?)$");
+            if (!pat.matcher(cpusString.trim()).matches()) {
+                return FormValidation.error("Wrong cpus format: '%s'", cpusString);
+            }
+            return FormValidation.ok();
+        }
+
         public FormValidation doCheckExtraHostsString(@QueryParameter String extraHostsString) {
             final List<String> extraHosts = splitAndFilterEmptyList(extraHostsString, "\n");
             for (String extraHost : extraHosts) {
