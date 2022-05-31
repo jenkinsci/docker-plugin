@@ -773,7 +773,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
         final String cpusOrNull = getCpus();
         if (cpusOrNull != null && !cpusOrNull.isEmpty()) {
-            final Long nanoCpus = (new Double(Long.parseLong(cpusOrNull) * 1e9)).longValue();
+            final Double cpu_double = Double.parseDouble(cpusOrNull) * 1e9;
+            final Long nanoCpus     = cpu_double.longValue();
             hostConfig(containerConfig).withNanoCPUs(nanoCpus);
         }
 
