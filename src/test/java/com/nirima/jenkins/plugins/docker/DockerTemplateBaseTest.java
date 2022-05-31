@@ -241,6 +241,26 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
+    public void fillContainerConfigCpus() {
+        testFillContainerConfigCpus("not existing", "1.5", 1500000000L);
+    }
+
+    private static void testFillContainerConfigCpus(final String imageName, final String cpus, final Long result) {
+        // Given
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setCpus(cpus);
+
+        // When
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        // Then
+        verify(mockHostConfig, times(1)).withNanoCPUs(result);
+    }
+
+    @Test
     public void doNotOverrideDigestsWhenCalculatingFullName(){
         String simpleBaseImage = "jenkins/inbound-agent";
         String imageWithRegistry = "registry.example.org/"+simpleBaseImage;
