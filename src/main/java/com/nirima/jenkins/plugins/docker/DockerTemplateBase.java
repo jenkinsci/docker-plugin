@@ -1166,6 +1166,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         }
 
         public FormValidation doCheckCpus(@QueryParameter String cpusString) {
+            if (cpusString == null || cpusString.isEmpty()) {
+                return FormValidation.ok();
+            }
+
             Pattern pat = Pattern.compile("^(\\d+(\\.\\d+)?)$");
             if (!pat.matcher(cpusString.trim()).matches()) {
                 return FormValidation.error("Wrong cpus format: '%s'", cpusString);
