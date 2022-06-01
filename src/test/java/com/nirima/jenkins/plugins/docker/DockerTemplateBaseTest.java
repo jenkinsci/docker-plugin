@@ -245,6 +245,11 @@ public class DockerTemplateBaseTest {
         testFillContainerConfigCpus("not existing", "1.5", 1500000000L);
     }
 
+    @Test
+    public void fillContainerConfigCpusNotSet() {
+        testFillContainerConfigCpus("not existing", "", 0L);
+    }
+
     private static void testFillContainerConfigCpus(final String imageName, final String cpus, final Long result) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
@@ -257,7 +262,11 @@ public class DockerTemplateBaseTest {
         instanceUnderTest.fillContainerConfig(mockCmd);
 
         // Then
-        verify(mockHostConfig, times(1)).withNanoCPUs(result);
+        if (cpus.isEmpty()) {
+            verify(mockHostConfig, never()).withNanoCPUs(result);
+        } else {
+            verify(mockHostConfig, times(1)).withNanoCPUs(result);
+        }
     }
 
     @Test
