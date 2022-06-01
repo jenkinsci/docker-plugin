@@ -177,7 +177,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
 
         DockerTemplateBase template = new DockerSimpleTemplate(
                 xImage, pullCredentialsId, dnsString, network, xCommand, mountsString, volumesFrom,
-                environmentsString, xHostname, xUser, extraGroupsString, memoryLimit, memorySwap, cpus, cpuPeriod, cpuQuota,
+                environmentsString, xHostname, xUser, extraGroupsString, memoryLimit, memorySwap, cpuPeriod, cpuQuota,
                 cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
 
         LOG.info("Starting container for image {}", xImage);
