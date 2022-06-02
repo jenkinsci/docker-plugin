@@ -1165,14 +1165,18 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckCpus(@QueryParameter String cpusString) {
-            if (cpusString == null || cpusString.isEmpty()) {
-                return FormValidation.ok();
-            }
+        public FormValidation doCheckCpus(@QueryParameter String cpus) {
+            try {
+                if ((cpus == null) || cpus.isEmpty()) {
+                    return FormValidation.ok();
+                }
 
-            Pattern pat = Pattern.compile("^(\\d+(\\.\\d+)?)$");
-            if (!pat.matcher(cpusString.trim()).matches()) {
-                return FormValidation.error("Wrong cpus format: '%s'", cpusString);
+                Pattern pat = Pattern.compile("^(\\d+(\\.\\d+)?)$");
+                if (!pat.matcher(cpus.trim()).matches()) {
+                    return FormValidation.error("Wrong cpus format: '%s' (floating point number expected) ", cpus);
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
             }
             return FormValidation.ok();
         }
