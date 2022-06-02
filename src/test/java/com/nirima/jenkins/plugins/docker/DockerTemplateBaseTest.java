@@ -17,6 +17,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import hudson.util.FormValidation;
+
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.BindOptions;
@@ -267,6 +269,31 @@ public class DockerTemplateBaseTest {
         } else {
             verify(mockHostConfig, times(1)).withNanoCPUs(result);
         }
+    }
+
+    @Test
+    public void validateContainerConfigCpusString() {
+        testValidateContainerConfigCpusString("", FormValidation.Kind.OK);
+        testValidateContainerConfigCpusString("10.3", FormValidation.Kind.OK);
+        testValidateContainerConfigCpusString("asd10.3", FormValidation.Kind.ERROR);
+        testValidateContainerConfigCpusString("-10.3", FormValidation.Kind.ERROR);
+        testValidateContainerConfigCpusString("1", FormValidation.Kind.OK);
+        testValidateContainerConfigCpusString(".1", FormValidation.Kind.ERROR);
+        testValidateContainerConfigCpusString("23.5a", FormValidation.Kind.ERROR);
+    }
+
+    private static void testValidateContainerConfigCpusString(final String cpus, final FormValidation.Kind result) {
+        // Given
+        final DockerTemplateBase.DescriptorImpl desc = new DockerTemplateBase.DescriptorImpl();
+
+        // When
+        FormValidation doCheckCpus = desc.doCheckCpus(cpus);
+
+        // Then
+        assertThat(
+            "Check cpus string: '" + cpus + "'",
+            doCheckCpus.kind == result
+        );
     }
 
     @Test
