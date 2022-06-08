@@ -126,6 +126,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public @CheckForNull Integer memoryLimit;
     public @CheckForNull Integer memorySwap;
+    public @CheckForNull String cpus;
     public @CheckForNull Long cpuPeriod;
     public @CheckForNull Long cpuQuota;
     public @CheckForNull Integer cpuShares;
@@ -486,6 +487,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     }
 
     @CheckForNull
+    public String getCpus() {
+        return Util.fixEmpty(cpus);
+    }
+
+    @DataBoundSetter
+    public void setCpus(String cpus) {
+        this.cpus = Util.fixEmpty(cpus);
+    }
+
+    @CheckForNull
     public Long getCpuPeriod() {
         return cpuPeriod;
     }
@@ -759,6 +770,13 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         labels.put(DockerContainerLabelKeys.JENKINS_URL, getJenkinsUrlForContainerLabel());
         labels.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
 
+        final String cpusOrNull = getCpus();
+        if (cpusOrNull != null && !cpusOrNull.isEmpty()) {
+            final Double cpu_double = Double.parseDouble(cpusOrNull) * 1e9;
+            final Long nanoCpus     = cpu_double.longValue();
+            hostConfig(containerConfig).withNanoCPUs(nanoCpus);
+        }
+
         final Long cpuPeriodOrNull = getCpuPeriod();
         if (cpuPeriodOrNull != null && cpuPeriodOrNull > 0) {
             hostConfig(containerConfig).withCpuPeriod(cpuPeriodOrNull);
@@ -1031,6 +1049,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (bindPorts != null ? !bindPorts.equals(that.bindPorts) : that.bindPorts != null) return false;
         if (memoryLimit != null ? !memoryLimit.equals(that.memoryLimit) : that.memoryLimit != null) return false;
         if (memorySwap != null ? !memorySwap.equals(that.memorySwap) : that.memorySwap != null) return false;
+        if (cpus != null ? !cpus.equals(that.cpus) : that.cpus != null) return false;
         if (cpuPeriod != null ? !cpuPeriod.equals(that.cpuPeriod) : that.cpuPeriod != null) return false;
         if (cpuQuota != null ? !cpuQuota.equals(that.cpuQuota) : that.cpuQuota != null) return false;
         if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
@@ -1065,6 +1084,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (bindAllPorts ? 1 : 0);
         result = 31 * result + (memoryLimit != null ? memoryLimit.hashCode() : 0);
         result = 31 * result + (memorySwap != null ? memorySwap.hashCode() : 0);
+        result = 31 * result + (cpus != null ? cpus.hashCode() : 0);
         result = 31 * result + (cpuPeriod != null ? cpuPeriod.hashCode() : 0);
         result = 31 * result + (cpuQuota != null ? cpuQuota.hashCode() : 0);
         result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
@@ -1102,6 +1122,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "bindAllPorts", bindAllPorts);
         bldToString(sb, "memoryLimit", memoryLimit);
         bldToString(sb, "memorySwap", memorySwap);
+        bldToString(sb, "cpus", cpus);
         bldToString(sb, "cpuPeriod", cpuPeriod);
         bldToString(sb, "cpuQuota", cpuQuota);
         bldToString(sb, "cpuShares", cpuShares);
@@ -1136,6 +1157,22 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                 final String[] strings = splitAndFilterEmpty(volumesFromString, "\n");
                 for (String volFrom : strings) {
                     VolumesFrom.parse(volFrom);
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckCpus(@QueryParameter String cpus) {
+            try {
+                if ((cpus == null) || cpus.isEmpty()) {
+                    return FormValidation.ok();
+                }
+
+                Pattern pat = Pattern.compile("^(\\d+(\\.\\d+)?)$");
+                if (!pat.matcher(cpus.trim()).matches()) {
+                    return FormValidation.error("Wrong cpus format: '%s' (floating point number expected) ", cpus);
                 }
             } catch (Throwable t) {
                 return FormValidation.error(t.getMessage());
