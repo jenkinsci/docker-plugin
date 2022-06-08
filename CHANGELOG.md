@@ -3,6 +3,7 @@
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 
+* Enhancement: Add support for --cpus [#895](https://github.com/jenkinsci/docker-plugin/pull/895)
 * Fix volumes-from parsing [#878](https://github.com/jenkinsci/docker-plugin/issues/878)
 
 ## 1.2.9
