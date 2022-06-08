@@ -17,8 +17,8 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 
 /**
- + * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
- + */
+ * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
+ */
 public class DockerServerCredentialsSSLConfig implements SSLConfig {
     private final DockerServerCredentials credentials;
 

@@ -157,6 +157,8 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
+    	// We need our container to just sit there and do nothing when it's started.
+    	// We'll then (later) do a docker-exec to it to run the real Jenkins agent code.
         ensureWaiting(cmd);
     }
 
