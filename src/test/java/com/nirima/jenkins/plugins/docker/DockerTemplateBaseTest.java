@@ -280,6 +280,7 @@ public class DockerTemplateBaseTest {
         testValidateContainerConfigCpusString("1", FormValidation.Kind.OK);
         testValidateContainerConfigCpusString(".1", FormValidation.Kind.ERROR);
         testValidateContainerConfigCpusString("23.5a", FormValidation.Kind.ERROR);
+        testValidateContainerConfigCpusString("23.", FormValidation.Kind.ERROR);
     }
 
     private static void testValidateContainerConfigCpusString(final String cpus, final FormValidation.Kind result) {
