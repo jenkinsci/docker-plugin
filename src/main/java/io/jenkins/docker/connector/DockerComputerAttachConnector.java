@@ -45,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -53,6 +54,7 @@ import javax.annotation.Nonnull;
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public class DockerComputerAttachConnector extends DockerComputerConnector implements Serializable {
+    private static final Logger LOGGER = Logger.getLogger(DockerComputerAttachConnector.class.getName());
 
     @CheckForNull
     private String user;
@@ -157,14 +159,37 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
-        ensureWaiting(cmd);
+        // we pass the workdir into ensureWaiting, so we can run windows detection there
+        ensureWaiting(workdir, cmd);
+    }
+
+    @Override
+    public void beforeContainerStarted(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull DockerTransientNode node) throws IOException, InterruptedException {
+        super.beforeContainerStarted(api, workdir, node);
+
+        // hyper-v virtualised containers can't be access while they are running, so copy the files before starting the container
+        // TODO: find a better way to detect windows containers than matching on the workdin being c:\bla*
+        if(workdir.matches("^.:.*")) {
+            LOGGER.info("This appears to be a windows container, so we will try to inject the remoting jar into the stopped container");
+
+            // TODO: move this and the similar snippet from afterContainerStarted into a seperate function?
+            final String containerId = node.getContainerId();
+            try(final DockerClient client = api.getClient()) {
+                injectRemotingJar(containerId, workdir, client);
+            }
+        }
     }
 
     @Override
     public void afterContainerStarted(DockerAPI api, String workdir, DockerTransientNode node) throws IOException, InterruptedException {
-        final String containerId = node.getContainerId();
-        try(final DockerClient client = api.getClient()) {
-            injectRemotingJar(containerId, workdir, client);
+        // TODO: find out & decide if theres actual reason for doing the injecting in afterContainerStarted instead of beforeContainerStarted on !windows containers
+        // TODO: find a better way to detect windows containers than matching on the workdin being c:\bla*
+        if(!workdir.matches("^.:.*")) {
+            LOGGER.info("This appears to be a non windows container, so we will try to inject the remoting jar into the running container");
+            final String containerId = node.getContainerId();
+            try (final DockerClient client = api.getClient()) {
+                injectRemotingJar(containerId, workdir, client);
+            }
         }
     }
 
