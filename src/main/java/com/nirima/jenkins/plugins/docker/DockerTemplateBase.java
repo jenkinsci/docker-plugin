@@ -1006,7 +1006,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @Override
     public Descriptor<DockerTemplateBase> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(DockerTemplateBase.class);
+        return Jenkins.get().getDescriptor(DockerTemplateBase.class);
     }
 
     public String getFullImageId() {

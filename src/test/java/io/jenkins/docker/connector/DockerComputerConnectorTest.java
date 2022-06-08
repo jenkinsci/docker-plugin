@@ -1,5 +1,7 @@
 package io.jenkins.docker.connector;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 
@@ -111,7 +113,7 @@ public abstract class DockerComputerConnectorTest {
             terminateAllDockerNodes();
             final long currentTimeMs = System.currentTimeMillis();
             final Long elapsedTimeMs = currentTimeMs - startTimeMs;
-            Assert.assertThat(elapsedTimeMs, OrderingComparison.lessThan(maxWaitTimeMs));
+            assertThat(elapsedTimeMs, OrderingComparison.lessThan(maxWaitTimeMs));
         }
     }
 

@@ -1,8 +1,8 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.ExternalResource;
 
 import java.io.IOException;
@@ -30,9 +30,6 @@ public class PortUtilsTest {
 
     @Rule
     public SomeServerRule server = new SomeServerRule();
-
-    @Rule
-    public ExpectedException ex = ExpectedException.none();
 
     @Test
     public void shouldConnectToServerSuccessfully() throws Exception {
@@ -68,9 +65,13 @@ public class PortUtilsTest {
 
     @Test
     public void shouldThrowIllegalStateExOnNotAvailPort() throws Exception {
-        ex.expect(IllegalStateException.class);
-        PortUtils.connectionCheck("localhost", 0).withRetries(RETRY_COUNT).withEveryRetryWaitFor(DELAY, MILLISECONDS)
-                .useSSH().execute();
+        try {
+	        PortUtils.connectionCheck("localhost", 0).withRetries(RETRY_COUNT).withEveryRetryWaitFor(DELAY, MILLISECONDS)
+	                .useSSH().execute();
+	        Assert.fail("Expected " + IllegalStateException.class);
+        } catch ( IllegalStateException expected ) {
+        	// pass
+        }
     }
 
     @Test
