@@ -169,7 +169,6 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * @param extraGroupsString  See {@link #setExtraGroupsString(String)}
      * @param memoryLimit        See {@link #setMemoryLimit(Integer)}
      * @param memorySwap         See {@link #setMemorySwap(Integer)}
-     * @param cpus               See {@link #setCpus(String)}
      * @param cpuPeriod          See {@link #setCpuPeriod(Long)}
      * @param cpuQuota           See {@link #setCpuQuota(Long)}
      * @param cpuShares          See {@link #setCpuShares(Integer)}

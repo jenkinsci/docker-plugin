@@ -16,7 +16,6 @@ public class DockerTemplateTest {
     String javaPath = " javaPath";
     Integer memoryLimit = 1024;
     Integer memorySwap = 1280;
-    String cpus = "";
     Long cpuPeriod = 0L;
     Long cpuQuota = 0L;
     Integer cpuShares = 1000;
