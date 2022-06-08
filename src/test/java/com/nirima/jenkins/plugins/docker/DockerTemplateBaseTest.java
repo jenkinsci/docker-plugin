@@ -395,13 +395,33 @@ public class DockerTemplateBaseTest {
                 new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("/aTarget"));
         testFillContainerMount("file", "type=volume,source=aVolume,destination=aFile",
                 new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile"));
+        testFillContainerMount("roFile", "source=aVolume,destination=aFile,ro",
+                new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile").withReadOnly(true));
         testFillContainerMount("readOnlyFile", "source=aVolume,destination=aFile,readonly",
                 new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile").withReadOnly(true));
 
         testFillContainerMount("bind", "type=bind,source=/aSource,target=/aTarget",
                 new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget"));
+        testFillContainerMount("roBind", "type=bind,source=/aSource,target=/aTarget,ro",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
         testFillContainerMount("readOnlyBind", "type=bind,source=/aSource,target=/aTarget,readonly",
                 new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("roTrueBind", "type=bind,source=/aSource,target=/aTarget,ro=true",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("readOnlyTrueBind", "type=bind,source=/aSource,target=/aTarget,readonly=true",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("roOneBind", "type=bind,source=/aSource,target=/aTarget,ro=1",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("readOnlyOneBind", "type=bind,source=/aSource,target=/aTarget,readonly=1",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("roFalseBind", "type=bind,source=/aSource,target=/aTarget,ro=false",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(false));
+        testFillContainerMount("readOnlyFalseBind", "type=bind,source=/aSource,target=/aTarget,readonly=false",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(false));
+        testFillContainerMount("roZeroBind", "type=bind,source=/aSource,target=/aTarget,ro=0",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(false));
+        testFillContainerMount("readOnlyZeroBind", "type=bind,source=/aSource,target=/aTarget,readonly=0",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(false));
         testFillContainerMount("bindWithPropagation", "type=bind,source=/aSource,target=/aTarget,bind-propagation=rslave",
                 new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withBindOptions(new BindOptions().withPropagation(BindPropagation.R_SLAVE)));
 

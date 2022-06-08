@@ -907,8 +907,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         final String[] tokens = mnt.split(",");
         for (String token : tokens) {
             final String[] parts = token.split("=");
-            if (!(parts.length == 2 || parts.length == 1 && "readonly".equals(parts[0]))) {
-                throw new IllegalArgumentException("Invalid mount: expected key=value comma separated pairs, or 'readonly' keyword");
+            if (!(parts.length == 2 || parts.length == 1 && ("ro".equals(parts[0]) || "readonly".equals(parts[0])))) {
+                throw new IllegalArgumentException("Invalid mount: expected key=value comma separated pairs, or 'ro' / 'readonly' keywords");
             }
 
             switch (parts[0]) {
@@ -926,7 +926,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                     break;
                 case "ro":
                 case "readonly":
-                    mount.withReadOnly(true);
+                    String value = parts.length == 2 && parts[1] != null ? parts[1].trim() : "";
+                    if (value.isEmpty() || "true".equalsIgnoreCase(value) || "1".equals(value)) {
+                        mount.withReadOnly(true);
+                    } else if ("false".equalsIgnoreCase(value) || "0".equals(value)) {
+                        mount.withReadOnly(false);
+                    }
                     break;
                 case "bind-propagation":
                     bindOptions = new BindOptions().withPropagation(BindPropagation.valueOf((parts[1].startsWith("r") ? "R_" + parts[1].substring(1) : parts[1]).toUpperCase()));
