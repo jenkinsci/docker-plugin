@@ -161,7 +161,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
     }
 
     @Override
-    public void afterContainerStarted(DockerAPI api, String workdir, DockerTransientNode node) throws IOException, InterruptedException {
+    public void beforeContainerStarted(DockerAPI api, String workdir, DockerTransientNode node) throws IOException, InterruptedException {
         final String containerId = node.getContainerId();
         try(final DockerClient client = api.getClient()) {
             injectRemotingJar(containerId, workdir, client);
