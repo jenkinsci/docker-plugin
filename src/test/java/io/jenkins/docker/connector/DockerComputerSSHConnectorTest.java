@@ -48,8 +48,10 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy = new DockerComputerSSHConnector.InjectSSHKey(COMMON_IMAGE_USERNAME);
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
         connector.setJavaPath(SSH_AGENT_IMAGE_JAVAPATH);
+        final String imagenameAndVersion = SSH_AGENT_IMAGE_IMAGENAME + ':' + getJenkinsDockerImageVersionForThisEnvironment();
+
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase(SSH_AGENT_IMAGE_IMAGENAME),
+                new DockerTemplateBase(imagenameAndVersion),
                 connector,
                 LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );
@@ -68,8 +70,9 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy = new DockerComputerSSHConnector.ManuallyConfiguredSSHKey(credentialsId, new NonVerifyingKeyVerificationStrategy());
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
         connector.setJavaPath(SSH_AGENT_IMAGE_JAVAPATH);
+        final String imagenameAndVersion = SSH_AGENT_IMAGE_IMAGENAME + ':' + getJenkinsDockerImageVersionForThisEnvironment();
         final DockerTemplate template = new DockerTemplate(
-                new DockerTemplateBase(SSH_AGENT_IMAGE_IMAGENAME),
+                new DockerTemplateBase(imagenameAndVersion),
                 connector,
                 LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );

@@ -42,6 +42,48 @@ public abstract class DockerComputerConnectorTest {
     protected static final String COMMON_IMAGE_HOMEDIR = "/home/jenkins/agent";
     protected static final String INSTANCE_CAP = "10";
 
+	private static int getJavaVersion() {
+		final String systemPropertyName = "java.version";
+		final String javaVersion = System.getProperty(systemPropertyName);
+		try {
+			if (javaVersion.startsWith("1.")) {
+				// we're using Java 8 or lower so the syntax is 1.x where x is the version we
+				// want.
+				// ... and we know that x will be a single digit.
+				// e.g. 1.8.1 is Java 8, 1.6.3 is Java 6 etc.
+				final String secondNumber = javaVersion.substring(2, 3);
+				return Integer.parseInt(secondNumber);
+			}
+			// otherwise we're using Java 9 or higher so the syntax is x.n...
+			// ... but x might be multiple digits.
+			// e.g. 9.0 is Java 9, 11.123.4 is Java 11 etc.
+			final int indexOfPeriod = javaVersion.indexOf('.');
+			final String firstNumber = indexOfPeriod < 0 ? javaVersion : javaVersion.substring(0, indexOfPeriod);
+			return Integer.parseInt(firstNumber);
+		} catch (RuntimeException ex) {
+			throw new IllegalStateException("Unable to determine version of Java from system property '"
+					+ systemPropertyName + "' value '" + javaVersion + "'.", ex);
+		}
+	}
+
+	protected static String getJenkinsDockerImageVersionForThisEnvironment() {
+		/*
+		 * Maintenance note: This code needs to follow the tagging strategy used in
+		 * https://hub.docker.com/r/jenkins/agent/tags etc.
+		 */
+		final int javaVersion = getJavaVersion();
+		if (SystemUtils.IS_OS_WINDOWS) {
+			if (javaVersion >= 11) {
+				return "jdk11-nanoserver-1809";
+			}
+			return "jdk8-nanoserver-1809";
+		}
+		if (javaVersion >= 11) {
+			return "latest-jdk11";
+		}
+		return "latest-jdk8";
+	}
+
     private static int testNumber;
     private String cloudName;
 
