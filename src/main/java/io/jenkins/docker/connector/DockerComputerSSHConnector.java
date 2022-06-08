@@ -9,6 +9,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
@@ -245,12 +246,17 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
         cmd.withPortSpecs(port+"/tcp");
         final PortBinding sshPortBinding = PortBinding.parse(":" + port);
-        final Ports portBindings = cmd.getPortBindings();
+        HostConfig hostConfig = cmd.getHostConfig();
+        if( hostConfig==null ) {
+        	hostConfig = new HostConfig();
+        	cmd.withHostConfig(hostConfig);
+        }
+        final Ports portBindings = hostConfig.getPortBindings();
         if(portBindings != null) {
             portBindings.add(sshPortBinding);
-            cmd.withPortBindings(portBindings);
+            hostConfig.withPortBindings(portBindings);
         } else {
-            cmd.withPortBindings(sshPortBinding);
+        	hostConfig.withPortBindings(sshPortBinding);
         }
         cmd.withExposedPorts(ExposedPort.parse(port+"/tcp"));
     }
@@ -290,8 +296,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         if ("exited".equals(inspect.getState().getStatus())) {
             // Something went wrong
             // FIXME report error "somewhere" visible to end user.
-            LOGGER.error("Failed to launch docker SSH agent :" + inspect.getState().getExitCode());
-            throw new IOException("Failed to launch docker SSH agent. Container exited with status " + inspect.getState().getExitCode());
+            LOGGER.error("Failed to launch docker SSH agent :" + inspect.getState().getExitCodeLong());
+            throw new IOException("Failed to launch docker SSH agent. Container exited with status " + inspect.getState().getExitCodeLong());
         }
         LOGGER.debug("container created {}", inspect);
         final InetSocketAddress address = getBindingForPort(api, inspect, port);

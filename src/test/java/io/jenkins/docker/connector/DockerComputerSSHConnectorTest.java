@@ -5,6 +5,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.core.command.CreateContainerCmdImpl;
@@ -83,28 +84,40 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
 
     @Test
     public void testPortBinding() throws IOException, InterruptedException {
+    	// Given
         DockerComputerSSHConnector connector = new DockerComputerSSHConnector(Mockito.mock(DockerComputerSSHConnector.SSHKeyStrategy.class));
         CreateContainerCmdImpl cmd = new CreateContainerCmdImpl(Mockito.mock(CreateContainerCmd.Exec.class), Mockito.mock(AuthConfig.class), "");
-        cmd.withPortBindings(PortBinding.parse("42:42"));
+        HostConfig hostConfig = cmd.getHostConfig();
+        if( hostConfig==null ) {
+        	hostConfig = new HostConfig();
+        	cmd.withHostConfig(hostConfig);
+        }
+        final PortBinding exportContainerPort42 = PortBinding.parse("42:42");
+		hostConfig.withPortBindings(exportContainerPort42);
+		final ExposedPort port42 = new ExposedPort(42);
+		final ExposedPort port22 = new ExposedPort(22);
 
+		// When
         connector.setPort(22);
         connector.beforeContainerCreated(Mockito.mock(DockerAPI.class), "/workdir", cmd);
-        final Ports portBindings = cmd.getPortBindings();
-        Assert.assertNotNull(portBindings);
-        final Map<ExposedPort, Ports.Binding[]> bindingMap = portBindings.getBindings();
-        Assert.assertNotNull(bindingMap);
-        Assert.assertEquals(2, bindingMap.size());
 
-        final Ports.Binding[] configuredBindings = bindingMap.get(new ExposedPort(42));
-        Assert.assertNotNull(configuredBindings);
-        Assert.assertEquals(1, configuredBindings.length);
-        Assert.assertEquals("42", configuredBindings[0].getHostPortSpec());
+        // Then
+        final Ports actualPortBindings = cmd.getHostConfig().getPortBindings();
+        Assert.assertNotNull(actualPortBindings);
+        final Map<ExposedPort, Ports.Binding[]> actualBindingMap = actualPortBindings.getBindings();
+        Assert.assertNotNull(actualBindingMap);
+        Assert.assertEquals(2, actualBindingMap.size());
 
-        final Ports.Binding[] sshBindings = bindingMap.get(new ExposedPort(22));
-        Assert.assertNotNull(sshBindings);
-        Assert.assertEquals(1, sshBindings.length);
-        Assert.assertNull(sshBindings[0].getHostPortSpec());
+		final Ports.Binding[] actualBindingsForPort42 = actualBindingMap.get(port42);
+        Assert.assertNotNull(actualBindingsForPort42);
+        Assert.assertEquals(1, actualBindingsForPort42.length);
+        final String actualHostPortSpecForPort42 = actualBindingsForPort42[0].getHostPortSpec();
+		Assert.assertEquals("42", actualHostPortSpecForPort42);
 
-        System.out.println();
+		final Ports.Binding[] actualBindingsForPort22 = actualBindingMap.get(port22);
+        Assert.assertNotNull(actualBindingsForPort22);
+        Assert.assertEquals(1, actualBindingsForPort22.length);
+        final String actualHostPortSpecForPort22 = actualBindingsForPort22[0].getHostPortSpec();
+		Assert.assertNull(actualHostPortSpecForPort22);
     }
 }

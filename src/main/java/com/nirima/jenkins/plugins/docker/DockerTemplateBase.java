@@ -750,9 +750,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.withCmd(cmdOrNull);
         }
 
-        containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
-        containerConfig.withPublishAllPorts(bindAllPorts);
-        containerConfig.withPrivileged(privileged);
+        hostConfig(containerConfig).withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
+        hostConfig(containerConfig).withPublishAllPorts(bindAllPorts);
+        hostConfig(containerConfig).withPrivileged(privileged);
 
         final Map<String, String> existingLabelsOrNull = containerConfig.getLabels();
         final Map<String, String> labels;
@@ -789,13 +789,13 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
         final Integer cpuSharesOrNull = getCpuShares();
         if (cpuSharesOrNull != null && cpuSharesOrNull > 0) {
-            containerConfig.withCpuShares(cpuSharesOrNull);
+        	hostConfig(containerConfig).withCpuShares(cpuSharesOrNull);
         }
 
         final Integer memoryLimitOrNull = getMemoryLimit();
         if (memoryLimitOrNull != null && memoryLimitOrNull > 0) {
             final long memoryInByte = memoryLimitOrNull.longValue() * 1024L * 1024L;
-            containerConfig.withMemory(memoryInByte);
+            hostConfig(containerConfig).withMemory(memoryInByte);
         }
 
         final Integer memorySwapOrNullOrNegative = getMemorySwap();
@@ -803,21 +803,21 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             final long memorySwapOrNegative = memorySwapOrNullOrNegative.longValue();
             if (memorySwapOrNegative > 0L) {
                 long memorySwapInByte = memorySwapOrNegative * 1024L * 1024L;
-                containerConfig.withMemorySwap(memorySwapInByte);
+                hostConfig(containerConfig).withMemorySwap(memorySwapInByte);
             } else {
-                containerConfig.withMemorySwap(memorySwapOrNegative);
+            	hostConfig(containerConfig).withMemorySwap(memorySwapOrNegative);
             }
         }
 
         final String[] dnsHostsOrNull = getDnsHosts();
         if (dnsHostsOrNull != null && dnsHostsOrNull.length > 0) {
-            containerConfig.withDns(dnsHostsOrNull);
+        	hostConfig(containerConfig).withDns(dnsHostsOrNull);
         }
 
         final String networkOrNull = getNetwork();
         if (networkOrNull != null && networkOrNull.length() > 0) {
             containerConfig.withNetworkDisabled(false);
-            containerConfig.withNetworkMode(networkOrNull);
+            hostConfig(containerConfig).withNetworkMode(networkOrNull);
         }
 
         // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196
@@ -834,7 +834,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String volFromStr : volumesFrom2OrNull) {
                 volFrom.add(VolumesFrom.parse(volFromStr));
             }
-            containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
+            hostConfig(containerConfig).withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
         }
 
         final String[] devicesOrNull = getDevices();
@@ -843,7 +843,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String deviceStr : devicesOrNull) {
                 list.add(Device.parse(deviceStr));
             }
-            containerConfig.withDevices(list);
+            hostConfig(containerConfig).withDevices(list);
         }
 
         containerConfig.withTty(tty);
@@ -860,7 +860,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
         final List<String> extraHostsOrNull = getExtraHosts();
         if (CollectionUtils.isNotEmpty(extraHostsOrNull)) {
-            containerConfig.withExtraHosts(extraHostsOrNull.toArray(new String[extraHostsOrNull.size()]));
+        	hostConfig(containerConfig).withExtraHosts(extraHostsOrNull.toArray(new String[extraHostsOrNull.size()]));
         }
 
         final Integer shmSizeOrNull = getShmSize();
@@ -876,12 +876,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
         final List<String> capabilitiesToAddOrNull = getCapabilitiesToAdd();
         if (CollectionUtils.isNotEmpty(capabilitiesToAddOrNull)) {
-            containerConfig.withCapAdd(toCapabilities(capabilitiesToAddOrNull));
+        	hostConfig(containerConfig).withCapAdd(toCapabilities(capabilitiesToAddOrNull));
         }
 
         final List<String> capabilitiesToDropOrNull = getCapabilitiesToDrop();
         if (CollectionUtils.isNotEmpty(capabilitiesToDropOrNull)) {
-            containerConfig.withCapDrop(toCapabilities(capabilitiesToDropOrNull));
+        	hostConfig(containerConfig).withCapDrop(toCapabilities(capabilitiesToDropOrNull));
         }
 
         return containerConfig;
@@ -969,8 +969,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return hc;
     }
 
-    private static List<Capability> toCapabilities(List<String> capabilitiesString) {
-        List<Capability> res = new ArrayList<>();
+    private static Capability[] toCapabilities(List<String> capabilitiesString) {
+        final ArrayList<Capability> res = new ArrayList<>();
         for(String capability : capabilitiesString) {
             try {
                 res.add(Capability.valueOf(capability));
@@ -978,7 +978,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                 throw new IllegalArgumentException("Invalid capability name : " + capability, e);
             }
         }
-        return res;
+        return res.toArray(new Capability[res.size()]);
     }
 
     /**

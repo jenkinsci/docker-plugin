@@ -3,10 +3,9 @@ package com.nirima.jenkins.plugins.docker;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyVararg;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -94,6 +93,8 @@ public class DockerTemplateBaseTest {
             final String environmentStringToSet, final boolean envsIsExpectedToBeSet, final String... expectedEnvsSet) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
         instanceUnderTest.setEnvironmentsString(environmentStringToSet);
 
@@ -103,10 +104,10 @@ public class DockerTemplateBaseTest {
         // Then
         if (envsIsExpectedToBeSet) {
             verify(mockCmd, times(1)).withEnv(expectedEnvsSet);
-            verify(mockCmd, never()).withEnv(anyListOf(String.class));
+            verify(mockCmd, never()).withEnv(anyList());
         } else {
-            verify(mockCmd, never()).withEnv((String[]) anyVararg());
-            verify(mockCmd, never()).withEnv(anyListOf(String.class));
+            verify(mockCmd, never()).withEnv((String[]) any());
+            verify(mockCmd, never()).withEnv(anyList());
         }
     }
 
@@ -142,7 +143,7 @@ public class DockerTemplateBaseTest {
         if (groupAddIsExpectedToBeSet) {
             verify(mockHostConfig, times(1)).withGroupAdd(Arrays.asList(expectedGroupsSet));
         } else {
-            verify(mockHostConfig, never()).withGroupAdd(anyListOf(String.class));
+            verify(mockHostConfig, never()).withGroupAdd(anyList());
         }
     }
 
@@ -182,7 +183,7 @@ public class DockerTemplateBaseTest {
         String toAddInString = "AUDIT_CONTROL";
         Capability toAdd = Capability.AUDIT_CONTROL;
         testFillContainerCapabilitiesToAdd("toAdd", Arrays.asList(toAddInString), true,
-                Arrays.asList(toAdd));
+                new Capability[] { toAdd } );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -192,9 +193,11 @@ public class DockerTemplateBaseTest {
     }
 
     private static void testFillContainerCapabilitiesToAdd(final String imageName, final List<String> capabilitiesToSet,
-            final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
+            final boolean capabilitiesIsExpectedToBeSet, final Capability[] expectedCapabilities) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
         instanceUnderTest.setCapabilitiesToAdd(capabilitiesToSet);
 
@@ -203,9 +206,9 @@ public class DockerTemplateBaseTest {
 
         // Then
         if (capabilitiesIsExpectedToBeSet) {
-            verify(mockCmd, times(1)).withCapAdd(expectedCapabilities);
+            verify(mockHostConfig, times(1)).withCapAdd(expectedCapabilities);
         } else {
-            verify(mockCmd, never()).withCapAdd(anyList());
+            verify(mockHostConfig, never()).withCapAdd(any());
         }
     }
 
@@ -215,7 +218,7 @@ public class DockerTemplateBaseTest {
         String toDropInString = "AUDIT_CONTROL";
         Capability toDrop = Capability.AUDIT_CONTROL;
         testFillContainerCapabilitiesToDrop("toDrop", Arrays.asList(toDropInString), true,
-                Arrays.asList(toDrop));
+                new Capability[] { toDrop } );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -225,9 +228,11 @@ public class DockerTemplateBaseTest {
     }
 
     private static void testFillContainerCapabilitiesToDrop(final String imageName, final List<String> capabilitiesToSet,
-            final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
+            final boolean capabilitiesIsExpectedToBeSet, final Capability[] expectedCapabilities) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
         instanceUnderTest.setCapabilitiesToDrop(capabilitiesToSet);
 
@@ -236,9 +241,9 @@ public class DockerTemplateBaseTest {
 
         // Then
         if (capabilitiesIsExpectedToBeSet) {
-            verify(mockCmd, times(1)).withCapDrop(expectedCapabilities);
+            verify(mockHostConfig, times(1)).withCapDrop(expectedCapabilities);
         } else {
-            verify(mockCmd, never()).withCapDrop(anyList());
+            verify(mockHostConfig, never()).withCapDrop(any());
         }
     }
 
@@ -455,11 +460,13 @@ public class DockerTemplateBaseTest {
 
     private static void testFillContainerVolumesFrom(String imageName, String volumesFromStringToSet, VolumesFrom... expectedVolumesFromSet) {
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
         instanceUnderTest.setVolumesFromString(volumesFromStringToSet);
 
         instanceUnderTest.fillContainerConfig(mockCmd);
 
-        verify(mockCmd).withVolumesFrom(expectedVolumesFromSet);
+        verify(mockHostConfig).withVolumesFrom(expectedVolumesFromSet);
     }
 }
