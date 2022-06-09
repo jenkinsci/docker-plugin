@@ -668,7 +668,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     /**
      * For ConfigurationAsCode compatibility
-     * @deprecated use {@link #setMounts()}
+     * @deprecated use {@link #setMounts(String[])}
      */
     @Deprecated
     public void setVolumes(String[] vols) {
@@ -688,7 +688,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     /**
      * For ConfigurationAsCode compatibility
-     * @deprecated use {@link #setMountsString()}
+     * @deprecated use {@link #setMountsString(String)}
      */
     @Deprecated
     public void setVolumesString(String volumesString) {
