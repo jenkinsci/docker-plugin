@@ -1,22 +1,21 @@
 package io.jenkins.docker.client;
 
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.VersionCmd;
-import com.github.dockerjava.api.model.Version;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.SSLConfig;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
+import static org.apache.commons.lang.StringUtils.trimToNull;
 
-import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
-import hudson.model.Item;
-import hudson.security.ACL;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import io.jenkins.dockerjavaapi.client.DelegatingDockerClient;
-import jenkins.model.Jenkins;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.URI;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
@@ -29,20 +28,24 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.URI;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.VersionCmd;
+import com.github.dockerjava.api.model.Version;
+import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.SSLConfig;
+import com.github.dockerjava.jaxrs.JerseyDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
-import static org.apache.commons.lang.StringUtils.trimToNull;
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.model.Item;
+import hudson.security.ACL;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import io.jenkins.dockerjavaapi.client.DelegatingDockerClient;
+import jenkins.model.Jenkins;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -242,28 +245,22 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     @SuppressWarnings("resource")
     private static SharableDockerClient makeClient(final String dockerUri, final String credentialsId,
             final Integer readTimeoutInMillisecondsOrNull, final Integer connectTimeoutInMillisecondsOrNull) {
-        NettyDockerCmdExecFactoryCompat cmdExecFactory = null;
+        DockerHttpClient httpClient = null;
         DockerClient actualClient = null;
         try {
-            cmdExecFactory = new NettyDockerCmdExecFactoryCompat()
-                .withReadTimeoutCompat(readTimeoutInMillisecondsOrNull)
-                .withConnectTimeoutCompat(connectTimeoutInMillisecondsOrNull);
-            final DefaultDockerClientConfig.Builder configBuilder = new DefaultDockerClientConfig.Builder()
-                    .withDockerHost(dockerUri)
-                    .withCustomSslConfig(toSSlConfig(credentialsId));
-            actualClient = DockerClientBuilder.getInstance(configBuilder)
-                .withDockerCmdExecFactory(cmdExecFactory)
-                .build();
+            httpClient = new JerseyDockerHttpClient.Builder().dockerHost(URI.create(dockerUri))
+                    .sslConfig(toSSlConfig(credentialsId)).build(); 
+            actualClient = DockerClientBuilder.getInstance().withDockerHttpClient(httpClient).build();
             final SharableDockerClient multiUsageClient = new SharableDockerClient(actualClient);
             // if we've got this far, we're going to succeed, so we need to ensure that we
             // don't close the resources we're returning.
-            cmdExecFactory = null;
+            httpClient = null;
             actualClient = null;
             return multiUsageClient;
         } finally {
             // these will no-op if we're successfully returning a value, but in any error
             // cases we should ensure that we don't leak precious resources.
-            closeAndLogAnyExceptions(cmdExecFactory);
+            closeAndLogAnyExceptions(httpClient);
             closeAndLogAnyExceptions(actualClient);
         }
     }
