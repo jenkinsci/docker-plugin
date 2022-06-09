@@ -1,8 +1,8 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.ExternalResource;
 
 import java.io.IOException;
@@ -31,9 +31,6 @@ public class PortUtilsTest {
     @Rule
     public SomeServerRule server = new SomeServerRule();
 
-    @Rule
-    public ExpectedException ex = ExpectedException.none();
-
     @Test
     public void shouldConnectToServerSuccessfully() throws Exception {
         assertThat("Server is up and should connect",
@@ -50,7 +47,7 @@ public class PortUtilsTest {
     public void shouldWaitForPortAvailableUntilTimeout() throws Exception {
         // Given
         // e.g. try, delay, try, delay, try = 3 tries, 2 delays.
-        final long minExpectedTime = RETRY_COUNT * DELAY;
+        final long minExpectedTime = RETRY_COUNT * DELAY - minimumFudgeFactor(DELAY);
         final long maxExpectedTime = (RETRY_COUNT + 1) * DELAY - 1;
 
         // When
@@ -68,9 +65,13 @@ public class PortUtilsTest {
 
     @Test
     public void shouldThrowIllegalStateExOnNotAvailPort() throws Exception {
-        ex.expect(IllegalStateException.class);
-        PortUtils.connectionCheck("localhost", 0).withRetries(RETRY_COUNT).withEveryRetryWaitFor(DELAY, MILLISECONDS)
-                .useSSH().execute();
+        try {
+	        PortUtils.connectionCheck("localhost", 0).withRetries(RETRY_COUNT).withEveryRetryWaitFor(DELAY, MILLISECONDS)
+	                .useSSH().execute();
+	        Assert.fail("Expected " + IllegalStateException.class);
+        } catch ( IllegalStateException expected ) {
+        	// pass
+        }
     }
 
     @Test
@@ -83,6 +84,7 @@ public class PortUtilsTest {
         final long minExpectedTime = sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry + waitBetweenTries
                 + sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry;
         final long maxExpectedTime = minExpectedTime + waitBetweenTries - 1;
+        final long minAllowedTime = minExpectedTime - minimumFudgeFactor(waitBetweenTries);
 
         // When
         final long before = currentTimeMillis();
@@ -95,7 +97,7 @@ public class PortUtilsTest {
         // Then
         assertThat("Port is connectible", actual, equalTo(false));
         assertThat("Should wait for timeout", actualDuration,
-                allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
+                allOf(greaterThanOrEqualTo(minAllowedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
 
     @Test
@@ -124,6 +126,7 @@ public class PortUtilsTest {
         final long bringPortUpAfter = DELAY + DELAY/2;
         final long minExpectedTime = 2 * DELAY;
         final long maxExpectedTime = minExpectedTime + DELAY - 1;
+        final long minAllowedTime = minExpectedTime - minimumFudgeFactor(DELAY);
         server.stopAndRebindAfter(bringPortUpAfter, MILLISECONDS);
 
         // When
@@ -136,7 +139,17 @@ public class PortUtilsTest {
         // Then
         assertThat("Used port should be connectible", actual, equalTo(true));
         assertThat("Should wait then retry", actualDuration,
-                allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
+                allOf(greaterThanOrEqualTo(minAllowedTime), lessThanOrEqualTo(maxExpectedTime)));
+    }
+
+    /**
+     * On Windows, timers seem to be less accurate and/or expire shortly before they should,
+     * meaning that tests can complete faster than they should,
+     * e.g. I've seen a timeout of 2000ms complete in 1998ms,
+     * so the tests must allow for that and not complain.
+     */
+    private static int minimumFudgeFactor(int oneUnitOfExpectedDelay) {
+        return oneUnitOfExpectedDelay / 20;
     }
 
     private class SomeServerRule extends ExternalResource {
@@ -175,7 +188,7 @@ public class PortUtilsTest {
         protected void after() {
             try {
                 socket.close();
-            } catch (IOException e) {
+            } catch (IOException ignored) {
                 // ignore
             }
         }

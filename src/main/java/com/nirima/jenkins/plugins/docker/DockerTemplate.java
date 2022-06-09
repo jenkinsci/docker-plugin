@@ -4,12 +4,12 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PullResponseItem;
-import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
@@ -59,6 +59,8 @@ import java.util.Set;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopy;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopyOfList;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 public class DockerTemplate implements Describable<DockerTemplate> {
@@ -198,6 +200,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     public Integer getMemorySwap() {
         return dockerTemplateBase.getMemorySwap();
+    }
+
+    public String getCpus() {
+        return dockerTemplateBase.getCpus();
     }
 
     public Long getCpuPeriod() {
@@ -491,6 +497,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     /**
      * Initializes data structure that we don't persist.
+     * @return this, but populated
      */
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "This method's job is to ensure that things aren't null where they shouldn't be.")
     protected Object readResolve() {
@@ -624,7 +631,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Override
     public Descriptor<DockerTemplate> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(getClass());
+        return Jenkins.get().getDescriptor(getClass());
     }
 
     @Nonnull
@@ -644,7 +651,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             try(final DockerClient client = api.getClient(pullTimeout)) {
                 final PullImageCmd cmd =  client.pullImageCmd(image);
                 final DockerRegistryEndpoint registry = getRegistry();
-                DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
+                DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.get());
                 cmd.exec(new PullImageResultCallback() {
                     @Override
                     public void onNext(PullResponseItem item) {
@@ -728,7 +735,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             node.setNodeDescription("Docker Agent [" + ourImage + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
             node.setMode(getMode());
             node.setLabelString(getLabelString());
-            node.setRetentionStrategy(getRetentionStrategy());
+            node.setRetentionStrategy(makeCopy(getRetentionStrategy()));
             robustlySetNodeProperties(node, makeCopyOfList(getNodeProperties()));
             node.setRemoveVolumes(isRemoveVolumes());
             node.setStopTimeout(getStopTimeout());
@@ -746,31 +753,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             if ( finallyRemoveTheContainer ) {
                 try {
                     client.removeContainerCmd(containerId).withForce(true).exec();
-                } catch (NotFoundException ex) {
+                } catch (NotFoundException handledByCode) {
                     LOGGER.info("Unable to remove container '" + containerId + "' as it had already gone.");
                 } catch (Throwable ex) {
                     LOGGER.error("Unable to remove container '" + containerId + "' due to exception:", ex);
                 }
             }
         }
-    }
-
-    private static <T> List<T> makeCopyOfList(List<? extends T> listOrNull) {
-        if (listOrNull == null) {
-            return null;
-        }
-        final List<T> copyList = new ArrayList<>(listOrNull.size());
-        for( final T originalElement : listOrNull) {
-            final T copyOfElement = makeCopy(originalElement);
-            copyList.add(copyOfElement);
-        }
-        return copyList;
-    }
-
-    private static <T> T makeCopy(final T original) {
-        final String xml = Jenkins.XSTREAM.toXML(original);
-        final Object copy = Jenkins.XSTREAM.fromXML(xml);
-        return (T) copy;
     }
 
     /**
@@ -842,13 +831,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     public static final class DescriptorImpl extends Descriptor<DockerTemplate> {
         /**
          * Get a list of all {@link NodePropertyDescriptor}s we can use to define DockerSlave NodeProperties.
+         * @return All appropriate {@link NodePropertyDescriptor}s.
          */
         @SuppressWarnings("cast")
         public List<NodePropertyDescriptor> getNodePropertiesDescriptors() {
             // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
             List<NodePropertyDescriptor> result = new ArrayList<>();
             Collection<NodePropertyDescriptor> list =
-                    (Collection) Jenkins.getInstance().getDescriptorList(NodeProperty.class);
+                    (Collection) Jenkins.get().getDescriptorList(NodeProperty.class);
             for (NodePropertyDescriptor npd : DescriptorVisibilityFilter.applyType(DockerTransientNode.class, list)) {
                 if (npd.isApplicable(DockerTransientNode.class)) {
                     result.add(npd);
@@ -866,7 +856,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         public Descriptor getRetentionStrategyDescriptor() {
-            return Jenkins.getInstance().getDescriptor(DockerOnceRetentionStrategy.class);
+            return Jenkins.get().getDescriptor(DockerOnceRetentionStrategy.class);
         }
 
         public FormValidation doCheckPullTimeout(@QueryParameter String value) {

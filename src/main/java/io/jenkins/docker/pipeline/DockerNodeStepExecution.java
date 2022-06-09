@@ -5,7 +5,6 @@ import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.Util;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -29,8 +28,10 @@ import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -141,7 +142,7 @@ class DockerNodeStepExecution extends StepExecution {
             node = t.provisionNode(api, listener);
             node.setDockerAPI(api);
             node.setAcceptingTasks(false); // Prevent this node to be used by tasks from build queue
-            Jenkins.getInstance().addNode(node);
+            Jenkins.get().addNode(node);
 
             listener.getLogger().println("Waiting for node to be online ...");
             // TODO maybe rely on ComputerListener to catch onOnline() event ?
@@ -168,7 +169,7 @@ class DockerNodeStepExecution extends StepExecution {
     }
 
     private static DockerAPI defaultApi() {
-        for (Cloud cloud : Jenkins.getInstance().clouds) {
+        for (Cloud cloud : Jenkins.get().clouds) {
             if (cloud instanceof DockerCloud) {
                 return ((DockerCloud) cloud).getDockerApi();
             }
@@ -193,13 +194,19 @@ class DockerNodeStepExecution extends StepExecution {
             env.overrideExpandingAll(computer.buildEnvironment(listener));
             env.put("NODE_NAME", computer.getName());
             env.put("EXECUTOR_NUMBER", "0");
-            env.put("NODE_LABELS", Util.join(node.getAssignedLabels(), " "));
+            env.put("NODE_LABELS", join(node.getAssignedLabels(), " "));
             env.put("WORKSPACE", ws.getRemote());
         } catch (IOException | InterruptedException e) {
             getContext().onFailure(e);
         }
 
         getContext().newBodyInvoker().withCallback(new Callback(node)).withContexts(computer, env, ws).start();
+    }
+
+    private static String join(Collection<?> objects, String delimiter) {
+        return objects.stream()
+                      .map(Object::toString)
+                      .collect(Collectors.joining(delimiter));
     }
 
     @Override
@@ -218,12 +225,12 @@ class DockerNodeStepExecution extends StepExecution {
 
         @Override
         protected void finished(StepContext context) throws Exception {
-            final DockerTransientNode node = (DockerTransientNode) Jenkins.getInstance().getNode(nodeName);
+            final DockerTransientNode node = (DockerTransientNode) Jenkins.get().getNode(nodeName);
             if (node != null) {
                 TaskListener listener = context.get(TaskListener.class);
                 listener.getLogger().println("Terminating docker node ...");
-                node.terminate(listener);
-                Jenkins.getInstance().removeNode(node);
+                node._terminate(listener);
+                Jenkins.get().removeNode(node);
             }
         }
     }

@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.7</version>
+        <version>4.40</version>
         <relativePath />
     </parent>
 
@@ -50,31 +49,32 @@
     </developers>
 
     <properties>
-        <revision>1.2.4</revision>
+        <revision>1.2.10</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.level>8</java.level>
         <groovy.version>2.4.7</groovy.version>
-        <jenkins.version>2.222.4</jenkins.version>
+        <jenkins.version>2.303.3</jenkins.version>
+        <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
+        <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
+        <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>bouncycastle-api</artifactId>
-            <version>2.18</version>
         </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-java-api</artifactId>
-            <version>3.2.7-SNAPSHOT</version>
+            <version>3.2.13-37.vf3411c9828b9</version>
         </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-commons</artifactId>
-            <version>1.16</version>
+            <version>1.18</version>
         </dependency>
 
         <dependency>
@@ -107,6 +107,24 @@
         </dependency>
 
         <dependency>
+            <groupId>io.jenkins</groupId>
+            <artifactId>configuration-as-code</artifactId>
+            <scope>test</scope>
+            <exclusions>
+            	<!-- We get apache commons lang from docker-java and that version can conflict with what JCasC says it needs -->
+            	<exclusion>
+            		<groupId>org.apache.commons</groupId>
+            		<artifactId>commons-lang3</artifactId>
+            	</exclusion>
+            </exclusions> 
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.configuration-as-code</groupId>
+            <artifactId>test-harness</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-job</artifactId>
             <scope>test</scope>
@@ -130,7 +148,8 @@
 
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
+            <artifactId>hamcrest</artifactId>
+            <version>2.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -142,7 +161,6 @@
         <dependency>
             <groupId>org.jenkins-ci.modules</groupId>
             <artifactId>instance-identity</artifactId>
-            <version>2.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -161,54 +179,25 @@
             <artifactId>workflow-basic-steps</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.modules</groupId>
-            <artifactId>instance-identity</artifactId>
-            <version>2.2</version>
-        </dependency>
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>1.13</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/io.jenkins.tools.bom/bom-2.222.x -->
-            <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.222.x</artifactId>
-                <version>24</version>
+                <artifactId>bom-2.303.x</artifactId>
+                <version>1409.v7659b_c072f18</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <failOnError>false</failOnError>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <configuration>
-                    <compatibleSinceVersion>0.17</compatibleSinceVersion>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/docker-plugin</url>
-        <tag>docker-plugin-1.2.3</tag>
+        <tag>${scmTag}</tag>
     </scm>
 
     <repositories>
@@ -223,5 +212,4 @@
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
-
 </project>

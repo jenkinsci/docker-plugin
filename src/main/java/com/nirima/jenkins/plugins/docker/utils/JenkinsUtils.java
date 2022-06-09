@@ -43,7 +43,11 @@ public class JenkinsUtils {
     private static String _id;
 
     /**
-     * If the build was on a cloud, get the ID of that cloud.
+     * If the build was on a docker cloud, get the cloud.
+     * 
+     * @param build The build under inspection.
+     * @return {@link Optional} containing the {@link DockerCloud} or otherwise
+     *         {@link Optional#empty()}.
      */
     @Restricted(NoExternalUse.class)
     public static Optional<DockerCloud> getCloudForBuild(AbstractBuild build) {
@@ -56,12 +60,16 @@ public class JenkinsUtils {
 
     /**
      * If the build was workflow, get the ID of that channel.
+     * 
+     * @param channel From the build under inspection.
+     * @return {@link Optional} containing the {@link DockerCloud} or otherwise
+     *         {@link Optional#empty()}.
      */
     @Restricted(NoExternalUse.class)
     public static Optional<DockerCloud> getCloudForChannel(VirtualChannel channel) {
         if (channel instanceof Channel) {
             Channel c = (Channel) channel;
-            Node node = Jenkins.getInstance().getNode(c.getName());
+            Node node = Jenkins.get().getNode(c.getName());
             if (node instanceof DockerTransientNode) {
                 return Optional.of(((DockerTransientNode) node).getCloud());
             }
@@ -224,6 +232,7 @@ public class JenkinsUtils {
     /**
      * Turns empty arrays into nulls.
      * 
+     * @param       <T> Any kind of {@link Object}.
      * @param array The array (or null)
      * @return null or the non-empty array.
      */
@@ -239,6 +248,7 @@ public class JenkinsUtils {
     /**
      * Turns empty collections into nulls.
      * 
+     * @param            <C> Any kind of {@link Collection}.
      * @param collection The collection (or null)
      * @return null or the non-empty collection.
      */
@@ -254,6 +264,7 @@ public class JenkinsUtils {
     /**
      * Turns empty maps into nulls.
      * 
+     * @param     <C> Any kind of {@link Map}.
      * @param map The map (or null)
      * @return null or the non-empty map.
      */
@@ -267,7 +278,10 @@ public class JenkinsUtils {
     }
 
     /**
-     * Used to help with toString methods.
+     * Used to help with toString methods: Starts a new toString result.
+     * 
+     * @param subjectOfToString The class being turned into a string.
+     * @return A {@link StringBuilder} containing the class's name.
      */
     @Restricted(NoExternalUse.class)
     public static StringBuilder startToString(Object subjectOfToString) {
@@ -275,7 +289,9 @@ public class JenkinsUtils {
     }
 
     /**
-     * Used to help with toString methods.
+     * Used to help with toString methods: Ends a toString result.
+     * 
+     * @param sb The {@link StringBuilder} from {@link #startToString(Object)}.
      */
     @Restricted(NoExternalUse.class)
     public static void endToString(StringBuilder sb) {
@@ -287,7 +303,13 @@ public class JenkinsUtils {
     }
 
     /**
-     * Used to help with toString methods.
+     * Used to help with toString methods: Appends to a toString result.
+     * 
+     * @param               <T> The type being appended.
+     * @param sb            The {@link StringBuilder} from
+     *                      {@link #startToString(Object)}.
+     * @param attributeName The field name
+     * @param value         The field value
      */
     @Restricted(NoExternalUse.class)
     public static <T> void bldToString(StringBuilder sb, String attributeName, @Nullable T[] value) {
@@ -305,7 +327,12 @@ public class JenkinsUtils {
     }
 
     /**
-     * Used to help with toString methods.
+     * Used to help with toString methods: Appends to a toString result.
+     * 
+     * @param sb            The {@link StringBuilder} from
+     *                      {@link #startToString(Object)}.
+     * @param attributeName The field name
+     * @param value         The field value
      */
     @Restricted(NoExternalUse.class)
     public static void bldToString(StringBuilder sb, String attributeName, int value) {
@@ -320,7 +347,12 @@ public class JenkinsUtils {
     }
 
     /**
-     * Used to help with toString methods.
+     * Used to help with toString methods: Appends to a toString result.
+     * 
+     * @param sb            The {@link StringBuilder} from
+     *                      {@link #startToString(Object)}.
+     * @param attributeName The field name
+     * @param value         The field value
      */
     @Restricted(NoExternalUse.class)
     public static void bldToString(StringBuilder sb, String attributeName, @Nullable Object value) {
@@ -443,5 +475,46 @@ public class JenkinsUtils {
             }
         }
         return strings.toArray(new String[strings.size()]);
+    }
+
+	/**
+	 * Makes a copy of a {@link List} of Jenkins objects. This is effectively a deep
+	 * clone. Typically used to copy something that's been configured in a template
+	 * before it's used in something generated from that template.
+	 * 
+	 * @param <T>        The type of thing to be copied.
+	 * @param listOrNull The list of things to be copied.
+	 * @return A deep clone of the list.
+	 */
+    @Restricted(NoExternalUse.class)
+    public static <T> List<T> makeCopyOfList(@Nullable List<? extends T> listOrNull) {
+        if (listOrNull == null) {
+            return null;
+        }
+        final List<T> copyList = new ArrayList<>(listOrNull.size());
+        for( final T originalElement : listOrNull) {
+            final T copyOfElement = makeCopy(originalElement);
+            copyList.add(copyOfElement);
+        }
+        return copyList;
+    }
+
+	/**
+	 * Makes a copy of a Jenkins object. This is effectively a deep clone. Typically
+	 * used to copy something that's been configured in a template before it's used
+	 * in something generated from that template.
+	 * 
+	 * @param <T>      The type of thing to be copied.
+	 * @param original The thing to be copied.
+	 * @return A deep clone of the thing.
+	 */
+    @Restricted(NoExternalUse.class)
+    public static <T> T makeCopy(@Nullable final T original) {
+    	if (original == null) {
+    		return null;
+    	}
+        final String xml = Jenkins.XSTREAM.toXML(original);
+        final Object copy = Jenkins.XSTREAM.fromXML(xml);
+        return (T) copy;
     }
 }

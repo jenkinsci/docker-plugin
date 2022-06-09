@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,7 +47,7 @@ public class DockerBuilderPublisherTest {
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException ex) {
             // Then
-            Assert.assertThat(ex.getMessage(), containsString(invalidTag));
+            assertThat(ex.getMessage(), containsString(invalidTag));
         }
     }
 
@@ -62,7 +63,7 @@ public class DockerBuilderPublisherTest {
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException ex) {
             // Then
-            Assert.assertThat(ex.getMessage(), containsString(invalidTag));
+            assertThat(ex.getMessage(), containsString(invalidTag));
         }
     }
 
@@ -78,7 +79,7 @@ public class DockerBuilderPublisherTest {
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException ex) {
             // Then
-            Assert.assertThat(ex.getMessage(), containsString(invalidTag));
+            assertThat(ex.getMessage(), containsString(invalidTag));
         }
     }
 
@@ -94,7 +95,7 @@ public class DockerBuilderPublisherTest {
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException ex) {
             // Then
-            Assert.assertThat(ex.getMessage(), containsString(invalidTag));
+            assertThat(ex.getMessage(), containsString(invalidTag));
         }
     }
 }

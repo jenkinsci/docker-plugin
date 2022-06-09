@@ -9,6 +9,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.NetworkSettings;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
@@ -57,6 +58,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +68,6 @@ import java.util.concurrent.TimeUnit;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
-import static hudson.remoting.Base64.encode;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -245,12 +246,17 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
         cmd.withPortSpecs(port+"/tcp");
         final PortBinding sshPortBinding = PortBinding.parse(":" + port);
-        final Ports portBindings = cmd.getPortBindings();
+        HostConfig hostConfig = cmd.getHostConfig();
+        if( hostConfig==null ) {
+        	hostConfig = new HostConfig();
+        	cmd.withHostConfig(hostConfig);
+        }
+        final Ports portBindings = hostConfig.getPortBindings();
         if(portBindings != null) {
             portBindings.add(sshPortBinding);
-            cmd.withPortBindings(portBindings);
+            hostConfig.withPortBindings(portBindings);
         } else {
-            cmd.withPortBindings(sshPortBinding);
+        	hostConfig.withPortBindings(sshPortBinding);
         }
         cmd.withExposedPorts(ExposedPort.parse(port+"/tcp"));
     }
@@ -290,8 +296,8 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         if ("exited".equals(inspect.getState().getStatus())) {
             // Something went wrong
             // FIXME report error "somewhere" visible to end user.
-            LOGGER.error("Failed to launch docker SSH agent :" + inspect.getState().getExitCode());
-            throw new IOException("Failed to launch docker SSH agent. Container exited with status " + inspect.getState().getExitCode());
+            LOGGER.error("Failed to launch docker SSH agent :" + inspect.getState().getExitCodeLong());
+            throw new IOException("Failed to launch docker SSH agent. Container exited with status " + inspect.getState().getExitCodeLong());
         }
         LOGGER.debug("container created {}", inspect);
         final InetSocketAddress address = getBindingForPort(api, inspect, port);
@@ -384,7 +390,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
 
         public List getSSHKeyStrategyDescriptors() {
-            return Jenkins.getInstance().getDescriptorList(SSHKeyStrategy.class);
+            return Jenkins.get().getDescriptorList(SSHKeyStrategy.class);
         }
     }
 
@@ -452,7 +458,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         @Override
         public String getInjectedKey() throws IOException {
             InstanceIdentity id = InstanceIdentity.get();
-            return "ssh-rsa " + encode(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
+            return "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
         }
 
         @Extension
@@ -558,7 +564,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 if (context != null) {
                     return context.hasPermission(Item.CONFIGURE);
                 }
-                return Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER);
+                return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
             }
         }
     }

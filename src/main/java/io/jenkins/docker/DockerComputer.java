@@ -2,7 +2,7 @@ package io.jenkins.docker;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.EnvVars;
-import hudson.slaves.SlaveComputer;
+import hudson.slaves.AbstractCloudComputer;
 import io.jenkins.docker.client.DockerAPI;
 import javax.annotation.CheckForNull;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
  *
  * @author magnayn
  */
-public class DockerComputer extends SlaveComputer {
+public class DockerComputer extends AbstractCloudComputer<DockerTransientNode> {
     // private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
 
     public DockerComputer(DockerTransientNode node) {
@@ -24,12 +24,6 @@ public class DockerComputer extends SlaveComputer {
     public DockerCloud getCloud() {
         final DockerTransientNode nodeOrNull = getNode();
         return nodeOrNull == null ? null : nodeOrNull.getCloud();
-    }
-
-    @CheckForNull
-    @Override
-    public DockerTransientNode getNode() {
-        return (DockerTransientNode) super.getNode();
     }
 
     @CheckForNull

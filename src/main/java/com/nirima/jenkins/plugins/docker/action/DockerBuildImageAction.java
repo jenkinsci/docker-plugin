@@ -60,7 +60,7 @@ public class DockerBuildImageAction implements Action, Serializable, Describable
         this.tags = tags;
     }
 
-    /**
+    /*
      * For internal use only, use {@link #DockerBuildImageAction(String, String, List, boolean, boolean)} instead.
      */
     @Restricted(NoExternalUse.class)
@@ -101,7 +101,7 @@ public class DockerBuildImageAction implements Action, Serializable, Describable
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(getClass());
+        return (DescriptorImpl) Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     /**

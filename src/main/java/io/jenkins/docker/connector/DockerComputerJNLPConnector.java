@@ -3,6 +3,7 @@ package io.jenkins.docker.connector;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopy;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmpty;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
@@ -22,7 +23,7 @@ import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.client.DockerEnvUtils;
 import jenkins.model.Jenkins;
-import jenkins.slaves.JnlpSlaveAgentProtocol;
+import jenkins.slaves.JnlpAgentReceiver;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
@@ -53,7 +54,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     @Restricted(NoExternalUse.class)
     public DockerComputerJNLPConnector() {
-        this(new JNLPLauncher());
+        this(new JNLPLauncher(false));
     }
 
     @DataBoundConstructor
@@ -96,13 +97,13 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         this.entryPointArguments = fixEmpty(entryPointArguments);
     }
 
-    public DockerComputerJNLPConnector withUser(String user) {
-        setUser(user);
+    public DockerComputerJNLPConnector withUser(String value) {
+        setUser(value);
         return this;
     }
 
-    public DockerComputerJNLPConnector withJenkinsUrl(String jenkinsUrl) {
-        setJenkinsUrl(jenkinsUrl);
+    public DockerComputerJNLPConnector withJenkinsUrl(String value) {
+        setJenkinsUrl(value);
         return this;
     }
 
@@ -149,7 +150,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     @Override
     protected ComputerLauncher createLauncher(final DockerAPI api, final String workdir, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
-        return new JNLPLauncher();
+        return makeCopy(jnlpLauncher);
     }
 
     @Restricted(NoExternalUse.class)
@@ -184,9 +185,9 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
-        final String effectiveJenkinsUrl = StringUtils.isEmpty(jenkinsUrl) ? Jenkins.getInstance().getRootUrl() : jenkinsUrl;
+        final String effectiveJenkinsUrl = StringUtils.isEmpty(jenkinsUrl) ? Jenkins.get().getRootUrl() : jenkinsUrl;
         final String nodeName = DockerTemplate.getNodeNameFromContainerConfig(cmd);
-        final String secret = JnlpSlaveAgentProtocol.SLAVE_SECRET.mac(nodeName);
+        final String secret = JnlpAgentReceiver.SLAVE_SECRET.mac(nodeName);
         final EnvVars knownVariables = calculateVariablesForVariableSubstitution(nodeName, secret, jnlpLauncher.tunnel, effectiveJenkinsUrl);
         final String configuredArgString = getEntryPointArgumentsString();
         final String effectiveConfiguredArgString = StringUtils.isNotBlank(configuredArgString) ? configuredArgString : DEFAULT_ENTRY_POINT_ARGUMENTS;
@@ -217,7 +218,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     private static EnvVars calculateVariablesForVariableSubstitution(final String nodeName, final String secret,
             final String jnlpTunnel, final String jenkinsUrl) throws IOException, InterruptedException {
         final EnvVars knownVariables = new EnvVars();
-        final Jenkins j = Jenkins.getInstance();
+        final Jenkins j = Jenkins.get();
         addEnvVars(knownVariables, j.getGlobalNodeProperties());
         for (final ArgumentVariables v : ArgumentVariables.values()) {
             // This switch statement MUST handle all possible

@@ -3,10 +3,9 @@ package com.nirima.jenkins.plugins.docker;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyVararg;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -17,7 +16,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import hudson.util.FormValidation;
+
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.BindOptions;
 import com.github.dockerjava.api.model.BindPropagation;
 import com.github.dockerjava.api.model.Capability;
@@ -25,6 +27,7 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.TmpfsOptions;
+import com.github.dockerjava.api.model.VolumesFrom;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 
 import java.util.Arrays;
@@ -90,6 +93,8 @@ public class DockerTemplateBaseTest {
             final String environmentStringToSet, final boolean envsIsExpectedToBeSet, final String... expectedEnvsSet) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
         instanceUnderTest.setEnvironmentsString(environmentStringToSet);
 
@@ -99,10 +104,10 @@ public class DockerTemplateBaseTest {
         // Then
         if (envsIsExpectedToBeSet) {
             verify(mockCmd, times(1)).withEnv(expectedEnvsSet);
-            verify(mockCmd, never()).withEnv(anyListOf(String.class));
+            verify(mockCmd, never()).withEnv(anyList());
         } else {
-            verify(mockCmd, never()).withEnv((String[]) anyVararg());
-            verify(mockCmd, never()).withEnv(anyListOf(String.class));
+            verify(mockCmd, never()).withEnv((String[]) any());
+            verify(mockCmd, never()).withEnv(anyList());
         }
     }
 
@@ -138,7 +143,7 @@ public class DockerTemplateBaseTest {
         if (groupAddIsExpectedToBeSet) {
             verify(mockHostConfig, times(1)).withGroupAdd(Arrays.asList(expectedGroupsSet));
         } else {
-            verify(mockHostConfig, never()).withGroupAdd(anyListOf(String.class));
+            verify(mockHostConfig, never()).withGroupAdd(anyList());
         }
     }
 
@@ -178,7 +183,7 @@ public class DockerTemplateBaseTest {
         String toAddInString = "AUDIT_CONTROL";
         Capability toAdd = Capability.AUDIT_CONTROL;
         testFillContainerCapabilitiesToAdd("toAdd", Arrays.asList(toAddInString), true,
-                Arrays.asList(toAdd));
+                new Capability[] { toAdd } );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -188,9 +193,11 @@ public class DockerTemplateBaseTest {
     }
 
     private static void testFillContainerCapabilitiesToAdd(final String imageName, final List<String> capabilitiesToSet,
-            final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
+            final boolean capabilitiesIsExpectedToBeSet, final Capability[] expectedCapabilities) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
         instanceUnderTest.setCapabilitiesToAdd(capabilitiesToSet);
 
@@ -199,9 +206,9 @@ public class DockerTemplateBaseTest {
 
         // Then
         if (capabilitiesIsExpectedToBeSet) {
-            verify(mockCmd, times(1)).withCapAdd(expectedCapabilities);
+            verify(mockHostConfig, times(1)).withCapAdd(expectedCapabilities);
         } else {
-            verify(mockCmd, never()).withCapAdd(anyList());
+            verify(mockHostConfig, never()).withCapAdd(any());
         }
     }
 
@@ -211,7 +218,7 @@ public class DockerTemplateBaseTest {
         String toDropInString = "AUDIT_CONTROL";
         Capability toDrop = Capability.AUDIT_CONTROL;
         testFillContainerCapabilitiesToDrop("toDrop", Arrays.asList(toDropInString), true,
-                Arrays.asList(toDrop));
+                new Capability[] { toDrop } );
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -221,9 +228,11 @@ public class DockerTemplateBaseTest {
     }
 
     private static void testFillContainerCapabilitiesToDrop(final String imageName, final List<String> capabilitiesToSet,
-            final boolean capabilitiesIsExpectedToBeSet, final List<Capability> expectedCapabilities) {
+            final boolean capabilitiesIsExpectedToBeSet, final Capability[] expectedCapabilities) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
         instanceUnderTest.setCapabilitiesToDrop(capabilitiesToSet);
 
@@ -232,10 +241,65 @@ public class DockerTemplateBaseTest {
 
         // Then
         if (capabilitiesIsExpectedToBeSet) {
-            verify(mockCmd, times(1)).withCapDrop(expectedCapabilities);
+            verify(mockHostConfig, times(1)).withCapDrop(expectedCapabilities);
         } else {
-            verify(mockCmd, never()).withCapDrop(anyList());
+            verify(mockHostConfig, never()).withCapDrop(any());
         }
+    }
+
+    @Test
+    public void fillContainerConfigCpus() {
+        testFillContainerConfigCpus("not existing", "1.5", 1500000000L);
+    }
+
+    @Test
+    public void fillContainerConfigCpusNotSet() {
+        testFillContainerConfigCpus("not existing", "", 0L);
+    }
+
+    private static void testFillContainerConfigCpus(final String imageName, final String cpus, final Long result) {
+        // Given
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setCpus(cpus);
+
+        // When
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        // Then
+        if (cpus.isEmpty()) {
+            verify(mockHostConfig, never()).withNanoCPUs(result);
+        } else {
+            verify(mockHostConfig, times(1)).withNanoCPUs(result);
+        }
+    }
+
+    @Test
+    public void validateContainerConfigCpusString() {
+        testValidateContainerConfigCpusString("", FormValidation.Kind.OK);
+        testValidateContainerConfigCpusString("10.3", FormValidation.Kind.OK);
+        testValidateContainerConfigCpusString("asd10.3", FormValidation.Kind.ERROR);
+        testValidateContainerConfigCpusString("-10.3", FormValidation.Kind.ERROR);
+        testValidateContainerConfigCpusString("1", FormValidation.Kind.OK);
+        testValidateContainerConfigCpusString(".1", FormValidation.Kind.ERROR);
+        testValidateContainerConfigCpusString("23.5a", FormValidation.Kind.ERROR);
+        testValidateContainerConfigCpusString("23.", FormValidation.Kind.ERROR);
+    }
+
+    private static void testValidateContainerConfigCpusString(final String cpus, final FormValidation.Kind result) {
+        // Given
+        final DockerTemplateBase.DescriptorImpl desc = new DockerTemplateBase.DescriptorImpl();
+
+        // When
+        FormValidation doCheckCpus = desc.doCheckCpus(cpus);
+
+        // Then
+        assertThat(
+            "Check cpus string: '" + cpus + "'",
+            doCheckCpus.kind == result
+        );
     }
 
     @Test
@@ -336,13 +400,33 @@ public class DockerTemplateBaseTest {
                 new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("/aTarget"));
         testFillContainerMount("file", "type=volume,source=aVolume,destination=aFile",
                 new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile"));
+        testFillContainerMount("roFile", "source=aVolume,destination=aFile,ro",
+                new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile").withReadOnly(true));
         testFillContainerMount("readOnlyFile", "source=aVolume,destination=aFile,readonly",
                 new Mount().withType(MountType.VOLUME).withSource("aVolume").withTarget("aFile").withReadOnly(true));
 
         testFillContainerMount("bind", "type=bind,source=/aSource,target=/aTarget",
                 new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget"));
+        testFillContainerMount("roBind", "type=bind,source=/aSource,target=/aTarget,ro",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
         testFillContainerMount("readOnlyBind", "type=bind,source=/aSource,target=/aTarget,readonly",
                 new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("roTrueBind", "type=bind,source=/aSource,target=/aTarget,ro=true",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("readOnlyTrueBind", "type=bind,source=/aSource,target=/aTarget,readonly=true",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("roOneBind", "type=bind,source=/aSource,target=/aTarget,ro=1",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("readOnlyOneBind", "type=bind,source=/aSource,target=/aTarget,readonly=1",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(true));
+        testFillContainerMount("roFalseBind", "type=bind,source=/aSource,target=/aTarget,ro=false",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(false));
+        testFillContainerMount("readOnlyFalseBind", "type=bind,source=/aSource,target=/aTarget,readonly=false",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(false));
+        testFillContainerMount("roZeroBind", "type=bind,source=/aSource,target=/aTarget,ro=0",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(false));
+        testFillContainerMount("readOnlyZeroBind", "type=bind,source=/aSource,target=/aTarget,readonly=0",
+                new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withReadOnly(false));
         testFillContainerMount("bindWithPropagation", "type=bind,source=/aSource,target=/aTarget,bind-propagation=rslave",
                 new Mount().withType(MountType.BIND).withSource("/aSource").withTarget("/aTarget").withBindOptions(new BindOptions().withPropagation(BindPropagation.R_SLAVE)));
 
@@ -350,6 +434,9 @@ public class DockerTemplateBaseTest {
                 new Mount().withType(MountType.TMPFS).withTarget("/aTarget"));
         testFillContainerMount("tmpfsWithOption", "type=tmpfs,destination=/aTarget,tmpfs-mode=0700",
                 new Mount().withType(MountType.TMPFS).withTarget("/aTarget").withTmpfsOptions(new TmpfsOptions().withMode(448)));
+
+        testFillContainerMount("npipe", "type=npipe,source=\\\\.\\pipe\\docker_engine,destination=\\\\.\\pipe\\docker_engine",
+                new Mount().withType(MountType.NPIPE).withSource("\\\\.\\pipe\\docker_engine").withTarget("\\\\.\\pipe\\docker_engine"));
     }
 
     private static void testFillContainerMount(String imageName, String mountStringToSet, Mount... expectedMountsSet) {
@@ -362,5 +449,24 @@ public class DockerTemplateBaseTest {
         instanceUnderTest.fillContainerConfig(mockCmd);
 
         verify(mockHostConfig).withMounts(Arrays.asList(expectedMountsSet));
+    }
+
+    @Test
+    public void fillContainerConfigGivenVolumesFrom() {
+        testFillContainerVolumesFrom("randomContainer", "aContainer", new VolumesFrom("aContainer"));
+        testFillContainerVolumesFrom("containerRO", "aContainer:ro", new VolumesFrom("aContainer", AccessMode.ro));
+        testFillContainerVolumesFrom("containerRW", "aContainer:rw", new VolumesFrom("aContainer", AccessMode.rw));
+    }
+
+    private static void testFillContainerVolumesFrom(String imageName, String volumesFromStringToSet, VolumesFrom... expectedVolumesFromSet) {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setVolumesFromString(volumesFromStringToSet);
+
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        verify(mockHostConfig).withVolumesFrom(expectedVolumesFromSet);
     }
 }

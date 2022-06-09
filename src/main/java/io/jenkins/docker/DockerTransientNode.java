@@ -11,8 +11,8 @@ import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.Slave;
 import hudson.model.TaskListener;
+import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.client.DockerAPI;
@@ -27,11 +27,11 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * A {@link Slave} node designed to be used only once for a build.
+ * A {@link AbstractCloudSlave} node designed to be used only once for a build.
  * 
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class DockerTransientNode extends Slave {
+public class DockerTransientNode extends AbstractCloudSlave {
     private static final long serialVersionUID = 1349729340506926183L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTransientNode.class.getName());
 
@@ -72,14 +72,14 @@ public class DockerTransientNode extends Slave {
      * later have to call {@link #setLauncher(ComputerLauncher)}.
      * 
      * @param nodeName    Name of the node; passed to
-     *                    {@link Slave#Slave(String, String, ComputerLauncher)}.
+     *                    {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
      * @param containerId Docker container id.
      * @param workdir     remoteFs home dir; passed to
-     *                    {@link Slave#Slave(String, String, ComputerLauncher)}.
-     * @throws             Descriptor.FormException See
-     *                     {@link Slave#Slave(String, String, ComputerLauncher)}.
-     * @throws IOException See
-     *                     {@link Slave#Slave(String, String, ComputerLauncher)}.
+     *                    {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
+     * @throws            Descriptor.FormException See
+     *                     {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
+     * @throws            IOException See
+     *                     {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
      */
     public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir) throws Descriptor.FormException, IOException {
         super(nodeName, workdir, null);
@@ -161,7 +161,18 @@ public class DockerTransientNode extends Slave {
         void error(String msg, Throwable ex);
     }
 
-    public void terminate(final TaskListener listener) {
+    @Override
+    @Restricted(NoExternalUse.class)
+    public void _terminate(final TaskListener listener) {
+        final ILogger tl = createILoggerForTaskListener(listener);
+        try {
+            terminate(tl);
+        } catch (Throwable ex) {
+            tl.error("Failure while terminating '" + name + "':", ex);
+        }
+    }
+
+    private static ILogger createILoggerForTaskListener(final TaskListener listener) {
         final ILogger tl = new ILogger() {
             @Override
             public void println(String msg) {
@@ -175,17 +186,15 @@ public class DockerTransientNode extends Slave {
                 LOGGER.error(msg, ex);
             }
         };
-        try {
-            terminate(tl);
-        } catch (Throwable ex) {
-            tl.error("Failure while terminating '" + name + "':", ex);
-        }
+        return tl;
     }
 
     /**
      * Tries to remove all trace of this node, logging anything that goes wrong.
      * <p>
      * Note: This is not intended for use outside the plugin.
+     * 
+     * @param logger Where to log any progress messages, exceptions etc.
      */
     @Restricted(NoExternalUse.class)
     public void terminate(final Logger logger) {
@@ -219,7 +228,7 @@ public class DockerTransientNode extends Slave {
     private void terminate(ILogger logger) {
         try {
             final Computer computer = toComputer();
-            if (computer != null) {
+            if (computer != null && !(computer.getOfflineCause() instanceof DockerOfflineCause)) {
                 computer.disconnect(new DockerOfflineCause());
                 logger.println("Disconnected computer for node '" + name + "'.");
             }
@@ -227,7 +236,7 @@ public class DockerTransientNode extends Slave {
             logger.error("Can't disconnect computer for node '" + name + "' due to exception:", ex);
         }
 
-        final String containerId = getContainerId();
+        final String ourContainerId = getContainerId();
         Computer.threadPoolForRemoting.submit(() -> {
             synchronized(DockerTransientNode.this) {
                 if( containerRemoved ) {
@@ -237,18 +246,18 @@ public class DockerTransientNode extends Slave {
                 try {
                     api = getDockerAPI();
                 } catch (RuntimeException ex) {
-                    logger.error("Unable to stop and remove container '" + containerId + "' for node '" + name + "' due to exception:", ex);
+                    logger.error("Unable to stop and remove container '" + ourContainerId + "' for node '" + name + "' due to exception:", ex);
                     return;
                 }
                 final boolean newValues[] = stopAndRemoveContainer(api, logger, "for node '" + name + "'",
-                    removeVolumes, stopTimeout, containerId, containerStopped);
+                    removeVolumes, stopTimeout, ourContainerId, containerStopped);
                 containerStopped = newValues[0];
                 containerRemoved = newValues[1];
             }
         });
 
         try {
-            Jenkins.getInstance().removeNode(this);
+            Jenkins.get().removeNode(this);
             logger.println("Removed Node for node '" + name + "'.");
         } catch (IOException ex) {
             logger.error("Failed to remove Node for node '" + name + "' due to exception:", ex);
@@ -275,11 +284,11 @@ public class DockerTransientNode extends Slave {
                 containerNowStopped = true;
                 logger.println("Stopped container '"+ containerId + "' " + containerDescription + ".");
             }
-        } catch(NotFoundException e) {
+        } catch(NotFoundException handledByCode) {
             logger.println("Can't stop container '" + containerId + "' " + containerDescription + " as it does not exist.");
             containerNowStopped = true;
             containerNowRemoved = true; // no point trying to remove the container if it's already gone.
-        } catch(NotModifiedException e) {
+        } catch(NotModifiedException handledByCode) {
             logger.println("Container '" + containerId + "' already stopped" + containerDescription + ".");
             containerNowStopped = true;
         } catch (Exception ex) {
@@ -294,10 +303,10 @@ public class DockerTransientNode extends Slave {
                 containerNowRemoved = true;
                 logger.println("Removed container '" + containerId + "' " + containerDescription + ".");
             }
-        } catch (NotFoundException e) {
+        } catch (NotFoundException handledByCode) {
             logger.println("Container '" + containerId + "' already gone " + containerDescription + ".");
             containerNowRemoved = true;
-        } catch (ConflictException e) {
+        } catch (ConflictException handledByCode) {
             logger.println("Container '" + containerId + "' removal already in progress.");
             containerNowRemoved = true;
         } catch (Exception ex) {
@@ -348,7 +357,7 @@ public class DockerTransientNode extends Slave {
 
     public DockerCloud getCloud() {
         if (cloudId == null) return null;
-        final Cloud cloud = Jenkins.getInstance().getCloud(cloudId);
+        final Cloud cloud = Jenkins.get().getCloud(cloudId);
 
         if (cloud == null) {
             throw new RuntimeException("Failed to retrieve Cloud " + cloudId);

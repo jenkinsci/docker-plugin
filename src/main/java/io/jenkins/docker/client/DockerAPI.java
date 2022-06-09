@@ -429,3 +429,9 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         }
     }
 }
+            } else {
+                Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+            }
+        }
+    }
+}

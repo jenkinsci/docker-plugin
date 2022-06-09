@@ -32,6 +32,7 @@ def templateBaseParameters = [
   // bindPorts:                '',
   // capabilitiesToAddString:  '',
   // capabilitiesToDropString: '',
+  // cpus:                     '',
   // cpuPeriod:                (Long)null,
   // cpuQuota:                 (Long)null,
   // cpuShares:                (Integer)null,
@@ -150,7 +151,7 @@ cloudParameters.findAll{!cloudParametersHandledSpecially.contains(it.key)}.each 
 /////////////////////////////////////////////////////////////////////////////
 
 // get Jenkins instance
-Jenkins jenkins = Jenkins.getInstance()
+Jenkins jenkins = Jenkins.get()
 
 // add/replace cloud configuration to Jenkins
 Cloud oldCloudOrNull = jenkins.clouds.getByName(cloudParameters.name)

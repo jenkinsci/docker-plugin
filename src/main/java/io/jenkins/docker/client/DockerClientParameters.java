@@ -1,6 +1,6 @@
 package io.jenkins.docker.client;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 class DockerClientParameters {
     final String dockerUri;
@@ -34,7 +34,7 @@ class DockerClientParameters {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(dockerUri, credentialsId, connectTimeoutInMsOrNull, readTimeoutInMsOrNull);
+        return Objects.hash(dockerUri, credentialsId, connectTimeoutInMsOrNull, readTimeoutInMsOrNull);
     }
 
     @Override
@@ -46,9 +46,9 @@ class DockerClientParameters {
             return false;
         }
         final DockerClientParameters other = (DockerClientParameters) obj;
-        return Objects.equal(dockerUri, other.dockerUri) && Objects.equal(credentialsId, other.credentialsId)
-                && Objects.equal(readTimeoutInMsOrNull, other.readTimeoutInMsOrNull)
-                && Objects.equal(connectTimeoutInMsOrNull, other.connectTimeoutInMsOrNull);
+        return Objects.equals(dockerUri, other.dockerUri) && Objects.equals(credentialsId, other.credentialsId)
+                && Objects.equals(readTimeoutInMsOrNull, other.readTimeoutInMsOrNull)
+                && Objects.equals(connectTimeoutInMsOrNull, other.connectTimeoutInMsOrNull);
     }
 
     @Override

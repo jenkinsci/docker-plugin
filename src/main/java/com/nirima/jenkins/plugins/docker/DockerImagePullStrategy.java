@@ -71,7 +71,7 @@ public enum DockerImagePullStrategy {
         try {
             client.inspectImageCmd(image).exec();
             imageExists = true;
-        } catch (NotFoundException e) {
+        } catch (NotFoundException handledByCode) {
             imageExists = false;
         }
 

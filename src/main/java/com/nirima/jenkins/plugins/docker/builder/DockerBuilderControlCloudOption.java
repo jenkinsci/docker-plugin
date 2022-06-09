@@ -31,7 +31,7 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
     protected @Nonnull DockerCloud getCloud(Run<?, ?> build, Launcher launcher) {
         // Did we specify?
         if (!Strings.isNullOrEmpty(cloudName)) {
-            DockerCloud specifiedCloud = (DockerCloud)Jenkins.getInstance().getCloud(cloudName);
+            DockerCloud specifiedCloud = (DockerCloud)Jenkins.get().getCloud(cloudName);
             if( specifiedCloud == null )
                 throw new IllegalStateException("Could not find a cloud named " + cloudName);
             return specifiedCloud;

@@ -68,7 +68,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
      * for a single execution.
      * The processing will be stopped on next occasion, if this threshold is exceeded.
      */
-    private static final Duration PROCESSING_TIMEOUT_IN_MS = Duration.ofMillis(RECURRENCE_PERIOD_IN_MS * 4 / 5);
+    private static final Duration PROCESSING_TIMEOUT = Duration.ofMillis(RECURRENCE_PERIOD_IN_MS * 4 / 5);
 
     private static final Statistics executionStatistics = new Statistics();
 
@@ -87,7 +87,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     protected List<Node> getAllNodes() {
-        return Jenkins.getInstance().getNodes();
+        return Jenkins.get().getNodes();
     }
 
     protected String getJenkinsInstanceId() {
@@ -95,12 +95,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     }
 
     protected void removeNode(DockerTransientNode dtn) throws IOException {
-        Jenkins.getInstance().removeNode(dtn);
+        Jenkins.get().removeNode(dtn);
     }
 
-    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description, boolean removeVolumes, String containerId,
+    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger aLogger, String description, boolean removeVolumes, String containerId,
             boolean stop) {
-        return DockerTransientNode.stopAndRemoveContainer(dockerApi, logger, description, removeVolumes, containerId, stop);
+        return DockerTransientNode.stopAndRemoveContainer(dockerApi, aLogger, description, removeVolumes, containerId, stop);
     }
 
 
@@ -154,8 +154,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                     cleanUpSuperfluousComputer(nodeMap, csmMerged, snapshotInstance);
                 }
             } catch (WatchdogProcessingTimeout timeout) {
-                LOGGER.warn("Processing of cleanup watchdog took too long; current timeout value: {} ms, "
-                        + "watchdog started on {}", PROCESSING_TIMEOUT_IN_MS, start.toString(), timeout);
+                LOGGER.warn("Processing of cleanup watchdog took too long; current timeout value: {}, "
+                        + "watchdog started on {}", PROCESSING_TIMEOUT, start.toString(), timeout);
                 executionStatistics.addProcessingTimeout();
                 executionStatistics.addOverallRuntime(Duration.between(start, clock.instant()).toMillis());
                 return;
@@ -168,6 +168,12 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         LOGGER.info("Docker Container Watchdog check has been completed");
     }
 
+    /**
+     * Gets all Jenkins nodes.
+     * 
+     * @return A {@link Map} of all {@link Node}s known to Jenkins, indexed by
+     *         {@link Node#getNodeName()}.
+     */
     private Map<String, Node> loadNodeMap() {
         Map<String, Node> nodeMap = new HashMap<>();
 
@@ -211,7 +217,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             csmMerged = csmMerged.merge(csm);
         } catch (IOException e) {
             LOGGER.warn("Failed to properly close a DockerClient instance after reading the list of containers and cleaning them up; ignoring", e);
-        } catch (ContainersRetrievalException e) {
+        } catch (ContainersRetrievalException handledByCode) {
             csmMerged.setContainerListIncomplete(true);
         }
 
@@ -296,7 +302,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         Collection<Container> allContainers = csm.getAllContainers();
 
         for (Container container : allContainers) {
-            String nodeName = csm.getNodeName(container.getId());
+            final String containerId = container.getId();
+            String nodeName = csm.getNodeName(containerId);
 
             Node node = nodeMap.get(nodeName);
             if (node != null) {
@@ -309,7 +316,9 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              * corresponding node isn't there yet.
              * That is why we have to have a grace period for pulling up containers.
              */
-            if (isStillTooYoung(container.getCreated(), snapshotInstant)) {
+            final Long containerCreated = container.getCreated();
+            if (isStillTooYoung(containerCreated, snapshotInstant)) {
+                LOGGER.info("Container {} is too young to be considered for removal", containerId);
                 continue;
             }
 
@@ -319,13 +328,13 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             LOGGER.info("Container {}, which is reported to be assigned to node {}, "
                     + "is no longer associated (node might be gone already?). "
                     + "The container's last status is {}; it was created on {}", 
-                    container.getId(), nodeName, container.getStatus(), container.getCreated());
+                    containerId, nodeName, container.getStatus(), containerCreated);
 
             try {
                 terminateContainer(dc, client, container);
             } catch (Exception e) {
                 // Graceful termination failed; we need to use some force
-                LOGGER.warn("Graceful termination of Container {} failed; terminating directly via API - this may cause remnants to be left behind", container.getId(), e);
+                LOGGER.warn("Graceful termination of Container {} failed", containerId, e);
             }
         }
     }
@@ -341,7 +350,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          * It automatically also is a "minimal lifetime" value for containers, before this watchdog
          * is allowed to kill any container. 
          */
-        final Duration graceDurationForContainers = Duration.ofSeconds(JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L));
+        final long graceDurationForContainersInSeconds = JenkinsUtils.getSystemPropertyLong(DockerContainerWatchdog.class.getName()+".initialGraceDurationForContainersInSeconds", 60L);
+        final Duration graceDurationForContainers = Duration.ofSeconds(graceDurationForContainersInSeconds);
         final Duration untilMayBeCleanedUp = containerLifetime.minus(graceDurationForContainers);
         return untilMayBeCleanedUp.isNegative();
     }
@@ -350,7 +360,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         boolean gracefulFailed = false;
         try {
             terminateContainerGracefully(dc, container);
-        } catch (TerminationException e) {
+        } catch (TerminationException handledByCode) {
             gracefulFailed = true;
         } catch (ContainerIsTaintedException e) {
             LOGGER.warn("Container {} has been tampered with; skipping cleanup", container.getId(), e);
@@ -397,7 +407,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
          */
         final String nodeName = containerLabels.get(DockerContainerLabelKeys.NODE_NAME);
         if (nodeExistsBypassingCache(nodeName)) {
-            LOGGER.warn("Attempt to terminate container ID {} gracefully, but a node for it suddenly has appeared", container.getId());
+            LOGGER.warn("Was going to terminate container ID {}, but a node for it has appeared so it does not need removing now.", container.getId());
             throw new ContainerIsTaintedException(String.format("Node for container ID %s has appeared", container.getId()));
         }
 
@@ -511,7 +521,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         final Instant now = clock.instant();
         Duration runtime = Duration.between(startedTimestamp, now);
 
-        if (runtime.compareTo(PROCESSING_TIMEOUT_IN_MS) > 0) {
+        if (runtime.compareTo(PROCESSING_TIMEOUT) > 0) {
             throw new WatchdogProcessingTimeout();
         }
     }

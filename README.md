@@ -176,7 +176,7 @@ You _can_ use an Entrypoint to run some side service inside your build agent con
 
 ## Further information
 
-More information can be obtained from the online help built into the Jenkins WebUI.
+More information can be obtained from the online help built into the Jenkins web UI.
 Most configurable fields have explanatory text.
 This,
 combined with knowledge of [docker itself](https://docs.docker.com/),

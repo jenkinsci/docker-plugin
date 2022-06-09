@@ -27,7 +27,6 @@ import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
-import org.apache.commons.codec.binary.Base64;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -45,6 +44,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -203,6 +203,7 @@ public class DockerCloud extends Cloud {
 
     /**
      * @deprecated use {@link #getContainerCap()}
+     * @return {@link #getContainerCap()} as a {@link String}.
      */
     @Deprecated
     public String getContainerCapStr() {
@@ -332,12 +333,12 @@ public class DockerCloud extends Cloud {
             LOGGER.debug("Asked to provision {} agent(s) for: {}", numberOfExecutorsRequired, label);
 
             final List<NodeProvisioner.PlannedNode> r = new ArrayList<>();
-            final List<DockerTemplate> templates = getTemplates(label);
+            final List<DockerTemplate> matchingTemplates = getTemplates(label);
             int remainingWorkload = numberOfExecutorsRequired;
 
             // Take account of the executors that will result from the containers which we
             // are already committed to starting but which have yet to be given to Jenkins
-            for ( final DockerTemplate t : templates ) {
+            for ( final DockerTemplate t : matchingTemplates ) {
                 final int numberOfContainersInProgress = countContainersInProgress(t);
                 final int numberOfExecutorsInProgress = t.getNumExecutors() * numberOfContainersInProgress;
                 remainingWorkload -= numberOfExecutorsInProgress;
@@ -351,12 +352,12 @@ public class DockerCloud extends Cloud {
                 }
             }
 
-            while (remainingWorkload > 0 && !templates.isEmpty()) {
-                final DockerTemplate t = templates.get(0); // get first
+            while (remainingWorkload > 0 && !matchingTemplates.isEmpty()) {
+                final DockerTemplate t = matchingTemplates.get(0); // get first
 
                 final boolean thereIsCapacityToProvisionFromThisTemplate = canAddProvisionedAgent(t);
                 if (!thereIsCapacityToProvisionFromThisTemplate) {
-                    templates.remove(t);
+                    matchingTemplates.remove(t);
                     continue;
                 }
                 LOGGER.info("Will provision '{}', for label: '{}', in cloud: '{}'",
@@ -437,7 +438,7 @@ public class DockerCloud extends Cloud {
      */
     private static void robustlyAddNodeToJenkins(DockerTransientNode node) throws IOException {
         // don't retry getInstance - fail immediately if that fails.
-        final Jenkins jenkins = Jenkins.getInstance();
+        final Jenkins jenkins = Jenkins.get();
         final int maxAttempts = 10;
         for (int attempt = 1;; attempt++) {
             try {
@@ -458,7 +459,7 @@ public class DockerCloud extends Cloud {
         }
     }
 
-    /**
+    /*
      * for publishers/builders. Simply runs container in docker cloud
      */
     public static String runContainer(DockerTemplateBase dockerTemplateBase,
@@ -498,12 +499,15 @@ public class DockerCloud extends Cloud {
 
     /**
      * Gets first {@link DockerTemplate} that has the matching {@link Label}.
+     * 
+     * @param label The label we're looking to match.
+     * @return The first {@link DockerTemplate} that has the matching {@link Label}, or null if not found.
      */
     @CheckForNull
     public DockerTemplate getTemplate(Label label) {
-        List<DockerTemplate> templates = getTemplates(label);
-        if (!templates.isEmpty()) {
-            return templates.get(0);
+        List<DockerTemplate> matchingTemplates = getTemplates(label);
+        if (!matchingTemplates.isEmpty()) {
+            return matchingTemplates.get(0);
         }
 
         return null;
@@ -511,6 +515,8 @@ public class DockerCloud extends Cloud {
 
     /**
      * Add a new template to the cloud
+     * 
+     * @param t The template to be added.
      */
     public synchronized void addTemplate(DockerTemplate t) {
         if ( templates == null ) {
@@ -547,6 +553,7 @@ public class DockerCloud extends Cloud {
     /**
      * Multiple amis can have the same label.
      *
+     * @param label The label to be matched, or null if no label was provided.
      * @return Templates matched to requested label assuming agent Mode
      */
     public List<DockerTemplate> getTemplates(Label label) {
@@ -590,6 +597,8 @@ public class DockerCloud extends Cloud {
 
     /**
      * Remove Docker template
+     * 
+     * @param t The template to be removed.
      */
     public synchronized void removeTemplate(DockerTemplate t) {
         if ( templates != null ) {
@@ -607,6 +616,8 @@ public class DockerCloud extends Cloud {
      *            If null, then all instances belonging to this Jenkins instance
      *            are counted. Otherwise, only those started with the specified
      *            image are counted.
+     * @return The number of containers.
+     * @throws Exception if anything went wrong.
      */
     public int countContainersInDocker(final String imageName) throws Exception {
         final Map<String, String> labelFilter = new HashMap<>();
@@ -680,7 +691,7 @@ public class DockerCloud extends Cloud {
 
     @CheckForNull
     public static DockerCloud getCloudByName(String name) {
-        return (DockerCloud) Jenkins.getInstance().getCloud(name);
+        return (DockerCloud) Jenkins.get().getCloud(name);
     }
 
     protected Object readResolve() {
@@ -818,7 +829,7 @@ public class DockerCloud extends Cloud {
     @Nonnull
     public static List<DockerCloud> instances() {
         List<DockerCloud> instances = new ArrayList<>();
-        for (Cloud cloud : Jenkins.getInstance().clouds) {
+        for (Cloud cloud : Jenkins.get().clouds) {
             if (cloud instanceof DockerCloud) {
                 instances.add((DockerCloud) cloud);
             }
@@ -899,7 +910,7 @@ public class DockerCloud extends Cloud {
         // What docker-commons claim to be a "token" is actually configuration storage
         // see https://github.com/docker/docker-ce/blob/v17.09.0-ce/components/cli/cli/config/configfile/file.go#L214
         // i.e base64 encoded username : password
-        final String decode = new String(Base64.decodeBase64(token), StandardCharsets.UTF_8);
+        final String decode = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
         int i = decode.indexOf(':');
         if (i > 0) {
             String username = decode.substring(0, i);

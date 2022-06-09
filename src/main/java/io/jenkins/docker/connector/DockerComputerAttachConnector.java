@@ -157,11 +157,13 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
+    	// We need our container to just sit there and do nothing when it's started.
+    	// We'll then (later) do a docker-exec to it to run the real Jenkins agent code.
         ensureWaiting(cmd);
     }
 
     @Override
-    public void afterContainerStarted(DockerAPI api, String workdir, DockerTransientNode node) throws IOException, InterruptedException {
+    public void beforeContainerStarted(DockerAPI api, String workdir, DockerTransientNode node) throws IOException, InterruptedException {
         final String containerId = node.getContainerId();
         try(final DockerClient client = api.getClient()) {
             injectRemotingJar(containerId, workdir, client);
@@ -265,7 +267,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         @Override
         public void launch(final SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
             final PrintStream logger = computer.getListener().getLogger();
-            final String jenkinsUrl = Jenkins.getInstance().getRootUrl();
+            final String jenkinsUrl = Jenkins.get().getRootUrl();
             final String effectiveJavaExe = StringUtils.isNotBlank(javaExeOrNull) ? javaExeOrNull : DEFAULT_JAVA_EXE;
             final String effectiveJvmArgs = StringUtils.isNotBlank(jvmArgsOrEmpty) ? jvmArgsOrEmpty : DEFAULT_JVM_ARGS ;
             final EnvVars knownVariables = calculateVariablesForVariableSubstitution(effectiveJavaExe, effectiveJvmArgs, remoting.getName(), remoteFs, jenkinsUrl);
@@ -331,7 +333,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
                 @Nonnull final String jvmArgs, @Nonnull final String jarName, @Nonnull final String remoteFs,
                 @Nonnull final String jenkinsUrl) throws IOException, InterruptedException {
             final EnvVars knownVariables = new EnvVars();
-            final Jenkins j = Jenkins.getInstance();
+            final Jenkins j = Jenkins.get();
             addEnvVars(knownVariables, j.getGlobalNodeProperties());
             for (final ArgumentVariables v : ArgumentVariables.values()) {
                 // This switch statement MUST handle all possible

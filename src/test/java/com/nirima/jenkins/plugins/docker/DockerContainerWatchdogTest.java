@@ -382,9 +382,9 @@ public class DockerContainerWatchdogTest {
         }
 
         @Override
-        protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description,
+        protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger aLogger, String description,
                 boolean removeVolumes, String containerId, boolean stop) {
-            boolean result = super.stopAndRemoveContainer(dockerApi, logger, description, removeVolumes, containerId, stop);
+            boolean result = super.stopAndRemoveContainer(dockerApi, aLogger, description, removeVolumes, containerId, stop);
 
             currentTestClock = Clock.offset(currentTestClock, Duration.ofMinutes(10));
             this.setClock(currentTestClock);

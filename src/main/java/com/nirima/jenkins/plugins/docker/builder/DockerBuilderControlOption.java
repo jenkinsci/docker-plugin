@@ -27,6 +27,7 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
             throws DockerException, IOException;
 
     /**
+     * @param build The build being inspected
      * @return first DockerLaunchAction attached to build
      */
     protected DockerLaunchAction getLaunchAction(Run<?, ?> build) {
@@ -43,7 +44,7 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
 
     @Override
     public Descriptor<DockerBuilderControlOption> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorOrDie(getClass());
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     public static abstract class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption> {

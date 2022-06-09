@@ -1,6 +1,8 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfigurations;
@@ -8,7 +10,6 @@ import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Identifier;
 import com.github.dockerjava.api.model.PushResponseItem;
 import com.github.dockerjava.core.NameParser;
-import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.github.dockerjava.core.dockerfile.Dockerfile;
 import com.google.common.base.Joiner;
@@ -59,11 +60,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmptyMap;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndTrimFilterEmptyList;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 import static org.apache.commons.lang.StringUtils.isEmpty;
@@ -128,6 +132,9 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
 
     @CheckForNull
     private List<String> tags;
+	
+    @CheckForNull
+    private Map<String, String> buildArgs;
 
     public final boolean pushOnSuccess;
 
@@ -174,7 +181,10 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         return registry;
     }
 
-    /** @deprecated See {@link #getFromRegistry()} */
+    /**
+     * @deprecated See {@link #getFromRegistry()}
+     * @return old field no longer in use
+     */
     @Deprecated
     @CheckForNull
     public String getPullCredentialsId() {
@@ -203,6 +213,27 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
 
     public void setTagsString(String tagsString) {
         setTags(splitAndTrimFilterEmptyList(tagsString, "\n"));
+    }
+
+    @CheckForNull
+    public Map<String, String> getBuildArgs() {
+        return fixEmpty(buildArgs);
+    }
+
+    @DataBoundSetter
+    public void setBuildArgs(Map<String, String> buildArgs) {
+        this.buildArgs = fixEmpty(buildArgs);
+    }
+
+    @Nonnull
+    public String getBuildArgsString() {
+        final Map<String, String> buildArgsOrNull = getBuildArgs();
+        return buildArgsOrNull == null ? "" : Joiner.on("\n").withKeyValueSeparator("=").join(buildArgsOrNull);
+    }
+
+    @DataBoundSetter
+    public void setBuildArgsString(String buildArgsString) {
+        setBuildArgs(splitAndFilterEmptyMap(buildArgsString, "\n"));
     }
 
     @CheckForNull
@@ -249,7 +280,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             theCloud = JenkinsUtils.getCloudByNameOrThrow(cloud);
         } else {
             if(channel instanceof Channel) {
-                final Node node = Jenkins.getInstance().getNode(((Channel)channel).getName() );
+                final Node node = Jenkins.get().getNode(((Channel)channel).getName() );
                 if (node instanceof DockerTransientNode) {
                     return ((DockerTransientNode) node).getDockerAPI();
                 }
@@ -278,14 +309,17 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         private final TaskListener listener;
         private final FilePath fpChild;
         private final List<String> tagsToUse;
+        @Nonnull
+        private final Map<String, String> buildArgsToUse;
         private final DockerAPI dockerApi;
         private final hudson.model.Run<?, ?> run;
 
-        private Run(hudson.model.Run<?, ?> run, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, DockerAPI dockerApi) {
+        private Run(hudson.model.Run<?, ?> run, final TaskListener listener, FilePath fpChild, List<String> tagsToUse, @Nonnull Map<String, String> buildArgsToUse, DockerAPI dockerApi) {
             this.run = run;
             this.listener = listener;
             this.fpChild = fpChild;
             this.tagsToUse = tagsToUse;
+            this.buildArgsToUse = buildArgsToUse;
             this.dockerApi = dockerApi;
         }
 
@@ -362,12 +396,12 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             };
             final String imageId;
             try(final DockerClient client = getClientWithNoTimeout()) {
-                imageId = client.buildImageCmd(tar)
+                BuildImageCmd cmd = client.buildImageCmd(tar)
                         .withNoCache(noCache)
                         .withPull(pull)
-                        .withBuildAuthConfigs(auths)
-                        .exec(resultCallback)
-                        .awaitImageId();
+                        .withBuildAuthConfigs(auths);
+                buildArgsToUse.forEach(cmd::withBuildArg);
+                imageId = cmd.exec(resultCallback).awaitImageId();
                 if (imageId == null) {
                     throw new AbortException("Built image id is null. Some error occured");
                 }
@@ -441,6 +475,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
     @Override
     public void perform(hudson.model.Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
         final List<String> expandedTags = expandTags(run, workspace, listener);
+		final Map<String, String> buildArgsToUse = Optional.ofNullable(getBuildArgs()).orElseGet(Collections::emptyMap);
         String expandedDockerFileDirectory = dockerFileDirectory;
         try {
             expandedDockerFileDirectory = TokenMacro.expandAll(run, workspace, listener, this.dockerFileDirectory);
@@ -448,7 +483,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             listener.getLogger().println("Couldn't macro expand docker file directory " + dockerFileDirectory);
             e.printStackTrace(listener.getLogger());
         }
-        new Run(run, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, getDockerAPI(launcher)).run();
+        new Run(run, listener, new FilePath(workspace, expandedDockerFileDirectory), expandedTags, buildArgsToUse, getDockerAPI(launcher)).run();
     }
 
     @Override
@@ -499,7 +534,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         private ListBoxModel doFillRegistryCredentialsIdItems(@AncestorInPath Item item) {
             final DockerRegistryEndpoint.DescriptorImpl descriptor =
                     (DockerRegistryEndpoint.DescriptorImpl)
-                    Jenkins.getInstance().getDescriptorOrDie(DockerRegistryEndpoint.class);
+                    Jenkins.get().getDescriptorOrDie(DockerRegistryEndpoint.class);
             return descriptor.doFillCredentialsIdItems(item);
         }
 

@@ -50,7 +50,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
+        return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public Object getTarget() {
-        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         return this;
     }
 

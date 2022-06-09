@@ -10,6 +10,6 @@ import jenkins.model.Jenkins;
 public abstract class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption>
 {
     public static DescriptorExtensionList<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor> all() {
-        return Jenkins.getInstance().getDescriptorList(DockerBuilderControlOption.class);
+        return Jenkins.get().getDescriptorList(DockerBuilderControlOption.class);
     }
 }

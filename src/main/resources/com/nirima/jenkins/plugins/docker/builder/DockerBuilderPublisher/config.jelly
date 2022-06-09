@@ -23,6 +23,10 @@
         <f:expandableTextbox/>
     </f:entry>
 
+    <f:entry title="${%Build Args}" field="buildArgsString">
+        <f:expandableTextbox/>
+    </f:entry>
+
     <f:entry title="${%Push image}" field="pushOnSuccess">
         <f:checkbox/>
     </f:entry>
