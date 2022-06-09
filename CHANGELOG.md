@@ -3,6 +3,7 @@
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 
+* Docker-attach should inject JAR before starting container [#898](https://github.com/jenkinsci/docker-plugin/pull/898)
 * Bump min Jenkins version from 2.204.4 to 2.303.3 [#897](https://github.com/jenkinsci/docker-plugin/pull/897)
 * Fix readonly parsing when mounting [#880](https://github.com/jenkinsci/docker-plugin/issues/880)
 * Enhancement: Supports mounting NPIPEs [#888](https://github.com/jenkinsci/docker-plugin/pull/888)
