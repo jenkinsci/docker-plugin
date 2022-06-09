@@ -1,7 +1,9 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.sameInstance;
 
 import java.util.Arrays;
 import java.util.Collection;

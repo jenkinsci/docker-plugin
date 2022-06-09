@@ -476,4 +476,45 @@ public class JenkinsUtils {
         }
         return strings.toArray(new String[strings.size()]);
     }
+
+	/**
+	 * Makes a copy of a {@link List} of Jenkins objects. This is effectively a deep
+	 * clone. Typically used to copy something that's been configured in a template
+	 * before it's used in something generated from that template.
+	 * 
+	 * @param <T>        The type of thing to be copied.
+	 * @param listOrNull The list of things to be copied.
+	 * @return A deep clone of the list.
+	 */
+    @Restricted(NoExternalUse.class)
+    public static <T> List<T> makeCopyOfList(@Nullable List<? extends T> listOrNull) {
+        if (listOrNull == null) {
+            return null;
+        }
+        final List<T> copyList = new ArrayList<>(listOrNull.size());
+        for( final T originalElement : listOrNull) {
+            final T copyOfElement = makeCopy(originalElement);
+            copyList.add(copyOfElement);
+        }
+        return copyList;
+    }
+
+	/**
+	 * Makes a copy of a Jenkins object. This is effectively a deep clone. Typically
+	 * used to copy something that's been configured in a template before it's used
+	 * in something generated from that template.
+	 * 
+	 * @param <T>      The type of thing to be copied.
+	 * @param original The thing to be copied.
+	 * @return A deep clone of the thing.
+	 */
+    @Restricted(NoExternalUse.class)
+    public static <T> T makeCopy(@Nullable final T original) {
+    	if (original == null) {
+    		return null;
+    	}
+        final String xml = Jenkins.XSTREAM.toXML(original);
+        final Object copy = Jenkins.XSTREAM.fromXML(xml);
+        return (T) copy;
+    }
 }

@@ -4,12 +4,12 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PullResponseItem;
-import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
@@ -59,6 +59,8 @@ import java.util.Set;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopy;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopyOfList;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
 public class DockerTemplate implements Describable<DockerTemplate> {
@@ -758,24 +760,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 }
             }
         }
-    }
-
-    private static <T> List<T> makeCopyOfList(List<? extends T> listOrNull) {
-        if (listOrNull == null) {
-            return null;
-        }
-        final List<T> copyList = new ArrayList<>(listOrNull.size());
-        for( final T originalElement : listOrNull) {
-            final T copyOfElement = makeCopy(originalElement);
-            copyList.add(copyOfElement);
-        }
-        return copyList;
-    }
-
-    private static <T> T makeCopy(final T original) {
-        final String xml = Jenkins.XSTREAM.toXML(original);
-        final Object copy = Jenkins.XSTREAM.fromXML(xml);
-        return (T) copy;
     }
 
     /**
