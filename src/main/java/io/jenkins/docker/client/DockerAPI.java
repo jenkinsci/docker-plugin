@@ -1,33 +1,5 @@
 package io.jenkins.docker.client;
 
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
-import static org.apache.commons.lang.StringUtils.trimToNull;
-
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.URI;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
-import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.interceptor.RequirePOST;
-import org.newsclub.net.unix.AFUNIXSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.VersionCmd;
@@ -46,6 +18,33 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.dockerjavaapi.client.DelegatingDockerClient;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.newsclub.net.unix.AFUNIXSocket;
+import org.newsclub.net.unix.AFUNIXSocketAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.URI;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
+import static org.apache.commons.lang.StringUtils.trimToNull;
+
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
