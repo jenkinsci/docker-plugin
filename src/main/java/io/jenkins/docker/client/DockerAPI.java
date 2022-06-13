@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -247,8 +248,12 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         DockerHttpClient httpClient = null;
         DockerClient actualClient = null;
         try {
-            httpClient = new ApacheDockerHttpClient.Builder().dockerHost(URI.create(dockerUri))
-                    .sslConfig(toSSlConfig(credentialsId)).build();
+            httpClient = new ApacheDockerHttpClient.Builder()//
+                    .dockerHost(URI.create(dockerUri))//
+                    .sslConfig(toSSlConfig(credentialsId))//
+                    .connectionTimeout(connectTimeoutInMillisecondsOrNull != null ? Duration.ofMillis((long) connectTimeoutInMillisecondsOrNull.intValue()) : null)//
+                    .responseTimeout(readTimeoutInMillisecondsOrNull != null ? Duration.ofMillis((long) readTimeoutInMillisecondsOrNull.intValue()) : null)//
+                    .build();
             actualClient = DockerClientBuilder.getInstance().withDockerHttpClient(httpClient).build();
             final SharableDockerClient multiUsageClient = new SharableDockerClient(actualClient);
             // if we've got this far, we're going to succeed, so we need to ensure that we
