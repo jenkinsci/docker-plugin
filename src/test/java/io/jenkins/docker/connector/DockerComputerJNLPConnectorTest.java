@@ -36,11 +36,11 @@ public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest
         }
 
         final String imagenameAndVersion = JNLP_AGENT_IMAGE_IMAGENAME + ':' + getJenkinsDockerImageVersionForThisEnvironment();
-		final DockerTemplate template = new DockerTemplate(
+        final DockerTemplate template = new DockerTemplate(
                 new DockerTemplateBase(imagenameAndVersion),
                 new DockerComputerJNLPConnector(new JNLPLauncher(null, null)).withUser(COMMON_IMAGE_USERNAME)
                         .withJenkinsUrl(uri.toString()),
-                        LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
+                        getLabelForTemplate(), COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );
 
         if (SystemUtils.IS_OS_LINUX) {
