@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -14,10 +13,11 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.Matchers.allOf;
 
 /**
  * @author lanwen (Merkushev Kirill)
@@ -33,14 +33,22 @@ public class PortUtilsTest {
 
     @Test
     public void shouldConnectToServerSuccessfully() throws Exception {
-        assertThat("Server is up and should connect",
-                PortUtils.connectionCheck(server.host(), server.port()).executeOnce(), equalTo(true));
+        // When
+        boolean actual = PortUtils.connectionCheck(server.host(), server.port())
+        		.executeOnce();
+
+        // Then
+		assertThat("Server is up and should connect", actual, equalTo(true));
     }
 
     @Test
     public void shouldNotConnectToUnusedPort() throws Exception {
-        assertThat("Unused port should not be connectible", PortUtils.connectionCheck("localhost", 0).executeOnce(),
-                equalTo(false));
+        // When
+        boolean actual = PortUtils.connectionCheck("localhost", 0)
+        		.executeOnce();
+
+        // Then
+		assertThat("Unused port should not be connectible", actual, equalTo(false));
     }
 
     @Test
@@ -52,8 +60,10 @@ public class PortUtilsTest {
 
         // When
         final long before = currentTimeMillis();
-        final boolean actual = PortUtils.connectionCheck("localhost", 0).withRetries(RETRY_COUNT)
-                .withEveryRetryWaitFor(DELAY, MILLISECONDS).execute();
+        final boolean actual = PortUtils.connectionCheck("localhost", 0)
+        		.withRetries(RETRY_COUNT)
+                .withEveryRetryWaitFor(DELAY, MILLISECONDS)
+                .execute();
         final long after = currentTimeMillis();
         final long actualDuration = after - before;
 
@@ -65,13 +75,23 @@ public class PortUtilsTest {
 
     @Test
     public void shouldThrowIllegalStateExOnNotAvailPort() throws Exception {
+        // Given
+    	final Class<IllegalStateException> expectedType = IllegalStateException.class;
+
+    	// When
+    	Throwable thrown = null; 
         try {
-	        PortUtils.connectionCheck("localhost", 0).withRetries(RETRY_COUNT).withEveryRetryWaitFor(DELAY, MILLISECONDS)
-	                .useSSH().execute();
-	        Assert.fail("Expected " + IllegalStateException.class);
-        } catch ( IllegalStateException expected ) {
-        	// pass
+	        PortUtils.connectionCheck("localhost", 0)
+	        		.withRetries(RETRY_COUNT)
+	        		.withEveryRetryWaitFor(DELAY, MILLISECONDS)
+	                .useSSH()
+	                .execute();
+        } catch ( Throwable expected ) {
+        	thrown = expected;
         }
+
+        // Then
+		assertThat(expectedType.getSimpleName() + " thrown", thrown, instanceOf(expectedType));
     }
 
     @Test
@@ -88,9 +108,11 @@ public class PortUtilsTest {
 
         // When
         final long before = currentTimeMillis();
-        final boolean actual = PortUtils.connectionCheck(server.host(), server.port()).withRetries(retries)
+        final boolean actual = PortUtils.connectionCheck(server.host(), server.port())
+        		.withRetries(retries)
                 .withEveryRetryWaitFor(waitBetweenTries, MILLISECONDS).useSSH()
-                .withSSHTimeout(sshWaitDuringTry, MILLISECONDS).execute();
+                .withSSHTimeout(sshWaitDuringTry, MILLISECONDS)
+                .execute();
         final long after = currentTimeMillis();
         final long actualDuration = after - before;
 
@@ -108,7 +130,8 @@ public class PortUtilsTest {
         // When
         final long before = currentTimeMillis();
         final boolean actual = PortUtils.connectionCheck(server.host(), server.port())
-                .withEveryRetryWaitFor(DELAY, MILLISECONDS).execute();
+                .withEveryRetryWaitFor(DELAY, MILLISECONDS)
+                .execute();
         final long after = currentTimeMillis();
         final long actualDuration = after - before;
 
@@ -126,20 +149,27 @@ public class PortUtilsTest {
         final long bringPortUpAfter = DELAY + DELAY/2;
         final long minExpectedTime = 2 * DELAY;
         final long maxExpectedTime = minExpectedTime + DELAY - 1;
-        final long minAllowedTime = minExpectedTime - minimumFudgeFactor(DELAY);
+        // It can take so long to test for the port availability that it's available
+        // by the time the test completes (this is especially common on Windows where the
+        // "can we open this socket?" test takes a couple of seconds the first time it's
+        // done) and hence the test might "pass" the instant we make the socket available
+        // instead of forcing us to retry.
+        final long minAllowedTime = bringPortUpAfter - minimumFudgeFactor(DELAY);
         server.stopAndRebindAfter(bringPortUpAfter, MILLISECONDS);
 
         // When
         final long before = currentTimeMillis();
-        final boolean actual = PortUtils.connectionCheck(server.host(), server.port()).withRetries(retries)
-                .withEveryRetryWaitFor(DELAY, MILLISECONDS).execute();
+        final boolean actual = PortUtils.connectionCheck(server.host(), server.port())
+        		.withRetries(retries)
+                .withEveryRetryWaitFor(DELAY, MILLISECONDS)
+                .execute();
         final long after = currentTimeMillis();
         final long actualDuration = after - before;
 
         // Then
         assertThat("Used port should be connectible", actual, equalTo(true));
-        assertThat("Should wait then retry", actualDuration,
-                allOf(greaterThanOrEqualTo(minAllowedTime), lessThanOrEqualTo(maxExpectedTime)));
+		assertThat("Should try, fail, wait " + DELAY + ", retry(1), fail, wait " + DELAY + ", retry(2) and succeed",
+				actualDuration, allOf(greaterThanOrEqualTo(minAllowedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
 
     /**

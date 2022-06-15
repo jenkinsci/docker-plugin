@@ -3,6 +3,7 @@
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 
+* Fix PortUtilsTest unit test on Windows [#901](https://github.com/jenkinsci/docker-plugin/pull/901)
 * Fix JCasC parsing of volume/mounts [#852](https://github.com/jenkinsci/docker-plugin/issues/852)
 * Docker-attach should inject JAR before starting container [#898](https://github.com/jenkinsci/docker-plugin/pull/898)
 * Bump min Jenkins version from 2.204.4 to 2.303.3 [#897](https://github.com/jenkinsci/docker-plugin/pull/897)

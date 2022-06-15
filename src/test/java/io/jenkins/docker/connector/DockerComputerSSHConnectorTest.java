@@ -54,7 +54,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         final DockerTemplate template = new DockerTemplate(
                 new DockerTemplateBase(imagenameAndVersion),
                 connector,
-                LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
+                getLabelForTemplate(), COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );
         template.setName("connectAgentViaSSHUsingInjectSshKey");
         should_connect_agent(template);
@@ -75,7 +75,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         final DockerTemplate template = new DockerTemplate(
                 new DockerTemplateBase(imagenameAndVersion),
                 connector,
-                LABEL, COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
+                getLabelForTemplate(), COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
         );
         template.getDockerTemplateBase().setEnvironmentsString("JENKINS_SLAVE_SSH_PUBKEY=" + publicKey);
         template.setName("connectAgentViaSSHUsingCredentialsKey");
@@ -84,20 +84,20 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
 
     @Test
     public void testPortBinding() throws IOException, InterruptedException {
-    	// Given
+        // Given
         DockerComputerSSHConnector connector = new DockerComputerSSHConnector(Mockito.mock(DockerComputerSSHConnector.SSHKeyStrategy.class));
         CreateContainerCmdImpl cmd = new CreateContainerCmdImpl(Mockito.mock(CreateContainerCmd.Exec.class), Mockito.mock(AuthConfig.class), "");
         HostConfig hostConfig = cmd.getHostConfig();
         if( hostConfig==null ) {
-        	hostConfig = new HostConfig();
-        	cmd.withHostConfig(hostConfig);
+            hostConfig = new HostConfig();
+            cmd.withHostConfig(hostConfig);
         }
         final PortBinding exportContainerPort42 = PortBinding.parse("42:42");
-		hostConfig.withPortBindings(exportContainerPort42);
-		final ExposedPort port42 = new ExposedPort(42);
-		final ExposedPort port22 = new ExposedPort(22);
+        hostConfig.withPortBindings(exportContainerPort42);
+        final ExposedPort port42 = new ExposedPort(42);
+        final ExposedPort port22 = new ExposedPort(22);
 
-		// When
+        // When
         connector.setPort(22);
         connector.beforeContainerCreated(Mockito.mock(DockerAPI.class), "/workdir", cmd);
 
@@ -108,16 +108,16 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         Assert.assertNotNull(actualBindingMap);
         Assert.assertEquals(2, actualBindingMap.size());
 
-		final Ports.Binding[] actualBindingsForPort42 = actualBindingMap.get(port42);
+        final Ports.Binding[] actualBindingsForPort42 = actualBindingMap.get(port42);
         Assert.assertNotNull(actualBindingsForPort42);
         Assert.assertEquals(1, actualBindingsForPort42.length);
         final String actualHostPortSpecForPort42 = actualBindingsForPort42[0].getHostPortSpec();
-		Assert.assertEquals("42", actualHostPortSpecForPort42);
+        Assert.assertEquals("42", actualHostPortSpecForPort42);
 
-		final Ports.Binding[] actualBindingsForPort22 = actualBindingMap.get(port22);
+        final Ports.Binding[] actualBindingsForPort22 = actualBindingMap.get(port22);
         Assert.assertNotNull(actualBindingsForPort22);
         Assert.assertEquals(1, actualBindingsForPort22.length);
         final String actualHostPortSpecForPort22 = actualBindingsForPort22[0].getHostPortSpec();
-		Assert.assertNull(actualHostPortSpecForPort22);
+        Assert.assertNull(actualHostPortSpecForPort22);
     }
 }
