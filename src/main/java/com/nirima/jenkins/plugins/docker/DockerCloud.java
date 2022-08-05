@@ -16,6 +16,7 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.AuthConfig;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Version;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -601,21 +602,33 @@ public class DockerCloud extends Cloud {
             templates.remove(t);
         }
     }
+    
+    /**
+     * @deprecated use countContainersInDocker(String, String) instead
+     * @see DockerCloud#countContainersInDocker(String, String)
+     */
+    @Deprecated
+    public int countContainersInDocker(final String imageName) throws Exception {
+    	return countContainersInDocker(imageName, null);
+    }
 
     /**
      * Counts the number of instances currently running in Docker that are using
-     * the specified image.
+     * the specified image and template.<br>
+     * Returns all containers matching the given filter parameters.
+     * 
      * <p>
      * <b>WARNING:</b> This method can be slow so it should be called sparingly.
      *
      * @param imageName
-     *            If null, then all instances belonging to this Jenkins instance
-     *            are counted. Otherwise, only those started with the specified
-     *            image are counted.
+     * 		        filter for imageName. If null, no filter is active for imageName.
+     * @param templateName
+     *              filter for templateName. If null, no filter is active for templateName.
+     *
      * @return The number of containers.
      * @throws Exception if anything went wrong.
      */
-    public int countContainersInDocker(final String imageName) throws Exception {
+    public int countContainersInDocker(final String imageName, final String templateName) throws Exception {
         final Map<String, String> labelFilter = new HashMap<>();
         labelFilter.put(
                 DockerContainerLabelKeys.JENKINS_INSTANCE_ID,
@@ -623,10 +636,14 @@ public class DockerCloud extends Cloud {
         if (imageName != null) {
             labelFilter.put(DockerContainerLabelKeys.CONTAINER_IMAGE, imageName);
         }
-        final List<?> containers;
+        if (templateName != null) {
+        	labelFilter.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
+        }
+        final List<Container> containers;
         try (final DockerClient client = dockerApi.getClient()) {
             containers = client.listContainersCmd().withLabelFilter(labelFilter).exec();
         }
+       
         final int count = containers.size();
         return count;
     }
@@ -636,6 +653,7 @@ public class DockerCloud extends Cloud {
      */
     private boolean canAddProvisionedAgent(DockerTemplate t) throws Exception {
         final String templateImage = t.getImage();
+        final String templateName = t.getName();
         final int templateContainerCap = t.instanceCap;
         final int cloudContainerCap = getContainerCap();
 
@@ -643,7 +661,7 @@ public class DockerCloud extends Cloud {
         final boolean haveTemplateContainerCap = templateContainerCap > 0 && templateContainerCap != Integer.MAX_VALUE;
         final int estimatedTotalAgents;
         if (haveCloudContainerCap) {
-            final int totalContainersInCloud = countContainersInDocker(null);
+            final int totalContainersInCloud = countContainersInDocker(null, null);
             final int containersInProgress = countContainersInProgress();
             estimatedTotalAgents = totalContainersInCloud + containersInProgress;
             if (estimatedTotalAgents >= cloudContainerCap) {
@@ -659,7 +677,7 @@ public class DockerCloud extends Cloud {
         }
         final int estimatedTemplateAgents;
         if (haveTemplateContainerCap) {
-            final int totalContainersOfThisTemplateInCloud = countContainersInDocker(templateImage);
+			final int totalContainersOfThisTemplateInCloud = countContainersInDocker(templateImage, templateName);
             final int containersInProgress = countContainersInProgress(t);
             estimatedTemplateAgents = totalContainersOfThisTemplateInCloud + containersInProgress;
             if (estimatedTemplateAgents >= templateContainerCap) {
