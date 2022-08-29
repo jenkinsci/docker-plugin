@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
     xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
     xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-    <t:summary icon="/plugin/docker-plugin/images/48x48/docker.png">
+    <t:summary icon="symbol-docker plugin-docker-plugin">
 
     <h1>Docker Build Data</h1>
 
