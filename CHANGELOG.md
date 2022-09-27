@@ -3,6 +3,9 @@
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 
+## 1.2.10
+_2022-09-27_
+
 * Fix PortUtilsTest unit test on Windows [#901](https://github.com/jenkinsci/docker-plugin/pull/901)
 * Fix JCasC parsing of volume/mounts [#852](https://github.com/jenkinsci/docker-plugin/issues/852)
 * Docker-attach should inject JAR before starting container [#898](https://github.com/jenkinsci/docker-plugin/pull/898)
@@ -10,6 +13,7 @@ A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docke
 * Fix readonly parsing when mounting [#880](https://github.com/jenkinsci/docker-plugin/issues/880)
 * Enhancement: Supports mounting NPIPEs [#888](https://github.com/jenkinsci/docker-plugin/pull/888)
 * Enhancement: Add support for --cpus [#895](https://github.com/jenkinsci/docker-plugin/pull/895)
+* Enhancement: Improve help text for docker user field [#909](https://github.com/jenkinsci/docker-plugin/pull/909)
 * Fix volumes-from parsing [#878](https://github.com/jenkinsci/docker-plugin/issues/878)
 * :warning: Requires docker-java-api-plugin 3.2.x
 
