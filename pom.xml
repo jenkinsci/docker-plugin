@@ -61,6 +61,8 @@
         <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
         <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
+        <spotbugs.effort>Max</spotbugs.effort>
+        <spotbugs.threshold>Low</spotbugs.threshold>
     </properties>
 
     <dependencies>
