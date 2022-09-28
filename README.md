@@ -152,7 +152,7 @@ for the Docker image to be used:
     [jenkins/agent](https://hub.docker.com/r/jenkins/agent/)
     as a basis for a custom image. 
 
-To create a custom image and bundle your favorite tools,
+To create a custom image and bundle your favourite tools,
 create a `Dockerfile` with the `FROM` to point to one of the
 jenkins/\*-agent
 reference images,
@@ -161,7 +161,7 @@ and install everything needed for your own usage, e.g.
 ```
 FROM jenkins/inbound-agent
 RUN apt-get update && apt-get install XXX
-COPY your-favorite-tool-here
+COPY your-favourite-tool-here
 ```
 
 
