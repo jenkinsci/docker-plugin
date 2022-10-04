@@ -192,11 +192,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>19.0</version>
-        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -231,15 +226,4 @@
         </pluginRepository>
     </pluginRepositories>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <configuration>
-                    <maskClasses>com.google.common.</maskClasses>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
