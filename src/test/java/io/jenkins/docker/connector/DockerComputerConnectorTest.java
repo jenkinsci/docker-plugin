@@ -191,7 +191,7 @@ public abstract class DockerComputerConnectorTest {
         final Result actualBuildResult;
         final List<String> actualBuildLog;
         try {
-            final FreeStyleBuild build = scheduledBuild.get(90L, TimeUnit.SECONDS);
+            final FreeStyleBuild build = scheduledBuild.get(120L, TimeUnit.SECONDS);
             actualBuildResult = build.getResult();
             actualBuildLog = build.getLog(1000);
         } finally {
