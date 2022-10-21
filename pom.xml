@@ -43,9 +43,13 @@
             <id>pjdarton</id>
             <name>Peter Darton</name>
             <roles>
-                <role>maintainer</role>
+                <role>maintainer (retired)</role>
             </roles>
         </developer>
+        <!--
+            You could have your name here.
+            https://www.jenkins.io/doc/developer/plugin-governance/adopt-a-plugin/
+        -->
     </developers>
 
     <properties>
