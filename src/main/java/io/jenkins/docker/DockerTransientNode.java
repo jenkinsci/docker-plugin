@@ -370,6 +370,58 @@ public class DockerTransientNode extends AbstractCloudSlave {
         return (DockerCloud) cloud;
     }
 
+    /**
+     * <i>Robustly</i> adds this node to Jenkins.
+     * This works around for Jenkins core issue in Nodes.java's addNode method..
+     * There's a line there saying
+     * "<i>TODO there is a theoretical race whereby the node instance is
+     * updated/removed after lock release</i>". When we're busy adding nodes
+     * this is not merely "theoretical"!
+     * 
+     * @see <a href=
+     *      "https://github.com/jenkinsci/jenkins/blob/a0faeaee3cbcd2709b6ffb4491e31928b1d234d5/core/src/main/java/jenkins/model/Nodes.java#L148">
+     *      Nodes.java addNode method</a>
+     * 
+     * @throws IOException
+     *             if it all failed horribly every time we tried.
+     */
+    @Restricted(NoExternalUse.class)
+    public void robustlyAddToJenkins() throws IOException {
+        // don't retry getInstance - fail immediately if that fails.
+        final Jenkins jenkins = Jenkins.get();
+        final int maxAttempts = 10;
+        for (int attempt = 1;; attempt++) {
+            try {
+                // addNode can fail at random due to a race condition.
+                jenkins.addNode(this);
+                return;
+            } catch (IOException | RuntimeException ex) {
+                if (attempt > maxAttempts) {
+                    throw ex;
+                }
+                final long delayInMilliseconds = 10L * attempt;
+                try {
+                    Thread.sleep(delayInMilliseconds);
+                } catch (InterruptedException e) {
+                    throw new IOException(e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Reverse of {@link #robustlyAddToJenkins()}.
+     * 
+     * @throws IOException
+     *             if it all failed horribly.
+     */
+    @Restricted(NoExternalUse.class)
+    public void robustlyRemoveFromJenkins() throws IOException {
+        final Jenkins jenkins = Jenkins.get();
+        // We think removeNode is reliable so no retries needed
+        jenkins.removeNode(this);
+    }
+
     @Extension
     public static final class DockerTransientNodeDescriptor extends SlaveDescriptor {
 
