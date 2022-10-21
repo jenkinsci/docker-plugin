@@ -112,7 +112,7 @@ class DemuxTester implements AutoCloseable, Runnable {
             thread.join(100);
         }
         catch (IOException | InterruptedException e) { 
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -132,13 +132,19 @@ class DemuxTester implements AutoCloseable, Runnable {
 
         //  2. wait until all bytes are processed
         //     (with a 1-second timeout to prevent hanging)
-        for (int i=200 ; i!=0 ; i--) {
-            if (feeder_input_stream.available() == 0) {
+        long maxTimeInNs = 1000000000L;
+        long startTimestampNs = System.nanoTime();
+        while ((System.nanoTime() - startTimestampNs) <= maxTimeInNs) {
+            // if all bytes have been read then we might be finished
+            boolean all_bytes_have_been_read = feeder_input_stream.available() == 0;
+            // ...but we might still be processing them
+            // i.e. are we now blocked (waiting for more), or at eof?
+            boolean thread_is_idle = !Thread.State.RUNNABLE.equals(thread.getState());
+            if (all_bytes_have_been_read && thread_is_idle) {
                 break;
             }
-            Thread.sleep(5);
+            Thread.sleep(5L);
         }
-        Thread.sleep(5);
 
         //  3. ensure the output equals 'expected_output'
         Assert.assertArrayEquals(expected_output, sink.toByteArray());
