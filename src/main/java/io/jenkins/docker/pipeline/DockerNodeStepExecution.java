@@ -142,7 +142,7 @@ class DockerNodeStepExecution extends StepExecution {
             node = t.provisionNode(api, listener);
             node.setDockerAPI(api);
             node.setAcceptingTasks(false); // Prevent this node to be used by tasks from build queue
-            Jenkins.get().addNode(node);
+            node.robustlyAddToJenkins();
 
             listener.getLogger().println("Waiting for node to be online ...");
             // TODO maybe rely on ComputerListener to catch onOnline() event ?
@@ -230,7 +230,7 @@ class DockerNodeStepExecution extends StepExecution {
                 TaskListener listener = context.get(TaskListener.class);
                 listener.getLogger().println("Terminating docker node ...");
                 node._terminate(listener);
-                Jenkins.get().removeNode(node);
+                node.robustlyRemoveFromJenkins();
             }
         }
     }
