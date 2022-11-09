@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.40</version>
+        <version>4.50</version>
         <relativePath />
     </parent>
 
@@ -43,9 +43,13 @@
             <id>pjdarton</id>
             <name>Peter Darton</name>
             <roles>
-                <role>maintainer</role>
+                <role>maintainer (retired)</role>
             </roles>
         </developer>
+        <!--
+            You could have your name here.
+            https://www.jenkins.io/doc/developer/plugin-governance/adopt-a-plugin/
+        -->
     </developers>
 
     <properties>
@@ -57,6 +61,8 @@
         <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
         <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
+        <spotbugs.effort>Max</spotbugs.effort>
+        <spotbugs.threshold>Low</spotbugs.threshold>
     </properties>
 
     <dependencies>
@@ -194,7 +200,7 @@
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
+        <connection>scm:git:https://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/docker-plugin</url>
         <tag>${scmTag}</tag>

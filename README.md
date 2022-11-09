@@ -4,6 +4,11 @@
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/docker-plugin.svg?color=blue)](https://plugins.jenkins.io/docker-plugin)
 [![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/docker-plugin/master)](https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/)
 
+Note: This plugin is officially ["up for adoption"](https://www.jenkins.io/doc/developer/plugin-governance/adopt-a-plugin/#faq).
+It would benefit from having a new maintainer who uses it "for real work"
+and is thus able to test things "for real" before release
+instead of relying purely on the unit tests.
+
 #### Overview
 
 This plugin allows containers to be dynamically provisioned as Jenkins nodes using Docker.
@@ -48,8 +53,14 @@ plugin and should go to its repository instead of this one.
 
 ----
 
+**Note:** This plugin does not use the OS's native docker client;
+it uses [docker-java](https://github.com/docker-java/docker-java).
+You do not need to install a docker client on Jenkins or on your agents to use this plugin.
+
+----
+
 **Note:** This plugin does not _provide_ a Docker daemon; it allows Jenkins to _use_ a docker daemon.
-i.e. Once you've installed docker on your OS, this plugin will allow Jenkins to use it.
+i.e. Once you've installed docker somewhere, this plugin will allow Jenkins to make use of it.
 
 ----
 
@@ -60,6 +71,8 @@ A quick setup is :
 1. get a docker environment running
 1. follow the instructions for creating a docker image that can be used
 as a Jenkins Agent
+_or_ use one of the pre-built images
+e.g. [jenkins/inbound-agent](https://hub.docker.com/r/jenkins/inbound-agent/)
 
 ### Docker Environment
 
@@ -182,9 +195,15 @@ This,
 combined with knowledge of [docker itself](https://docs.docker.com/),
 should answer most questions.
 
-# Configure plugin via Groovy script
+# Configuration as code
 
-Jenkins can be configured using Groovy code, and the docker plugin is no exception.
+Jenkins and the docker-plugin can be configured using Groovy code
+and/or using the [JCasC plugin](https://plugins.jenkins.io/configuration-as-code/).
+
+If you're unsure which method to use, use JCasC.
+
+## Groovy script
+
 For example, this
 [configuration script](docs/attachments/docker-plugin-configuration-script.groovy)
 could be run automatically upon
@@ -195,3 +214,7 @@ If run,
 this script will configure the docker-plugin to look for a docker daemon running within the same OS as the Jenkins master
 (connecting to Docker service through `unix:///var/run/docker.sock`)
 and with the containers connecting to Jenkins using the "attach" method.
+
+## JCasC plugin
+
+Install the [configuration-as-code plugin](https://plugins.jenkins.io/configuration-as-code/) and follow [its example](https://github.com/jenkinsci/configuration-as-code-plugin/tree/master/demos/docker).

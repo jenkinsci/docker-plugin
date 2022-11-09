@@ -130,7 +130,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * @throws IOException if Jenkins is unable to persist the details.
      */
     protected void ensureNodeIsKnown(DockerTransientNode node) throws IOException {
-        Jenkins.get().addNode(node);
+        node.robustlyAddToJenkins();
     }
 
     /**
