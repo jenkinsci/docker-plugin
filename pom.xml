@@ -204,7 +204,7 @@
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
+        <connection>scm:git:https://github.com/jenkinsci/docker-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/docker-plugin</url>
         <tag>${scmTag}</tag>
