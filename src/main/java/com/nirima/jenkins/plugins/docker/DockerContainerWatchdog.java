@@ -121,7 +121,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             return;
         }
 
-        LOGGER.info("Docker Container Watchdog has been triggered");
+        LOGGER.debug("Docker Container Watchdog has been triggered");
 
         executionStatistics.writeStatisticsToLog();
 
@@ -142,7 +142,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                         continue; // currently declines to default it, contrary to getUri Javadoc
                     }
 
-                    LOGGER.info("Checking Docker Cloud {} at {}", dc.getDisplayName(), uri);
+                    LOGGER.debug("Checking Docker Cloud {} at {}", dc.getDisplayName(), uri);
                     listener.getLogger().println(String.format("Checking Docker Cloud %s", dc.getDisplayName()));
 
                     csmMerged = processCloud(dc, nodeMap, csmMerged, snapshotInstance);
@@ -165,7 +165,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             executionStatistics.addOverallRuntime(Duration.between(start, stop).toMillis());
         }
 
-        LOGGER.info("Docker Container Watchdog check has been completed");
+        LOGGER.debug("Docker Container Watchdog check has been completed");
     }
 
     /**
@@ -196,7 +196,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
              */
         }
 
-        LOGGER.info("We currently have {} nodes assigned to this Jenkins instance, which we will check", nodeMap.size());
+        LOGGER.debug("We currently have {} nodes assigned to this Jenkins instance, which we will check", nodeMap.size());
 
         return nodeMap;
     }
@@ -544,7 +544,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         private long retrieveContainersCalls;
 
         public void writeStatisticsToLog() {
-            LOGGER.info("Watchdog Statistics: "
+            LOGGER.debug("Watchdog Statistics: "
                     + "Number of overall executions: {}, "
                     + "Executions with processing timeout: {}, "
                     + "Containers removed gracefully: {}, "
