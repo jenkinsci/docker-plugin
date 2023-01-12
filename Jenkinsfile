@@ -8,7 +8,7 @@ buildPlugin(
   failFast: false,
   // Test Java 11 with minimum Jenkins version, Java 17 with a more recent version
   configurations: [
-    [platform: 'windows', jdk: '17', jenkins: '2.386'],
+    [platform: 'windows', jdk: '17'],
     [platform: 'linux',   jdk: '11'],
   ]
 )
