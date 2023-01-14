@@ -57,7 +57,7 @@
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <groovy.version>2.4.7</groovy.version>
-        <jenkins.version>2.346.3</jenkins.version>
+        <jenkins.version>2.332.4</jenkins.version>
         <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
         <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
@@ -184,7 +184,7 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.346.x</artifactId>
+                <artifactId>bom-2.332.x</artifactId>
                 <version>1763.v092b_8980a_f5e</version>
                 <type>pom</type>
                 <scope>import</scope>
