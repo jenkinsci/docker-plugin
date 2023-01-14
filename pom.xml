@@ -167,11 +167,6 @@
             <groupId>org.jenkins-ci.modules</groupId>
             <artifactId>instance-identity</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>3.0.0</version>
-        </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
