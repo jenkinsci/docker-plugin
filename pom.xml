@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.50</version>
+        <version>4.51</version>
         <relativePath />
     </parent>
 
@@ -57,7 +57,7 @@
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <groovy.version>2.4.7</groovy.version>
-        <jenkins.version>2.303.3</jenkins.version>
+        <jenkins.version>2.332.4</jenkins.version>
         <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
         <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
@@ -116,13 +116,6 @@
             <groupId>io.jenkins</groupId>
             <artifactId>configuration-as-code</artifactId>
             <scope>test</scope>
-            <exclusions>
-            	<!-- We get apache commons lang from docker-java and that version can conflict with what JCasC says it needs -->
-            	<exclusion>
-            		<groupId>org.apache.commons</groupId>
-            		<artifactId>commons-lang3</artifactId>
-            	</exclusion>
-            </exclusions> 
         </dependency>
         <dependency>
             <groupId>io.jenkins.configuration-as-code</groupId>
@@ -191,8 +184,8 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.303.x</artifactId>
-                <version>1409.v7659b_c072f18</version>
+                <artifactId>bom-2.332.x</artifactId>
+                <version>1763.v092b_8980a_f5e</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
