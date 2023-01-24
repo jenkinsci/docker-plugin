@@ -1,9 +1,5 @@
 # Docker plugin for Jenkins
 
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/docker-plugin.svg)](https://plugins.jenkins.io/docker-plugin)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/docker-plugin.svg?color=blue)](https://plugins.jenkins.io/docker-plugin)
-[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/docker-plugin/master)](https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/)
-
 Note: This plugin is officially ["up for adoption"](https://www.jenkins.io/doc/developer/plugin-governance/adopt-a-plugin/#faq).
 It would benefit from having a new maintainer who uses it "for real work"
 and is thus able to test things "for real" before release
