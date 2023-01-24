@@ -56,7 +56,6 @@
         <revision>1.2.11</revision>
         <changelist>-SNAPSHOT</changelist>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <groovy.version>2.4.7</groovy.version>
         <jenkins.version>2.332.4</jenkins.version>
         <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
         <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
@@ -75,6 +74,12 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-java-api</artifactId>
             <version>3.2.13-37.vf3411c9828b9</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-httpclient5</artifactId>
+            <version>3.2.13</version>
         </dependency>
 
         <dependency>
@@ -161,11 +166,6 @@
             <groupId>org.jenkins-ci.modules</groupId>
             <artifactId>instance-identity</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>3.0.0</version>
-        </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -211,4 +211,5 @@
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
+
 </project>
