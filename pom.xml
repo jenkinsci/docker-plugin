@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.51</version>
+        <version>4.63</version>
         <relativePath />
     </parent>
 
@@ -15,7 +15,7 @@
 
     <name>Docker plugin</name>
     <description>Provide Cloud Provisioning and other Docker features</description>
-    <url>https://github.com/jenkinsci/docker-plugin</url>
+    <url>https://github.com/jenkinsci/${project.artifactId}</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -55,8 +55,7 @@
     <properties>
         <revision>1.3.1</revision>
         <changelist>-SNAPSHOT</changelist>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jenkins.version>2.332.4</jenkins.version>
+        <jenkins.version>2.361.4</jenkins.version>
         <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
         <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
@@ -73,19 +72,13 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-java-api</artifactId>
-            <version>3.2.13-37.vf3411c9828b9</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java-transport-httpclient5</artifactId>
-            <version>3.2.13</version>
+            <version>3.2.13-68.va_875df25a_b_45</version>
         </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>docker-commons</artifactId>
-            <version>1.18</version>
+            <version>419.v8e3cd84ef49c</version>
         </dependency>
 
         <dependency>
@@ -151,13 +144,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-            <version>2.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
@@ -184,8 +170,8 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.332.x</artifactId>
-                <version>1763.v092b_8980a_f5e</version>
+                <artifactId>bom-2.361.x</artifactId>
+                <version>2081.v85885a_d2e5c5</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -193,9 +179,9 @@
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:https://github.com/jenkinsci/docker-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/docker-plugin</url>
+        <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
+        <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+        <url>https://github.com/${gitHubRepo}</url>
         <tag>${scmTag}</tag>
     </scm>
 
