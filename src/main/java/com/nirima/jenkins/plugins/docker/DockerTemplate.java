@@ -69,7 +69,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      */
     public static final int DEFAULT_STOP_TIMEOUT = 10;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerTemplate.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerTemplate.class.getName());
 
     private static final UniqueIdGenerator ID_GENERATOR = new UniqueIdGenerator(36);
 
