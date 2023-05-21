@@ -202,4 +202,21 @@
       <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
+
+  <profiles>
+    <profile>
+      <id>skip-spotless-on-windows-ci</id>
+      <activation>
+        <os>
+          <family>Windows</family>
+        </os>
+        <property>
+          <name>env.CI</name>
+        </property>
+      </activation>
+      <properties>
+        <spotless.check.skip>true</spotless.check.skip>
+      </properties>
+    </profile>
+  </profiles>
 </project>
