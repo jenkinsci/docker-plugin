@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.Functions;
 import hudson.Util;
@@ -8,8 +10,6 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -62,7 +62,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
      */
     @Restricted(NoExternalUse.class)
     public void disableBySystem(
-            @Nonnull final String reasonGiven, final long durationInMilliseconds, @Nullable final Throwable exception) {
+            @NonNull final String reasonGiven, final long durationInMilliseconds, @Nullable final Throwable exception) {
         final long durationInNanoseconds = TimeUnit.MILLISECONDS.toNanos(durationInMilliseconds);
         final long now = readTimeNowInNanoseconds();
         disabledBySystem = true;

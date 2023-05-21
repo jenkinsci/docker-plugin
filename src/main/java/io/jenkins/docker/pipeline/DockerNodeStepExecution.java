@@ -3,6 +3,8 @@ package io.jenkins.docker.pipeline;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Computer;
@@ -19,8 +21,6 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -218,7 +218,7 @@ class DockerNodeStepExecution extends StepExecution {
     }
 
     @Override
-    public void stop(@Nonnull Throwable cause) throws Exception {
+    public void stop(@NonNull Throwable cause) throws Exception {
         if (task != null) {
             task.cancel(true);
         }

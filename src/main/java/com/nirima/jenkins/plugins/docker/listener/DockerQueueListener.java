@@ -4,6 +4,8 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerJobProperty;
 import com.nirima.jenkins.plugins.docker.DockerJobTemplateProperty;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.InvisibleAction;
 import hudson.model.Label;
@@ -16,8 +18,6 @@ import hudson.model.labels.LabelAtom;
 import hudson.model.queue.QueueListener;
 import hudson.model.queue.SubTask;
 import java.util.UUID;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 
 /**
  * This listener handles templates which are configured in a project.
@@ -83,7 +83,7 @@ public class DockerQueueListener extends QueueListener {
         }
 
         @Override
-        public Label getAssignedLabel(@Nonnull SubTask task) {
+        public Label getAssignedLabel(@NonNull SubTask task) {
             return new LabelAtom(uuid);
         }
     }

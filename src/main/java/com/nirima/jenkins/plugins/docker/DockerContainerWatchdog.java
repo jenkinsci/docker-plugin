@@ -53,7 +53,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
     /**
      * The recurrence period how often this task shall be run
-     *
+     * <p>
      * NB: Reading the property here statically is the right think to do,
      * because getRecurrencePeriod() is required to return a constant (i.e.
      * it may not change during runtime).

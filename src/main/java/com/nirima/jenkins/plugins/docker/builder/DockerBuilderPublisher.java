@@ -23,6 +23,9 @@ import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -51,9 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
@@ -72,7 +72,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Builder extension to build / publish an image from a Dockerfile.
- * TODO automatic migration to https://wiki.jenkins.io/display/JENKINS/CloudBees+Docker+Build+and+Publish+plugin
+ * TODO automatic migration to <a href="https://plugins.jenkins.io/docker-build-publish/">CloudBees Docker Build and Publish</a>
  */
 public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
 
@@ -206,7 +206,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         this.tags = fixEmpty(tags);
     }
 
-    @Nonnull
+    @NonNull
     public String getTagsString() {
         final List<String> tagsOrNull = getTags();
         return tagsOrNull == null ? "" : Joiner.on("\n").join(tagsOrNull);
@@ -226,7 +226,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         this.buildArgs = fixEmpty(buildArgs);
     }
 
-    @Nonnull
+    @NonNull
     public String getBuildArgsString() {
         final Map<String, String> buildArgsOrNull = getBuildArgs();
         return buildArgsOrNull == null
@@ -290,7 +290,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
                 }
             }
             final Optional<DockerCloud> cloudForChannel = JenkinsUtils.getCloudForChannel(channel);
-            if (!cloudForChannel.isPresent()) {
+            if (cloudForChannel.isEmpty()) {
                 throw new RuntimeException("Could not find the cloud this project was built on");
             }
             theCloud = cloudForChannel.get();
@@ -315,7 +315,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
         private final FilePath fpChild;
         private final List<String> tagsToUse;
 
-        @Nonnull
+        @NonNull
         private final Map<String, String> buildArgsToUse;
 
         private final DockerAPI dockerApi;
@@ -326,7 +326,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
                 final TaskListener listener,
                 FilePath fpChild,
                 List<String> tagsToUse,
-                @Nonnull Map<String, String> buildArgsToUse,
+                @NonNull Map<String, String> buildArgsToUse,
                 DockerAPI dockerApi) {
             this.run = run;
             this.listener = listener;
@@ -395,7 +395,7 @@ public class DockerBuilderPublisher extends Builder implements SimpleBuildStep {
             }
         }
 
-        @Nonnull
+        @NonNull
         private String buildImage() throws IOException, InterruptedException {
             final AuthConfigurations auths = new AuthConfigurations();
             final DockerRegistryEndpoint pullRegistry = getFromRegistry();

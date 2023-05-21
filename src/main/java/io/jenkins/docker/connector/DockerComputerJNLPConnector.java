@@ -11,6 +11,8 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.google.common.base.Joiner;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Util;
@@ -24,8 +26,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import jenkins.slaves.JnlpAgentReceiver;
 import org.apache.commons.lang.StringUtils;
@@ -81,7 +81,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         this.jenkinsUrl = Util.fixEmptyAndTrim(jenkinsUrl);
     }
 
-    @Nonnull
+    @NonNull
     public String getEntryPointArgumentsString() {
         if (entryPointArguments == null) {
             return "";

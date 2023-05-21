@@ -1,8 +1,11 @@
 package io.jenkins.docker.client;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
@@ -12,7 +15,7 @@ public class UsageTrackingCacheTest {
     @Test
     public void getAndIncrementUsageGivenEmptyCacheThenReturnsNull() {
         final String key = "key";
-        final List<Object> expiryList = Lists.newArrayList();
+        final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.DAYS, expiryHandler);
 
@@ -26,7 +29,7 @@ public class UsageTrackingCacheTest {
     public void cacheAndIncrementUsageGivenClashingEntryThenThrows() {
         final String key = "key";
         final Object value = value("value");
-        final List<Object> expiryList = Lists.newArrayList();
+        final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.DAYS, expiryHandler);
         instance.cacheAndIncrementUsage(key, value);
@@ -43,7 +46,7 @@ public class UsageTrackingCacheTest {
     public void getAndIncrementUsageGivenActiveDataThenReturnsSameDataEveryTime() {
         final String key = "key";
         final Object value = value("value");
-        final List<Object> expiryList = Lists.newArrayList();
+        final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.DAYS, expiryHandler);
         instance.cacheAndIncrementUsage(key, value);
@@ -61,7 +64,7 @@ public class UsageTrackingCacheTest {
     @Test
     public void decrementUsageGivenNoActivityThenThrows() {
         final Object value = value("value");
-        final List<Object> expiryList = Lists.newArrayList();
+        final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.DAYS, expiryHandler);
 
@@ -77,7 +80,7 @@ public class UsageTrackingCacheTest {
     public void decrementUsageGivenOneTooManyCallsThenThrows() {
         final String key = "key";
         final Object value = value("value");
-        final List<Object> expiryList = Lists.newArrayList();
+        final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.DAYS, expiryHandler);
         instance.cacheAndIncrementUsage(key, value); // count=1
@@ -98,7 +101,7 @@ public class UsageTrackingCacheTest {
     public void getAndIncrementUsageGivenRecentButInactiveDataInCacheThenReturnsCachedData() {
         final String key = "key";
         final Object value = value("value");
-        final List<Object> expiryList = Lists.newArrayList();
+        final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.DAYS, expiryHandler);
         instance.cacheAndIncrementUsage(key, value); // count=1
@@ -114,7 +117,7 @@ public class UsageTrackingCacheTest {
     public void getAndIncrementUsageGivenOldInactiveDataInCacheThenDiscardsOldDataAndReturnsNull() throws Exception {
         final String key = "key";
         final Object value = value("value");
-        final List<Object> expiryList = Lists.newArrayList();
+        final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance =
                 new UsageTrackingCache<>(1, TimeUnit.MILLISECONDS, expiryHandler);
@@ -133,7 +136,7 @@ public class UsageTrackingCacheTest {
     public void expiryHandlerGivenOldActiveDataInCacheThenNotCalled() throws Exception {
         final String key = "key";
         final Object value = value("value");
-        final List<Object> expiryList = Lists.newArrayList();
+        final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance =
                 new UsageTrackingCache<>(1, TimeUnit.MILLISECONDS, expiryHandler);
@@ -158,7 +161,7 @@ public class UsageTrackingCacheTest {
 
     private static <K extends L, V extends L, L> UsageTrackingCache.ExpiryHandler<K, V> expiryTracker(
             final List<L> expiryList) {
-        return new UsageTrackingCache.ExpiryHandler<K, V>() {
+        return new UsageTrackingCache.ExpiryHandler<>() {
             @Override
             public void entryDroppedFromCache(K key, V value) {
                 expiryList.add(key);

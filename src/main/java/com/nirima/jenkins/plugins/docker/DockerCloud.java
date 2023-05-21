@@ -17,7 +17,8 @@ import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Version;
-import com.google.common.base.Throwables;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -40,10 +41,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
@@ -291,11 +291,8 @@ public class DockerCloud extends Cloud {
         final String cloudId = cloud.name;
         final String templateId = getTemplateId(template);
         synchronized (CONTAINERS_IN_PROGRESS) {
-            Map<String, Integer> mapForThisCloud = CONTAINERS_IN_PROGRESS.get(cloudId);
-            if (mapForThisCloud == null) {
-                mapForThisCloud = new HashMap<>();
-                CONTAINERS_IN_PROGRESS.put(cloudId, mapForThisCloud);
-            }
+            Map<String, Integer> mapForThisCloud =
+                    CONTAINERS_IN_PROGRESS.computeIfAbsent(cloudId, unused -> new HashMap<>());
             final Integer oldValue = mapForThisCloud.get(templateId);
             final int oldNumber = oldValue == null ? 0 : oldValue;
             final int newNumber = oldNumber + adjustment;
@@ -414,7 +411,11 @@ public class DockerCloud extends Cloud {
                             if (agent != null) {
                                 agent.terminate(LOGGER);
                             }
-                            throw Throwables.propagate(ex);
+                            if (ex instanceof RuntimeException) {
+                                throw (RuntimeException) ex;
+                            } else {
+                                throw new RuntimeException(ex);
+                            }
                         } finally {
                             decrementContainersInProgress(t);
                         }
@@ -534,7 +535,7 @@ public class DockerCloud extends Cloud {
     }
 
     public List<DockerTemplate> getTemplates() {
-        return templates == null ? Collections.EMPTY_LIST : templates;
+        return templates == null ? Collections.emptyList() : templates;
     }
 
     /**
@@ -768,10 +769,10 @@ public class DockerCloud extends Cloud {
         // Primitive fields should be tested before objects.
         // Computationally-expensive fields get tested last.
         // Note: If modifying this code, remember to update hashCode() and toString()
-        if (name != null ? !name.equals(that.name) : that.name != null) {
+        if (!Objects.equals(name, that.name)) {
             return false;
         }
-        if (dockerApi != null ? !dockerApi.equals(that.dockerApi) : that.dockerApi != null) {
+        if (!Objects.equals(dockerApi, that.dockerApi)) {
             return false;
         }
         if (containerCap != that.containerCap) {
@@ -783,7 +784,7 @@ public class DockerCloud extends Cloud {
         if (!getDisabled().equals(that.getDisabled())) {
             return false;
         }
-        if (templates != null ? !templates.equals(that.templates) : that.templates != null) {
+        if (!Objects.equals(templates, that.templates)) {
             return false;
         }
         return true;
@@ -851,7 +852,7 @@ public class DockerCloud extends Cloud {
         return TimeUnit.SECONDS.toMillis(ERROR_DURATION_DEFAULT_SECONDS);
     }
 
-    @Nonnull
+    @NonNull
     public static List<DockerCloud> instances() {
         List<DockerCloud> instances = new ArrayList<>();
         for (Cloud cloud : Jenkins.get().clouds) {
@@ -924,7 +925,7 @@ public class DockerCloud extends Cloud {
         // but in some context (typically, passing registry auth for `docker build`) we just can't guess this one.
 
         final Credentials c = firstOrNull(
-                CredentialsProvider.lookupCredentials(IdCredentials.class, context, ACL.SYSTEM, Collections.EMPTY_LIST),
+                CredentialsProvider.lookupCredentials(IdCredentials.class, context, ACL.SYSTEM, List.of()),
                 withId(registry.getCredentialsId()));
         final DockerRegistryToken t = c == null ? null : AuthenticationTokens.convert(DockerRegistryToken.class, c);
         if (t == null) {

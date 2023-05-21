@@ -8,8 +8,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -27,7 +27,7 @@ public class DockerImagePullStrategyTest {
 
     @Parameterized.Parameters(name = "existing image: ''{0}'', image to pull: ''{1}'', strategy: ''{2}''")
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
+        return List.of(new Object[][] {
             {false, "repo/name:latest", DockerImagePullStrategy.PULL_LATEST, true},
             {true, "repo/name:latest", DockerImagePullStrategy.PULL_LATEST, true},
             {false, "repo/name:1.0", DockerImagePullStrategy.PULL_LATEST, true},

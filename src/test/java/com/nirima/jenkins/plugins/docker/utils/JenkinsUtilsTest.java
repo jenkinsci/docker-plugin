@@ -10,7 +10,6 @@ import hudson.model.Label;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import io.jenkins.docker.client.DockerAPI;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +33,7 @@ public class JenkinsUtilsTest {
         final DockerCloud cloudExpected = new DockerCloud(expectedCloudName, dockerApi, Collections.emptyList());
         final DockerCloud cloudOther = new DockerCloud("otherCloudName", dockerApi, Collections.emptyList());
         final OtherTypeOfCloud cloudForeign = new OtherTypeOfCloud("foreign");
-        final List<Cloud> clouds = Arrays.asList(cloudEmpty, cloudOther, cloudExpected, cloudForeign);
+        final List<Cloud> clouds = List.of(cloudEmpty, cloudOther, cloudExpected, cloudForeign);
         jenkins.getInstance().clouds.replaceBy(clouds);
 
         // When
@@ -55,7 +54,7 @@ public class JenkinsUtilsTest {
         final String cloudName2 = "otherCloudName";
         final DockerCloud cloud2 = new DockerCloud(cloudName2, dockerApi, Collections.emptyList());
         final OtherTypeOfCloud cloudForeign = new OtherTypeOfCloud("foreign");
-        final List<Cloud> clouds = Arrays.asList(cloudEmpty, cloud2, cloud1, cloudForeign);
+        final List<Cloud> clouds = List.of(cloudEmpty, cloud2, cloud1, cloudForeign);
         jenkins.getInstance().clouds.replaceBy(clouds);
 
         try {
@@ -83,7 +82,7 @@ public class JenkinsUtilsTest {
         final String cloudName2 = "DockerCloud2Name";
         final DockerCloud cloud2 = new DockerCloud(cloudName2, dockerApi, Collections.emptyList());
         final OtherTypeOfCloud cloudForeign = new OtherTypeOfCloud(requestedCloudName);
-        final List<Cloud> clouds = Arrays.asList(cloudEmpty, cloud2, cloud1, cloudForeign);
+        final List<Cloud> clouds = List.of(cloudEmpty, cloud2, cloud1, cloudForeign);
         jenkins.getInstance().clouds.replaceBy(clouds);
 
         try {

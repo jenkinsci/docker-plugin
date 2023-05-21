@@ -3,10 +3,10 @@ package com.nirima.jenkins.plugins.docker.builder;
 import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Launcher;
 import hudson.model.Run;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 
 /**
@@ -25,7 +25,7 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
         return cloudName;
     }
 
-    protected @Nonnull DockerCloud getCloud(Run<?, ?> build, Launcher launcher) {
+    protected @NonNull DockerCloud getCloud(Run<?, ?> build, Launcher launcher) {
         // Did we specify?
         if (!Strings.isNullOrEmpty(cloudName)) {
             DockerCloud specifiedCloud = (DockerCloud) Jenkins.get().getCloud(cloudName);
@@ -38,7 +38,7 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
         // Otherwise default to where we ran
         Optional<DockerCloud> cloud = JenkinsUtils.getCloudThatWeBuiltOn(build, launcher);
 
-        if (!cloud.isPresent()) {
+        if (cloud.isEmpty()) {
             throw new IllegalStateException("Cannot list cloud for docker action");
         }
 

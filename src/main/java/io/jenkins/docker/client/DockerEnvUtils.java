@@ -39,7 +39,7 @@ public class DockerEnvUtils {
             }
         }
         envs.add(envName + '=' + envValue);
-        final String[] newEnvs = envs.toArray(new String[envs.size()]);
+        final String[] newEnvs = envs.toArray(new String[0]);
         cmd.withEnv(newEnvs);
     }
 }

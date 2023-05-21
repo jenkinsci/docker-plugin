@@ -1,6 +1,5 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.trilead.ssh2.Connection;
@@ -161,7 +160,9 @@ public class PortUtils {
          *             if interrupted while waiting between retries.
          */
         public boolean execute() throws InterruptedException {
-            checkState(parent.execute(), "Port %s is not opened to connect to", parent.port);
+            if (!parent.execute()) {
+                throw new IllegalStateException(String.format("Port %d is not opened to connect to", parent.port));
+            }
 
             final int retries = Math.max(0, parent.retries);
             final long retryDelay = parent.retryDelay;

@@ -10,7 +10,6 @@ import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
 import java.time.Clock;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
 
     @Override
     protected List<DockerCloud> getAllClouds() {
-        return Collections.unmodifiableList(allClouds);
+        return List.copyOf(allClouds);
     }
 
     @Override
@@ -74,11 +73,11 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     }
 
     public List<DockerTransientNode> getAllRemovedNodes() {
-        return Collections.unmodifiableList(nodesRemoved);
+        return List.copyOf(nodesRemoved);
     }
 
     public List<String> getContainersRemoved() {
-        return Collections.unmodifiableList(containersRemoved);
+        return List.copyOf(containersRemoved);
     }
 
     public void runExecute() throws IOException, InterruptedException {

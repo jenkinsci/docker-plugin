@@ -8,6 +8,7 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerOfflineCause;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -18,7 +19,6 @@ import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -62,7 +62,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
      */
     @Deprecated
     public DockerTransientNode(
-            @Nonnull String nodeName, @Nonnull String containerId, String workdir, ComputerLauncher launcher)
+            @NonNull String nodeName, @NonNull String containerId, String workdir, ComputerLauncher launcher)
             throws Descriptor.FormException, IOException {
         this(nodeName, containerId, workdir);
         setLauncher(launcher);
@@ -82,7 +82,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
      * @throws            IOException See
      *                     {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
      */
-    public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir)
+    public DockerTransientNode(@NonNull String nodeName, @NonNull String containerId, String workdir)
             throws Descriptor.FormException, IOException {
         super(nodeName, workdir, null);
         this.containerId = containerId;
@@ -100,7 +100,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
         this.acceptingTasks.set(acceptingTasks);
     }
 
-    @Nonnull
+    @NonNull
     public String getContainerId() {
         return containerId;
     }
@@ -255,7 +255,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
                             ex);
                     return;
                 }
-                final boolean newValues[] = stopAndRemoveContainer(
+                final boolean[] newValues = stopAndRemoveContainer(
                         api,
                         logger,
                         "for node '" + name + "'",
@@ -374,7 +374,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
             final String containerId,
             final boolean containerAlreadyStopped) {
         final ILogger tl = createILoggerForSLF4JLogger(logger);
-        final boolean containerState[] = stopAndRemoveContainer(
+        final boolean[] containerState = stopAndRemoveContainer(
                 api,
                 tl,
                 containerDescription,

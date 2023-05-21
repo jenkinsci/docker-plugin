@@ -1,6 +1,6 @@
 package io.jenkins.docker.pipeline;
 
-import com.google.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
@@ -17,7 +17,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -111,7 +110,7 @@ public class DockerNodeStep extends Step {
             return "dockerNode";
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Docker Node (⚠️ Experimental)";
@@ -130,14 +129,14 @@ public class DockerNodeStep extends Step {
 
         @Override
         public Set<? extends Class<?>> getRequiredContext() {
-            return ImmutableSet.of(TaskListener.class, FlowNode.class);
+            return Set.of(TaskListener.class, FlowNode.class);
         }
 
         @Override
         public Set<? extends Class<?>> getProvidedContext() {
             // TODO can/should we provide Executor? We cannot access Executor.start(WorkUnit) from outside the package.
             // cf. isAcceptingTasks, withContexts
-            return ImmutableSet.of(
+            return Set.of(
                     Computer.class,
                     FilePath.class, /* DefaultStepContext infers from Computer: */
                     Node.class,

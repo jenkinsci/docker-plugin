@@ -1,7 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.endsWithIgnoringCase;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyLong;
@@ -23,7 +24,6 @@ import com.github.dockerjava.api.model.TmpfsOptions;
 import com.github.dockerjava.api.model.VolumesFrom;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.util.FormValidation;
-import java.util.Arrays;
 import java.util.List;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -143,7 +143,7 @@ public class DockerTemplateBaseTest {
 
         // Then
         if (groupAddIsExpectedToBeSet) {
-            verify(mockHostConfig, times(1)).withGroupAdd(Arrays.asList(expectedGroupsSet));
+            verify(mockHostConfig, times(1)).withGroupAdd(List.of(expectedGroupsSet));
         } else {
             verify(mockHostConfig, never()).withGroupAdd(anyList());
         }
@@ -154,10 +154,7 @@ public class DockerTemplateBaseTest {
         testFillContainerSecurityOpts("null", null, false, null);
         String seccompSecurityOptUnconfined = "seccomp=unconfined";
         testFillContainerSecurityOpts(
-                "unconfined",
-                Arrays.asList(seccompSecurityOptUnconfined),
-                true,
-                Arrays.asList(seccompSecurityOptUnconfined));
+                "unconfined", List.of(seccompSecurityOptUnconfined), true, List.of(seccompSecurityOptUnconfined));
     }
 
     private static void testFillContainerSecurityOpts(
@@ -188,12 +185,12 @@ public class DockerTemplateBaseTest {
         testFillContainerCapabilitiesToAdd("null", null, false, null);
         String toAddInString = "AUDIT_CONTROL";
         Capability toAdd = Capability.AUDIT_CONTROL;
-        testFillContainerCapabilitiesToAdd("toAdd", Arrays.asList(toAddInString), true, new Capability[] {toAdd});
+        testFillContainerCapabilitiesToAdd("toAdd", List.of(toAddInString), true, new Capability[] {toAdd});
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void fillContainerConfigGivenCapabilitiesToAddWithException() {
-        testFillContainerCapabilitiesToAdd("not existing", Arrays.asList("DUMMY"), false, null);
+        testFillContainerCapabilitiesToAdd("not existing", List.of("DUMMY"), false, null);
     }
 
     private static void testFillContainerCapabilitiesToAdd(
@@ -224,12 +221,12 @@ public class DockerTemplateBaseTest {
         testFillContainerCapabilitiesToDrop("null", null, false, null);
         String toDropInString = "AUDIT_CONTROL";
         Capability toDrop = Capability.AUDIT_CONTROL;
-        testFillContainerCapabilitiesToDrop("toDrop", Arrays.asList(toDropInString), true, new Capability[] {toDrop});
+        testFillContainerCapabilitiesToDrop("toDrop", List.of(toDropInString), true, new Capability[] {toDrop});
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void fillContainerConfigGivenCapabilitiesToDropWithException() {
-        testFillContainerCapabilitiesToDrop("not existing", Arrays.asList("DUMMY"), false, null);
+        testFillContainerCapabilitiesToDrop("not existing", List.of("DUMMY"), false, null);
     }
 
     private static void testFillContainerCapabilitiesToDrop(
@@ -412,7 +409,7 @@ public class DockerTemplateBaseTest {
         instanceUnderTest.readResolve();
         instanceUnderTest.fillContainerConfig(mockCmd);
 
-        verify(mockHostConfig).withMounts(Arrays.asList(expectedMountsSet));
+        verify(mockHostConfig).withMounts(List.of(expectedMountsSet));
     }
 
     @Test
@@ -570,7 +567,7 @@ public class DockerTemplateBaseTest {
 
         instanceUnderTest.fillContainerConfig(mockCmd);
 
-        verify(mockHostConfig).withMounts(Arrays.asList(expectedMountsSet));
+        verify(mockHostConfig).withMounts(List.of(expectedMountsSet));
     }
 
     @Test

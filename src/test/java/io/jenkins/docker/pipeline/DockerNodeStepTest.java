@@ -24,12 +24,12 @@
 
 package io.jenkins.docker.pipeline;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import com.google.common.collect.ImmutableSet;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerContainerWatchdog;
 import com.nirima.jenkins.plugins.docker.TestableDockerContainerWatchdog;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.FilePath;
 import hudson.model.Descriptor;
 import hudson.model.DownloadService;
@@ -50,7 +50,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang3.SystemUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -242,10 +241,9 @@ public class DockerNodeStepTest {
                         .get(0);
                 Maven.MavenInstaller installer = new Maven.MavenInstaller(ins.id);
 
-                InstallSourceProperty mvnIsp = new InstallSourceProperty(Collections.singletonList(installer));
+                InstallSourceProperty mvnIsp = new InstallSourceProperty(List.of(installer));
 
-                Maven.MavenInstallation mvnInst =
-                        new Maven.MavenInstallation("myMaven", null, Collections.singletonList(mvnIsp));
+                Maven.MavenInstallation mvnInst = new Maven.MavenInstallation("myMaven", null, List.of(mvnIsp));
                 story.j.jenkins.getDescriptorByType(Maven.DescriptorImpl.class).setInstallations(mvnInst);
                 WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "toolInstall");
                 j.setDefinition(new CpsFlowDefinition(
@@ -378,7 +376,7 @@ public class DockerNodeStepTest {
             UninstantiatedDescribable uninstantiated = new DescribableModel<>(DockerNodeStep.class).uninstantiate2(s);
             assertEquals(
                     uninstantiated.toString(),
-                    Collections.singleton("image"),
+                    Set.of("image"),
                     uninstantiated.getArguments().keySet());
             r.jenkins.clouds.add(new DockerCloud(
                     "whatever",
@@ -518,7 +516,7 @@ public class DockerNodeStepTest {
 
             @Override
             public Set<? extends Class<?>> getRequiredContext() {
-                return ImmutableSet.of(TaskListener.class, FilePath.class);
+                return Set.of(TaskListener.class, FilePath.class);
             }
         }
     }
@@ -536,7 +534,7 @@ public class DockerNodeStepTest {
         public boolean start() throws Exception {
             EnvironmentExpander envEx = EnvironmentExpander.merge(
                     getContext().get(EnvironmentExpander.class),
-                    EnvironmentExpander.constant(Collections.singletonMap("PATH+MODIFIER", step.getElement())));
+                    EnvironmentExpander.constant(Map.of("PATH+MODIFIER", step.getElement())));
 
             body = getContext()
                     .newBodyInvoker()
@@ -549,7 +547,7 @@ public class DockerNodeStepTest {
         }
 
         @Override
-        public void stop(@Nonnull Throwable cause) throws Exception {
+        public void stop(@NonNull Throwable cause) throws Exception {
             if (body != null) {
                 body.cancel(cause);
             }

@@ -15,10 +15,10 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 public final class DockerContainerLabelKeys {
 
     /**
-     * As requested by https://docs.docker.com/config/labels-custom-metadata/, keys of labels used
+     * As requested by <a href="https://docs.docker.com/config/labels-custom-metadata/">Docker object labels</a>, keys of labels used
      * in docker shall be prefixed by a namespace using the reverse DNS notation.
      * All label keys of this plugin shall use this namespace as a prefix.
-     *
+     * <p>
      * Label keys defined in this interface already have this namespace prefixed.
      */
     private static final String PLUGIN_LABEL_KEY_NAMESPACE =

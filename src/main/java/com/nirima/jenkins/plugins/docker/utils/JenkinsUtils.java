@@ -1,9 +1,10 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import com.google.common.base.Function;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
@@ -21,9 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
@@ -99,7 +98,7 @@ public class JenkinsUtils {
      *                                  name.
      */
     @Restricted(NoExternalUse.class)
-    @Nonnull
+    @NonNull
     public static DockerCloud getCloudByNameOrThrow(final String serverName) {
         try {
             final DockerCloud resultOrNull = DockerCloud.getCloudByName(serverName);
@@ -114,18 +113,15 @@ public class JenkinsUtils {
     }
 
     @Restricted(NoExternalUse.class)
-    @Nonnull
+    @NonNull
     public static List<String> getServerNames() {
-        return Lists.transform(DockerCloud.instances(), new Function<DockerCloud, String>() {
-            @Override
-            public String apply(DockerCloud input) {
-                return input == null ? "" : input.getDisplayName();
-            }
-        });
+        return DockerCloud.instances().stream()
+                .map(cloud -> cloud == null ? "" : cloud.getDisplayName())
+                .collect(Collectors.toList());
     }
 
     @Restricted(NoExternalUse.class)
-    @Nonnull
+    @NonNull
     public static String getInstanceId() {
         try {
             if (_id == null) {
@@ -147,7 +143,7 @@ public class JenkinsUtils {
     /**
      * returns the Java system property specified by <code>key</code>. If that
      * fails, a default value is returned instead.
-     *
+     * <p>
      * To be replaced with jenkins.util.SystemProperties.getString() once they lift
      * their @Restricted(NoExternalUse.class)
      *
@@ -169,11 +165,11 @@ public class JenkinsUtils {
     /**
      * returns the Java system property specified by <code>key</code>. If that
      * fails, a default value is returned instead.
-     *
+     * <p>
      * In case the value of the system property cannot be parsed properly (e.g. a
      * character was passed, causing a parsing error to occur), the default value is
      * returned.
-     *
+     * <p>
      * To be replaced with jenkins.util.SystemProperties.getLong() once they lift
      * their @Restricted(NoExternalUse.class)
      *
@@ -206,10 +202,10 @@ public class JenkinsUtils {
     /**
      * returns the Java system property specified by <code>key</code>. If that
      * fails, a default value is returned instead.
-     *
+     * <p>
      * In case the value of the system property cannot be parsed properly (e.g. an
      * invalid identifier was passed), the value <code>false</code> is returned.
-     *
+     * <p>
      * To be replaced with jenkins.util.SystemProperties.getBoolean() once they lift
      * their @Restricted(NoExternalUse.class)
      *
@@ -383,7 +379,7 @@ public class JenkinsUtils {
      * @return An array (possibly empty, never null).
      */
     @Restricted(NoExternalUse.class)
-    @Nonnull
+    @NonNull
     public static String[] splitAndFilterEmpty(@Nullable String s, String separator) {
         if (s == null) {
             return new String[0];
@@ -392,7 +388,7 @@ public class JenkinsUtils {
         for (String o : Splitter.on(separator).omitEmptyStrings().split(s)) {
             result.add(o);
         }
-        return result.toArray(new String[result.size()]);
+        return result.toArray(new String[0]);
     }
 
     /**
@@ -404,7 +400,7 @@ public class JenkinsUtils {
      * @return A {@link List} (possibly empty, never null).
      */
     @Restricted(NoExternalUse.class)
-    @Nonnull
+    @NonNull
     public static List<String> splitAndFilterEmptyList(@Nullable String s, String separator) {
         final List<String> result = new ArrayList<>();
         if (s != null) {
@@ -444,7 +440,7 @@ public class JenkinsUtils {
      * @return A {@link Map} (possibly empty, never null).
      */
     @Restricted(NoExternalUse.class)
-    @Nonnull
+    @NonNull
     public static Map<String, String> splitAndFilterEmptyMap(@Nullable String s, String separator) {
         final Map<String, String> result = new LinkedHashMap<>();
         if (s != null) {
@@ -466,7 +462,7 @@ public class JenkinsUtils {
      * @return A new array no longer than the one given, but which may be empty.
      */
     @Restricted(NoExternalUse.class)
-    @Nonnull
+    @NonNull
     public static String[] filterStringArray(@Nullable String[] arr) {
         final ArrayList<String> strings = new ArrayList<>();
         if (arr != null) {
@@ -477,7 +473,7 @@ public class JenkinsUtils {
                 }
             }
         }
-        return strings.toArray(new String[strings.size()]);
+        return strings.toArray(new String[0]);
     }
 
     /**

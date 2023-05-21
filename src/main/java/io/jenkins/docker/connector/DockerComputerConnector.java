@@ -4,6 +4,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.thoughtworks.xstream.InitializationException;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.DescriptorExtensionList;
 import hudson.EnvVars;
 import hudson.model.AbstractDescribableImpl;
@@ -20,8 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -76,7 +76,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * @throws IOException          If anything goes wrong.
      * @throws InterruptedException If interrupted while doing things.
      */
-    public void beforeContainerCreated(@Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull CreateContainerCmd cmd)
+    public void beforeContainerCreated(@NonNull DockerAPI api, @NonNull String workdir, @NonNull CreateContainerCmd cmd)
             throws IOException, InterruptedException {}
 
     /**
@@ -91,7 +91,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * @throws InterruptedException If interrupted while doing things.
      */
     public void beforeContainerStarted(
-            @Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull DockerTransientNode node)
+            @NonNull DockerAPI api, @NonNull String workdir, @NonNull DockerTransientNode node)
             throws IOException, InterruptedException {}
 
     /**
@@ -106,7 +106,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * @throws InterruptedException If interrupted while doing things.
      */
     public void afterContainerStarted(
-            @Nonnull DockerAPI api, @Nonnull String workdir, @Nonnull DockerTransientNode node)
+            @NonNull DockerAPI api, @NonNull String workdir, @NonNull DockerTransientNode node)
             throws IOException, InterruptedException {}
 
     /**
@@ -115,7 +115,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      *
      * @param cmd The {@link CreateContainerCmd} to be adjusted.
      */
-    protected void ensureWaiting(@Nonnull CreateContainerCmd cmd) {
+    protected void ensureWaiting(@NonNull CreateContainerCmd cmd) {
         final String[] cmdAlreadySet = cmd.getCmd();
         if (cmdAlreadySet == null || cmdAlreadySet.length == 0) {
             // no command has been set, we need one that will just hang. Typically "sh" waiting for stdin
@@ -147,7 +147,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * @return The filesystem path to the remoting jar file.
      */
     protected String injectRemotingJar(
-            @Nonnull String containerId, @Nonnull String workdir, @Nonnull DockerClient client) {
+            @NonNull String containerId, @NonNull String workdir, @NonNull DockerClient client) {
         // Copy agent.jar into container
         client.copyArchiveToContainerCmd(containerId)
                 .withHostResource(remoting.getAbsolutePath())
@@ -158,7 +158,7 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
 
     @Restricted(NoExternalUse.class)
     protected static void addEnvVars(
-            @Nonnull final EnvVars vars, @Nullable final Iterable<? extends NodeProperty<?>> nodeProperties)
+            @NonNull final EnvVars vars, @Nullable final Iterable<? extends NodeProperty<?>> nodeProperties)
             throws IOException, InterruptedException {
         if (nodeProperties != null) {
             for (final NodeProperty<?> nodeProperty : nodeProperties) {
@@ -169,16 +169,16 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
 
     @Restricted(NoExternalUse.class)
     protected static void addEnvVar(
-            @Nonnull final EnvVars vars, @Nonnull final String name, @Nullable final Object valueOrNull) {
+            @NonNull final EnvVars vars, @NonNull final String name, @Nullable final Object valueOrNull) {
         vars.put(name, valueOrNull == null ? "" : valueOrNull.toString());
     }
 
-    @Nonnull
+    @NonNull
     public final ComputerLauncher createLauncher(
-            @Nonnull final DockerAPI api,
-            @Nonnull final String containerId,
-            @Nonnull String workdir,
-            @Nonnull TaskListener listener)
+            @NonNull final DockerAPI api,
+            @NonNull final String containerId,
+            @NonNull String workdir,
+            @NonNull TaskListener listener)
             throws IOException, InterruptedException {
         final InspectContainerResponse inspect;
         try (final DockerClient client = api.getClient()) {
@@ -211,12 +211,12 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      * @throws IOException          If anything goes wrong, e.g. talking to docker.
      * @throws InterruptedException If we're interrupted while waiting.
      */
-    @Nonnull
+    @NonNull
     protected abstract ComputerLauncher createLauncher(
-            @Nonnull DockerAPI api,
-            @Nonnull String workdir,
-            @Nonnull InspectContainerResponse inspect,
-            @Nonnull TaskListener listener)
+            @NonNull DockerAPI api,
+            @NonNull String workdir,
+            @NonNull InspectContainerResponse inspect,
+            @NonNull TaskListener listener)
             throws IOException, InterruptedException;
 
     /**
@@ -224,7 +224,6 @@ public abstract class DockerComputerConnector extends AbstractDescribableImpl<Do
      */
     public static DescriptorExtensionList<DockerComputerConnector, Descriptor<DockerComputerConnector>> all() {
         final Jenkins j = Jenkins.get();
-        return j.<DockerComputerConnector, Descriptor<DockerComputerConnector>>getDescriptorList(
-                DockerComputerConnector.class);
+        return j.getDescriptorList(DockerComputerConnector.class);
     }
 }
