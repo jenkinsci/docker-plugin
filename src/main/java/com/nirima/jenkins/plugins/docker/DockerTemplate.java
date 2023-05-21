@@ -14,7 +14,6 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.Config;
 import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.PullResponseItem;
@@ -705,8 +704,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         if (remoteFsOrNull != null) {
             return remoteFsOrNull;
         }
-        final ContainerConfig config = image.getConfig();
-        final String containerWorkingDir = config == null ? null : config.getWorkingDir();
+        final ContainerConfig containerConfig = image.getContainerConfig();
+        String containerWorkingDir = containerConfig == null ? null : containerConfig.getWorkingDir();
+        if (containerWorkingDir == null || containerWorkingDir.isBlank()) {
+            final ContainerConfig config = image.getConfig();
+            containerWorkingDir = config == null ? null : config.getWorkingDir();
+        }
         if (!StringUtils.isBlank(containerWorkingDir)) {
             return containerWorkingDir;
         }
