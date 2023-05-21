@@ -186,7 +186,7 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {75, 76, 77});
 
             Assert.assertFalse(tester.isEof());
-            Assert.assertTrue(tester.exception() == null);
+            Assert.assertNull(tester.exception());
         }
     }
 
@@ -224,7 +224,7 @@ public class DockerMultiplexedInputStreamTest {
             subtestLargeFrame(tester, 7);
 
             Assert.assertFalse(tester.isEof());
-            Assert.assertTrue(tester.exception() == null);
+            Assert.assertNull(tester.exception());
         }
     }
 
@@ -277,7 +277,7 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {65, 66, 67, 72, 73, 74, 75, 76});
 
             Assert.assertFalse(tester.isEof());
-            Assert.assertTrue(tester.exception() == null);
+            Assert.assertNull(tester.exception());
         }
     }
 
@@ -311,7 +311,7 @@ public class DockerMultiplexedInputStreamTest {
                     // send EOF
                     true);
             Assert.assertTrue(tester.isEof());
-            Assert.assertTrue(tester.exception() == null);
+            Assert.assertNull(tester.exception());
         }
 
         // EOF in stdout
@@ -346,7 +346,7 @@ public class DockerMultiplexedInputStreamTest {
                     // send EOF
                     true);
             Assert.assertTrue(tester.isEof());
-            Assert.assertTrue(tester.exception() == null);
+            Assert.assertNull(tester.exception());
         }
 
         // EOF in stderr
@@ -386,7 +386,7 @@ public class DockerMultiplexedInputStreamTest {
                     // send EOF
                     true);
             Assert.assertTrue(tester.isEof());
-            Assert.assertTrue(tester.exception() == null);
+            Assert.assertNull(tester.exception());
         }
     }
 
@@ -423,7 +423,7 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {65, 66, 67});
 
             Assert.assertFalse(tester.isEof());
-            Assert.assertTrue(tester.exception() != null);
+            Assert.assertNotNull(tester.exception());
         }
     }
 }

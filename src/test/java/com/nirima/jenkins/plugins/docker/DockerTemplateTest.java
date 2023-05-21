@@ -1,6 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -99,10 +101,22 @@ public class DockerTemplateTest {
         DockerTemplate instance;
         instance = getDockerTemplateInstanceWithDNSHost("");
 
-        assertTrue("Error, wrong memoryLimit", 1024 == instance.getDockerTemplateBase().memoryLimit);
-        assertTrue("Error, wrong memorySwap", 1280 == instance.getDockerTemplateBase().memorySwap);
-        assertTrue("Error, wrong cpuShares", 1000 == instance.getDockerTemplateBase().cpuShares);
-        assertTrue("Error, wrong shmSize", 1002 == instance.getDockerTemplateBase().shmSize);
+        assertEquals(
+                "Error, wrong memoryLimit",
+                1024,
+                instance.getDockerTemplateBase().memoryLimit.intValue());
+        assertEquals(
+                "Error, wrong memorySwap",
+                1280,
+                instance.getDockerTemplateBase().memorySwap.intValue());
+        assertEquals(
+                "Error, wrong cpuShares",
+                1000,
+                instance.getDockerTemplateBase().cpuShares.intValue());
+        assertEquals(
+                "Error, wrong shmSize",
+                1002,
+                instance.getDockerTemplateBase().shmSize.intValue());
     }
 
     @Test

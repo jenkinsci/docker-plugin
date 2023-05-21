@@ -1,13 +1,13 @@
 package io.jenkins.docker.client;
 
-import static com.cloudbees.plugins.credentials.CredentialsMatchers.*;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.firstOrNull;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.model.Version;
@@ -29,7 +29,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
 import java.time.Duration;
-import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
@@ -175,7 +176,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
 
     static {
         final UsageTrackingCache.ExpiryHandler<DockerClientParameters, SharableDockerClient> expiryHandler;
-        expiryHandler = new UsageTrackingCache.ExpiryHandler<DockerClientParameters, SharableDockerClient>() {
+        expiryHandler = new UsageTrackingCache.ExpiryHandler<>() {
             @Override
             public void entryDroppedFromCache(DockerClientParameters cacheKey, SharableDockerClient client) {
                 try {
@@ -256,11 +257,11 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
                     .sslConfig(toSSlConfig(credentialsId)) //
                     .connectionTimeout(
                             connectTimeoutInMillisecondsOrNull != null
-                                    ? Duration.ofMillis((long) connectTimeoutInMillisecondsOrNull.intValue())
+                                    ? Duration.ofMillis(connectTimeoutInMillisecondsOrNull.intValue())
                                     : null) //
                     .responseTimeout(
                             readTimeoutInMillisecondsOrNull != null
-                                    ? Duration.ofMillis((long) readTimeoutInMillisecondsOrNull.intValue())
+                                    ? Duration.ofMillis(readTimeoutInMillisecondsOrNull.intValue())
                                     : null) //
                     .build();
             actualClient = DockerClientBuilder.getInstance()
@@ -296,11 +297,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         }
 
         DockerServerCredentials credentials = firstOrNull(
-                lookupCredentials(
-                        DockerServerCredentials.class,
-                        Jenkins.get(),
-                        ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()),
+                lookupCredentials(DockerServerCredentials.class, Jenkins.get(), ACL.SYSTEM, List.of()),
                 withId(credentialsId));
         return credentials == null ? null : new DockerServerCredentialsSSLConfig(credentials);
     }
@@ -316,7 +313,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
             final URI uri = new URI(dockerHost.getUri());
             if ("unix".equals(uri.getScheme())) {
                 final String socketFileName = uri.getPath();
-                final AFUNIXSocketAddress unix = new AFUNIXSocketAddress(new File(socketFileName));
+                final AFUNIXSocketAddress unix = AFUNIXSocketAddress.of(new File(socketFileName));
                 final Socket socket = AFUNIXSocket.newInstance();
                 socket.connect(unix);
                 return socket;
@@ -349,13 +346,13 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         if (readTimeout != dockerAPI.readTimeout) {
             return false;
         }
-        if (dockerHost != null ? !dockerHost.equals(dockerAPI.dockerHost) : dockerAPI.dockerHost != null) {
+        if (!Objects.equals(dockerHost, dockerAPI.dockerHost)) {
             return false;
         }
-        if (apiVersion != null ? !apiVersion.equals(dockerAPI.apiVersion) : dockerAPI.apiVersion != null) {
+        if (!Objects.equals(apiVersion, dockerAPI.apiVersion)) {
             return false;
         }
-        if (hostname != null ? !hostname.equals(dockerAPI.hostname) : dockerAPI.hostname != null) {
+        if (!Objects.equals(hostname, dockerAPI.hostname)) {
             return false;
         }
         return true;

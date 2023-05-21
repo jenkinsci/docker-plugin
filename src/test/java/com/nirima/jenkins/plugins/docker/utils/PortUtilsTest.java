@@ -154,7 +154,7 @@ public class PortUtilsTest {
         // e.g. try, delay, try, delay, try, delay, try, delay, try = 5 tries, 4 delays.
         // expecting port to become available during the second delay.
         final long bringPortUpAfter = DELAY + DELAY / 2;
-        final long minExpectedTime = 2 * DELAY;
+        final long minExpectedTime = 2L * DELAY;
         final long maxExpectedTime = minExpectedTime + DELAY - 1;
         // It can take so long to test for the port availability that it's available
         // by the time the test completes (this is especially common on Windows where the
@@ -191,7 +191,7 @@ public class PortUtilsTest {
         return oneUnitOfExpectedDelay / 20;
     }
 
-    private class SomeServerRule extends ExternalResource {
+    private static class SomeServerRule extends ExternalResource {
         private ServerSocket socket;
 
         public int port() {

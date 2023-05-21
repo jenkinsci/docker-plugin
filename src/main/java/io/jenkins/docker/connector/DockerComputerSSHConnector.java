@@ -20,6 +20,8 @@ import com.github.dockerjava.api.model.Ports;
 import com.nirima.jenkins.plugins.docker.utils.PortUtils;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.signature.RSAKeyAlgorithm;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
@@ -45,13 +47,10 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -513,7 +512,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         @Extension
         public static final class DescriptorImpl extends Descriptor<SSHKeyStrategy> {
-            @Nonnull
+            @NonNull
             @Override
             public String getDisplayName() {
                 return "Inject SSH key";
@@ -599,7 +598,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         @Extension
         public static final class DescriptorImpl extends Descriptor<SSHKeyStrategy> {
-            @Nonnull
+            @NonNull
             @Override
             public String getDisplayName() {
                 return "Use configured SSH credentials";
@@ -617,7 +616,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                                 ACL.SYSTEM,
                                 context,
                                 StandardUsernameCredentials.class,
-                                Collections.emptyList(),
+                                List.of(),
                                 SSHAuthenticator.matcher(Connection.class))
                         .includeCurrentValue(credentialsId);
             }
@@ -676,7 +675,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
 
         @Extension
         public static final class DescriptorImpl extends SSHLauncher.DescriptorImpl {
-            @Nonnull
+            @NonNull
             @Override
             public String getDisplayName() {
                 return "Docker variant of " + super.getDisplayName() + " with SSH key injection";

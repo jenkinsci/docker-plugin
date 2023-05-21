@@ -4,12 +4,12 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 
 /**
  * A cache that keep things until they haven't been used for a given duration.
@@ -57,7 +57,7 @@ public class UsageTrackingCache<K, V> {
      *            before they are thrown away.
      */
     UsageTrackingCache(
-            final long duration, @Nonnull final TimeUnit unit, @Nonnull final ExpiryHandler<K, V> expiryHandler) {
+            final long duration, @NonNull final TimeUnit unit, @NonNull final ExpiryHandler<K, V> expiryHandler) {
         activeCacheByKey = new HashMap<>();
         activeCacheByValue = new IdentityHashMap();
         CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
@@ -90,7 +90,7 @@ public class UsageTrackingCache<K, V> {
      * @return An existing cache entry, or null.
      */
     @CheckForNull
-    public V getAndIncrementUsage(@Nonnull K key) {
+    public V getAndIncrementUsage(@NonNull K key) {
         final CacheEntry<K, V> activeRecord = activeCacheByKey.get(key);
         if (activeRecord != null) {
             // we have an entry that's currently in use
@@ -127,7 +127,7 @@ public class UsageTrackingCache<K, V> {
      * @param entry
      *            The entry to be cached.
      */
-    public void cacheAndIncrementUsage(@Nonnull K key, @Nonnull V entry) {
+    public void cacheAndIncrementUsage(@NonNull K key, @NonNull V entry) {
         final CacheEntry<K, V> record = new CacheEntry<>(key, entry, 1);
         final CacheEntry<K, V> oldKeyRecord = activeCacheByKey.put(key, record);
         final CacheEntry<K, V> oldValueRecord = activeCacheByValue.put(entry, record);
@@ -150,7 +150,7 @@ public class UsageTrackingCache<K, V> {
      * @param entry
      *            The entry that is no longer in use.
      */
-    public void decrementUsage(@Nonnull V entry) {
+    public void decrementUsage(@NonNull V entry) {
         durationCache.cleanUp(); // force cleanup activity
         final CacheEntry<K, V> record = activeCacheByValue.get(entry);
         if (record == null) {

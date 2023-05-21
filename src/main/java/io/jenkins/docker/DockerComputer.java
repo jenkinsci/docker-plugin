@@ -1,11 +1,11 @@
 package io.jenkins.docker;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.EnvVars;
 import hudson.slaves.AbstractCloudComputer;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
-import javax.annotation.CheckForNull;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 
 /**

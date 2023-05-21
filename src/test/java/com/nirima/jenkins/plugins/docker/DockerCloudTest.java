@@ -12,7 +12,9 @@ import hudson.model.Node;
 import hudson.util.Secret;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.Assert;
@@ -33,7 +35,7 @@ public class DockerCloudTest {
     public void testConstructor_0_10_2() {
         new DockerCloud(
                 "name",
-                Collections.<DockerTemplate>emptyList(), // templates
+                List.of(), // templates
                 "http://localhost:4243", // serverUrl
                 100, // containerCap,
                 10, // connectTimeout,
@@ -93,11 +95,9 @@ public class DockerCloudTest {
         template.setRetentionStrategy(new DockerOnceRetentionStrategy(33));
 
         DockerCloud cloud = new DockerCloud(
-                "docker",
-                new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")),
-                Collections.singletonList(template));
+                "docker", new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")), List.of(template));
 
-        jenkins.getInstance().clouds.replaceBy(Collections.singleton(cloud));
+        jenkins.getInstance().clouds.replaceBy(Set.of(cloud));
 
         jenkins.configRoundtrip();
 
@@ -116,7 +116,7 @@ public class DockerCloudTest {
         Assert.assertEquals(
                 "DockerCloud.CONTAINERS_IN_PROGRESS is empty to start with",
                 DockerCloud.CONTAINERS_IN_PROGRESS,
-                Collections.EMPTY_MAP);
+                Map.of());
 
         c1.incrementContainersInProgress(i1);
         assertCount(c1, c2, i1, i2, 1, 0, 0, 0);
@@ -136,9 +136,7 @@ public class DockerCloudTest {
         c2.decrementContainersInProgress(i1);
         assertCount(c1, c2, i1, i2, 0, 0, 0, 0);
         Assert.assertEquals(
-                "DockerCloud.CONTAINERS_IN_PROGRESS is empty afterwards",
-                DockerCloud.CONTAINERS_IN_PROGRESS,
-                Collections.EMPTY_MAP);
+                "DockerCloud.CONTAINERS_IN_PROGRESS is empty afterwards", DockerCloud.CONTAINERS_IN_PROGRESS, Map.of());
     }
 
     private static void assertCount(

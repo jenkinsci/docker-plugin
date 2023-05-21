@@ -12,6 +12,8 @@ import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.google.common.base.Joiner;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Util;
@@ -35,8 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -89,7 +89,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         this.javaExe = Util.fixEmptyAndTrim(javaExe);
     }
 
-    @Nonnull
+    @NonNull
     public String getEntryPointCmdString() {
         if (entryPointCmd == null) {
             return "";
@@ -106,7 +106,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         this.entryPointCmd = fixEmpty(entryPointCmd);
     }
 
-    @Nonnull
+    @NonNull
     public String getJvmArgsString() {
         if (jvmArgs == null) {
             return "";
@@ -353,11 +353,11 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         }
 
         private static EnvVars calculateVariablesForVariableSubstitution(
-                @Nonnull final String javaExe,
-                @Nonnull final String jvmArgs,
-                @Nonnull final String jarName,
-                @Nonnull final String remoteFs,
-                @Nonnull final String jenkinsUrl)
+                @NonNull final String javaExe,
+                @NonNull final String jvmArgs,
+                @NonNull final String jarName,
+                @NonNull final String remoteFs,
+                @NonNull final String jenkinsUrl)
                 throws IOException, InterruptedException {
             final EnvVars knownVariables = new EnvVars();
             final Jenkins j = Jenkins.get();

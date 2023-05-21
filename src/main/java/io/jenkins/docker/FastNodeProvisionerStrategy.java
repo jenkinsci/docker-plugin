@@ -8,6 +8,7 @@ import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.FINEST;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Label;
 import hudson.model.LoadStatistics;
@@ -17,11 +18,10 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import java.util.Collection;
 import java.util.logging.Logger;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 
 /**
- * Based on https://github.com/jenkinsci/one-shot-executor-plugin/blob/master/src/main/java/org/jenkinsci/plugins/oneshot/OneShotProvisionerStrategy.java
+ * Based on <a href="https://github.com/jenkinsci/one-shot-executor-plugin/blob/master/src/main/java/org/jenkinsci/plugins/oneshot/OneShotProvisionerStrategy.java">OneShotProvisionerStrategy</a>
  *
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
@@ -30,9 +30,9 @@ public class FastNodeProvisionerStrategy extends Strategy {
 
     private static final Logger LOGGER = Logger.getLogger(FastNodeProvisionerStrategy.class.getName());
 
-    @Nonnull
+    @NonNull
     @Override
-    public StrategyDecision apply(@Nonnull NodeProvisioner.StrategyState state) {
+    public StrategyDecision apply(@NonNull NodeProvisioner.StrategyState state) {
         if (Jenkins.get().isQuietingDown()) {
             return CONSULT_REMAINING_STRATEGIES;
         }
@@ -47,7 +47,7 @@ public class FastNodeProvisionerStrategy extends Strategy {
         return CONSULT_REMAINING_STRATEGIES;
     }
 
-    private StrategyDecision applyToCloud(@Nonnull NodeProvisioner.StrategyState state, DockerCloud cloud) {
+    private StrategyDecision applyToCloud(@NonNull NodeProvisioner.StrategyState state, DockerCloud cloud) {
 
         final Label label = state.getLabel();
 

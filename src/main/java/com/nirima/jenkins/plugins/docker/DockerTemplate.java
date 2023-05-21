@@ -21,6 +21,8 @@ import com.google.common.base.Strings;
 import com.nirima.jenkins.plugins.docker.launcher.DockerComputerLauncher;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import com.nirima.jenkins.plugins.docker.utils.UniqueIdGenerator;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -44,13 +46,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
@@ -80,7 +79,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     private final @CheckForNull String labelString;
 
-    private @Nonnull DockerComputerConnector connector;
+    private @NonNull DockerComputerConnector connector;
 
     /** @deprecated Use {@link #connector} instead. */
     @Deprecated
@@ -95,13 +94,13 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     // for backward compatibility reason can't declare this attribute as type DockerOnceRetentionStrategy
     private RetentionStrategy retentionStrategy = new DockerOnceRetentionStrategy(10);
 
-    private @Nonnull DockerTemplateBase dockerTemplateBase;
+    private @NonNull DockerTemplateBase dockerTemplateBase;
 
     private boolean removeVolumes;
 
     private int stopTimeout = DEFAULT_STOP_TIMEOUT;
 
-    private @Nonnull transient /*almost final*/ Set<LabelAtom> labelSet;
+    private @NonNull transient /*almost final*/ Set<LabelAtom> labelSet;
 
     private @CheckForNull DockerImagePullStrategy pullStrategy;
 
@@ -124,8 +123,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     public DockerTemplate(
-            @Nonnull DockerTemplateBase dockerTemplateBase,
-            @Nonnull DockerComputerConnector connector,
+            @NonNull DockerTemplateBase dockerTemplateBase,
+            @NonNull DockerComputerConnector connector,
             String labelString,
             String remoteFs,
             String instanceCapStr) {
@@ -135,8 +134,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @DataBoundConstructor
     public DockerTemplate(
-            @Nonnull DockerTemplateBase dockerTemplateBase,
-            @Nonnull DockerComputerConnector connector,
+            @NonNull DockerTemplateBase dockerTemplateBase,
+            @NonNull DockerComputerConnector connector,
             String labelString,
             String instanceCapStr) {
         this.dockerTemplateBase = dockerTemplateBase;
@@ -316,7 +315,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      *         node for the container that will be created by this command.
      * @throws IllegalStateException if no label was found.
      */
-    @Nonnull
+    @NonNull
     public static String getNodeNameFromContainerConfig(CreateContainerCmd containerConfig) {
         final Map<String, String> labels = containerConfig.getLabels();
         final String result = labels == null ? null : labels.get(DockerContainerLabelKeys.NODE_NAME);
@@ -382,7 +381,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return retentionStrategy;
     }
 
-    @Nonnull
+    @NonNull
     public DockerComputerConnector getConnector() {
         return connector;
     }
@@ -408,12 +407,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return instanceCap;
     }
 
-    @Nonnull
+    @NonNull
     public Set<LabelAtom> getLabelSet() {
         return labelSet;
     }
 
-    @Nonnull
+    @NonNull
     public DockerImagePullStrategy getPullStrategy() {
         return pullStrategy != null ? pullStrategy : DockerImagePullStrategy.PULL_LATEST;
     }
@@ -474,7 +473,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
-    @Nonnull
+    @NonNull
     public String getName() {
         if (name == null || name.trim().isEmpty()) {
             return DEFAULT_NAME;
@@ -635,7 +634,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return Jenkins.get().getDescriptor(getClass());
     }
 
-    @Nonnull
+    @NonNull
     InspectImageResponse pullImage(DockerAPI api, TaskListener listener) throws IOException, InterruptedException {
         final String image = getFullImageId();
 
@@ -699,7 +698,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
-    @Nonnull
+    @NonNull
     private String getEffectiveRemoteFs(final InspectImageResponse image) {
         final String remoteFsOrNull = getRemoteFs();
         if (remoteFsOrNull != null) {
@@ -852,15 +851,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                     result.add(npd);
                 }
             }
-            final Iterator<NodePropertyDescriptor> iterator = result.iterator();
-            while (iterator.hasNext()) {
-                final NodePropertyDescriptor de = iterator.next();
-                // see https://issues.jenkins-ci.org/browse/JENKINS-47697
-                if ("org.jenkinsci.plugins.matrixauth.AuthorizationMatrixNodeProperty"
-                        .equals(de.getKlass().toJavaClass().getName())) {
-                    iterator.remove();
-                }
-            }
+            // see https://issues.jenkins-ci.org/browse/JENKINS-47697
+            result.removeIf(de -> "org.jenkinsci.plugins.matrixauth.AuthorizationMatrixNodeProperty"
+                    .equals(de.getKlass().toJavaClass().getName()));
             return result;
         }
 

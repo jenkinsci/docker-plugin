@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker.strategy;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -18,7 +19,6 @@ import io.jenkins.docker.DockerTransientNode;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -104,7 +104,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
     }
 
     public boolean getTerminateOnceDone() {
-        return terminateOnceDone == null ? false : terminateOnceDone.booleanValue();
+        return terminateOnceDone != null && terminateOnceDone.booleanValue();
     }
 
     public int getNumberOfTasksInProgress() {
@@ -112,7 +112,7 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
     }
 
     @Override
-    public long check(@Nonnull DockerComputer c) {
+    public long check(@NonNull DockerComputer c) {
         // When the agent is idle for too long we should terminate it.
         // This can happen if an agent was created but there's no workload for it to
         // process.

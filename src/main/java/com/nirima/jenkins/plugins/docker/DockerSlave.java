@@ -1,12 +1,12 @@
 package com.nirima.jenkins.plugins.docker;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.Descriptor;
 import hudson.model.Slave;
 import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
-import javax.annotation.Nonnull;
 
 /**
  * @deprecated use {@link DockerTransientNode}
@@ -27,7 +27,7 @@ public class DockerSlave extends Slave {
     @SuppressWarnings("unused")
     private transient DockerAPI dockerAPI;
 
-    private DockerSlave(@Nonnull String name, String remoteFS, ComputerLauncher launcher)
+    private DockerSlave(@NonNull String name, String remoteFS, ComputerLauncher launcher)
             throws Descriptor.FormException, IOException {
         super(name, remoteFS, launcher);
     }

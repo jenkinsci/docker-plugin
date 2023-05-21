@@ -19,9 +19,9 @@ import hudson.util.StreamTaskListener;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -124,7 +124,7 @@ public abstract class DockerComputerConnectorTest {
     }
 
     private void terminateAllDockerNodes() {
-        final TaskListener tl = new StreamTaskListener(System.out, Charset.forName("UTF-8"));
+        final TaskListener tl = new StreamTaskListener(System.out, StandardCharsets.UTF_8);
         for (final Node n : j.jenkins.getNodes()) {
             if (n instanceof DockerTransientNode) {
                 final DockerTransientNode dn = (DockerTransientNode) n;
@@ -182,10 +182,8 @@ public abstract class DockerComputerConnectorTest {
         }
 
         DockerCloud cloud = new DockerCloud(
-                cloudName,
-                new DockerAPI(new DockerServerEndpoint(dockerHost, null)),
-                Collections.singletonList(template));
-        j.jenkins.clouds.replaceBy(Collections.singleton(cloud));
+                cloudName, new DockerAPI(new DockerServerEndpoint(dockerHost, null)), List.of(template));
+        j.jenkins.clouds.replaceBy(Set.of(cloud));
 
         // When
         final FreeStyleProject project = j.createFreeStyleProject("test-docker-agent-can-connect");
@@ -203,7 +201,7 @@ public abstract class DockerComputerConnectorTest {
         }
 
         // Then
-        Assert.assertTrue(actualBuildResult == Result.SUCCESS);
+        Assert.assertEquals(Result.SUCCESS, actualBuildResult);
         Assert.assertTrue(actualBuildLog.contains(expectedTextInBuildLog));
     }
 }
