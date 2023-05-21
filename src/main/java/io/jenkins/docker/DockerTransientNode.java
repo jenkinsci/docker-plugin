@@ -8,6 +8,7 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerOfflineCause;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -16,19 +17,17 @@ import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * A {@link AbstractCloudSlave} node designed to be used only once for a build.
- * 
+ *
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public class DockerTransientNode extends AbstractCloudSlave {
@@ -62,7 +61,9 @@ public class DockerTransientNode extends AbstractCloudSlave {
      * @throws IOException See {@link #DockerTransientNode(String, String, String)}.
      */
     @Deprecated
-    public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir, ComputerLauncher launcher) throws Descriptor.FormException, IOException {
+    public DockerTransientNode(
+            @NonNull String nodeName, @NonNull String containerId, String workdir, ComputerLauncher launcher)
+            throws Descriptor.FormException, IOException {
         this(nodeName, containerId, workdir);
         setLauncher(launcher);
     }
@@ -70,7 +71,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
     /**
      * Preferred constructor. Note that, unless this is a JNLP node, callers will
      * later have to call {@link #setLauncher(ComputerLauncher)}.
-     * 
+     *
      * @param nodeName    Name of the node; passed to
      *                    {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
      * @param containerId Docker container id.
@@ -81,7 +82,8 @@ public class DockerTransientNode extends AbstractCloudSlave {
      * @throws            IOException See
      *                     {@link AbstractCloudSlave#AbstractCloudSlave(String, String, ComputerLauncher)}.
      */
-    public DockerTransientNode(@Nonnull String nodeName, @Nonnull String containerId, String workdir) throws Descriptor.FormException, IOException {
+    public DockerTransientNode(@NonNull String nodeName, @NonNull String containerId, String workdir)
+            throws Descriptor.FormException, IOException {
         super(nodeName, workdir, null);
         this.containerId = containerId;
         setNumExecutors(1);
@@ -98,8 +100,8 @@ public class DockerTransientNode extends AbstractCloudSlave {
         this.acceptingTasks.set(acceptingTasks);
     }
 
-    @Nonnull
-    public String getContainerId(){
+    @NonNull
+    public String getContainerId() {
         return containerId;
     }
 
@@ -193,7 +195,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
      * Tries to remove all trace of this node, logging anything that goes wrong.
      * <p>
      * Note: This is not intended for use outside the plugin.
-     * 
+     *
      * @param logger Where to log any progress messages, exceptions etc.
      */
     @Restricted(NoExternalUse.class)
@@ -225,6 +227,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
     // exceptions if we try to stop or remove a container twice.
     private transient boolean containerStopped;
     private transient boolean containerRemoved;
+
     private void terminate(ILogger logger) {
         try {
             final Computer computer = toComputer();
@@ -238,19 +241,28 @@ public class DockerTransientNode extends AbstractCloudSlave {
 
         final String ourContainerId = getContainerId();
         Computer.threadPoolForRemoting.submit(() -> {
-            synchronized(DockerTransientNode.this) {
-                if( containerRemoved ) {
+            synchronized (DockerTransientNode.this) {
+                if (containerRemoved) {
                     return; // nothing left to do here
                 }
                 final DockerAPI api;
                 try {
                     api = getDockerAPI();
                 } catch (RuntimeException ex) {
-                    logger.error("Unable to stop and remove container '" + ourContainerId + "' for node '" + name + "' due to exception:", ex);
+                    logger.error(
+                            "Unable to stop and remove container '" + ourContainerId + "' for node '" + name
+                                    + "' due to exception:",
+                            ex);
                     return;
                 }
-                final boolean newValues[] = stopAndRemoveContainer(api, logger, "for node '" + name + "'",
-                    removeVolumes, stopTimeout, ourContainerId, containerStopped);
+                final boolean[] newValues = stopAndRemoveContainer(
+                        api,
+                        logger,
+                        "for node '" + name + "'",
+                        removeVolumes,
+                        stopTimeout,
+                        ourContainerId,
+                        containerStopped);
                 containerStopped = newValues[0];
                 containerRemoved = newValues[1];
             }
@@ -266,37 +278,45 @@ public class DockerTransientNode extends AbstractCloudSlave {
 
     /**
      * Removes a container, optionally stopping it first.
-     * 
+     *
      * @return pair of booleans, first is true if the container is not running,
      *         second is true if the container no longer exists.
      */
-    private static boolean[] stopAndRemoveContainer(final DockerAPI api, final ILogger logger,
-            final String containerDescription, final boolean removeVolumes, final int stopTimeout, final String containerId,
+    private static boolean[] stopAndRemoveContainer(
+            final DockerAPI api,
+            final ILogger logger,
+            final String containerDescription,
+            final boolean removeVolumes,
+            final int stopTimeout,
+            final String containerId,
             final boolean containerAlreadyStopped) {
         boolean containerNowStopped = containerAlreadyStopped;
         boolean containerNowRemoved = false;
 
-        try(final DockerClient client = api.getClient()) {
-            if( !containerNowStopped ) {
+        try (final DockerClient client = api.getClient()) {
+            if (!containerNowStopped) {
                 client.stopContainerCmd(containerId)
                         .withTimeout(stopTimeout > 0 ? stopTimeout : DockerTemplate.DEFAULT_STOP_TIMEOUT)
                         .exec();
                 containerNowStopped = true;
-                logger.println("Stopped container '"+ containerId + "' " + containerDescription + ".");
+                logger.println("Stopped container '" + containerId + "' " + containerDescription + ".");
             }
-        } catch(NotFoundException handledByCode) {
-            logger.println("Can't stop container '" + containerId + "' " + containerDescription + " as it does not exist.");
+        } catch (NotFoundException handledByCode) {
+            logger.println(
+                    "Can't stop container '" + containerId + "' " + containerDescription + " as it does not exist.");
             containerNowStopped = true;
             containerNowRemoved = true; // no point trying to remove the container if it's already gone.
-        } catch(NotModifiedException handledByCode) {
+        } catch (NotModifiedException handledByCode) {
             logger.println("Container '" + containerId + "' already stopped" + containerDescription + ".");
             containerNowStopped = true;
         } catch (Exception ex) {
-            logger.error("Failed to stop container '" + containerId + "' " + containerDescription + " due to exception:", ex);
+            logger.error(
+                    "Failed to stop container '" + containerId + "' " + containerDescription + " due to exception:",
+                    ex);
         }
 
-        try(final DockerClient client = api.getClient()) {
-            if( !containerNowRemoved ) {
+        try (final DockerClient client = api.getClient()) {
+            if (!containerNowRemoved) {
                 client.removeContainerCmd(containerId)
                         .withRemoveVolumes(removeVolumes)
                         .exec();
@@ -310,12 +330,11 @@ public class DockerTransientNode extends AbstractCloudSlave {
             logger.println("Container '" + containerId + "' removal already in progress.");
             containerNowRemoved = true;
         } catch (Exception ex) {
-            logger.error("Failed to remove container '" + containerId + "' " + containerDescription + " due to exception:", ex);
+            logger.error(
+                    "Failed to remove container '" + containerId + "' " + containerDescription + " due to exception:",
+                    ex);
         }
-        return new boolean[]{
-                containerNowStopped,
-                containerNowRemoved
-        };
+        return new boolean[] {containerNowStopped, containerNowRemoved};
     }
 
     /**
@@ -324,7 +343,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
      * corresponding {@link DockerTransientNode} - if we have a
      * {@link DockerTransientNode} then call
      * {@link DockerTransientNode#terminate(Logger)} instead.
-     * 
+     *
      * @param api
      *            The {@link DockerAPI} which we are to use.
      * @param logger
@@ -347,16 +366,29 @@ public class DockerTransientNode extends AbstractCloudSlave {
      *         why).
      */
     @Restricted(NoExternalUse.class)
-    public static boolean stopAndRemoveContainer(final DockerAPI api, final Logger logger, final String containerDescription,
-            final boolean removeVolumes, final String containerId, final boolean containerAlreadyStopped) {
+    public static boolean stopAndRemoveContainer(
+            final DockerAPI api,
+            final Logger logger,
+            final String containerDescription,
+            final boolean removeVolumes,
+            final String containerId,
+            final boolean containerAlreadyStopped) {
         final ILogger tl = createILoggerForSLF4JLogger(logger);
-        final boolean containerState[] = stopAndRemoveContainer(api, tl, containerDescription, removeVolumes,
-                DockerTemplate.DEFAULT_STOP_TIMEOUT, containerId, containerAlreadyStopped);
+        final boolean[] containerState = stopAndRemoveContainer(
+                api,
+                tl,
+                containerDescription,
+                removeVolumes,
+                DockerTemplate.DEFAULT_STOP_TIMEOUT,
+                containerId,
+                containerAlreadyStopped);
         return containerState[1];
     }
 
     public DockerCloud getCloud() {
-        if (cloudId == null) return null;
+        if (cloudId == null) {
+            return null;
+        }
         final Cloud cloud = Jenkins.get().getCloud(cloudId);
 
         if (cloud == null) {
@@ -364,7 +396,8 @@ public class DockerTransientNode extends AbstractCloudSlave {
         }
 
         if (!(cloud instanceof DockerCloud)) {
-            throw new RuntimeException(cloudId + " is not a DockerCloud, it's a " + cloud.getClass().toString());
+            throw new RuntimeException(cloudId + " is not a DockerCloud, it's a "
+                    + cloud.getClass().toString());
         }
 
         return (DockerCloud) cloud;
@@ -377,11 +410,11 @@ public class DockerTransientNode extends AbstractCloudSlave {
      * "<i>TODO there is a theoretical race whereby the node instance is
      * updated/removed after lock release</i>". When we're busy adding nodes
      * this is not merely "theoretical"!
-     * 
+     *
      * @see <a href=
      *      "https://github.com/jenkinsci/jenkins/blob/a0faeaee3cbcd2709b6ffb4491e31928b1d234d5/core/src/main/java/jenkins/model/Nodes.java#L148">
      *      Nodes.java addNode method</a>
-     * 
+     *
      * @throws IOException
      *             if it all failed horribly every time we tried.
      */
@@ -390,7 +423,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
         // don't retry getInstance - fail immediately if that fails.
         final Jenkins jenkins = Jenkins.get();
         final int maxAttempts = 10;
-        for (int attempt = 1;; attempt++) {
+        for (int attempt = 1; ; attempt++) {
             try {
                 // addNode can fail at random due to a race condition.
                 jenkins.addNode(this);
@@ -411,7 +444,7 @@ public class DockerTransientNode extends AbstractCloudSlave {
 
     /**
      * Reverse of {@link #robustlyAddToJenkins()}.
-     * 
+     *
      * @throws IOException
      *             if it all failed horribly.
      */

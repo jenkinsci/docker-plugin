@@ -1,10 +1,10 @@
 package io.jenkins.docker;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.EnvVars;
 import hudson.slaves.AbstractCloudComputer;
 import io.jenkins.docker.client.DockerAPI;
-import javax.annotation.CheckForNull;
 import java.io.IOException;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 
@@ -60,9 +60,6 @@ public class DockerComputer extends AbstractCloudComputer<DockerTransientNode> {
 
     @Override
     public String toString() {
-        return "DockerComputer{" +
-                "name='" + super.getName() + '\'' +
-                ", node='" + nodeName + '\'' +
-                '}';
+        return "DockerComputer{" + "name='" + super.getName() + '\'' + ", node='" + nodeName + '\'' + '}';
     }
 }
