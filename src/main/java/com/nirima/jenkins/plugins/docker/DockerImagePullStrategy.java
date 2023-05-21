@@ -7,7 +7,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
  * @author Kanstantsin Shautsou
  */
 public enum DockerImagePullStrategy {
-
     PULL_ALWAYS("Pull all images every time") {
         @Override
         public boolean pullIfNotExists(String imageName) {
@@ -49,7 +48,7 @@ public enum DockerImagePullStrategy {
     }
 
     public String getDescription() {
-        //TODO add {@link #Locale.class}?
+        // TODO add {@link #Locale.class}?
         return description;
     }
 
@@ -75,8 +74,6 @@ public enum DockerImagePullStrategy {
             imageExists = false;
         }
 
-        return imageExists ?
-                pullIfExists(image) :
-                pullIfNotExists(image);
+        return imageExists ? pullIfExists(image) : pullIfNotExists(image);
     }
 }

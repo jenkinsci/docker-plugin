@@ -10,11 +10,10 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.export.ExportedBean;
-
 import java.io.IOException;
 import java.io.Serializable;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * Created by magnayn on 10/01/2014.
@@ -41,14 +40,14 @@ public class DockerBuildAction implements Action, Serializable, Describable<Dock
         this.cloudId = node.getCloudId();
         try {
             final InspectContainerResponse containerDetails;
-            try(final DockerClient client = dockerAPI.getClient()) {
+            try (final DockerClient client = dockerAPI.getClient()) {
                 containerDetails = client.inspectContainerCmd(containerId).exec();
             }
             this.inspect = new ObjectMapper()
-                .enable(SerializationFeature.INDENT_OUTPUT)
-                .writeValueAsString(containerDetails);
+                    .enable(SerializationFeature.INDENT_OUTPUT)
+                    .writeValueAsString(containerDetails);
         } catch (IOException e) {
-            this.inspect = "Failed to capture container inspection data: "+e.getMessage();
+            this.inspect = "Failed to capture container inspection data: " + e.getMessage();
         }
     }
 

@@ -1,5 +1,12 @@
 package io.jenkins.docker;
 
+import static hudson.slaves.NodeProvisioner.Strategy;
+import static hudson.slaves.NodeProvisioner.StrategyDecision;
+import static hudson.slaves.NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
+import static hudson.slaves.NodeProvisioner.StrategyDecision.PROVISIONING_COMPLETED;
+import static java.util.logging.Level.FINE;
+import static java.util.logging.Level.FINEST;
+
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.Extension;
 import hudson.model.Label;
@@ -8,18 +15,10 @@ import hudson.model.Queue;
 import hudson.model.queue.QueueListener;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
-import jenkins.model.Jenkins;
-
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.logging.Logger;
-
-import static hudson.slaves.NodeProvisioner.Strategy;
-import static hudson.slaves.NodeProvisioner.StrategyDecision;
-import static hudson.slaves.NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
-import static hudson.slaves.NodeProvisioner.StrategyDecision.PROVISIONING_COMPLETED;
-import static java.util.logging.Level.FINE;
-import static java.util.logging.Level.FINEST;
+import javax.annotation.Nonnull;
+import jenkins.model.Jenkins;
 
 /**
  * Based on https://github.com/jenkinsci/one-shot-executor-plugin/blob/master/src/main/java/org/jenkinsci/plugins/oneshot/OneShotProvisionerStrategy.java
@@ -40,7 +39,9 @@ public class FastNodeProvisionerStrategy extends Strategy {
         for (Cloud cloud : Jenkins.get().clouds) {
             if (cloud instanceof DockerCloud) {
                 final StrategyDecision decision = applyToCloud(state, (DockerCloud) cloud);
-                if (decision == PROVISIONING_COMPLETED) return decision;
+                if (decision == PROVISIONING_COMPLETED) {
+                    return decision;
+                }
             }
         }
         return CONSULT_REMAINING_STRATEGIES;
@@ -55,24 +56,25 @@ public class FastNodeProvisionerStrategy extends Strategy {
         }
 
         LoadStatistics.LoadStatisticsSnapshot snapshot = state.getSnapshot();
-        LOGGER.log(FINEST, "Available executors={0}, connecting={1}, planned={2}",
-                new Object[]{snapshot.getAvailableExecutors(), snapshot.getConnectingExecutors(), state.getPlannedCapacitySnapshot()});
-        int availableCapacity =
-              snapshot.getAvailableExecutors()
-            + snapshot.getConnectingExecutors()
-            + state.getPlannedCapacitySnapshot();
+        LOGGER.log(FINEST, "Available executors={0}, connecting={1}, planned={2}", new Object[] {
+            snapshot.getAvailableExecutors(), snapshot.getConnectingExecutors(), state.getPlannedCapacitySnapshot()
+        });
+        int availableCapacity = snapshot.getAvailableExecutors()
+                + snapshot.getConnectingExecutors()
+                + state.getPlannedCapacitySnapshot();
 
         int currentDemand = snapshot.getQueueLength();
-        LOGGER.log(FINE, "Available capacity={0}, currentDemand={1}",
-                new Object[]{availableCapacity, currentDemand});
+        LOGGER.log(FINE, "Available capacity={0}, currentDemand={1}", new Object[] {availableCapacity, currentDemand});
 
         if (availableCapacity < currentDemand) {
-            Collection<NodeProvisioner.PlannedNode> plannedNodes = cloud.provision(label, currentDemand - availableCapacity);
+            Collection<NodeProvisioner.PlannedNode> plannedNodes =
+                    cloud.provision(label, currentDemand - availableCapacity);
             LOGGER.log(FINE, "Planned {0} new nodes", plannedNodes.size());
             state.recordPendingLaunches(plannedNodes);
             availableCapacity += plannedNodes.size();
-            LOGGER.log(FINE, "After provisioning, available capacity={0}, currentDemand={1}",
-                    new Object[]{availableCapacity, currentDemand});
+            LOGGER.log(FINE, "After provisioning, available capacity={0}, currentDemand={1}", new Object[] {
+                availableCapacity, currentDemand
+            });
         }
 
         if (availableCapacity >= currentDemand) {
@@ -94,9 +96,8 @@ public class FastNodeProvisionerStrategy extends Strategy {
             final Label label = item.getAssignedLabel();
             for (Cloud cloud : jenkins.clouds) {
                 if (cloud instanceof DockerCloud && cloud.canProvision(label)) {
-                    final NodeProvisioner provisioner = (label == null
-                            ? jenkins.unlabeledNodeProvisioner
-                            : label.nodeProvisioner);
+                    final NodeProvisioner provisioner =
+                            (label == null ? jenkins.unlabeledNodeProvisioner : label.nodeProvisioner);
                     provisioner.suggestReviewNow();
                 }
             }

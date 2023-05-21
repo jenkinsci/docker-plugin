@@ -2,12 +2,10 @@ package io.jenkins.docker.client;
 
 import static org.junit.Assert.*;
 
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 import org.junit.Test;
-
-import com.google.common.collect.Lists;
 
 public class UsageTrackingCacheTest {
 
@@ -118,8 +116,8 @@ public class UsageTrackingCacheTest {
         final Object value = value("value");
         final List<Object> expiryList = Lists.newArrayList();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
-        final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.MILLISECONDS,
-                expiryHandler);
+        final UsageTrackingCache<String, Object> instance =
+                new UsageTrackingCache<>(1, TimeUnit.MILLISECONDS, expiryHandler);
         instance.cacheAndIncrementUsage(key, value); // count=1
         instance.decrementUsage(value); // count=0 so inactive
         // cache could expire the entry any time from now onwards
@@ -130,14 +128,15 @@ public class UsageTrackingCacheTest {
 
         assertExpired(expiryList, key, value);
     }
+
     @Test
     public void expiryHandlerGivenOldActiveDataInCacheThenNotCalled() throws Exception {
         final String key = "key";
         final Object value = value("value");
         final List<Object> expiryList = Lists.newArrayList();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
-        final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.MILLISECONDS,
-                expiryHandler);
+        final UsageTrackingCache<String, Object> instance =
+                new UsageTrackingCache<>(1, TimeUnit.MILLISECONDS, expiryHandler);
         instance.cacheAndIncrementUsage(key, value); // count=1
         // cache could expire the entry any time from now onwards, but shouldn't as it's active
         Thread.sleep(50L); // force cache to expire

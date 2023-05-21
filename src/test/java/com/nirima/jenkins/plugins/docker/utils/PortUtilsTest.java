@@ -1,14 +1,5 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExternalResource;
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -18,6 +9,14 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 /**
  * @author lanwen (Merkushev Kirill)
@@ -34,21 +33,19 @@ public class PortUtilsTest {
     @Test
     public void shouldConnectToServerSuccessfully() throws Exception {
         // When
-        boolean actual = PortUtils.connectionCheck(server.host(), server.port())
-        		.executeOnce();
+        boolean actual = PortUtils.connectionCheck(server.host(), server.port()).executeOnce();
 
         // Then
-		assertThat("Server is up and should connect", actual, equalTo(true));
+        assertThat("Server is up and should connect", actual, equalTo(true));
     }
 
     @Test
     public void shouldNotConnectToUnusedPort() throws Exception {
         // When
-        boolean actual = PortUtils.connectionCheck("localhost", 0)
-        		.executeOnce();
+        boolean actual = PortUtils.connectionCheck("localhost", 0).executeOnce();
 
         // Then
-		assertThat("Unused port should not be connectible", actual, equalTo(false));
+        assertThat("Unused port should not be connectible", actual, equalTo(false));
     }
 
     @Test
@@ -61,7 +58,7 @@ public class PortUtilsTest {
         // When
         final long before = currentTimeMillis();
         final boolean actual = PortUtils.connectionCheck("localhost", 0)
-        		.withRetries(RETRY_COUNT)
+                .withRetries(RETRY_COUNT)
                 .withEveryRetryWaitFor(DELAY, MILLISECONDS)
                 .execute();
         final long after = currentTimeMillis();
@@ -69,29 +66,31 @@ public class PortUtilsTest {
 
         // Then
         assertThat("Unused port should not be connectible", actual, equalTo(false));
-        assertThat("Should wait for timeout", actualDuration,
+        assertThat(
+                "Should wait for timeout",
+                actualDuration,
                 allOf(greaterThanOrEqualTo(minExpectedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
 
     @Test
     public void shouldThrowIllegalStateExOnNotAvailPort() throws Exception {
         // Given
-    	final Class<IllegalStateException> expectedType = IllegalStateException.class;
+        final Class<IllegalStateException> expectedType = IllegalStateException.class;
 
-    	// When
-    	Throwable thrown = null; 
+        // When
+        Throwable thrown = null;
         try {
-	        PortUtils.connectionCheck("localhost", 0)
-	        		.withRetries(RETRY_COUNT)
-	        		.withEveryRetryWaitFor(DELAY, MILLISECONDS)
-	                .useSSH()
-	                .execute();
-        } catch ( Throwable expected ) {
-        	thrown = expected;
+            PortUtils.connectionCheck("localhost", 0)
+                    .withRetries(RETRY_COUNT)
+                    .withEveryRetryWaitFor(DELAY, MILLISECONDS)
+                    .useSSH()
+                    .execute();
+        } catch (Throwable expected) {
+            thrown = expected;
         }
 
         // Then
-		assertThat(expectedType.getSimpleName() + " thrown", thrown, instanceOf(expectedType));
+        assertThat(expectedType.getSimpleName() + " thrown", thrown, instanceOf(expectedType));
     }
 
     @Test
@@ -101,16 +100,22 @@ public class PortUtilsTest {
         final int waitBetweenTries = DELAY / 2;
         final int sshWaitDuringTry = DELAY / 3;
         // e.g. try, delay, try, delay, try, delay, try = 4 tries, 3 delays.
-        final long minExpectedTime = sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry + waitBetweenTries
-                + sshWaitDuringTry + waitBetweenTries + sshWaitDuringTry;
+        final long minExpectedTime = sshWaitDuringTry
+                + waitBetweenTries
+                + sshWaitDuringTry
+                + waitBetweenTries
+                + sshWaitDuringTry
+                + waitBetweenTries
+                + sshWaitDuringTry;
         final long maxExpectedTime = minExpectedTime + waitBetweenTries - 1;
         final long minAllowedTime = minExpectedTime - minimumFudgeFactor(waitBetweenTries);
 
         // When
         final long before = currentTimeMillis();
         final boolean actual = PortUtils.connectionCheck(server.host(), server.port())
-        		.withRetries(retries)
-                .withEveryRetryWaitFor(waitBetweenTries, MILLISECONDS).useSSH()
+                .withRetries(retries)
+                .withEveryRetryWaitFor(waitBetweenTries, MILLISECONDS)
+                .useSSH()
                 .withSSHTimeout(sshWaitDuringTry, MILLISECONDS)
                 .execute();
         final long after = currentTimeMillis();
@@ -118,7 +123,9 @@ public class PortUtilsTest {
 
         // Then
         assertThat("Port is connectible", actual, equalTo(false));
-        assertThat("Should wait for timeout", actualDuration,
+        assertThat(
+                "Should wait for timeout",
+                actualDuration,
                 allOf(greaterThanOrEqualTo(minAllowedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
 
@@ -145,8 +152,8 @@ public class PortUtilsTest {
         // Given
         int retries = 4;
         // e.g. try, delay, try, delay, try, delay, try, delay, try = 5 tries, 4 delays.
-        // expecting port to become available during the second delay. 
-        final long bringPortUpAfter = DELAY + DELAY/2;
+        // expecting port to become available during the second delay.
+        final long bringPortUpAfter = DELAY + DELAY / 2;
         final long minExpectedTime = 2 * DELAY;
         final long maxExpectedTime = minExpectedTime + DELAY - 1;
         // It can take so long to test for the port availability that it's available
@@ -160,7 +167,7 @@ public class PortUtilsTest {
         // When
         final long before = currentTimeMillis();
         final boolean actual = PortUtils.connectionCheck(server.host(), server.port())
-        		.withRetries(retries)
+                .withRetries(retries)
                 .withEveryRetryWaitFor(DELAY, MILLISECONDS)
                 .execute();
         final long after = currentTimeMillis();
@@ -168,8 +175,10 @@ public class PortUtilsTest {
 
         // Then
         assertThat("Used port should be connectible", actual, equalTo(true));
-		assertThat("Should try, fail, wait " + DELAY + ", retry(1), fail, wait " + DELAY + ", retry(2) and succeed",
-				actualDuration, allOf(greaterThanOrEqualTo(minAllowedTime), lessThanOrEqualTo(maxExpectedTime)));
+        assertThat(
+                "Should try, fail, wait " + DELAY + ", retry(1), fail, wait " + DELAY + ", retry(2) and succeed",
+                actualDuration,
+                allOf(greaterThanOrEqualTo(minAllowedTime), lessThanOrEqualTo(maxExpectedTime)));
     }
 
     /**
@@ -196,16 +205,20 @@ public class PortUtilsTest {
         public void stopAndRebindAfter(long delay, TimeUnit unit) throws IOException {
             final int port = port();
             socket.close();
-            Executors.newSingleThreadScheduledExecutor().schedule(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        socket = new ServerSocket(port);
-                    } catch (IOException e) {
-                        throw new RuntimeException("Can't rebind socket", e);
-                    }
-                }
-            }, delay, unit);
+            Executors.newSingleThreadScheduledExecutor()
+                    .schedule(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        socket = new ServerSocket(port);
+                                    } catch (IOException e) {
+                                        throw new RuntimeException("Can't rebind socket", e);
+                                    }
+                                }
+                            },
+                            delay,
+                            unit);
         }
 
         @Override

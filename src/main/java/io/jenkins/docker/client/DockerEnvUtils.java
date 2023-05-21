@@ -1,22 +1,19 @@
 package io.jenkins.docker.client;
 
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import com.github.dockerjava.api.command.CreateContainerCmd;
-
 public class DockerEnvUtils {
 
-    private DockerEnvUtils() {
-    }
+    private DockerEnvUtils() {}
 
     /**
      * Adds (or updates) an environment variable to the list of environment
      * variables being passed into a create-container command.
-     * 
+     *
      * @param envName
      *            The name of the environment variable to set.
      * @param envValue

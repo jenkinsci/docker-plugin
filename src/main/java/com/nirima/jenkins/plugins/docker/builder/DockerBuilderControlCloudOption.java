@@ -5,12 +5,9 @@ import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Launcher;
 import hudson.model.Run;
-import jenkins.model.Jenkins;
-
-import javax.annotation.Nonnull;
-
 import java.util.Optional;
-
+import javax.annotation.Nonnull;
+import jenkins.model.Jenkins;
 
 /**
  * Abstract class for cloud based container "control" actions
@@ -31,9 +28,10 @@ public abstract class DockerBuilderControlCloudOption extends DockerBuilderContr
     protected @Nonnull DockerCloud getCloud(Run<?, ?> build, Launcher launcher) {
         // Did we specify?
         if (!Strings.isNullOrEmpty(cloudName)) {
-            DockerCloud specifiedCloud = (DockerCloud)Jenkins.get().getCloud(cloudName);
-            if( specifiedCloud == null )
+            DockerCloud specifiedCloud = (DockerCloud) Jenkins.get().getCloud(cloudName);
+            if (specifiedCloud == null) {
                 throw new IllegalStateException("Could not find a cloud named " + cloudName);
+            }
             return specifiedCloud;
         }
 

@@ -11,12 +11,11 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
+import java.io.PrintStream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.PrintStream;
 
 /**
  * Build step that stops container in DockerCloud
@@ -35,15 +34,14 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
     }
 
     @Override
-    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
-            throws DockerException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener) throws DockerException {
         final PrintStream llog = listener.getLogger();
         LOG.info("Stopping container " + containerId);
         llog.println("Stopping container " + containerId);
 
         final DockerCloud cloud = getCloud(build, launcher);
         final DockerAPI dockerApi = cloud.getDockerApi();
-        try(final DockerClient client = dockerApi.getClient()) {
+        try (final DockerClient client = dockerApi.getClient()) {
             executeOnDocker(build, llog, client);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -51,8 +49,7 @@ public class DockerBuilderControlOptionStop extends DockerBuilderControlOptionSt
     }
 
     @SuppressWarnings("unused")
-    private void executeOnDocker(Run<?, ?> build, PrintStream llog, DockerClient client)
-            throws DockerException {
+    private void executeOnDocker(Run<?, ?> build, PrintStream llog, DockerClient client) throws DockerException {
         try {
             client.stopContainerCmd(containerId).exec();
         } catch (NotModifiedException ex) {

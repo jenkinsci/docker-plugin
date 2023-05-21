@@ -11,7 +11,6 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.google.common.base.Joiner;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Util;
@@ -21,7 +20,12 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
-import io.jenkins.docker.client.DockerEnvUtils;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Objects;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import jenkins.slaves.JnlpAgentReceiver;
 import org.apache.commons.lang.StringUtils;
@@ -31,14 +35,6 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
@@ -46,9 +42,12 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     @CheckForNull
     private String user;
+
     private final JNLPLauncher jnlpLauncher;
+
     @CheckForNull
     private String jenkinsUrl;
+
     @CheckForNull
     private String[] entryPointArguments;
 
@@ -84,7 +83,9 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     @Nonnull
     public String getEntryPointArgumentsString() {
-        if (entryPointArguments == null) return "";
+        if (entryPointArguments == null) {
+            return "";
+        }
         return Joiner.on("\n").join(entryPointArguments);
     }
 
@@ -127,13 +128,16 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (!super.equals(obj))
+        }
+        if (!super.equals(obj)) {
             return false;
+        }
         DockerComputerJNLPConnector other = (DockerComputerJNLPConnector) obj;
         return Arrays.equals(entryPointArguments, other.entryPointArguments)
-                && Objects.equals(jenkinsUrl, other.jenkinsUrl) && Objects.equals(jnlpLauncher, other.jnlpLauncher)
+                && Objects.equals(jenkinsUrl, other.jenkinsUrl)
+                && Objects.equals(jnlpLauncher, other.jnlpLauncher)
                 && Objects.equals(user, other.user);
     }
 
@@ -149,17 +153,21 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     }
 
     @Override
-    protected ComputerLauncher createLauncher(final DockerAPI api, final String workdir, final InspectContainerResponse inspect, TaskListener listener) throws IOException, InterruptedException {
+    protected ComputerLauncher createLauncher(
+            final DockerAPI api, final String workdir, final InspectContainerResponse inspect, TaskListener listener)
+            throws IOException, InterruptedException {
         return makeCopy(jnlpLauncher);
     }
 
     @Restricted(NoExternalUse.class)
     enum ArgumentVariables {
         NodeName("NODE_NAME", "The name assigned to this node"), //
-        Secret("JNLP_SECRET",
+        Secret(
+                "JNLP_SECRET",
                 "The secret that must be passed to agent.jar's -secret argument to pass JNLP authentication."), //
         JenkinsUrl("JENKINS_URL", "The Jenkins root URL."), //
-        TunnelArgument("TUNNEL_ARG",
+        TunnelArgument(
+                "TUNNEL_ARG",
                 "If a JNLP tunnel has been specified then this evaluates to '-tunnel', otherwise it evaluates to the empty string"), //
         TunnelValue("TUNNEL", "The JNLP tunnel value");
         private final String name;
@@ -184,13 +192,17 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
             + "}\n${" + ArgumentVariables.Secret.getName() + "}\n${" + ArgumentVariables.NodeName.getName() + "}";
 
     @Override
-    public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd) throws IOException, InterruptedException {
-        final String effectiveJenkinsUrl = StringUtils.isEmpty(jenkinsUrl) ? Jenkins.get().getRootUrl() : jenkinsUrl;
+    public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd)
+            throws IOException, InterruptedException {
+        final String effectiveJenkinsUrl =
+                StringUtils.isEmpty(jenkinsUrl) ? Jenkins.get().getRootUrl() : jenkinsUrl;
         final String nodeName = DockerTemplate.getNodeNameFromContainerConfig(cmd);
         final String secret = JnlpAgentReceiver.SLAVE_SECRET.mac(nodeName);
-        final EnvVars knownVariables = calculateVariablesForVariableSubstitution(nodeName, secret, jnlpLauncher.tunnel, effectiveJenkinsUrl);
+        final EnvVars knownVariables =
+                calculateVariablesForVariableSubstitution(nodeName, secret, jnlpLauncher.tunnel, effectiveJenkinsUrl);
         final String configuredArgString = getEntryPointArgumentsString();
-        final String effectiveConfiguredArgString = StringUtils.isNotBlank(configuredArgString) ? configuredArgString : DEFAULT_ENTRY_POINT_ARGUMENTS;
+        final String effectiveConfiguredArgString =
+                StringUtils.isNotBlank(configuredArgString) ? configuredArgString : DEFAULT_ENTRY_POINT_ARGUMENTS;
         final String resolvedArgString = Util.replaceMacro(effectiveConfiguredArgString, knownVariables);
         final String[] resolvedArgs = splitAndFilterEmpty(resolvedArgString, "\n");
 
@@ -211,8 +223,9 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         ensureNodeIsKnown(node);
     }
 
-    private static EnvVars calculateVariablesForVariableSubstitution(final String nodeName, final String secret,
-            final String jnlpTunnel, final String jenkinsUrl) throws IOException, InterruptedException {
+    private static EnvVars calculateVariablesForVariableSubstitution(
+            final String nodeName, final String secret, final String jnlpTunnel, final String jenkinsUrl)
+            throws IOException, InterruptedException {
         final EnvVars knownVariables = new EnvVars();
         final Jenkins j = Jenkins.get();
         addEnvVars(knownVariables, j.getGlobalNodeProperties());
@@ -221,22 +234,22 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
             // values of v.
             final String argValue;
             switch (v) {
-                case JenkinsUrl :
+                case JenkinsUrl:
                     argValue = jenkinsUrl;
                     break;
-                case TunnelArgument :
+                case TunnelArgument:
                     argValue = StringUtils.isNotBlank(jnlpTunnel) ? "-tunnel" : "";
                     break;
-                case TunnelValue :
+                case TunnelValue:
                     argValue = jnlpTunnel;
                     break;
-                case Secret :
+                case Secret:
                     argValue = secret;
                     break;
-                case NodeName :
+                case NodeName:
                     argValue = nodeName;
                     break;
-                default :
+                default:
                     final String msg = "Internal code error: Switch statement is missing \"case " + v.name()
                             + " : argValue = ... ; break;\" code.";
                     // If this line throws an exception then it's because
@@ -251,7 +264,8 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         return knownVariables;
     }
 
-    @Extension @Symbol("jnlp")
+    @Extension
+    @Symbol("jnlp")
     public static final class DescriptorImpl extends Descriptor<DockerComputerConnector> {
 
         public Collection<ArgumentVariables> getEntryPointArgumentVariables() {
