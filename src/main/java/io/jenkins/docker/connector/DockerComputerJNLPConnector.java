@@ -195,10 +195,6 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         final String[] resolvedArgs = splitAndFilterEmpty(resolvedArgString, "\n");
 
         cmd.withCmd(resolvedArgs);
-        String vmargs = jnlpLauncher.vmargs;
-        if (StringUtils.isNotBlank(vmargs)) {
-            DockerEnvUtils.addEnvToCmd("JAVA_OPT", vmargs.trim(), cmd);
-        }
         if (StringUtils.isNotBlank(user)) {
             cmd.withUser(user);
         }

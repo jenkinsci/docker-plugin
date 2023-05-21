@@ -366,7 +366,7 @@ public class DockerNodeStepTest {
             r.jenkins.clouds.add(new DockerCloud("whatever", new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)), Collections.emptyList()));
             WorkflowJob j = r.createProject(WorkflowJob.class, "p");
             j.setDefinition(new CpsFlowDefinition(
-                dockerNodeWithImage("openjdk:8") + " {\n" +
+                dockerNodeWithImage("openjdk:11") + " {\n" +
                 "  sh 'java -version && whoami && pwd && touch stuff && ls -lat . ..'\n" +
                 "}\n", true));
             r.buildAndAssertSuccess(j);

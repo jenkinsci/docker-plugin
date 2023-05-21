@@ -1,11 +1,5 @@
 package io.jenkins.docker.connector;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 
@@ -14,10 +8,7 @@ import jenkins.model.JenkinsLocationConfiguration;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
     private static final String JNLP_AGENT_IMAGE_IMAGENAME = "jenkins/inbound-agent";
@@ -50,48 +41,4 @@ public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest
         template.setName("connectAgentViaJNLP");
         should_connect_agent(template);
     }
-
-    @Test
-    public void testKeepingEvnInBeforeContainerCreated() throws IOException, InterruptedException {
-        // Given
-        final String env1 = "ENV1=val1";
-        final String vmargs = "-Dhttp.proxyPort=8080";
-        final DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector(new JNLPLauncher(null, vmargs));
-
-        final CreateContainerCmd createCmd = mock(CreateContainerCmd.class);
-        final Map<String, String> containerLabels = new TreeMap<>();
-        when(createCmd.getLabels()).thenReturn(containerLabels);
-        DockerTemplate.setNodeNameInContainerConfig(createCmd, "nodeName");
-        when(createCmd.getEnv()).thenReturn(new String[]{ env1 });
-
-        // When
-        connector.beforeContainerCreated(null, null, createCmd);
-
-        // Then
-        verify(createCmd, times(1)).withEnv(new String[]{
-                env1,
-                "JAVA_OPT=" + vmargs
-        });
-    }
-
-    @Test
-    public void testAddingVmargsInBeforeContainerCreated() throws IOException, InterruptedException {
-        // Given
-        final String vmargs = "-Dhttp.proxyPort=8080";
-        final DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector(new JNLPLauncher(null, vmargs));
-
-        final CreateContainerCmd createCmd = mock(CreateContainerCmd.class);
-        final Map<String, String> containerLabels = new TreeMap<>();
-        when(createCmd.getLabels()).thenReturn(containerLabels);
-        DockerTemplate.setNodeNameInContainerConfig(createCmd, "nodeName");
-
-        // When
-        connector.beforeContainerCreated(null, null, createCmd);
-
-        // Then
-        verify(createCmd, times(1)).withEnv(new String[]{
-                "JAVA_OPT=" + vmargs
-        });
-    }
-
 }
