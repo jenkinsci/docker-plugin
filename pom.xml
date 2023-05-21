@@ -61,6 +61,7 @@
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
         <spotbugs.effort>Max</spotbugs.effort>
         <spotbugs.threshold>Low</spotbugs.threshold>
+        <junixsocket.version>2.6.2</junixsocket.version>
     </properties>
 
     <dependencies>
@@ -135,12 +136,12 @@
         <dependency>
             <groupId>com.kohlschutter.junixsocket</groupId>
             <artifactId>junixsocket-common</artifactId>
-            <version>2.3.0</version>
+            <version>${junixsocket.version}</version>
         </dependency>
         <dependency>
             <groupId>com.kohlschutter.junixsocket</groupId>
             <artifactId>junixsocket-native-common</artifactId>
-            <version>2.3.0</version>
+            <version>${junixsocket.version}</version>
         </dependency>
 
         <dependency>
