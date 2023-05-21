@@ -705,7 +705,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             return remoteFsOrNull;
         }
         final ContainerConfig containerConfig = image.getContainerConfig();
-        final String containerWorkingDir = containerConfig == null ? null : containerConfig.getWorkingDir();
+        String containerWorkingDir = containerConfig == null ? null : containerConfig.getWorkingDir();
+        if (containerWorkingDir == null || containerWorkingDir.isBlank()) {
+            final ContainerConfig config = image.getConfig();
+            containerWorkingDir = config == null ? null : config.getWorkingDir();
+        }
         if (!StringUtils.isBlank(containerWorkingDir)) {
             return containerWorkingDir;
         }
