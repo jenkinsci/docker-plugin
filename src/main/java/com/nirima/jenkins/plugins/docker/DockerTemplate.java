@@ -1,5 +1,12 @@
 package com.nirima.jenkins.plugins.docker;
 
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopy;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopyOfList;
+import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
@@ -32,19 +39,6 @@ import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import io.jenkins.docker.connector.DockerComputerJNLPConnector;
-import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,13 +49,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopy;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopyOfList;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DockerTemplate implements Describable<DockerTemplate> {
     /**
@@ -116,7 +115,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     /**
      * Default constructor; give an unusable instance.
-     * 
+     *
      * @deprecated This gives an empty image name, which isn't valid.
      */
     @Deprecated
@@ -124,22 +123,22 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         this(new DockerTemplateBase(""), new DockerComputerJNLPConnector(), null, "1");
     }
 
-    public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
-                          @Nonnull DockerComputerConnector connector,
-                          String labelString,
-                          String remoteFs,
-                          String instanceCapStr) {
+    public DockerTemplate(
+            @Nonnull DockerTemplateBase dockerTemplateBase,
+            @Nonnull DockerComputerConnector connector,
+            String labelString,
+            String remoteFs,
+            String instanceCapStr) {
         this(dockerTemplateBase, connector, labelString, instanceCapStr);
         setRemoteFs(remoteFs);
     }
 
-
     @DataBoundConstructor
-    public DockerTemplate(@Nonnull DockerTemplateBase dockerTemplateBase,
-                          @Nonnull DockerComputerConnector connector,
-                          String labelString,
-                          String instanceCapStr
-    ) {
+    public DockerTemplate(
+            @Nonnull DockerTemplateBase dockerTemplateBase,
+            @Nonnull DockerComputerConnector connector,
+            String labelString,
+            String instanceCapStr) {
         this.dockerTemplateBase = dockerTemplateBase;
         this.connector = connector;
         this.labelString = Util.fixEmpty(labelString);
@@ -309,7 +308,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     /**
      * Retrieves the {@link Node} name chosen by
      * {@link #fillContainerConfig(CreateContainerCmd)}.
-     * 
+     *
      * @param containerConfig
      *            The {@link CreateContainerCmd} previously returned by
      *            {@link #fillContainerConfig(CreateContainerCmd)}.
@@ -477,7 +476,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
     @Nonnull
     public String getName() {
-        if( name==null || name.trim().isEmpty()) {
+        if (name == null || name.trim().isEmpty()) {
             return DEFAULT_NAME;
         }
         return name.trim();
@@ -499,7 +498,9 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Initializes data structure that we don't persist.
      * @return this, but populated
      */
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "This method's job is to ensure that things aren't null where they shouldn't be.")
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+            value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
+            justification = "This method's job is to ensure that things aren't null where they shouldn't be.")
     protected Object readResolve() {
         try {
             // https://github.com/jenkinsci/docker-plugin/issues/270
@@ -512,7 +513,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 }
                 configVersion = 2;
             } else {
-               configDefaults();
+                configDefaults();
             }
 
             try {
@@ -521,7 +522,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
                 LOGGER.error("Can't parse labels: ", t);
             }
 
-            if (connector == null ) {
+            if (connector == null) {
                 if (launcher != null) {
                     connector = launcher.convertToConnector();
                 } else {
@@ -535,7 +536,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @Restricted(NoExternalUse.class)
-    public DockerTemplate cloneWithLabel(String label)  {
+    public DockerTemplate cloneWithLabel(String label) {
         final DockerTemplate template = new DockerTemplate(dockerTemplateBase, connector, label, remoteFs, "1");
         template.setMode(Node.Mode.EXCLUSIVE);
         template.setPullStrategy(getPullStrategy());
@@ -639,7 +640,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         final String image = getFullImageId();
 
         final boolean shouldPullImage;
-        try(final DockerClient client = api.getClient()) {
+        try (final DockerClient client = api.getClient()) {
             shouldPullImage = getPullStrategy().shouldPullImage(client, image);
         }
         if (shouldPullImage) {
@@ -648,17 +649,18 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
             long startTime = System.currentTimeMillis();
 
-            try(final DockerClient client = api.getClient(pullTimeout)) {
-                final PullImageCmd cmd =  client.pullImageCmd(image);
+            try (final DockerClient client = api.getClient(pullTimeout)) {
+                final PullImageCmd cmd = client.pullImageCmd(image);
                 final DockerRegistryEndpoint registry = getRegistry();
                 DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.get());
                 cmd.exec(new PullImageResultCallback() {
-                    @Override
-                    public void onNext(PullResponseItem item) {
-                        super.onNext(item);
-                        listener.getLogger().println(item.getStatus());
-                    }
-                }).awaitCompletion();
+                            @Override
+                            public void onNext(PullResponseItem item) {
+                                super.onNext(item);
+                                listener.getLogger().println(item.getStatus());
+                            }
+                        })
+                        .awaitCompletion();
             }
 
             long pullTime = System.currentTimeMillis() - startTime;
@@ -666,7 +668,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
 
         final InspectImageResponse result;
-        try(final DockerClient client = api.getClient()) {
+        try (final DockerClient client = api.getClient()) {
             result = client.inspectImageCmd(image).exec();
         } catch (NotFoundException e) {
             throw new DockerClientException("Could not pull image: " + image, e);
@@ -675,11 +677,12 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     }
 
     @Restricted(NoExternalUse.class)
-    public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener) throws IOException, Descriptor.FormException, InterruptedException {
+    public DockerTransientNode provisionNode(DockerAPI api, TaskListener listener)
+            throws IOException, Descriptor.FormException, InterruptedException {
         try {
             final InspectImageResponse image = pullImage(api, listener);
             final String effectiveRemoteFsDir = getEffectiveRemoteFs(image);
-            try(final DockerClient client = api.getClient()) {
+            try (final DockerClient client = api.getClient()) {
                 return doProvisionNode(api, client, effectiveRemoteFsDir, listener);
             }
         } catch (IOException | Descriptor.FormException | InterruptedException | RuntimeException ex) {
@@ -710,8 +713,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return "/";
     }
 
-    private DockerTransientNode doProvisionNode(final DockerAPI api, final DockerClient client,
-            final String effectiveRemoteFsDir, final TaskListener listener)
+    private DockerTransientNode doProvisionNode(
+            final DockerAPI api,
+            final DockerClient client,
+            final String effectiveRemoteFsDir,
+            final TaskListener listener)
             throws IOException, Descriptor.FormException, InterruptedException {
         final String ourImage = getImage(); // can't be null
         LOGGER.info("Trying to run container for image \"{}\"", ourImage);
@@ -732,7 +738,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
 
         try {
             final DockerTransientNode node = new DockerTransientNode(nodeName, containerId, effectiveRemoteFsDir);
-            node.setNodeDescription("Docker Agent [" + ourImage + " on "+ api.getDockerHost().getUri() + " ID " + containerId + "]");
+            node.setNodeDescription(
+                    "Docker Agent [" + ourImage + " on " + api.getDockerHost().getUri() + " ID " + containerId + "]");
             node.setMode(getMode());
             node.setLabelString(getLabelString());
             node.setRetentionStrategy(makeCopy(getRetentionStrategy()));
@@ -743,14 +750,15 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             ourConnector.beforeContainerStarted(api, effectiveRemoteFsDir, node);
             client.startContainerCmd(containerId).exec();
             ourConnector.afterContainerStarted(api, effectiveRemoteFsDir, node);
-            final ComputerLauncher nodeLauncher = ourConnector.createLauncher(api, containerId, effectiveRemoteFsDir, listener);
+            final ComputerLauncher nodeLauncher =
+                    ourConnector.createLauncher(api, containerId, effectiveRemoteFsDir, listener);
             node.setLauncher(nodeLauncher);
             finallyRemoveTheContainer = false;
             return node;
         } finally {
             // if something went wrong, cleanup aborted container
             // while ensuring that the original exception escapes.
-            if ( finallyRemoveTheContainer ) {
+            if (finallyRemoveTheContainer) {
                 try {
                     client.removeContainerCmd(containerId).withForce(true).exec();
                 } catch (NotFoundException handledByCode) {
@@ -765,7 +773,7 @@ public class DockerTemplate implements Describable<DockerTemplate> {
     /**
      * Returns a node name for a new node that doesn't clash with any we've
      * currently got.
-     * 
+     *
      * @param templateName
      *            The template's {@link #getName()}. This is used as a prefix for
      *            the node name.
@@ -786,11 +794,11 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         }
     }
 
-   /**
+    /**
      * Workaround for JENKINS-51203. Retries setting node properties until we
      * either give up or we succeed. If we give up, the exception thrown will be
      * the last one encountered.
-     * 
+     *
      * @param node
      *            The node whose nodeProperties are to be set.
      * @param nodeProperties
@@ -798,14 +806,14 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * @throws IOException
      *             if it all failed horribly every time we tried.
      */
-    private static void robustlySetNodeProperties(DockerTransientNode node,
-            List<? extends NodeProperty<?>> nodeProperties) throws IOException {
+    private static void robustlySetNodeProperties(
+            DockerTransientNode node, List<? extends NodeProperty<?>> nodeProperties) throws IOException {
         if (nodeProperties == null || nodeProperties.isEmpty()) {
             // no point calling setNodeProperties if we've got nothing to set.
             return;
         }
         final int maxAttempts = 10;
-        for (int attempt = 1;; attempt++) {
+        for (int attempt = 1; ; attempt++) {
             try {
                 // setNodeProperties can fail at random
                 // It does so because it's persisting all Nodes,
@@ -835,10 +843,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
          */
         @SuppressWarnings("cast")
         public List<NodePropertyDescriptor> getNodePropertiesDescriptors() {
-            // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I don't get
+            // Copy/paste hudson.model.Slave.SlaveDescriptor.nodePropertyDescriptors marked as @Restricted for reasons I
+            // don't get
             List<NodePropertyDescriptor> result = new ArrayList<>();
-            Collection<NodePropertyDescriptor> list =
-                    (Collection) Jenkins.get().getDescriptorList(NodeProperty.class);
+            Collection<NodePropertyDescriptor> list = (Collection) Jenkins.get().getDescriptorList(NodeProperty.class);
             for (NodePropertyDescriptor npd : DescriptorVisibilityFilter.applyType(DockerTransientNode.class, list)) {
                 if (npd.isApplicable(DockerTransientNode.class)) {
                     result.add(npd);
@@ -848,7 +856,8 @@ public class DockerTemplate implements Describable<DockerTemplate> {
             while (iterator.hasNext()) {
                 final NodePropertyDescriptor de = iterator.next();
                 // see https://issues.jenkins-ci.org/browse/JENKINS-47697
-                if ("org.jenkinsci.plugins.matrixauth.AuthorizationMatrixNodeProperty".equals(de.getKlass().toJavaClass().getName())) {
+                if ("org.jenkinsci.plugins.matrixauth.AuthorizationMatrixNodeProperty"
+                        .equals(de.getKlass().toJavaClass().getName())) {
                     iterator.remove();
                 }
             }

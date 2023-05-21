@@ -10,13 +10,12 @@ import hudson.model.BuildListener;
 import hudson.slaves.Cloud;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import java.io.IOException;
+import java.io.PrintStream;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.PrintStream;
 
 /**
  * Builder that adds template to all clouds.
@@ -27,6 +26,7 @@ public class DockerBuilderNewTemplate extends Builder {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderNewTemplate.class);
 
     private DockerTemplate dockerTemplate;
+
     @SuppressWarnings("unused")
     private int version = 1;
 

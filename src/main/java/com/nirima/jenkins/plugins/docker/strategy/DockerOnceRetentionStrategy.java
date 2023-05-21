@@ -1,6 +1,8 @@
 package com.nirima.jenkins.plugins.docker.strategy;
 
-import io.jenkins.docker.DockerComputer;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -11,22 +13,18 @@ import hudson.model.Queue;
 import hudson.model.Queue.FlyweightTask;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
+import io.jenkins.docker.DockerComputer;
 import io.jenkins.docker.DockerTransientNode;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-
-import javax.annotation.Nonnull;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
-import java.util.Objects;
 
 /**
  * Retention strategy that allows our docker agents to run only a single build
@@ -129,13 +127,14 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
         final long excessIdleMilliseconds = idleMilliseconds - maxIdleMilliseconds;
         if (excessIdleMilliseconds < 0L) {
             final long insufficientIdleMilliseconds = -excessIdleMilliseconds;
-            final long insufficientIdleMinutesRoundedUp = MILLISECONDS
-                    .toMinutes(insufficientIdleMilliseconds + ONE_MILLISECOND_LESS_THAN_A_MINUTE);
+            final long insufficientIdleMinutesRoundedUp =
+                    MILLISECONDS.toMinutes(insufficientIdleMilliseconds + ONE_MILLISECOND_LESS_THAN_A_MINUTE);
             return insufficientIdleMinutesRoundedUp; // check again once enough time has passed
         }
-        LOGGER.log(Level.FINE,
+        LOGGER.log(
+                Level.FINE,
                 "Disconnecting {0} as it's been idle for {1}ms which is {2}ms more than the configured max of {3} minutes",
-                new Object[] { computerName(c), idleMilliseconds, excessIdleMilliseconds, maxIdleMinutes });
+                new Object[] {computerName(c), idleMilliseconds, excessIdleMilliseconds, maxIdleMinutes});
         terminateContainer(c);
         return 1; // check again in 1 minute
     }
@@ -154,8 +153,9 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
         if (task instanceof FlyweightTask || executor instanceof OneOffExecutor) {
             // these don't "consume" an executor so they don't trigger our "only use it
             // once" behaviour.
-            LOGGER.log(Level.FINER, "Node {0} has started FlyweightTask {1}. Tasks in progress now={2}",
-                    new Object[] { executor.getOwner().getName(), task, newNumberOfTasksInProgress });
+            LOGGER.log(Level.FINER, "Node {0} has started FlyweightTask {1}. Tasks in progress now={2}", new Object[] {
+                executor.getOwner().getName(), task, newNumberOfTasksInProgress
+            });
             return;
         }
         if (executor instanceof ContinuableExecutable && ((ContinuableExecutable) executor).willContinue()) {
@@ -164,17 +164,19 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
             // ... BUT this task is the first of a series and we don't want to terminate
             // before it's completed so we don't trigger our "only use it once" behaviour
             // here either.
-            LOGGER.log(Level.FINER,
+            LOGGER.log(
+                    Level.FINER,
                     "Node {0} has started non-FlyweightTask {1}. Tasks in progress now={2}. This is-a ContinuableExecutable where willContinue()=true so we leave ourselves open to the follow-on task(s).",
-                    new Object[] { executor.getOwner().getName(), task, newNumberOfTasksInProgress });
+                    new Object[] {executor.getOwner().getName(), task, newNumberOfTasksInProgress});
             return;
         }
         // anything else will stop us accepting new stuff and ensure we terminate once
         // we're idle.
         setTerminateOnceDone(true);
-        LOGGER.log(Level.FINER,
+        LOGGER.log(
+                Level.FINER,
                 "Node {0} has started non-FlyweightTask {1}. Tasks in progress now={2}. Container will be terminated once idle.",
-                new Object[] { executor.getOwner().getName(), task, newNumberOfTasksInProgress });
+                new Object[] {executor.getOwner().getName(), task, newNumberOfTasksInProgress});
     }
 
     @Override
@@ -192,21 +194,24 @@ public class DockerOnceRetentionStrategy extends RetentionStrategy<DockerCompute
         final int newNumberOfTasksInProgress = oldNumberOfTasksInProgress - 1;
         setNumberOfTasksInProgress(newNumberOfTasksInProgress);
         if (newNumberOfTasksInProgress != 0) {
-            LOGGER.log(Level.FINER, "Node {0} has completed Task {1}. Tasks in progress now={2}",
-                    new Object[] { executor.getOwner().getName(), task, newNumberOfTasksInProgress });
+            LOGGER.log(Level.FINER, "Node {0} has completed Task {1}. Tasks in progress now={2}", new Object[] {
+                executor.getOwner().getName(), task, newNumberOfTasksInProgress
+            });
             return;
         }
         final boolean shouldTerminateOnceDone = getTerminateOnceDone();
         if (!shouldTerminateOnceDone) {
-            LOGGER.log(Level.FINER,
+            LOGGER.log(
+                    Level.FINER,
                     "Node {0} has completed Task {1}. Tasks in progress now={2}. Not terminating yet as only trivial work has been done.",
-                    new Object[] { executor.getOwner().getName(), task, newNumberOfTasksInProgress });
+                    new Object[] {executor.getOwner().getName(), task, newNumberOfTasksInProgress});
             return;
         }
         final DockerComputer c = (DockerComputer) executor.getOwner();
-        LOGGER.log(Level.FINE,
+        LOGGER.log(
+                Level.FINE,
                 "Node {0} has completed Task {1}. Tasks in progress now={2}. Terminating as non-trivial work has been done.",
-                new Object[] { executor.getOwner().getName(), task, newNumberOfTasksInProgress });
+                new Object[] {executor.getOwner().getName(), task, newNumberOfTasksInProgress});
         terminateContainer(c);
     }
 

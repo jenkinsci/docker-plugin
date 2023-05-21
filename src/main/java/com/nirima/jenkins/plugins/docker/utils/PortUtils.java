@@ -1,19 +1,17 @@
 package com.nirima.jenkins.plugins.docker.utils;
 
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import com.trilead.ssh2.Connection;
-
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static com.google.common.base.Preconditions.checkState;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PortUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(PortUtils.class);
@@ -51,7 +49,7 @@ public class PortUtils {
          * Sets the number of retries, such that {@link #execute()} will try
          * once more than this. If this is not set then a default of
          * {@value #DEFAULT_RETRIES} will be used.
-         * 
+         *
          * @param numberOfRetries
          *            Number of retries. Negative values will be treated as
          *            zero.
@@ -65,7 +63,7 @@ public class PortUtils {
         /**
          * Sets the delay between tries. If this is not set then a default of
          * {@value #DEFAULT_RETRY_DELAY_SECONDS} seconds will be used.
-         * 
+         *
          * @param time
          *            The lengthy of time.
          * @param units
@@ -97,14 +95,14 @@ public class PortUtils {
          * than zero then more than one attempt will be made, waiting (for the
          * period specified by {@link #withEveryRetryWaitFor(int, TimeUnit)})
          * between attempts.
-         * 
+         *
          * @return true if the connection succeeded, false if it failed despite
          *         any retries.
          * @throws InterruptedException
          *             if interrupted while waiting between retries.
          */
         public boolean execute() throws InterruptedException {
-            LOGGER.trace("Testing connectivity to {} port {}", host, port );
+            LOGGER.trace("Testing connectivity to {} port {}", host, port);
             for (int i = 1; i <= retries; i++) {
                 if (executeOnce()) {
                     return true;
@@ -114,7 +112,10 @@ public class PortUtils {
             if (executeOnce()) {
                 return true;
             }
-            LOGGER.warn("Could not connect to {} port {}. Are you sure this location is contactable from Jenkins?", host, port);
+            LOGGER.warn(
+                    "Could not connect to {} port {}. Are you sure this location is contactable from Jenkins?",
+                    host,
+                    port);
             return false;
         }
     }
@@ -129,7 +130,7 @@ public class PortUtils {
         }
 
         public ConnectionCheckSSH withSSHTimeout(int time, TimeUnit units) {
-            sshTimeoutMillis = (int)units.toMillis(time);
+            sshTimeoutMillis = (int) units.toMillis(time);
             return this;
         }
 
@@ -145,7 +146,7 @@ public class PortUtils {
          * also be subjected to retries, so that the total retry time for a port
          * that is initially unavailable and then slow to accept SSH connections
          * can be up to double what might be expected.
-         * 
+         *
          * @return true if the connection succeeded, false if it failed despite
          *         any retries.
          * @throws InterruptedException
@@ -153,7 +154,7 @@ public class PortUtils {
          *             sshd on host:port. Retries while attempts reached with
          *             delay First with tcp port wait, then with ssh connection
          *             wait
-         * 
+         *
          * @throws IllegalStateException
          *             if the TCP port is not reachable despite retries.
          * @throws InterruptedException
@@ -183,7 +184,13 @@ public class PortUtils {
                 LOGGER.info("SSH port is open on {}:{}", parent.host, parent.port);
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Failed to connect to {}:{} (try {}/{}) - {}", parent.host, parent.port, thisTryNumber, totalTriesIntended, e.getMessage());
+                LOGGER.error(
+                        "Failed to connect to {}:{} (try {}/{}) - {}",
+                        parent.host,
+                        parent.port,
+                        thisTryNumber,
+                        totalTriesIntended,
+                        e.getMessage());
                 return false;
             } finally {
                 sshConnection.close();

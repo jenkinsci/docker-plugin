@@ -13,6 +13,14 @@ import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import io.jenkins.docker.connector.DockerComputerConnector;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -22,16 +30,6 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -53,12 +51,19 @@ class DockerNodeStepExecution extends StepExecution {
     private final String remoteFs;
     /** The {@link DockerComputerConnector} ... which has to be {@link Serializable} too (not all are) */
     private final Serializable connector;
+
     private transient volatile CompletableFuture<DockerTransientNode> task;
     private volatile String nodeName;
 
-    public DockerNodeStepExecution(StepContext context, @Nullable DockerComputerConnector connector, String dockerHost, String credentialsId, String image, String remoteFs) {
+    public DockerNodeStepExecution(
+            StepContext context,
+            @Nullable DockerComputerConnector connector,
+            String dockerHost,
+            String credentialsId,
+            String image,
+            String remoteFs) {
         super(context);
-        if( connector!=null ) {
+        if (connector != null) {
             assertIsSerializableDockerComputerConnector(connector);
             this.connector = (Serializable) connector;
         } else {
@@ -87,8 +92,8 @@ class DockerNodeStepExecution extends StepExecution {
     }
 
     @Restricted(NoExternalUse.class)
-    static String getReasonWhyThisIsNotASerializableDockerComputerConnector(final String whatUserTried,
-            final Class<? extends Object> clazz) {
+    static String getReasonWhyThisIsNotASerializableDockerComputerConnector(
+            final String whatUserTried, final Class<? extends Object> clazz) {
         final boolean extendsOk = DockerComputerConnector.class.isAssignableFrom(clazz);
         final boolean implementsOk = Serializable.class.isAssignableFrom(clazz);
         if (extendsOk && implementsOk) {
@@ -124,9 +129,7 @@ class DockerNodeStepExecution extends StepExecution {
     private DockerTransientNode createNode(TaskListener listener) {
         final String uuid = UUID.randomUUID().toString();
         final DockerTemplate t = new DockerTemplate(
-                new DockerTemplateBase(image),
-                (DockerComputerConnector) connector,
-                uuid, remoteFs, "1");
+                new DockerTemplateBase(image), (DockerComputerConnector) connector, uuid, remoteFs, "1");
         t.setMode(Node.Mode.EXCLUSIVE);
 
         final DockerAPI api;
@@ -174,7 +177,8 @@ class DockerNodeStepExecution extends StepExecution {
                 return ((DockerCloud) cloud).getDockerApi();
             }
         }
-        throw new IllegalStateException("Must either specify dockerHost/credentialsId, or define at least one Docker cloud");
+        throw new IllegalStateException(
+                "Must either specify dockerHost/credentialsId, or define at least one Docker cloud");
     }
 
     private void invokeBody(DockerTransientNode node, TaskListener listener) {
@@ -189,7 +193,9 @@ class DockerNodeStepExecution extends StepExecution {
             flowNode.addAction(new WorkspaceActionImpl(ws, flowNode));
 
             computer = node.toComputer();
-            if (computer == null) throw new IllegalStateException("Agent not started");
+            if (computer == null) {
+                throw new IllegalStateException("Agent not started");
+            }
             env = computer.getEnvironment();
             env.overrideExpandingAll(computer.buildEnvironment(listener));
             env.put("NODE_NAME", computer.getName());
@@ -200,13 +206,15 @@ class DockerNodeStepExecution extends StepExecution {
             getContext().onFailure(e);
         }
 
-        getContext().newBodyInvoker().withCallback(new Callback(node)).withContexts(computer, env, ws).start();
+        getContext()
+                .newBodyInvoker()
+                .withCallback(new Callback(node))
+                .withContexts(computer, env, ws)
+                .start();
     }
 
     private static String join(Collection<?> objects, String delimiter) {
-        return objects.stream()
-                      .map(Object::toString)
-                      .collect(Collectors.joining(delimiter));
+        return objects.stream().map(Object::toString).collect(Collectors.joining(delimiter));
     }
 
     @Override

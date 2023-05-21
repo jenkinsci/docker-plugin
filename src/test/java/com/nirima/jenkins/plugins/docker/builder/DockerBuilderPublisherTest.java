@@ -25,8 +25,8 @@ public class DockerBuilderPublisherTest {
     @Test
     public void verifyTagsGivenValidTagsThenPasses() {
         // Given
-        final String validTags = String.join("\n", VALID1, VALID2, VALID3, VALID4, VALID5, VALID6, VALID7, VALID8,
-                VALID9, VALID10);
+        final String validTags =
+                String.join("\n", VALID1, VALID2, VALID3, VALID4, VALID5, VALID6, VALID7, VALID8, VALID9, VALID10);
 
         // When
         DockerBuilderPublisher.verifyTags(validTags);

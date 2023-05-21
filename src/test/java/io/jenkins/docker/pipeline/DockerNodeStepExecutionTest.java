@@ -29,14 +29,12 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import java.io.Serializable;
-
-import org.junit.Test;
-
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import io.jenkins.docker.connector.DockerComputerJNLPConnector;
 import io.jenkins.docker.connector.DockerComputerSSHConnector;
+import java.io.Serializable;
+import org.junit.Test;
 
 public class DockerNodeStepExecutionTest {
 
@@ -68,20 +66,20 @@ public class DockerNodeStepExecutionTest {
                 return "sshNotSerializable";
             }
         };
-        final Object[] unusables = { serialisable, neither, jnlp, ssh };
+        final Object[] unusables = {serialisable, neither, jnlp, ssh};
 
         // When
-        final String attachReason = DockerNodeStepExecution
-                .getReasonWhyThisIsNotASerializableDockerComputerConnector(attach.toString(), attach.getClass());
-        final String serialisableReason = DockerNodeStepExecution
-                .getReasonWhyThisIsNotASerializableDockerComputerConnector(serialisable.toString(),
-                        serialisable.getClass());
-        final String neitherReason = DockerNodeStepExecution
-                .getReasonWhyThisIsNotASerializableDockerComputerConnector(neither.toString(), neither.getClass());
-        final String jnlpReason = DockerNodeStepExecution
-                .getReasonWhyThisIsNotASerializableDockerComputerConnector(jnlp.toString(), jnlp.getClass());
-        final String sshReason = DockerNodeStepExecution
-                .getReasonWhyThisIsNotASerializableDockerComputerConnector(ssh.toString(), ssh.getClass());
+        final String attachReason = DockerNodeStepExecution.getReasonWhyThisIsNotASerializableDockerComputerConnector(
+                attach.toString(), attach.getClass());
+        final String serialisableReason =
+                DockerNodeStepExecution.getReasonWhyThisIsNotASerializableDockerComputerConnector(
+                        serialisable.toString(), serialisable.getClass());
+        final String neitherReason = DockerNodeStepExecution.getReasonWhyThisIsNotASerializableDockerComputerConnector(
+                neither.toString(), neither.getClass());
+        final String jnlpReason = DockerNodeStepExecution.getReasonWhyThisIsNotASerializableDockerComputerConnector(
+                jnlp.toString(), jnlp.getClass());
+        final String sshReason = DockerNodeStepExecution.getReasonWhyThisIsNotASerializableDockerComputerConnector(
+                ssh.toString(), ssh.getClass());
 
         // Then
         assertNull(attachReason);

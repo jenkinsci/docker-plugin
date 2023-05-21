@@ -10,13 +10,12 @@ import hudson.model.Descriptor;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import io.jenkins.docker.client.DockerAPI;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.StaplerProxy;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.StaplerProxy;
 
 /**
  * Manage the docker images. Docker page under "Manage Jenkins" page.
@@ -54,9 +53,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
     }
 
     @Override
-    public void save() throws IOException {
-
-    }
+    public void save() throws IOException {}
 
     /**
      * Descriptor is only used for UI form bindings.
