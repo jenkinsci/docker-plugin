@@ -122,7 +122,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>docker-java-api</artifactId>
-      <version>3.2.13-69.vb_b_0c2333257c</version>
+      <version>3.3.0-77.vd409a_cdc37d5</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
