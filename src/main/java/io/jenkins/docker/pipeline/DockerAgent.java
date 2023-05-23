@@ -112,7 +112,7 @@ public class DockerAgent extends DeclarativeAgent<DockerAgent> {
 
         @Override
         public String getDisplayName() {
-            return "Start a Docker container with a new agent";
+            return "Start a Docker container with a new agent (⚠️ Experimental)";
         }
 
         @SuppressWarnings("lgtm[jenkins/no-permission-check]") // done in DockerServerEndpoint
