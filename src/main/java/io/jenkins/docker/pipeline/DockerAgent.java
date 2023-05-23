@@ -9,6 +9,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 @SuppressWarnings("unchecked") // TODO DeclarativeAgent.getDescriptor problem
 public class DockerAgent extends DeclarativeAgent<DockerAgent> {
 
+    private static final long serialVersionUID = 1;
+
     public final String image;
 
     @DataBoundConstructor
