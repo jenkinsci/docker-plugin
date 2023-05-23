@@ -15,7 +15,7 @@ class DockerAgentScript extends DeclarativeAgentScript<DockerAgent> {
     Closure run(Closure body) {
         return {
             try {
-                script.dockerNode(describable?.image) {
+                script.dockerNode(describable.asArgs) {
                     CheckoutScript.doCheckout(script, describable, null, body).call()
                 }
             } catch (Exception e) {
