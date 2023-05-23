@@ -6,11 +6,14 @@ import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.EnvVars;
+import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
+import hudson.slaves.WorkspaceList;
+import io.jenkins.docker.DockerComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
@@ -25,6 +28,7 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
+import org.jenkinsci.plugins.workflow.steps.DynamicContext;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
@@ -202,6 +206,10 @@ class DockerNodeStepExecution extends StepExecution {
             env.put("EXECUTOR_NUMBER", "0");
             env.put("NODE_LABELS", join(node.getAssignedLabels(), " "));
             env.put("WORKSPACE", ws.getRemote());
+            FilePath tempDir = WorkspaceList.tempDir(ws);
+            if (tempDir != null) {
+                env.put("WORKSPACE_TMP", tempDir.getRemote()); // JENKINS-60634
+            }
         } catch (IOException | InterruptedException e) {
             getContext().onFailure(e);
         }
@@ -211,6 +219,20 @@ class DockerNodeStepExecution extends StepExecution {
                 .withCallback(new Callback(node))
                 .withContexts(computer, env, ws)
                 .start();
+    }
+
+    @Extension
+    public static final class ProvideDockerTransientNode extends DynamicContext.Typed<DockerTransientNode> {
+        @Override
+        protected Class<DockerTransientNode> type() {
+            return DockerTransientNode.class;
+        }
+
+        @Override
+        protected DockerTransientNode get(DelegatedContext context) throws IOException, InterruptedException {
+            Computer c = context.get(Computer.class);
+            return c instanceof DockerComputer ? ((DockerComputer) c).getNode() : null;
+        }
     }
 
     private static String join(Collection<?> objects, String delimiter) {

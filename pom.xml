@@ -81,17 +81,6 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <!-- Avoid exposing ourselves to a bug introduced in https://github.com/jenkinsci/workflow-durable-task-step-plugin/pull/180 -->
-      <dependency>
-        <groupId>org.jenkins-ci.plugins.workflow</groupId>
-        <artifactId>workflow-basic-steps</artifactId>
-        <version>994.vd57e3ca_46d24</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jenkins-ci.plugins.workflow</groupId>
-        <artifactId>workflow-durable-task-step</artifactId>
-        <version>1199.v02b_9244f8064</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
