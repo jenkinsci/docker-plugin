@@ -19,6 +19,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 @SuppressWarnings("unchecked") // TODO DeclarativeAgent.getDescriptor problem
 public class DockerAgent extends DeclarativeAgent<DockerAgent> {
@@ -114,6 +115,8 @@ public class DockerAgent extends DeclarativeAgent<DockerAgent> {
             return "Start a Docker container with a new agent";
         }
 
+        @SuppressWarnings("lgtm[jenkins/no-permission-check]") // done in DockerServerEndpoint
+        @POST
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item, @QueryParameter String uri) {
             return ExtensionList.lookupSingleton(DockerServerEndpoint.DescriptorImpl.class)
                     .doFillCredentialsIdItems(item, uri);
