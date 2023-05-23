@@ -7,16 +7,15 @@ import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 
 /**
  * Created by magnayn on 22/02/2014.
@@ -27,7 +26,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
 
     @Override
     public Descriptor<DockerManagementServer> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
+        return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
     }
 
     public String getUrl() {
@@ -39,12 +38,12 @@ public class DockerManagementServer implements Describable<DockerManagementServe
         theCloud = JenkinsUtils.getCloudByNameOrThrow(name);
     }
 
-    public Collection getImages(){
-        if ( !Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER) ) {
+    public Collection getImages() {
+        if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
             return Collections.emptyList();
         }
         final DockerAPI dockerApi = theCloud.getDockerApi();
-        try(final DockerClient client = dockerApi.getClient()) {
+        try (final DockerClient client = dockerApi.getClient()) {
             return client.listImagesCmd().exec();
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -52,11 +51,11 @@ public class DockerManagementServer implements Describable<DockerManagementServe
     }
 
     public Collection getProcesses() {
-        if ( !Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER) ) {
+        if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
             return Collections.emptyList();
         }
         final DockerAPI dockerApi = theCloud.getDockerApi();
-        try(final DockerClient client = dockerApi.getClient()) {
+        try (final DockerClient client = dockerApi.getClient()) {
             return client.listContainersCmd().exec();
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -64,8 +63,9 @@ public class DockerManagementServer implements Describable<DockerManagementServe
     }
 
     public String asTime(Long time) {
-        if( time == null )
+        if (time == null) {
             return "";
+        }
         long when = System.currentTimeMillis() - time;
         Date dt = new Date(when);
         return dt.toString();
@@ -77,10 +77,11 @@ public class DockerManagementServer implements Describable<DockerManagementServe
 
     @SuppressWarnings("unused")
     @RequirePOST
-    public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest req, StaplerResponse rsp) throws IOException {
-        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+    public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest req, StaplerResponse rsp)
+            throws IOException {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         final DockerAPI dockerApi = theCloud.getDockerApi();
-        try(final DockerClient client = dockerApi.getClient()) {
+        try (final DockerClient client = dockerApi.getClient()) {
             client.stopContainerCmd(stopId).exec();
         }
         rsp.sendRedirect(".");

@@ -26,7 +26,5 @@ public class DockerAgent extends DeclarativeAgent<DockerAgent> {
         public String getDisplayName() {
             return "Start a Docker container with a new agent";
         }
-
     }
-
 }

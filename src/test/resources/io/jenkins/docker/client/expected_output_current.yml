@@ -1,0 +1,30 @@
+docker:
+  dockerApi:
+    dockerHost:
+      uri: "unix:///var/run/docker.sock"
+  name: "docker"
+  templates:
+  - connector:
+      attach:
+        user: "jenkins"
+    dockerTemplateBase:
+      environment:
+      - "hello=world"
+      - "foo=bar"
+      environmentsString: |-
+        hello=world
+        foo=bar
+      image: "jenkins/agent"
+      mounts:
+      - "type=tmpfs,destination=/run"
+      - "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock"
+      - "type=volume,src=hello,dst=/world"
+      mountsString: |-
+        type=tmpfs,destination=/run
+        type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock
+        type=volume,src=hello,dst=/world
+    instanceCapStr: "10"
+    labelString: "docker-agent"
+    remoteFs: "/home/jenkins/agent"
+    retentionStrategy:
+      idleMinutes: 1

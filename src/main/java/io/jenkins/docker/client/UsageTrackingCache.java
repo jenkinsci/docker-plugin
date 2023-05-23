@@ -1,17 +1,15 @@
 package io.jenkins.docker.client;
 
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A cache that keep things until they haven't been used for a given duration.
@@ -49,7 +47,7 @@ public class UsageTrackingCache<K, V> {
 
     /**
      * Full constructor.
-     * 
+     *
      * @param duration
      *            How long inactive things should be kept in the cache.
      * @param unit
@@ -58,8 +56,8 @@ public class UsageTrackingCache<K, V> {
      *            Callback that is given all expired values from the cache just
      *            before they are thrown away.
      */
-    UsageTrackingCache(final long duration, @Nonnull final TimeUnit unit,
-            @Nonnull final ExpiryHandler<K, V> expiryHandler) {
+    UsageTrackingCache(
+            final long duration, @NonNull final TimeUnit unit, @NonNull final ExpiryHandler<K, V> expiryHandler) {
         activeCacheByKey = new HashMap<>();
         activeCacheByValue = new IdentityHashMap();
         CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
@@ -86,13 +84,13 @@ public class UsageTrackingCache<K, V> {
      * on the result. If it doesn't find an entry in the cache then it returns
      * null (and the caller will most likely decide to call
      * {@link #cacheAndIncrementUsage(Object, Object)} ).
-     * 
+     *
      * @param key
      *            The key used to look up the entry in the cache.
      * @return An existing cache entry, or null.
      */
     @CheckForNull
-    public V getAndIncrementUsage(@Nonnull K key) {
+    public V getAndIncrementUsage(@NonNull K key) {
         final CacheEntry<K, V> activeRecord = activeCacheByKey.get(key);
         if (activeRecord != null) {
             // we have an entry that's currently in use
@@ -123,13 +121,13 @@ public class UsageTrackingCache<K, V> {
      * Puts an entry in the cache with a usage count of 1. The caller MUST
      * ensure that {@link #decrementUsage(Object)} is later called on the entry
      * that has been cached.
-     * 
+     *
      * @param key
      *            The key used to look up the entry in the cache.
      * @param entry
      *            The entry to be cached.
      */
-    public void cacheAndIncrementUsage(@Nonnull K key, @Nonnull V entry) {
+    public void cacheAndIncrementUsage(@NonNull K key, @NonNull V entry) {
         final CacheEntry<K, V> record = new CacheEntry<>(key, entry, 1);
         final CacheEntry<K, V> oldKeyRecord = activeCacheByKey.put(key, record);
         final CacheEntry<K, V> oldValueRecord = activeCacheByValue.put(entry, record);
@@ -148,11 +146,11 @@ public class UsageTrackingCache<K, V> {
      * time that {@link #getAndIncrementUsage(Object)} returned a non-null value
      * and for every time that {@link #cacheAndIncrementUsage(Object, Object)}
      * was called.
-     * 
+     *
      * @param entry
      *            The entry that is no longer in use.
      */
-    public void decrementUsage(@Nonnull V entry) {
+    public void decrementUsage(@NonNull V entry) {
         durationCache.cleanUp(); // force cleanup activity
         final CacheEntry<K, V> record = activeCacheByValue.get(entry);
         if (record == null) {

@@ -8,11 +8,10 @@ import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import java.io.PrintStream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.PrintStream;
 
 /**
  * Stop all containers that ???
@@ -30,8 +29,7 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
     }
 
     @Override
-    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
-            throws DockerException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener) throws DockerException {
         final PrintStream llog = listener.getLogger();
 
         LOG.info("Stopping all containers");
@@ -50,9 +48,9 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
 
                 try {
                     containerItem.client.removeContainerCmd(containerId).exec();
-                } catch (NotFoundException e) {
+                } catch (NotFoundException handledByCode) {
                     llog.println("Container '" + containerId + "' already gone.");
-                } catch (ConflictException e) {
+                } catch (ConflictException handledByCode) {
                     llog.println("Container '" + containerId + "' removal already in progress.");
                 }
             }

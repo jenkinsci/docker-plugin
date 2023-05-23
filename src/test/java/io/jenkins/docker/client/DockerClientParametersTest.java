@@ -1,7 +1,9 @@
 package io.jenkins.docker.client;
 
-import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import org.junit.Test;
 
@@ -22,17 +24,27 @@ public class DockerClientParametersTest {
         final Integer connectTimeoutInMsOrNull1a = new Integer(5678);
         final Integer connectTimeoutInMsOrNull2 = Integer.valueOf(1234);
         final Integer connectTimeoutInMsOrNull3 = null;
-        final DockerClientParameters i1 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
-        final DockerClientParameters i2 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull3, connectTimeoutInMsOrNull3);
-        final DockerClientParameters e1 = new DockerClientParameters(dockerUri1a, credentialsId1a, readTimeoutInMsOrNull1a, connectTimeoutInMsOrNull1a);
-        final DockerClientParameters e2 = new DockerClientParameters(dockerUri1a, credentialsId1a, readTimeoutInMsOrNull3, connectTimeoutInMsOrNull3);
+        final DockerClientParameters i1 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
+        final DockerClientParameters i2 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull3, connectTimeoutInMsOrNull3);
+        final DockerClientParameters e1 = new DockerClientParameters(
+                dockerUri1a, credentialsId1a, readTimeoutInMsOrNull1a, connectTimeoutInMsOrNull1a);
+        final DockerClientParameters e2 = new DockerClientParameters(
+                dockerUri1a, credentialsId1a, readTimeoutInMsOrNull3, connectTimeoutInMsOrNull3);
 
-        final DockerClientParameters d01 = new DockerClientParameters(dockerUri2, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
-        final DockerClientParameters d02 = new DockerClientParameters(dockerUri1, credentialsId2, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
-        final DockerClientParameters d03 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull2, connectTimeoutInMsOrNull1);
-        final DockerClientParameters d04 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull3, connectTimeoutInMsOrNull1);
-        final DockerClientParameters d05 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull2);
-        final DockerClientParameters d06 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull3);
+        final DockerClientParameters d01 = new DockerClientParameters(
+                dockerUri2, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
+        final DockerClientParameters d02 = new DockerClientParameters(
+                dockerUri1, credentialsId2, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
+        final DockerClientParameters d03 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull2, connectTimeoutInMsOrNull1);
+        final DockerClientParameters d04 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull3, connectTimeoutInMsOrNull1);
+        final DockerClientParameters d05 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull2);
+        final DockerClientParameters d06 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull3);
 
         assertEquals(i1, i1);
         assertEquals(i1, e1);
@@ -71,9 +83,11 @@ public class DockerClientParametersTest {
         final Integer readTimeoutInMsOrNull2 = null;
         final Integer connectTimeoutInMsOrNull1 = Integer.valueOf(456);
         final Integer connectTimeoutInMsOrNull2 = null;
-        final DockerClientParameters i1 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
-        final DockerClientParameters i2 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull2, connectTimeoutInMsOrNull2);
-        
+        final DockerClientParameters i1 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
+        final DockerClientParameters i2 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull2, connectTimeoutInMsOrNull2);
+
         assertEquals(dockerUri1, i1.getDockerUri());
         assertEquals(credentialsId1, i1.getCredentialsId());
         assertEquals(readTimeoutInMsOrNull1, i1.getReadTimeoutInMsOrNull());
@@ -90,8 +104,10 @@ public class DockerClientParametersTest {
         final Integer readTimeoutInMsOrNull2 = null;
         final Integer connectTimeoutInMsOrNull1 = Integer.valueOf(3746);
         final Integer connectTimeoutInMsOrNull2 = null;
-        final DockerClientParameters i1 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
-        final DockerClientParameters i2 = new DockerClientParameters(dockerUri1, credentialsId1, readTimeoutInMsOrNull2, connectTimeoutInMsOrNull2);
+        final DockerClientParameters i1 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull1, connectTimeoutInMsOrNull1);
+        final DockerClientParameters i2 = new DockerClientParameters(
+                dockerUri1, credentialsId1, readTimeoutInMsOrNull2, connectTimeoutInMsOrNull2);
 
         final String s1 = i1.toString();
         final String s2 = i2.toString();

@@ -2,6 +2,67 @@
 
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
+
+## 1.2.10
+_2022-09-27_
+
+* Fix PortUtilsTest unit test on Windows [#901](https://github.com/jenkinsci/docker-plugin/pull/901)
+* Fix JCasC parsing of volume/mounts [#852](https://github.com/jenkinsci/docker-plugin/issues/852)
+* Docker-attach should inject JAR before starting container [#898](https://github.com/jenkinsci/docker-plugin/pull/898)
+* Bump min Jenkins version from 2.204.4 to 2.303.3 [#897](https://github.com/jenkinsci/docker-plugin/pull/897)
+* Fix readonly parsing when mounting [#880](https://github.com/jenkinsci/docker-plugin/issues/880)
+* Enhancement: Supports mounting NPIPEs [#888](https://github.com/jenkinsci/docker-plugin/pull/888)
+* Enhancement: Add support for --cpus [#895](https://github.com/jenkinsci/docker-plugin/pull/895)
+* Enhancement: Improve help text for docker user field [#909](https://github.com/jenkinsci/docker-plugin/pull/909)
+* Fix volumes-from parsing [#878](https://github.com/jenkinsci/docker-plugin/issues/878)
+* :warning: Requires docker-java-api-plugin 3.2.x
+
+## 1.2.9
+_2022-04-27_
+* More loosening of the dependency on the exact docker-java version [#884](https://github.com/jenkinsci/docker-plugin/issues/884)
+* :warning: Compatible with both docker-java-api-plugin 3.2.x and 3.1.x
+
+## 1.2.8
+_2022-04-14_
+* Loosen the dependency on the exact docker-java version [#882](https://github.com/jenkinsci/docker-plugin/pull/882) and [dockder-java-api-plugin#9](https://github.com/jenkinsci/docker-java-api-plugin/pull/9)
+* :warning: Requires [docker-java-api-plugin 3.1.5-31](https://github.com/jenkinsci/docker-java-api-plugin/releases/tag/3.1.5-31.v70b0ca3e8310) or any later 3.1.x.
+* :warning: NOT compatible with docker-java-api-plugin 3.2.x (not yet).
+
+## 1.2.7
+_2022-04-07_
+* Enhancement: Add support for build-time variables (build args) [#730](https://github.com/jenkinsci/docker-plugin/issues/730), [JENKINS-48512](https://issues.jenkins.io/browse/JENKINS-48512)
+* Fix DockerOnceRetentionStrategy [#859](https://github.com/jenkinsci/docker-plugin/pull/859)
+* :information_source: Causes cosmetic issue on Jenkins Web-UI [#881](https://github.com/jenkinsci/docker-plugin/issues/881)
+
+## 1.2.6
+_2021-12-13_
+* Prepare for sunset icon removal from core [#870](https://github.com/jenkinsci/docker-plugin/pull/870)
+
+## 1.2.5
+_2021-12-09_
+* QA: Fix Javadoc warnings [#869](https://github.com/jenkinsci/docker-plugin/pull/869)
+
+## 1.2.4
+_2021-12-09_
+* Enhancement: Improve compatibility with jobConfigHistory plugin [#861](https://github.com/jenkinsci/docker-plugin/pull/861)
+* Enhancement: Watchdog logging improvements [#860](https://github.com/jenkinsci/docker-plugin/pull/860)
+* Enhancement: Documentation improvements [#857](https://github.com/jenkinsci/docker-plugin/pull/857),  [#864](https://github.com/jenkinsci/docker-plugin/pull/864)
+* QA: Stop using deprecated methods [#848](https://github.com/jenkinsci/docker-plugin/pull/848), [#851](https://github.com/jenkinsci/docker-plugin/pull/851),  [#862](https://github.com/jenkinsci/docker-plugin/pull/862),  [#865](https://github.com/jenkinsci/docker-plugin/pull/865)
+* QA: Update SSH-Connector unit test to work with new container [#858](https://github.com/jenkinsci/docker-plugin/pull/858)
+* QA: Fix PortUtilsTest unit test [#847](https://github.com/jenkinsci/docker-plugin/pull/847)
+
+## 1.2.3
+_2021-08-19_
+* Enhancement: Can now pull images by digest [#709](https://github.com/jenkinsci/docker-plugin/issues/709)
+* Fix DockerNodeStepTest unit test by bumping min Jenkins version from 2.73.3 to 2.204.4 [#836](https://github.com/jenkinsci/docker-plugin/pull/836)
+* Enhancement: volumes have been replaced by mounts, allowing use of tmpdir etc [#714](https://github.com/jenkinsci/docker-plugin/issues/714)
+* Prepare plugin for core Guava upgrade [JENKINS-66320](https://issues.jenkins.io/browse/JENKINS-66320), [PR#846](https://github.com/jenkinsci/docker-plugin/pull/846)
+* Added descriptor to SSH launcher used by InjectSSHKey strategy. [#834](https://github.com/jenkinsci/docker-plugin/issues/834)
+
+## 1.2.2
+_2021-01-25_
+* Fix groovy config script in docs [#799](https://github.com/jenkinsci/docker-plugin/issues/799)
+* Fix Attach connection issue with Jenkins 2.266 onwards [#818](https://github.com/jenkinsci/docker-plugin/issues/818), [JENKINS-64251](https://issues.jenkins-ci.org/browse/JENKINS-64251)
 * Fix JNLP (incoming-agent) connection bug [#789](https://github.com/jenkinsci/docker-plugin/pull/789), [#757](https://github.com/jenkinsci/docker-plugin/issues/757), [JENKINS-59790](https://issues.jenkins-ci.org/browse/JENKINS-59790)
 
 ## 1.2.1
