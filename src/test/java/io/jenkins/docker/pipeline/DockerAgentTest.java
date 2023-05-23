@@ -36,7 +36,7 @@ public class DockerAgentTest {
         WorkflowJob j = r.createProject(WorkflowJob.class, "p");
         j.setDefinition(new CpsFlowDefinition(
                 "pipeline {\n" + "  agent {\n"
-                        + "    dockerContainer 'openjdk:11'\n"
+                        + "    dockerContainer 'eclipse-temurin:17'\n"
                         + "  }\n"
                         + "  stages {\n"
                         + "    stage('whatever') {\n"
@@ -47,6 +47,6 @@ public class DockerAgentTest {
                         + "  }\n"
                         + "}\n",
                 true));
-        r.assertLogContains("openjdk version \"11.", r.buildAndAssertSuccess(j));
+        r.assertLogContains("openjdk version \"17.", r.buildAndAssertSuccess(j));
     }
 }
