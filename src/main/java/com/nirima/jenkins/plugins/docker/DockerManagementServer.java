@@ -8,6 +8,7 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -46,7 +47,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
         try (final DockerClient client = dockerApi.getClient()) {
             return client.listImagesCmd().exec();
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -58,7 +59,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
         try (final DockerClient client = dockerApi.getClient()) {
             return client.listContainersCmd().exec();
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

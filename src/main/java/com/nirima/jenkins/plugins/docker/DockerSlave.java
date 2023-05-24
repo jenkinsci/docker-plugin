@@ -7,6 +7,7 @@ import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * @deprecated use {@link DockerTransientNode}
@@ -36,8 +37,10 @@ public class DockerSlave extends Slave {
     protected Object readResolve() {
         try {
             return new DockerTransientNode(containerId, containerId, dockerTemplate.remoteFs, getLauncher());
-        } catch (Descriptor.FormException | IOException e) {
+        } catch (Descriptor.FormException e) {
             throw new RuntimeException("Failed to migrate " + DockerSlave.class.getCanonicalName(), e);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to migrate " + DockerSlave.class.getCanonicalName(), e);
         }
     }
 }
