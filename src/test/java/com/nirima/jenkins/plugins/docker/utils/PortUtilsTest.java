@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -213,7 +214,7 @@ public class PortUtilsTest {
                                     try {
                                         socket = new ServerSocket(port);
                                     } catch (IOException e) {
-                                        throw new RuntimeException("Can't rebind socket", e);
+                                        throw new UncheckedIOException("Can't rebind socket", e);
                                     }
                                 }
                             },

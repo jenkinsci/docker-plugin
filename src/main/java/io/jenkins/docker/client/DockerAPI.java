@@ -26,6 +26,7 @@ import io.jenkins.dockerjavaapi.client.DelegatingDockerClient;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.Socket;
 import java.net.URI;
 import java.time.Duration;
@@ -129,7 +130,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
                 // Cache the return.
                 _isSwarm = remoteVersion.getVersion().startsWith("swarm");
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                throw new UncheckedIOException(ex);
             }
         }
         return _isSwarm;

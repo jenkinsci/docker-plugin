@@ -33,6 +33,7 @@ import hudson.util.FormValidation;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -269,7 +270,7 @@ public class DockerCloud extends Cloud {
             client.close();
             return client;
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -413,6 +414,8 @@ public class DockerCloud extends Cloud {
                             }
                             if (ex instanceof RuntimeException) {
                                 throw (RuntimeException) ex;
+                            } else if (ex instanceof IOException) {
+                                throw new UncheckedIOException((IOException) ex);
                             } else {
                                 throw new RuntimeException(ex);
                             }
@@ -796,7 +799,7 @@ public class DockerCloud extends Cloud {
             try (final DockerClient client = dockerApi.getClient()) {
                 remoteVersion = client.versionCmd().exec();
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                throw new UncheckedIOException(ex);
             }
             _isTriton = remoteVersion.getOperatingSystem().equals("solaris");
         }
