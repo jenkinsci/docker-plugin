@@ -1,5 +1,9 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.model.Container;
+import hudson.model.Node;
+import io.jenkins.docker.DockerTransientNode;
+import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -10,17 +14,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
-
-import com.github.dockerjava.api.model.Container;
-
-import hudson.model.Node;
-import io.jenkins.docker.DockerTransientNode;
-import io.jenkins.docker.client.DockerAPI;
 
 public class DockerContainerWatchdogTest {
     @Test
@@ -62,7 +59,8 @@ public class DockerContainerWatchdogTest {
         /* setup of nodes */
         LinkedList<Node> allNodes = new LinkedList<>();
 
-        DockerTransientNode node = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud, false);
+        DockerTransientNode node =
+                TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud, false);
         allNodes.add(node);
 
         subject.setAllNodes(allNodes);
@@ -73,7 +71,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissing() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissing() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -111,7 +109,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingWrongNodeNameIsIgnored() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingWrongNodeNameIsIgnored() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -138,7 +136,8 @@ public class DockerContainerWatchdogTest {
         /* setup of nodes */
         LinkedList<Node> allNodes = new LinkedList<>();
 
-        Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(UUID.randomUUID().toString(), "unittest-other", cloud, false);
+        Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(
+                UUID.randomUUID().toString(), "unittest-other", cloud, false);
         allNodes.add(n);
 
         subject.setAllNodes(allNodes);
@@ -153,7 +152,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingTwoClouds() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingTwoClouds() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName1 = "unittest-12345";
@@ -220,7 +219,7 @@ public class DockerContainerWatchdogTest {
          * keep in mind that the same containers are associated with the same DockerClient.
          * Thus, the same containers also appear twice to our subject - and thus will send the termination
          * requests twice.
-         * 
+         *
          * Note that this is an acceptable real-life behavior, which is uncommon, though.
          */
 
@@ -228,7 +227,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingWithTemplate() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingWithTemplate() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -263,7 +262,8 @@ public class DockerContainerWatchdogTest {
 
         subject.runExecute();
 
-        Mockito.verify(dockerApi.getClient(), Mockito.times(0)).removeContainerCmd(containerId); // enforced termination shall not happen
+        Mockito.verify(dockerApi.getClient(), Mockito.times(0))
+                .removeContainerCmd(containerId); // enforced termination shall not happen
 
         Assert.assertEquals(0, subject.getAllRemovedNodes().size());
 
@@ -274,7 +274,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingTooEarly() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingTooEarly() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1527970544000L), ZoneId.of("UTC"));
@@ -292,7 +292,8 @@ public class DockerContainerWatchdogTest {
         labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
         List<Container> containerList = new LinkedList<>();
-        Container c = TestableDockerContainerWatchdog.createMockedContainer(containerId, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
+        Container c = TestableDockerContainerWatchdog.createMockedContainer(
+                containerId, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
         containerList.add(c);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
@@ -313,7 +314,7 @@ public class DockerContainerWatchdogTest {
         // ... and shall not have called to remove it gracefully
         Assert.assertEquals(0, subject.getContainersRemoved().size());
 
-        // but, if we turn back time a little... 
+        // but, if we turn back time a little...
         subject.setClock(Clock.offset(clock, Duration.ofMinutes(5)));
 
         subject.runExecute();
@@ -325,7 +326,8 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testContainerExistsButSlaveIsMissingRemoveVolumesLabelMissing() throws IOException, InterruptedException {
+    public void testContainerExistsButAgentIsMissingRemoveVolumesLabelMissing()
+            throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-12345";
@@ -352,7 +354,8 @@ public class DockerContainerWatchdogTest {
         /* setup of nodes */
         LinkedList<Node> allNodes = new LinkedList<>();
 
-        Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(UUID.randomUUID().toString(), nodeName, cloud, false);
+        Node n = TestableDockerContainerWatchdog.createMockedDockerTransientNode(
+                UUID.randomUUID().toString(), nodeName, cloud, false);
         allNodes.add(n);
 
         subject.setAllNodes(allNodes);
@@ -382,9 +385,15 @@ public class DockerContainerWatchdogTest {
         }
 
         @Override
-        protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description,
-                boolean removeVolumes, String containerId, boolean stop) {
-            boolean result = super.stopAndRemoveContainer(dockerApi, logger, description, removeVolumes, containerId, stop);
+        protected boolean stopAndRemoveContainer(
+                DockerAPI dockerApi,
+                Logger aLogger,
+                String description,
+                boolean removeVolumes,
+                String containerId,
+                boolean stop) {
+            boolean result =
+                    super.stopAndRemoveContainer(dockerApi, aLogger, description, removeVolumes, containerId, stop);
 
             currentTestClock = Clock.offset(currentTestClock, Duration.ofMinutes(10));
             this.setClock(currentTestClock);
@@ -400,7 +409,6 @@ public class DockerContainerWatchdogTest {
         TestableDockerContainerWatchdog subject = new RemovalTweakingTestableDockerContainerWatchdog(clock);
         subject.setClock(clock);
 
-
         final String nodeName = "unittest-12345";
         final String containerId1 = UUID.randomUUID().toString();
         final String containerId2 = UUID.randomUUID().toString();
@@ -414,10 +422,12 @@ public class DockerContainerWatchdogTest {
         labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
 
         List<Container> containerList = new LinkedList<>();
-        Container c1 = TestableDockerContainerWatchdog.createMockedContainer(containerId1, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
+        Container c1 = TestableDockerContainerWatchdog.createMockedContainer(
+                containerId1, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
         containerList.add(c1);
 
-        Container c2 = TestableDockerContainerWatchdog.createMockedContainer(containerId2, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
+        Container c2 = TestableDockerContainerWatchdog.createMockedContainer(
+                containerId2, "Running", clock.instant().toEpochMilli() / 1000, labelMap);
         containerList.add(c2);
 
         DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
@@ -439,9 +449,8 @@ public class DockerContainerWatchdogTest {
         Assert.assertEquals(0, subject.getContainersRemoved().size());
     }
 
-
     @Test
-    public void testSlaveExistsButNoContainer() throws IOException, InterruptedException {
+    public void testAgentExistsButNoContainer() throws IOException, InterruptedException {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
         final String nodeName = "unittest-78901";
@@ -461,7 +470,8 @@ public class DockerContainerWatchdogTest {
         /* setup of nodes */
         LinkedList<Node> allNodes = new LinkedList<>();
 
-        DockerTransientNode node = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud, true);
+        DockerTransientNode node =
+                TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName, cloud, true);
         allNodes.add(node);
 
         subject.setAllNodes(allNodes);
@@ -476,7 +486,7 @@ public class DockerContainerWatchdogTest {
     }
 
     @Test
-    public void testSlaveExistsButNoContainerCheckForTimeout() throws IOException, InterruptedException {
+    public void testAgentExistsButNoContainerCheckForTimeout() throws IOException, InterruptedException {
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1527970544000L), ZoneId.of("UTC"));
         TestableDockerContainerWatchdog subject = new RemovalTweakingTestableDockerContainerWatchdog(clock);
         subject.setClock(clock);
@@ -499,9 +509,11 @@ public class DockerContainerWatchdogTest {
         /* setup of nodes */
         LinkedList<Node> allNodes = new LinkedList<>();
 
-        DockerTransientNode node1 = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName1, cloud, true);
+        DockerTransientNode node1 =
+                TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName1, cloud, true);
         allNodes.add(node1);
-        DockerTransientNode node2 = TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName2, cloud, true);
+        DockerTransientNode node2 =
+                TestableDockerContainerWatchdog.createMockedDockerTransientNode(containerId, nodeName2, cloud, true);
         allNodes.add(node2);
 
         subject.setAllNodes(allNodes);
@@ -514,5 +526,4 @@ public class DockerContainerWatchdogTest {
         DockerTransientNode removedNode = nodes.get(0);
         Assert.assertEquals(node1, removedNode);
     }
-
 }

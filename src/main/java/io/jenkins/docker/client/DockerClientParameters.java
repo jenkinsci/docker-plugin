@@ -1,6 +1,6 @@
 package io.jenkins.docker.client;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 class DockerClientParameters {
     final String dockerUri;
@@ -8,8 +8,8 @@ class DockerClientParameters {
     final Integer readTimeoutInMsOrNull;
     final Integer connectTimeoutInMsOrNull;
 
-    DockerClientParameters(String dockerUri, String credentialsId, Integer readTimeoutInMsOrNull,
-            Integer connectTimeoutInMsOrNull) {
+    DockerClientParameters(
+            String dockerUri, String credentialsId, Integer readTimeoutInMsOrNull, Integer connectTimeoutInMsOrNull) {
         this.dockerUri = dockerUri;
         this.credentialsId = credentialsId;
         this.readTimeoutInMsOrNull = readTimeoutInMsOrNull;
@@ -34,7 +34,7 @@ class DockerClientParameters {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(dockerUri, credentialsId, connectTimeoutInMsOrNull, readTimeoutInMsOrNull);
+        return Objects.hash(dockerUri, credentialsId, connectTimeoutInMsOrNull, readTimeoutInMsOrNull);
     }
 
     @Override
@@ -46,15 +46,18 @@ class DockerClientParameters {
             return false;
         }
         final DockerClientParameters other = (DockerClientParameters) obj;
-        return Objects.equal(dockerUri, other.dockerUri) && Objects.equal(credentialsId, other.credentialsId)
-                && Objects.equal(readTimeoutInMsOrNull, other.readTimeoutInMsOrNull)
-                && Objects.equal(connectTimeoutInMsOrNull, other.connectTimeoutInMsOrNull);
+        return Objects.equals(dockerUri, other.dockerUri)
+                && Objects.equals(credentialsId, other.credentialsId)
+                && Objects.equals(readTimeoutInMsOrNull, other.readTimeoutInMsOrNull)
+                && Objects.equals(connectTimeoutInMsOrNull, other.connectTimeoutInMsOrNull);
     }
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).add("dockerUri", dockerUri).add("credentialsId", credentialsId)
-                .add("readTimeoutInMsOrNull", readTimeoutInMsOrNull)
-                .add("connectTimeoutInMsOrNull", connectTimeoutInMsOrNull).toString();
+        return "DockerClientParameters{" + "dockerUri='"
+                + dockerUri + '\'' + ", credentialsId='"
+                + credentialsId + '\'' + ", readTimeoutInMsOrNull="
+                + readTimeoutInMsOrNull + ", connectTimeoutInMsOrNull="
+                + connectTimeoutInMsOrNull + '}';
     }
 }

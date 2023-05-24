@@ -1,9 +1,10 @@
 <div>
-    The command to run for this image. Be aware setting this might have impacts on the Launch mechanism,
-    for sample SSH Launcher do configure sshd with injected keys authentication, overriding this command might
-    prevent the agent to start.
+    Specifies a command to be executed upon containter start. Note this setting might have impact on the Launch mechanism,
+    for example SSH Launcher do configure sshd with injected keys authentication, overriding this command might
+    prevent the agent to start. Please refer to <a href="https://docs.docker.com/engine/reference/run/#cmd-default-command-or-options">docker documentation</a>
+    for more details.
     <br/>
-    Whatever it does, this command must keep the container running, so Jenkins can establish a remote connection at
+    Supplied command must keep the container running, so Jenkins can establish a remote connection at
     any time. If not set, Jenkins will configure a general purpose command to just wait for stdin.
     <br/>
     If you need your image to start some additional services, you should consider using an Entrypoint, and

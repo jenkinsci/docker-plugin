@@ -9,7 +9,6 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import io.jenkins.docker.DockerComputer;
 import io.jenkins.docker.DockerTransientNode;
-
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -19,30 +18,29 @@ import java.util.logging.Logger;
  *
  */
 @Extension
-public class DockerRunListener extends RunListener<Run<?,?>> {
+public class DockerRunListener extends RunListener<Run<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(DockerRunListener.class.getName());
-
 
     @Override
     public void onStarted(Run<?, ?> run, TaskListener listener) {
         final Computer computer = Computer.currentComputer();
         if (computer instanceof DockerComputer) {
-            final DockerTransientNode node = ((DockerComputer) computer).getNode();
-            run.addAction(new DockerBuildAction(node));
+            final DockerComputer dockerComputer = (DockerComputer) computer;
+            final DockerTransientNode node = dockerComputer.getNode();
+            if (node != null) {
+                run.addAction(new DockerBuildAction(node));
+            }
         }
     }
-    
+
     @Override
     public void onDeleted(Run<?, ?> run) {
         super.onDeleted(run);
         List<DockerBuildImageAction> actions = run.getActions(DockerBuildImageAction.class);
-
-        for(DockerBuildImageAction action : actions) {
-            if( action.cleanupWithJenkinsJobDelete ) {
+        for (DockerBuildImageAction action : actions) {
+            if (action.cleanupWithJenkinsJobDelete) {
                 LOGGER.info("Attempting to clean up docker image for " + run);
-
-
-                if( action.pushOnSuccess ) {
+                if (action.pushOnSuccess) {
 
                     // TODO:
 
@@ -71,6 +69,5 @@ public class DockerRunListener extends RunListener<Run<?,?>> {
                 }
             }
         }
-
     }
 }

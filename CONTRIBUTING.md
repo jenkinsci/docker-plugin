@@ -9,7 +9,10 @@ If you're not 100% sure it's a bug in the code then please seek help elsewhere.
 e.g. the [jenkins-users google group](https://groups.google.com/forum/#!forum/jenkinsci-users).
 - [RTFM](https://en.wikipedia.org/wiki/RTFM).
 The Jenkins UI pages include help that should explain things.
-The [plugin's wiki page](https://wiki.jenkins.io/display/JENKINS/Docker+Plugin) gives additional information.
+The
+[plugin documentation](README.md)
+gives additional information.
+Both of these assume a basic working understanding docker itself, so make sure you read [the docker documentation](https://docs.docker.com/) too.
 - Be helpful and make no demands.
   * This code is Free Open-Source Software - nobody is obliged to make things work for you *but* you have legal permission to fix things yourself.
   * If you're reporting and fixing an issue yourself then you only need to explain what problem you're fixing in enough detail that the maintainer(s) can understand why your changes are in the public interest.
@@ -28,7 +31,7 @@ No new restrictions/conditions are permitted.
   * How is this failing?
   * What should happen instead?
 - Provide step-by-step instructions for how to reproduce the issue.
-  * Try to avoid relying on custom docker images or for the repro case. Ideally, reproduce with a `jenkins/(ssh-slave|jnlp-slave|slave)` image with a dumb freestyle job, as that makes life easier for everyone.
+  * Try to avoid relying on custom docker images or for the repro case. Ideally, reproduce with a `jenkins/(ssh-agent|inbound-agent|agent)` image with a dumb freestyle job, as that makes life easier for everyone.
 - Specify the Jenkins core & plugin version (of all docker-related plugins) that you're seeing the issue with.
 - Check `Manage Jenkins` -> `Manage Old Data` for out of date configuration data and provide this info.
 - Check and provide errors from system jenkins.log and errors from `Manage Jenkins` -> `System Log`.
@@ -39,7 +42,7 @@ No new restrictions/conditions are permitted.
 - Provide a copy/paste of the `Cloud` section from $JENKINS_HOME/config.xml file (redacted where neccessary).
 - Describe what your docker infrastructure looks like, e.g. single vs multiple, hosts vs swarms, where Jenkins is in relation to that etc.
 - Provide docker host/api version.
-- Ensure that any code or log example surround with [the right markdown](https://help.github.com/articles/github-flavored-markdown/) otherwise it'll be unreadable.
+- Ensure that any code or log examples are surrounded with [the right markdown](https://help.github.com/articles/github-flavored-markdown/) otherwise it'll be unreadable.
 
 # Submitting pull requests
 
@@ -75,6 +78,5 @@ Please do not do both in the same PR as this makes life difficult for anyone els
 
 # Links
 
-- https://wiki.jenkins.io/display/JENKINS/Docker+Plugin
-- https://wiki.jenkins.io/display/JENKINS/Beginners+Guide+to+Contributing
-- https://wiki.jenkins.io/display/JENKINS/Extend+Jenkins
+- https://plugins.jenkins.io/docker-plugin/
+- https://jenkins.io/participate/code/

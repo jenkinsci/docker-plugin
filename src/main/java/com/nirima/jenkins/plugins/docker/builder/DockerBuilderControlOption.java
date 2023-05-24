@@ -10,11 +10,10 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
+import jenkins.model.Jenkins;
 
 /**
  * Root abstract class for DockerBuilderControls
@@ -27,12 +26,13 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
             throws DockerException, IOException;
 
     /**
+     * @param build The build being inspected
      * @return first DockerLaunchAction attached to build
      */
     protected DockerLaunchAction getLaunchAction(Run<?, ?> build) {
         List<DockerLaunchAction> launchActionList = build.getActions(DockerLaunchAction.class);
         DockerLaunchAction launchAction;
-        if (launchActionList.size() > 0 ) {
+        if (launchActionList.size() > 0) {
             launchAction = launchActionList.get(0);
         } else {
             launchAction = new DockerLaunchAction();
@@ -41,13 +41,12 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
         return launchAction;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     public Descriptor<DockerBuilderControlOption> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorOrDie(getClass());
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
-    public static abstract class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption> {
-
+    public abstract static class DockerBuilderControlOptionDescriptor extends Descriptor<DockerBuilderControlOption> {
         public ListBoxModel doFillCloudNameItems() {
             ListBoxModel model = new ListBoxModel();
             model.add("Cloud this build is running on", "");
@@ -56,6 +55,5 @@ public abstract class DockerBuilderControlOption implements Describable<DockerBu
             }
             return model;
         }
-
     }
 }

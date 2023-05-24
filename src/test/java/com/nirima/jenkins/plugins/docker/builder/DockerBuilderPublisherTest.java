@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,8 +25,8 @@ public class DockerBuilderPublisherTest {
     @Test
     public void verifyTagsGivenValidTagsThenPasses() {
         // Given
-        final String validTags = String.join("\n", VALID1, VALID2, VALID3, VALID4, VALID5, VALID6, VALID7, VALID8,
-                VALID9, VALID10);
+        final String validTags =
+                String.join("\n", VALID1, VALID2, VALID3, VALID4, VALID5, VALID6, VALID7, VALID8, VALID9, VALID10);
 
         // When
         DockerBuilderPublisher.verifyTags(validTags);
@@ -46,7 +47,7 @@ public class DockerBuilderPublisherTest {
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException ex) {
             // Then
-            Assert.assertThat(ex.getMessage(), containsString(invalidTag));
+            assertThat(ex.getMessage(), containsString(invalidTag));
         }
     }
 
@@ -62,7 +63,7 @@ public class DockerBuilderPublisherTest {
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException ex) {
             // Then
-            Assert.assertThat(ex.getMessage(), containsString(invalidTag));
+            assertThat(ex.getMessage(), containsString(invalidTag));
         }
     }
 
@@ -78,7 +79,7 @@ public class DockerBuilderPublisherTest {
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException ex) {
             // Then
-            Assert.assertThat(ex.getMessage(), containsString(invalidTag));
+            assertThat(ex.getMessage(), containsString(invalidTag));
         }
     }
 
@@ -94,7 +95,7 @@ public class DockerBuilderPublisherTest {
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException ex) {
             // Then
-            Assert.assertThat(ex.getMessage(), containsString(invalidTag));
+            assertThat(ex.getMessage(), containsString(invalidTag));
         }
     }
 }

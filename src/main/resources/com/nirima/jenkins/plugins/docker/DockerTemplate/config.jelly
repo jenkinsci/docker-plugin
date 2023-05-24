@@ -29,6 +29,10 @@
 
     <f:dropdownDescriptorSelector field="connector" title="Connect method"/>
 
+    <f:entry title="${%Stop timeout}" field="stopTimeout">
+        <f:number default="10"/>
+    </f:entry>
+
     <f:entry title="${%Remove volumes}" field="removeVolumes">
         <f:checkbox/>
     </f:entry>

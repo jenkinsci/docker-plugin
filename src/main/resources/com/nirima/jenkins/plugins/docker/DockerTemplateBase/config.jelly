@@ -22,6 +22,14 @@
       <f:textbox />
     </f:entry>
 
+    <f:entry title="${%User}" field="user">
+      <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Extra Groups}" field="extraGroupsString">
+      <f:expandableTextbox />
+    </f:entry>
+
     <f:entry title="${%DNS}" field="dnsString">
       <f:textbox />
     </f:entry>
@@ -30,7 +38,7 @@
       <f:textbox />
     </f:entry>
 
-    <f:entry title="${%Volumes}" field="volumesString">
+    <f:entry title="${%Mounts}" field="mountsString">
       <f:expandableTextbox />
     </f:entry>
 
@@ -62,6 +70,19 @@
       <f:number />
     </f:entry>
 
+     <f:entry title="${%CPU resources}" field="cpus">
+       <f:textbox />
+     </f:entry>
+
+     <f:entry title="${%CPU Period in us}" field="cpuPeriod">
+       <f:number clazz="positive-number" min="0" step="1"/>
+     </f:entry>
+
+     <f:entry title="${%CPU Quota in us}" field="cpuQuota">
+       <f:number clazz="positive-number" min="0" step="1"/>
+     </f:entry>
+
+
     <f:entry title="${%CPU Shares}" field="cpuShares">
       <f:number clazz="positive-number" min="0" step="1"/>
     </f:entry>
@@ -73,6 +94,18 @@
     <f:entry title="${%Run container privileged}" field="privileged">
       <f:checkbox />
       <span class="warning">at your own risk</span>
+    </f:entry>
+
+    <f:entry title="${%Security Options}" field="securityOptsString">
+      <f:expandableTextbox />
+    </f:entry>
+
+    <f:entry title="${%Capabilities to add}" field="capabilitiesToAddString">
+      <f:expandableTextbox />
+    </f:entry>
+
+    <f:entry title="${%Capabilities to drop}" field="capabilitiesToDropString">
+      <f:expandableTextbox />
     </f:entry>
 
     <f:entry title="${%Allocate a pseudo-TTY}" field="tty">
