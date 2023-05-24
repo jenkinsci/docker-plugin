@@ -48,7 +48,6 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -572,9 +571,9 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
             if (cmdArray == null || cmdArray.length == 0) {
                 cmd.withCmd(injectedKey);
             } else {
-                ArrayList<String> l = new ArrayList<String>(cmdArray.length + 1);
+                List<String> l = new ArrayList<>(cmdArray.length + 1);
                 l.add(injectedKey);
-                l.addAll(Arrays.asList(cmdArray));
+                l.addAll(List.of(cmdArray));
                 cmd.withCmd(l.toArray(new String[l.size()]));
             }
         }
