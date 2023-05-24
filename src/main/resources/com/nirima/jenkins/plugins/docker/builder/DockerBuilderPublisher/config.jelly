@@ -23,6 +23,10 @@
         <f:expandableTextbox/>
     </f:entry>
 
+    <f:entry title="${%Build Args}" field="buildArgsString">
+        <f:expandableTextbox/>
+    </f:entry>
+
     <f:entry title="${%Push image}" field="pushOnSuccess">
         <f:checkbox/>
     </f:entry>
@@ -36,6 +40,14 @@
     </f:entry>
 
     <f:entry title="${%Attempt to remove images when jenkins deletes the run}" field="cleanupWithJenkinsJobDelete">
+        <f:checkbox default="false"/>
+    </f:entry>
+
+    <f:entry title="${%Disable caching}" field="noCache">
+        <f:checkbox default="false"/>
+    </f:entry>
+
+    <f:entry title="${%Pull base image}" field="pull">
         <f:checkbox default="false"/>
     </f:entry>
 

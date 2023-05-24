@@ -1,282 +1,206 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>4.64</version>
+    <relativePath />
+  </parent>
 
-    <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>3.19</version>
-        <relativePath />
-    </parent>
+  <groupId>io.jenkins.docker</groupId>
+  <artifactId>docker-plugin</artifactId>
+  <version>${revision}${changelist}</version>
+  <packaging>hpi</packaging>
+  <name>Docker plugin</name>
+  <description>Provide Cloud Provisioning and other Docker features</description>
+  <url>https://github.com/jenkinsci/${project.artifactId}</url>
 
-    <groupId>io.jenkins.docker</groupId>
-    <artifactId>docker-plugin</artifactId>
-    <version>${revision}${changelist}</version>
-    <packaging>hpi</packaging>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
 
-    <name>Docker plugin</name>
-    <description>Provide Cloud Provisioning and other Docker features</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin</url>
-    
-    <developers>
-        <developer>
-            <id>ndeloof</id>
-            <name>Nicolas De Loof</name>
-        </developer>
-    </developers>
+  <developers>
+    <developer>
+      <id>magnayn</id>
+      <name>Nigel Magnay</name>
+      <roles>
+        <role>maintainer (retired)</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>ndeloof</id>
+      <name>Nicolas De Loof</name>
+      <roles>
+        <role>maintainer (retired)</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>pjdarton</id>
+      <name>Peter Darton</name>
+      <roles>
+        <role>maintainer (retired)</role>
+      </roles>
+    </developer>
+    <!--
+      You could have your name here.
+      https://www.jenkins.io/doc/developer/plugin-governance/adopt-a-plugin/
+    -->
+  </developers>
 
-    <properties>
-        <revision>1.1.8</revision>
-        <changelist>-SNAPSHOT</changelist>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.level>8</java.level>
-        <groovy.version>2.4.7</groovy.version>
-        <jenkins.version>2.60.3</jenkins.version>
-    </properties>
+  <scm>
+    <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
+    <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+    <tag>${scmTag}</tag>
+    <url>https://github.com/${gitHubRepo}</url>
+  </scm>
 
+  <properties>
+    <revision>1.3.4</revision>
+    <changelist>-SNAPSHOT</changelist>
+    <jenkins.version>2.375.4</jenkins.version>
+    <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
+    <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
+    <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
+    <spotbugs.effort>Max</spotbugs.effort>
+    <spotbugs.threshold>Low</spotbugs.threshold>
+    <spotless.check.skip>false</spotless.check.skip>
+    <junixsocket.version>2.6.2</junixsocket.version>
+  </properties>
+
+  <dependencyManagement>
     <dependencies>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>bouncycastle-api</artifactId>
-            <version>2.16.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>docker-java-api</artifactId>
-            <version>3.0.14</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpcore</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>apache-httpcomponents-client-4-api</artifactId>
-            <version>4.5.3-2.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>docker-commons</artifactId>
-            <version>1.9</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>ssh-slaves</artifactId>
-            <version>1.22</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>token-macro</artifactId>
-            <version>2.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>durable-task</artifactId>
-            <version>1.16</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-api</artifactId>
-            <version>2.23.1</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-step-api</artifactId>
-            <version>2.14</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-support</artifactId>
-            <version>2.16</version>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-durable-task-step</artifactId>
-            <version>2.17</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-job</artifactId>
-            <version>2.12.2</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-cps</artifactId>
-            <version>2.41</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>script-security</artifactId>
-            <version>1.36</version>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>com.kohlschutter.junixsocket</groupId>
-            <artifactId>junixsocket-common</artifactId>
-            <version>2.0.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.kohlschutter.junixsocket</groupId>
-            <artifactId>junixsocket-native-common</artifactId>
-            <version>2.0.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>1.10.19</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.modules</groupId>
-            <artifactId>instance-identity</artifactId>
-            <version>2.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-
-
-
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness-tools</artifactId>
-            <version>2.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-support</artifactId>
-            <version>2.16</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-basic-steps</artifactId>
-            <version>2.6</version>
-            <scope>test</scope>
-        </dependency>
+      <dependency>
+        <groupId>io.jenkins.tools.bom</groupId>
+        <artifactId>bom-2.375.x</artifactId>
+        <version>2102.v854b_fec19c92</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
+  </dependencyManagement>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>structs</artifactId>
-                <version>1.9</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>com.kohlschutter.junixsocket</groupId>
+      <artifactId>junixsocket-common</artifactId>
+      <version>${junixsocket.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.kohlschutter.junixsocket</groupId>
+      <artifactId>junixsocket-native-common</artifactId>
+      <version>${junixsocket.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.modules</groupId>
+      <artifactId>instance-identity</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>bouncycastle-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>docker-commons</artifactId>
+      <version>419.v8e3cd84ef49c</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>docker-java-api</artifactId>
+      <version>3.3.0-77.vd409a_cdc37d5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>durable-task</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>ssh-slaves</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>token-macro</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-api</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-step-api</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-support</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkinsci.plugins</groupId>
+      <artifactId>pipeline-model-extensions</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins</groupId>
+      <artifactId>configuration-as-code</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.configuration-as-code</groupId>
+      <artifactId>test-harness</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-support</artifactId>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkinsci.plugins</groupId>
+      <artifactId>pipeline-model-definition</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <configuration>
-                    <failOnError>false</failOnError>     <!-- FIXME need to review findbugs errors -->
-                </configuration>                 
-            </plugin>
-            <plugin>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <failOnError>false</failOnError>
-                </configuration>                 
-            </plugin>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <configuration>
-                    <compatibleSinceVersion>0.17</compatibleSinceVersion>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
 
-    <profiles>
-      <!-- Workaround to add new dependency for Jenkins Version 2.86+ as it's removed from Jenkins Core  -->
-      <profile>
-        <id>jenkins_2_89</id>
-        <activation>
-            <property>
-                <name>jenkins.version</name>
-                <value>2.89.4</value>
-            </property>
-        </activation>
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>command-launcher</artifactId>
-                <version>1.2</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-      </profile>
-      <profile>
-        <id>jenkins_2_107</id>
-        <activation>
-            <property>
-                <name>jenkins.version</name>
-                <value>2.107.1</value>
-            </property>
-        </activation>
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>command-launcher</artifactId>
-                <version>1.2</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-      </profile>
-    </profiles>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 
-
-    <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/docker-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/docker-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/docker-plugin</url>
-        <tag>${scmTag}</tag>
-    </scm>
-
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
-
+  <profiles>
+    <profile>
+      <id>skip-spotless-on-windows-ci</id>
+      <activation>
+        <os>
+          <family>Windows</family>
+        </os>
+        <property>
+          <name>env.CI</name>
+        </property>
+      </activation>
+      <properties>
+        <spotless.check.skip>true</spotless.check.skip>
+      </properties>
+    </profile>
+  </profiles>
 </project>

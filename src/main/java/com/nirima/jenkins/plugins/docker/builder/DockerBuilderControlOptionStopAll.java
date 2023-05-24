@@ -1,16 +1,17 @@
 package com.nirima.jenkins.plugins.docker.builder;
 
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.nirima.jenkins.plugins.docker.action.DockerLaunchAction;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import java.io.PrintStream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.PrintStream;
 
 /**
  * Stop all containers that ???
@@ -28,24 +29,30 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
     }
 
     @Override
-    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
-            throws DockerException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener) throws DockerException {
         final PrintStream llog = listener.getLogger();
 
         LOG.info("Stopping all containers");
         llog.println("Stopping all containers");
 
         for (DockerLaunchAction.Item containerItem : getLaunchAction(build).getRunning()) {
-            LOG.info("Stopping container {}", containerItem.id);
-            llog.println("Stopping container " + containerItem.id);
+            final String containerId = containerItem.id;
+            LOG.info("Stopping container {}", containerId);
+            llog.println("Stopping container " + containerId);
 
-            containerItem.client.stopContainerCmd(containerItem.id).exec();
+            containerItem.client.stopContainerCmd(containerId).exec();
 
             if (remove) {
-                LOG.info("Removing container {}", containerItem.id);
-                llog.println("Removing container " + containerItem.id);
+                LOG.info("Removing container {}", containerId);
+                llog.println("Removing container " + containerId);
 
-                containerItem.client.removeContainerCmd(containerItem.id).exec();
+                try {
+                    containerItem.client.removeContainerCmd(containerId).exec();
+                } catch (NotFoundException handledByCode) {
+                    llog.println("Container '" + containerId + "' already gone.");
+                } catch (ConflictException handledByCode) {
+                    llog.println("Container '" + containerId + "' removal already in progress.");
+                }
             }
         }
     }
@@ -56,6 +63,5 @@ public class DockerBuilderControlOptionStopAll extends DockerBuilderControlOptio
         public String getDisplayName() {
             return "Stop All Containers";
         }
-
     }
 }

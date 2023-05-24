@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!--
+    Exclusions in this section have been triaged and determined to be false positives.
+  -->
+  <Match>
+    <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerPluginConfiguration"/>
+  </Match>
+
+  <!--
+    Here lies technical debt. Exclusions in this section have not yet been triaged. When working on
+    on this section, pick an exclusion to triage, then:
+    - If it is a false positive, add a @SuppressFBWarnings(value = "[...]", justification = "[...]")
+      annotation indicating the reason why it is a false positive, then remove the exclusion from
+      this section.
+    - If it is not a false positive, fix the bug, then remove the exclusion from this section.
+   -->
+  <Match>
+    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerDisabled"/>
+    <Field name="disabledBySystem"/>
+  </Match>
+  <Match>
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerCloud"/>
+    <Or>
+      <Method name="countContainersInDocker"/>
+      <Method name="isTriton"/>
+    </Or>
+  </Match>
+  <Match>
+    <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerCloud"/>
+    <Method name="provision"/>
+  </Match>
+  <Match>
+    <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    <Class name="com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy"/>
+    <Method name="terminateContainer"/>
+  </Match>
+  <Match>
+    <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    <Class name="java.util.concurrent.ExecutorService"/>
+    <Method name="submit"/>
+  </Match>
+  <Match>
+    <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    <Class name="io.jenkins.docker.DockerTransientNode"/>
+    <Method name="terminate"/>
+  </Match>
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerCloud$1"/>
+    <Method name="run"/>
+  </Match>
+  <Match>
+    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerDisabled"/>
+    <Or>
+      <Field name="exceptionWhenDisabledBySystem"/>
+      <Field name="nanotimeWhenDisabledBySystem"/>
+      <Field name="nanotimeWhenReEnableBySystem"/>
+      <Field name="reasonWhyDisabledBySystem"/>
+    </Or>
+  </Match>
+  <Match>
+    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+    <Class name="io.jenkins.docker.DockerTransientNode"/>
+    <Or>
+      <Field name="containerRemoved"/>
+      <Field name="containerStopped"/>
+    </Or>
+  </Match>
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerJobProperty"/>
+    <Method name="perform"/>
+  </Match>
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION"/>
+    <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderControlOptionRun"/>
+    <Method name="expand"/>
+  </Match>
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION"/>
+    <Class name="io.jenkins.docker.client.DockerAPI"/>
+    <Method name="getSocket"/>
+  </Match>
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION"/>
+    <Class name="io.jenkins.docker.pipeline.DockerNodeStepExecution"/>
+    <Method name="createNode"/>
+  </Match>
+  <Match>
+    <Bug pattern="SIC_INNER_SHOULD_BE_STATIC_ANON"/>
+    <Or>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerJobProperty"/>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerManagement"/>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerTemplate"/>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerTemplateBase"/>
+      <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderControlOptionRun"/>
+    </Or>
+  </Match>
+  <Match>
+    <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    <Or>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerSimpleTemplate"/>
+      <Class name="com.nirima.jenkins.plugins.docker.action.DockerBuildAction"/>
+      <Class name="com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction"/>
+      <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderControl"/>
+      <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderControlOptionProvisionAndStart"/>
+      <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderControlOptionStart"/>
+      <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderControlOptionStop"/>
+      <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderControlOptionStopAll"/>
+      <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderPublisher$DockerBuildCallable"/>
+      <Class name="com.nirima.jenkins.plugins.docker.publisher.DockerPublisherControl"/>
+      <Class name="com.nirima.jenkins.plugins.docker.utils.DockerDirectoryCredentials"/>
+      <Class name="io.jenkins.docker.connector.DockerComputerAttachConnector"/>
+      <Class name="io.jenkins.docker.pipeline.DockerNodeStepExecution$Callback"/>
+    </Or>
+  </Match>
+  <Match>
+    <Bug pattern="DM_CONVERT_CASE"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerTemplateBase"/>
+    <Method name="parseMountsString"/>
+  </Match>
+  <Match>
+    <Bug pattern="UCF_USELESS_CONTROL_FLOW"/>
+    <Class name="com.nirima.jenkins.plugins.docker.listener.DockerRunListener"/>
+    <Method name="onDeleted"/>
+  </Match>
+  <Match>
+    <Bug pattern="BC_UNCONFIRMED_CAST"/>
+    <Class name="io.jenkins.docker.pipeline.DockerNodeStepExecution"/>
+  </Match>
+  <Match>
+    <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    <Class name="io.jenkins.docker.connector.DockerDelegatingComputerLauncher"/>
+  </Match>
+  <Match>
+    <Bug pattern="PZLA_PREFER_ZERO_LENGTH_ARRAYS"/>
+    <Class name="com.nirima.jenkins.plugins.docker.utils.JenkinsUtils"/>
+    <Method name="fixEmpty"/>
+  </Match>
+  <Match>
+    <Bug pattern="NM_CONFUSING"/>
+  </Match>
+  <Match>
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+  </Match>
+</FindBugsFilter>

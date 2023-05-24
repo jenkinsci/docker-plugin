@@ -10,25 +10,24 @@ import hudson.model.BuildListener;
 import hudson.slaves.Cloud;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import java.io.IOException;
+import java.io.PrintStream;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.Serializable;
-
 
 /**
  * Builder that adds template to all clouds.
  *
  * @author Jocelyn De La Rosa
  */
-public class DockerBuilderNewTemplate extends Builder implements Serializable {
+public class DockerBuilderNewTemplate extends Builder {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerBuilderNewTemplate.class);
 
     private DockerTemplate dockerTemplate;
+
+    @SuppressWarnings("unused")
     private int version = 1;
 
     @DataBoundConstructor
@@ -49,11 +48,9 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
             throws InterruptedException, IOException {
         final PrintStream llogger = listener.getLogger();
         final String dockerImage = dockerTemplate.getDockerTemplateBase().getImage();
-
         // Job must run as Admin as we are changing global cloud configuration here.
         build.getACL().checkPermission(Jenkins.ADMINISTER);
-
-        for (Cloud c : Jenkins.getInstance().clouds) {
+        for (Cloud c : Jenkins.get().clouds) {
             if (c instanceof DockerCloud && dockerImage != null) {
                 DockerCloud dockerCloud = (DockerCloud) c;
                 if (dockerCloud.getTemplate(dockerImage) == null) {
@@ -63,7 +60,6 @@ public class DockerBuilderNewTemplate extends Builder implements Serializable {
                 }
             }
         }
-
         return true;
     }
 

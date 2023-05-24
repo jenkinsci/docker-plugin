@@ -10,23 +10,21 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.export.ExportedBean;
-
 import java.io.IOException;
 import java.io.Serializable;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * Created by magnayn on 10/01/2014.
  */
 @ExportedBean
-public class DockerBuildAction implements Action, Serializable, Cloneable, Describable<DockerBuildAction> {
+public class DockerBuildAction implements Action, Serializable, Describable<DockerBuildAction> {
 
     private String cloudId;
     private final String containerHost;
     private final String containerId;
     private String inspect;
-
     private String taggedId;
 
     public DockerBuildAction(String containerHost, String containerId, String taggedId) {
@@ -42,17 +40,16 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
         this.cloudId = node.getCloudId();
         try {
             final InspectContainerResponse containerDetails;
-            try(final DockerClient client = dockerAPI.getClient()) {
+            try (final DockerClient client = dockerAPI.getClient()) {
                 containerDetails = client.inspectContainerCmd(containerId).exec();
             }
             this.inspect = new ObjectMapper()
-                .enable(SerializationFeature.INDENT_OUTPUT)
-                .writeValueAsString(containerDetails);
+                    .enable(SerializationFeature.INDENT_OUTPUT)
+                    .writeValueAsString(containerDetails);
         } catch (IOException e) {
-            this.inspect = "Failed to capture container inspection data: "+e.getMessage();
+            this.inspect = "Failed to capture container inspection data: " + e.getMessage();
         }
     }
-
 
     public String getCloudId() {
         return cloudId;
@@ -71,24 +68,27 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
     }
 
     public String getInspect() {
-
         return inspect;
     }
 
+    @Override
     public String getIconFileName() {
         return "/plugin/docker-plugin/images/24x24/docker.png";
     }
 
+    @Override
     public String getDisplayName() {
         return "Built on Docker";
     }
 
+    @Override
     public String getUrlName() {
         return "docker";
     }
 
+    @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(getClass());
+        return (DescriptorImpl) Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     /**
@@ -96,6 +96,7 @@ public class DockerBuildAction implements Action, Serializable, Cloneable, Descr
      */
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerBuildAction> {
+        @Override
         public String getDisplayName() {
             return "Docker";
         }

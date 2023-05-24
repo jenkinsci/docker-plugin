@@ -1,0 +1,20 @@
+<div>
+    <p>A list of new line separated <em>docker</em> labels to be set on the container,
+    Specified in the form <code>"label_name=value"</code>.</p>
+
+    <p>This has no effect on Jenkins functionality, and is not related to the labels
+    used by Jenkins to map jobs to agent nodes. These labels are metadata attached
+    to the docker container itself (again, not the jenkins agent), and which can
+    typically be read using the <code>docker inspect</code> command.</p>
+
+    <p>This can be useful when using a docker cluster (like docker swarm) to pass
+    information to the scheduler, in conjunction with constraints; or to let
+    other services (portainer, prometheus...) know how they should categorize or
+    otherwise deal with this specific container.</p>
+
+    <p style="margin-bottom: 0">Notes:</p>
+    <ul style="margin-top: 0">
+    <li>spaces are the beginning and end of the label name and value will be removed</li>
+    <li>invalid lines will be ignored</li>
+    </ul>
+</div>

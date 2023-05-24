@@ -3,7 +3,7 @@ package io.jenkins.docker.client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +16,14 @@ import org.slf4j.LoggerFactory;
 public class DockerMultiplexedInputStream extends InputStream {
 
     private final InputStream multiplexed;
+    private final String name;
     int next;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerMultiplexedInputStream.class);
 
-    public DockerMultiplexedInputStream(InputStream in) {
+    public DockerMultiplexedInputStream(InputStream in, String streamName) {
         multiplexed = in;
+        name = streamName;
         next = 0;
     }
 
@@ -45,11 +47,16 @@ public class DockerMultiplexedInputStream extends InputStream {
             byte[] header = new byte[8];
             int todo = 8;
             while (todo > 0) {
-                int i = multiplexed.read(header, 8-todo, todo);
-                if (i < 0) return; // EOF
+                int i = multiplexed.read(header, 8 - todo, todo);
+                if (i < 0) {
+                    return; // EOF
+                }
                 todo -= i;
             }
-            int size = ((header[4] & 0xff) << 24) + ((header[5] & 0xff) << 16) + ((header[6] & 0xff) << 8) + (header[7] & 0xff);
+            int size = ((header[4] & 0xff) << 24)
+                    + ((header[5] & 0xff) << 16)
+                    + ((header[6] & 0xff) << 8)
+                    + (header[7] & 0xff);
             switch (header[0]) {
                 case 1: // STDOUT
                     next = size;
@@ -60,16 +67,23 @@ public class DockerMultiplexedInputStream extends InputStream {
                     int received = 0;
                     while (received < size) {
                         int i = multiplexed.read(payload, received, size - received);
-                        if (i < 0) break; // EOF
+                        if (i < 0) {
+                            break; // EOF
+                        }
                         received += i;
                     }
-                    LOGGER.warn("Unexpected data on container stderr: {}",
-                                new String(payload, 0, received, StandardCharsets.UTF_8));
+                    if (LOGGER.isInfoEnabled()) {
+                        final String dataAsString = new String(payload, 0, received, StandardCharsets.UTF_8);
+                        final String dataAsTrimmedString = dataAsString.replaceAll("\\s*$", "");
+                        if (!dataAsTrimmedString.isEmpty()) {
+                            LOGGER.info("stderr from {}: {}", name, dataAsTrimmedString);
+                        }
+                    }
                     break;
                 default:
-                    throw new IOException("Unexpected application/vnd.docker.raw-stream frame type " + header);
+                    throw new IOException(
+                            "Unexpected application/vnd.docker.raw-stream frame type " + Arrays.toString(header));
             }
         }
     }
-
 }

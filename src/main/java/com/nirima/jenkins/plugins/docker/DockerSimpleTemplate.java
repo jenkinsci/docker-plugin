@@ -7,36 +7,46 @@ import jenkins.model.Jenkins;
  * A simple template storage.
  */
 public class DockerSimpleTemplate extends DockerTemplateBase {
-    public DockerSimpleTemplate(String image,
-                                String pullCredentialsId,
-                                String dnsString,
-                                String network,
-                                String dockerCommand,
-                                String volumesString,
-                                String volumesFrom,
-                                String environmentsString,
-                                String hostname,
-                                Integer memoryLimit,
-                                Integer memorySwap,
-                                Integer cpuShares,
-                                Integer shmSize,
-                                String bindPorts,
-                                boolean bindAllPorts,
-                                boolean privileged,
-                                boolean tty,
-                                String macAddress,
-                                String extraHostsString) {
-        super(image,
+    public DockerSimpleTemplate(
+            String image,
+            String pullCredentialsId,
+            String dnsString,
+            String network,
+            String dockerCommand,
+            String mountsString,
+            String volumesFrom,
+            String environmentsString,
+            String hostname,
+            String user,
+            String extraGroups,
+            Integer memoryLimit,
+            Integer memorySwap,
+            Long cpuPeriod,
+            Long cpuQuota,
+            Integer cpuShares,
+            Integer shmSize,
+            String bindPorts,
+            boolean bindAllPorts,
+            boolean privileged,
+            boolean tty,
+            String macAddress,
+            String extraHostsString) {
+        super(
+                image,
                 pullCredentialsId,
                 dnsString,
                 network,
                 dockerCommand,
-                volumesString,
+                mountsString,
                 volumesFrom,
                 environmentsString,
                 hostname,
+                user,
+                extraGroups,
                 memoryLimit,
                 memorySwap,
+                cpuPeriod,
+                cpuQuota,
                 cpuShares,
                 shmSize,
                 bindPorts,
@@ -49,7 +59,7 @@ public class DockerSimpleTemplate extends DockerTemplateBase {
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptor(getClass());
+        return (DescriptorImpl) Jenkins.get().getDescriptor(getClass());
     }
 
     @Extension
