@@ -9,7 +9,6 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import io.jenkins.docker.DockerComputer;
 import io.jenkins.docker.DockerTransientNode;
-
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -19,7 +18,7 @@ import java.util.logging.Logger;
  *
  */
 @Extension
-public class DockerRunListener extends RunListener<Run<?,?>> {
+public class DockerRunListener extends RunListener<Run<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(DockerRunListener.class.getName());
 
     @Override
@@ -38,10 +37,10 @@ public class DockerRunListener extends RunListener<Run<?,?>> {
     public void onDeleted(Run<?, ?> run) {
         super.onDeleted(run);
         List<DockerBuildImageAction> actions = run.getActions(DockerBuildImageAction.class);
-        for(DockerBuildImageAction action : actions) {
-            if( action.cleanupWithJenkinsJobDelete ) {
+        for (DockerBuildImageAction action : actions) {
+            if (action.cleanupWithJenkinsJobDelete) {
                 LOGGER.info("Attempting to clean up docker image for " + run);
-                if( action.pushOnSuccess ) {
+                if (action.pushOnSuccess) {
 
                     // TODO:
 

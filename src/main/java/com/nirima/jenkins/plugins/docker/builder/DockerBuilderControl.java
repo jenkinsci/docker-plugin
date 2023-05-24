@@ -4,14 +4,15 @@ import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import jenkins.tasks.SimpleBuildStep;
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import java.io.IOException;
 import java.io.Serializable;
+import jenkins.tasks.SimpleBuildStep;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Builder that contains one of the possible "option" control step.
@@ -26,7 +27,8 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
     }
 
     @Override
-    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
+    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
+            throws InterruptedException, IOException {
         option.execute(run, launcher, listener);
         run.save();
     }
@@ -49,7 +51,8 @@ public class DockerBuilderControl extends Builder implements Serializable, Simpl
             return "Start/Stop Docker Containers";
         }
 
-        public static DescriptorExtensionList<DockerBuilderControlOption,DockerBuilderControlOptionDescriptor> getOptionList() {
+        public static DescriptorExtensionList<DockerBuilderControlOption, DockerBuilderControlOptionDescriptor>
+                getOptionList() {
             return DockerBuilderControlOptionDescriptor.all();
         }
     }

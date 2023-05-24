@@ -1,8 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Extension;
 import hudson.model.Describable;
@@ -10,13 +8,12 @@ import hudson.model.Descriptor;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import io.jenkins.docker.client.DockerAPI;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.StaplerProxy;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.StaplerProxy;
 
 /**
  * Manage the docker images. Docker page under "Manage Jenkins" page.
@@ -54,9 +51,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
     }
 
     @Override
-    public void save() throws IOException {
-
-    }
+    public void save() throws IOException {}
 
     /**
      * Descriptor is only used for UI form bindings.
@@ -110,11 +105,6 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
     }
 
     public Collection<ServerDetail> getServers() {
-        return Collections2.transform(DockerCloud.instances(), new Function<DockerCloud, ServerDetail>() {
-            @Override
-            public ServerDetail apply(@Nullable DockerCloud input) {
-                return new ServerDetail(input);
-            }
-        });
+        return DockerCloud.instances().stream().map(ServerDetail::new).collect(Collectors.toList());
     }
 }

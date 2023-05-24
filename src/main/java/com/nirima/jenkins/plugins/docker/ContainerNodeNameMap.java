@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import com.github.dockerjava.api.model.Container;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -7,12 +8,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.github.dockerjava.api.model.Container;
-
 /**
  * A class which stores a one-way association between containers (their
  * identifiers) and names of nodes.
- * 
+ *
  * @author eaglerainbow
  *
  */
@@ -29,7 +28,7 @@ class ContainerNodeNameMap {
     /**
      * Adds a new mapping between a container and its name of the node, which
      * shall be persisted.
-     * 
+     *
      * @param container
      *            the container which shall be added.
      * @param nodeName
@@ -42,7 +41,7 @@ class ContainerNodeNameMap {
 
     /**
      * Retrieves a name of a node based on the identifier of a container.
-     * 
+     *
      * @param containerId
      *            the container for which the name of the node shall be
      *            determined.
@@ -56,7 +55,7 @@ class ContainerNodeNameMap {
 
     /**
      * Checks if a given container identifier was registered previously.
-     * 
+     *
      * @param containerId
      *            the identifier of the container for which the registration shall be checked
      * @return <code>true</code>, if the container identifier was registered before, <code>false</code> otherwise.
@@ -68,7 +67,7 @@ class ContainerNodeNameMap {
     /**
      * Retrieves a collection of containers which contains all containers
      * registered in this mapping.
-     * 
+     *
      * @return a collection of containers, which contains all containers
      *         registered in this mapping.
      */
@@ -81,7 +80,7 @@ class ContainerNodeNameMap {
      * <code>ContainerNodeNameMapping</code>, returning a new instance of
      * <code>ContainerNodeNameMapping</code> which contains the superset of all
      * mappings.
-     * 
+     *
      * @param other
      *            The other instance of <code>ContainerNodeNameMapping</code>,
      *            which shall be merged with the current instance.
@@ -116,4 +115,3 @@ class ContainerNodeNameMap {
         this.containerListIncomplete = containerListIncomplete;
     }
 }
-

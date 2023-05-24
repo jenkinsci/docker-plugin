@@ -1,23 +1,20 @@
 package com.nirima.jenkins.plugins.docker;
 
-import java.io.Serializable;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.Functions;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  * Records that the user has disabled something "until further notice", or the
@@ -38,8 +35,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
     // Persistence functionality
 
     @DataBoundConstructor
-    public DockerDisabled() {
-    }
+    public DockerDisabled() {}
 
     @DataBoundSetter
     public void setDisabledByChoice(final boolean disabledByChoice) {
@@ -55,7 +51,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
     /**
      * Called from owning classes to record a problem that will cause
      * {@link #isDisabled()} to return true for a period.
-     * 
+     *
      * @param reasonGiven
      *            Human-readable String stating why.
      * @param durationInMilliseconds
@@ -65,8 +61,8 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
      *            Optional exception.
      */
     @Restricted(NoExternalUse.class)
-    public void disableBySystem(@Nonnull final String reasonGiven, final long durationInMilliseconds,
-            @Nullable final Throwable exception) {
+    public void disableBySystem(
+            @NonNull final String reasonGiven, final long durationInMilliseconds, @Nullable final Throwable exception) {
         final long durationInNanoseconds = TimeUnit.MILLISECONDS.toNanos(durationInMilliseconds);
         final long now = readTimeNowInNanoseconds();
         disabledBySystem = true;
@@ -81,7 +77,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
      * has ticked the disable box or
      * {@link #disableBySystem(String, long, Throwable)} has been called
      * recently).
-     * 
+     *
      * @return true if we are currently disabled.
      */
     @Restricted(NoExternalUse.class)
@@ -156,9 +152,12 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
 
     @Extension
     public static class DescriptorImpl extends Descriptor<DockerDisabled> {
-        public FormValidation doCheckEnabledByChoice(@QueryParameter boolean enabledByChoice,
-                @QueryParameter boolean disabledBySystem, @QueryParameter String whenDisabledBySystemString,
-                @QueryParameter String whenReEnableBySystemString, @QueryParameter String reasonWhyDisabledBySystem,
+        public FormValidation doCheckEnabledByChoice(
+                @QueryParameter boolean enabledByChoice,
+                @QueryParameter boolean disabledBySystem,
+                @QueryParameter String whenDisabledBySystemString,
+                @QueryParameter String whenReEnableBySystemString,
+                @QueryParameter String reasonWhyDisabledBySystem,
                 @QueryParameter String exceptionWhenDisabledBySystemString) {
             if (!enabledByChoice) {
                 return FormValidation.warning("Note: Disabled.");

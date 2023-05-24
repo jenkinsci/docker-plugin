@@ -1,55 +1,5 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.model.AccessMode;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.BindOptions;
-import com.github.dockerjava.api.model.BindPropagation;
-import com.github.dockerjava.api.model.Capability;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.PropagationMode;
-import com.github.dockerjava.api.model.TmpfsOptions;
-import com.github.dockerjava.api.model.VolumesFrom;
-import com.github.dockerjava.api.model.Device;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Mount;
-import com.github.dockerjava.api.model.MountType;
-import com.github.dockerjava.core.NameParser;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
-import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
-import hudson.Extension;
-import hudson.Util;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.Item;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.filterStringArray;
@@ -60,13 +10,61 @@ import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilte
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.AccessMode;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.BindOptions;
+import com.github.dockerjava.api.model.BindPropagation;
+import com.github.dockerjava.api.model.Capability;
+import com.github.dockerjava.api.model.Device;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.PropagationMode;
+import com.github.dockerjava.api.model.TmpfsOptions;
+import com.github.dockerjava.api.model.VolumesFrom;
+import com.github.dockerjava.core.NameParser;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
+import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.Item;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import jenkins.model.Jenkins;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+
 /**
  * Base for docker templates - does not include Jenkins items like labels.
  */
 public class DockerTemplateBase implements Describable<DockerTemplateBase>, Serializable {
     private static final long serialVersionUID = 1838584884066776725L;
 
-    private @Nonnull final String image;
+    private @NonNull final String image;
 
     private @CheckForNull String pullCredentialsId;
     private @CheckForNull transient DockerRegistryEndpoint registry;
@@ -126,6 +124,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public @CheckForNull Integer memoryLimit;
     public @CheckForNull Integer memorySwap;
+    public @CheckForNull String cpus;
     public @CheckForNull Long cpuPeriod;
     public @CheckForNull Long cpuQuota;
     public @CheckForNull Integer cpuShares;
@@ -180,30 +179,30 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * @param extraHostsString   See {@link #setExtraHostsString(String)}
      */
     @Deprecated
-    public DockerTemplateBase(String image,
-                              String pullCredentialsId,
-                              String dnsString,
-                              String network,
-                              String dockerCommand,
-                              String mountsString,
-                              String volumesFromString,
-                              String environmentsString,
-                              String hostname,
-                              String user,
-                              String extraGroupsString,
-                              Integer memoryLimit,
-                              Integer memorySwap,
-                              Long cpuPeriod,
-                              Long cpuQuota,
-                              Integer cpuShares,
-                              Integer shmSize,
-                              String bindPorts,
-                              boolean bindAllPorts,
-                              boolean privileged,
-                              boolean tty,
-                              String macAddress,
-                              String extraHostsString
-    ) {
+    public DockerTemplateBase(
+            String image,
+            String pullCredentialsId,
+            String dnsString,
+            String network,
+            String dockerCommand,
+            String mountsString,
+            String volumesFromString,
+            String environmentsString,
+            String hostname,
+            String user,
+            String extraGroupsString,
+            Integer memoryLimit,
+            Integer memorySwap,
+            Long cpuPeriod,
+            Long cpuQuota,
+            Integer cpuShares,
+            Integer shmSize,
+            String bindPorts,
+            boolean bindAllPorts,
+            boolean privileged,
+            boolean tty,
+            String macAddress,
+            String extraHostsString) {
         this(image);
         setPullCredentialsId(pullCredentialsId);
         setDnsString(dnsString);
@@ -232,44 +231,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     protected Object readResolve() {
         if (volumesFrom != null) {
             if (StringUtils.isNotBlank(volumesFrom)) {
-                setVolumesFrom2(new String[]{volumesFrom});
+                setVolumesFrom2(new String[] {volumesFrom});
             }
             volumesFrom = null;
         }
         if (volumes != null && volumes.length > 0) {
-            List<String> mnts = new ArrayList<>();
-            for (String vol : volumes) {
-                if (!vol.contains(":")) {
-                    mnts.add("type=volume,destination=" + vol);
-                } else {
-                    StringBuilder builder = new StringBuilder();
-                    if (vol.startsWith("/")) {
-                        Bind bind = Bind.parse(vol);
-                        builder.append("type=bind,source=");
-                        builder.append(bind.getPath());
-                        builder.append(",destination=");
-                        builder.append(bind.getVolume().getPath());
-                        if (bind.getAccessMode() == AccessMode.ro) {
-                            builder.append(",readonly");
-                        }
-                        if (bind.getPropagationMode() != PropagationMode.DEFAULT) {
-                            builder.append(",bind-propagation=");
-                            builder.append(bind.getPropagationMode().toString());
-                        }
-                    } else {
-                        String[] parts = vol.split(":");
-                        builder.append("type=volume,source=");
-                        builder.append(parts[0]);
-                        builder.append(",destination=");
-                        builder.append(parts[1]);
-                        if (parts.length == 3 && ("readonly".equalsIgnoreCase(parts[2]) || "ro".equalsIgnoreCase(parts[2]))) {
-                            builder.append(",readonly");
-                        }
-                    }
-                    mnts.add(builder.toString());
-                }
-            }
-            setMounts(mnts.toArray(new String[mnts.size()]));
+            setMounts(convertVolumes(volumes));
             volumes = null;
         }
         if (pullCredentialsId == null && registry != null) {
@@ -278,7 +245,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return this;
     }
 
-    @Nonnull
+    @NonNull
     public String getImage() {
         return image.trim();
     }
@@ -337,7 +304,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setExtraGroups(splitAndFilterEmptyList(extraGroupsString, "\n"));
     }
 
-    @Nonnull
+    @NonNull
     public String getExtraGroupsString() {
         if (extraGroups == null) {
             return "";
@@ -350,9 +317,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(dnsHosts);
     }
 
-    @Nonnull
+    @NonNull
     public String getDnsString() {
-        if (dnsHosts == null) return "";
+        if (dnsHosts == null) {
+            return "";
+        }
         return Joiner.on(" ").join(dnsHosts);
     }
 
@@ -384,9 +353,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.mounts = fixEmpty(mounts);
     }
 
-    @Nonnull
+    @NonNull
     public String getMountsString() {
-        if (mounts == null) return "";
+        if (mounts == null) {
+            return "";
+        }
         return Joiner.on("\n").join(mounts);
     }
 
@@ -395,10 +366,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setMounts(splitAndFilterEmpty(mountsString, "\n"));
     }
 
-    @Nonnull
+    @NonNull
     public String getVolumesFromString() {
         final String[] volumesFrom2OrNull = getVolumesFrom2();
-        return volumesFrom2OrNull==null ? "" : Joiner.on("\n").join(volumesFrom2OrNull);
+        return volumesFrom2OrNull == null ? "" : Joiner.on("\n").join(volumesFrom2OrNull);
     }
 
     @DataBoundSetter
@@ -411,9 +382,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(filterStringArray(devices));
     }
 
-    @Nonnull
+    @NonNull
     public String getDevicesString() {
-        if (devices == null) return "";
+        if (devices == null) {
+            return "";
+        }
         return Joiner.on("\n").join(devices);
     }
 
@@ -431,9 +404,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(environment);
     }
 
-    @Nonnull
+    @NonNull
     public String getEnvironmentsString() {
-        if (environment == null) return "";
+        if (environment == null) {
+            return "";
+        }
         return Joiner.on("\n").join(environment);
     }
 
@@ -483,6 +458,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setMemorySwap(Integer memorySwap) {
         this.memorySwap = memorySwap;
+    }
+
+    @CheckForNull
+    public String getCpus() {
+        return Util.fixEmpty(cpus);
+    }
+
+    @DataBoundSetter
+    public void setCpus(String cpus) {
+        this.cpus = Util.fixEmpty(cpus);
     }
 
     @CheckForNull
@@ -558,7 +543,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(extraHosts);
     }
 
-    @Nonnull
+    @NonNull
     public String getExtraHostsString() {
         if (extraHosts == null) {
             return "";
@@ -580,12 +565,12 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(securityOpts);
     }
 
-    @Nonnull
+    @NonNull
     public String getSecurityOptsString() {
         return securityOpts == null ? "" : Joiner.on("\n").join(securityOpts);
     }
 
-    public void setSecurityOpts( List<String> securityOpts ) {
+    public void setSecurityOpts(List<String> securityOpts) {
         this.securityOpts = fixEmpty(securityOpts);
     }
 
@@ -599,7 +584,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(capabilitiesToAdd);
     }
 
-    @Nonnull
+    @NonNull
     public String getCapabilitiesToAddString() {
         if (capabilitiesToAdd == null) {
             return "";
@@ -621,7 +606,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(capabilitiesToDrop);
     }
 
-    @Nonnull
+    @NonNull
     public String getCapabilitiesToDropString() {
         if (capabilitiesToDrop == null) {
             return "";
@@ -643,7 +628,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(extraDockerLabels);
     }
 
-    @Nonnull
+    @NonNull
     public String getExtraDockerLabelsString() {
         if (extraDockerLabels == null) {
             return "";
@@ -687,6 +672,45 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this.volumesFrom2 = fixEmpty(volumesFrom);
     }
 
+    /**
+     * For ConfigurationAsCode compatibility
+     * @deprecated use {@link #setMounts(String[])}
+     */
+    @Deprecated
+    public void setVolumes(String[] vols) {
+        String[] fixed = fixEmpty(vols);
+        this.mounts = fixed != null && fixed.length > 0 ? convertVolumes(fixed) : new String[0];
+    }
+
+    /**
+     * For ConfigurationAsCode compatibility
+     * @deprecated use {@link #getMounts()}
+     */
+    @Deprecated
+    @CheckForNull
+    public String[] getVolumes() {
+        return getMounts();
+    }
+
+    /**
+     * For ConfigurationAsCode compatibility
+     * @deprecated use {@link #setMountsString(String)}
+     */
+    @Deprecated
+    public void setVolumesString(String volumesString) {
+        setMounts(convertVolumes(splitAndFilterEmpty(volumesString, "\n")));
+    }
+
+    /**
+     * For ConfigurationAsCode compatibility
+     * @deprecated use {@link #getMountsString()}
+     */
+    @Deprecated
+    @NonNull
+    public String getVolumesString() {
+        return getMountsString();
+    }
+
     public String getDisplayName() {
         return "Image of " + getImage();
     }
@@ -700,22 +724,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return fixEmpty(dockerCommandArray);
     }
 
-    @Nonnull
+    @NonNull
     public Iterable<PortBinding> getPortMappings() {
         if (Strings.isNullOrEmpty(bindPorts)) {
             return Collections.emptyList();
         }
-        return Iterables.transform(Splitter.on(' ')
-                        .trimResults()
-                        .omitEmptyStrings()
-                        .split(bindPorts),
-                new Function<String, PortBinding>() {
-                    @Nullable
-                    @Override
-                    public PortBinding apply(String s) {
-                        return PortBinding.parse(s);
-                    }
-                });
+        return Splitter.on(' ')
+                .trimResults()
+                .omitEmptyStrings()
+                .splitToStream(bindPorts)
+                .map(PortBinding::parse)
+                .collect(Collectors.toList());
     }
 
     public CreateContainerCmd fillContainerConfig(CreateContainerCmd containerConfig) {
@@ -739,9 +758,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             containerConfig.withCmd(cmdOrNull);
         }
 
-        containerConfig.withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
-        containerConfig.withPublishAllPorts(bindAllPorts);
-        containerConfig.withPrivileged(privileged);
+        hostConfig(containerConfig).withPortBindings(Iterables.toArray(getPortMappings(), PortBinding.class));
+        hostConfig(containerConfig).withPublishAllPorts(bindAllPorts);
+        hostConfig(containerConfig).withPrivileged(privileged);
 
         final Map<String, String> existingLabelsOrNull = containerConfig.getLabels();
         final Map<String, String> labels;
@@ -759,6 +778,13 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         labels.put(DockerContainerLabelKeys.JENKINS_URL, getJenkinsUrlForContainerLabel());
         labels.put(DockerContainerLabelKeys.CONTAINER_IMAGE, getImage());
 
+        final String cpusOrNull = getCpus();
+        if (cpusOrNull != null && !cpusOrNull.isEmpty()) {
+            final Double cpu_double = Double.parseDouble(cpusOrNull) * 1e9;
+            final Long nanoCpus = cpu_double.longValue();
+            hostConfig(containerConfig).withNanoCPUs(nanoCpus);
+        }
+
         final Long cpuPeriodOrNull = getCpuPeriod();
         if (cpuPeriodOrNull != null && cpuPeriodOrNull > 0) {
             hostConfig(containerConfig).withCpuPeriod(cpuPeriodOrNull);
@@ -771,13 +797,13 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
         final Integer cpuSharesOrNull = getCpuShares();
         if (cpuSharesOrNull != null && cpuSharesOrNull > 0) {
-            containerConfig.withCpuShares(cpuSharesOrNull);
+            hostConfig(containerConfig).withCpuShares(cpuSharesOrNull);
         }
 
         final Integer memoryLimitOrNull = getMemoryLimit();
         if (memoryLimitOrNull != null && memoryLimitOrNull > 0) {
             final long memoryInByte = memoryLimitOrNull.longValue() * 1024L * 1024L;
-            containerConfig.withMemory(memoryInByte);
+            hostConfig(containerConfig).withMemory(memoryInByte);
         }
 
         final Integer memorySwapOrNullOrNegative = getMemorySwap();
@@ -785,26 +811,26 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             final long memorySwapOrNegative = memorySwapOrNullOrNegative.longValue();
             if (memorySwapOrNegative > 0L) {
                 long memorySwapInByte = memorySwapOrNegative * 1024L * 1024L;
-                containerConfig.withMemorySwap(memorySwapInByte);
+                hostConfig(containerConfig).withMemorySwap(memorySwapInByte);
             } else {
-                containerConfig.withMemorySwap(memorySwapOrNegative);
+                hostConfig(containerConfig).withMemorySwap(memorySwapOrNegative);
             }
         }
 
         final String[] dnsHostsOrNull = getDnsHosts();
         if (dnsHostsOrNull != null && dnsHostsOrNull.length > 0) {
-            containerConfig.withDns(dnsHostsOrNull);
+            hostConfig(containerConfig).withDns(dnsHostsOrNull);
         }
 
         final String networkOrNull = getNetwork();
         if (networkOrNull != null && networkOrNull.length() > 0) {
             containerConfig.withNetworkDisabled(false);
-            containerConfig.withNetworkMode(networkOrNull);
+            hostConfig(containerConfig).withNetworkMode(networkOrNull);
         }
 
         // https://github.com/docker/docker/blob/ed257420025772acc38c51b0f018de3ee5564d0f/runconfig/parse.go#L182-L196
         final String[] mountsOrNull = getMounts();
-        if (mountsOrNull !=null && mountsOrNull.length > 0) {
+        if (mountsOrNull != null && mountsOrNull.length > 0) {
             ArrayList<Mount> mnts = new ArrayList<>();
             parseMountsStrings(mountsOrNull, mnts);
             hostConfig(containerConfig).withMounts(mnts);
@@ -814,9 +840,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (volumesFrom2OrNull != null && volumesFrom2OrNull.length > 0) {
             ArrayList<VolumesFrom> volFrom = new ArrayList<>();
             for (String volFromStr : volumesFrom2OrNull) {
-                volFrom.add(new VolumesFrom(volFromStr));
+                volFrom.add(VolumesFrom.parse(volFromStr));
             }
-            containerConfig.withVolumesFrom(volFrom.toArray(new VolumesFrom[volFrom.size()]));
+            hostConfig(containerConfig).withVolumesFrom(volFrom.toArray(new VolumesFrom[0]));
         }
 
         final String[] devicesOrNull = getDevices();
@@ -825,7 +851,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String deviceStr : devicesOrNull) {
                 list.add(Device.parse(deviceStr));
             }
-            containerConfig.withDevices(list);
+            hostConfig(containerConfig).withDevices(list);
         }
 
         containerConfig.withTty(tty);
@@ -842,7 +868,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
         final List<String> extraHostsOrNull = getExtraHosts();
         if (CollectionUtils.isNotEmpty(extraHostsOrNull)) {
-            containerConfig.withExtraHosts(extraHostsOrNull.toArray(new String[extraHostsOrNull.size()]));
+            hostConfig(containerConfig).withExtraHosts(extraHostsOrNull.toArray(new String[0]));
         }
 
         final Integer shmSizeOrNull = getShmSize();
@@ -853,17 +879,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
         final List<String> securityOptionsOrNull = getSecurityOpts();
         if (CollectionUtils.isNotEmpty(securityOptionsOrNull)) {
-            hostConfig(containerConfig).withSecurityOpts( securityOptionsOrNull );
+            hostConfig(containerConfig).withSecurityOpts(securityOptionsOrNull);
         }
 
         final List<String> capabilitiesToAddOrNull = getCapabilitiesToAdd();
         if (CollectionUtils.isNotEmpty(capabilitiesToAddOrNull)) {
-            containerConfig.withCapAdd(toCapabilities(capabilitiesToAddOrNull));
+            hostConfig(containerConfig).withCapAdd(toCapabilities(capabilitiesToAddOrNull));
         }
 
         final List<String> capabilitiesToDropOrNull = getCapabilitiesToDrop();
         if (CollectionUtils.isNotEmpty(capabilitiesToDropOrNull)) {
-            containerConfig.withCapDrop(toCapabilities(capabilitiesToDropOrNull));
+            hostConfig(containerConfig).withCapDrop(toCapabilities(capabilitiesToDropOrNull));
         }
 
         return containerConfig;
@@ -889,8 +915,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         final String[] tokens = mnt.split(",");
         for (String token : tokens) {
             final String[] parts = token.split("=");
-            if (!(parts.length == 2 || parts.length == 1 && "readonly".equals(parts[0]))) {
-                throw new IllegalArgumentException("Invalid mount: expected key=value comma separated pairs, or 'readonly' keyword");
+            if (!(parts.length == 2 || parts.length == 1 && ("ro".equals(parts[0]) || "readonly".equals(parts[0])))) {
+                throw new IllegalArgumentException(
+                        "Invalid mount: expected key=value comma separated pairs, or 'ro' / 'readonly' keywords");
             }
 
             switch (parts[0]) {
@@ -908,17 +935,29 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                     break;
                 case "ro":
                 case "readonly":
-                    mount.withReadOnly(true);
+                    String value = parts.length == 2 && parts[1] != null ? parts[1].trim() : "";
+                    if (value.isEmpty() || "true".equalsIgnoreCase(value) || "1".equals(value)) {
+                        mount.withReadOnly(true);
+                    } else if ("false".equalsIgnoreCase(value) || "0".equals(value)) {
+                        mount.withReadOnly(false);
+                    }
                     break;
                 case "bind-propagation":
-                    bindOptions = new BindOptions().withPropagation(BindPropagation.valueOf((parts[1].startsWith("r") ? "R_" + parts[1].substring(1) : parts[1]).toUpperCase()));
+                    bindOptions = new BindOptions()
+                            .withPropagation(BindPropagation.valueOf(
+                                    (parts[1].startsWith("r") ? "R_" + parts[1].substring(1) : parts[1])
+                                            .toUpperCase()));
                     break;
                 case "tmpfs-mode":
-                    if (tmpfsOptions == null) tmpfsOptions = new TmpfsOptions();
+                    if (tmpfsOptions == null) {
+                        tmpfsOptions = new TmpfsOptions();
+                    }
                     tmpfsOptions.withMode(Integer.parseInt(parts[1], 8));
                     break;
                 case "tmpfs-size":
-                    if (tmpfsOptions == null) tmpfsOptions = new TmpfsOptions();
+                    if (tmpfsOptions == null) {
+                        tmpfsOptions = new TmpfsOptions();
+                    }
                     tmpfsOptions.withSizeBytes(Long.parseLong(parts[1]));
                     break;
                 default:
@@ -931,12 +970,53 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             throw new IllegalArgumentException("Invalid mount: target/destination must be set");
         }
 
-        if (bindOptions != null) mount.withBindOptions(bindOptions);
-        if (tmpfsOptions != null) mount.withTmpfsOptions(tmpfsOptions);
+        if (bindOptions != null) {
+            mount.withBindOptions(bindOptions);
+        }
+        if (tmpfsOptions != null) {
+            mount.withTmpfsOptions(tmpfsOptions);
+        }
         mountListResult.add(mount);
     }
 
-    @Nonnull
+    private static String[] convertVolumes(String[] vols) {
+        List<String> mnts = new ArrayList<>();
+        for (String vol : vols) {
+            if (!vol.contains(":")) {
+                mnts.add("type=volume,destination=" + vol);
+            } else {
+                StringBuilder builder = new StringBuilder();
+                if (vol.startsWith("/")) {
+                    Bind bind = Bind.parse(vol);
+                    builder.append("type=bind,source=");
+                    builder.append(bind.getPath());
+                    builder.append(",destination=");
+                    builder.append(bind.getVolume().getPath());
+                    if (bind.getAccessMode() == AccessMode.ro) {
+                        builder.append(",readonly");
+                    }
+                    if (bind.getPropagationMode() != PropagationMode.DEFAULT) {
+                        builder.append(",bind-propagation=");
+                        builder.append(bind.getPropagationMode().toString());
+                    }
+                } else {
+                    String[] parts = vol.split(":");
+                    builder.append("type=volume,source=");
+                    builder.append(parts[0]);
+                    builder.append(",destination=");
+                    builder.append(parts[1]);
+                    if (parts.length == 3
+                            && ("readonly".equalsIgnoreCase(parts[2]) || "ro".equalsIgnoreCase(parts[2]))) {
+                        builder.append(",readonly");
+                    }
+                }
+                mnts.add(builder.toString());
+            }
+        }
+        return mnts.toArray(new String[0]);
+    }
+
+    @NonNull
     private static HostConfig hostConfig(CreateContainerCmd containerConfig) {
         final HostConfig hc = containerConfig.getHostConfig();
         if (hc == null) {
@@ -946,16 +1026,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         return hc;
     }
 
-    private static List<Capability> toCapabilities(List<String> capabilitiesString) {
-        List<Capability> res = new ArrayList<>();
-        for(String capability : capabilitiesString) {
+    private static Capability[] toCapabilities(List<String> capabilitiesString) {
+        final ArrayList<Capability> res = new ArrayList<>();
+        for (String capability : capabilitiesString) {
             try {
                 res.add(Capability.valueOf(capability));
-            } catch(IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid capability name : " + capability, e);
             }
         }
-        return res;
+        return res.toArray(new Capability[0]);
     }
 
     /**
@@ -963,7 +1043,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * {@link DockerContainerLabelKeys#JENKINS_URL} that we put into every
      * container we make, so that we can recognize our own containers later.
      */
-    @Nonnull
+    @NonNull
     static String getJenkinsUrlForContainerLabel() {
         final Jenkins jenkins = Jenkins.getInstanceOrNull();
         // Note: Jenkins.getInstanceOrNull() can return null during unit-tests.
@@ -976,23 +1056,23 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * {@link DockerContainerLabelKeys#JENKINS_INSTANCE_ID} that we put into every
      * container we make, so that we can recognize our own containers later.
      */
-    @Nonnull
+    @NonNull
     static String getJenkinsInstanceIdForContainerLabel() {
         return JenkinsUtils.getInstanceId();
     }
 
     @Override
     public Descriptor<DockerTemplateBase> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(DockerTemplateBase.class);
+        return Jenkins.get().getDescriptor(DockerTemplateBase.class);
     }
 
     public String getFullImageId() {
         NameParser.ReposTag repostag = NameParser.parseRepositoryTag(image);
         // if image was specified without tag, then treat as latest
-        if(repostag.tag.isEmpty()){
-            if(repostag.repos.contains("@sha256:")){
+        if (repostag.tag.isEmpty()) {
+            if (repostag.repos.contains("@sha256:")) {
                 // image has no tag but instead use a digest, do not append anything!
-                return  repostag.repos;
+                return repostag.repos;
             }
             // else no tag provided, append latest as tag
             return repostag.repos + ":" + "latest";
@@ -1003,44 +1083,105 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         DockerTemplateBase that = (DockerTemplateBase) o;
         // Maintenance note: This should include all non-transient fields.
         // Fields that are "usually unique" should go first.
         // Primitive fields should be tested before objects.
         // Computationally-expensive fields get tested last.
         // Note: If modifying this code, remember to update hashCode() and toString()
-        if (bindAllPorts != that.bindAllPorts) return false;
-        if (privileged != that.privileged) return false;
-        if (tty != that.tty) return false;
-        if (!image.equals(that.image)) return false;
-        if (pullCredentialsId != null ? !pullCredentialsId.equals(that.pullCredentialsId) : that.pullCredentialsId != null)
+        if (bindAllPorts != that.bindAllPorts) {
             return false;
-        if (dockerCommand != null ? !dockerCommand.equals(that.dockerCommand) : that.dockerCommand != null)
+        }
+        if (privileged != that.privileged) {
             return false;
-        if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
-        if (user != null ? !user.equals(that.user) : that.user != null) return false;
-        if (extraGroups != null ? !extraGroups.equals(that.extraGroups) : that.extraGroups != null) return false;
-        if (!Arrays.equals(dnsHosts, that.dnsHosts)) return false;
-        if (network != null ? !network.equals(that.network) : that.network != null) return false;
-        if (!Arrays.equals(mounts, that.mounts)) return false;
-        if (!Arrays.equals(volumesFrom2, that.volumesFrom2)) return false;
-        if (!Arrays.equals(devices, that.devices)) return false;
-        if (!Arrays.equals(environment, that.environment)) return false;
-        if (bindPorts != null ? !bindPorts.equals(that.bindPorts) : that.bindPorts != null) return false;
-        if (memoryLimit != null ? !memoryLimit.equals(that.memoryLimit) : that.memoryLimit != null) return false;
-        if (memorySwap != null ? !memorySwap.equals(that.memorySwap) : that.memorySwap != null) return false;
-        if (cpuPeriod != null ? !cpuPeriod.equals(that.cpuPeriod) : that.cpuPeriod != null) return false;
-        if (cpuQuota != null ? !cpuQuota.equals(that.cpuQuota) : that.cpuQuota != null) return false;
-        if (cpuShares != null ? !cpuShares.equals(that.cpuShares) : that.cpuShares != null) return false;
-        if (shmSize != null ? !shmSize.equals(that.shmSize) : that.shmSize != null) return false;
-        if (macAddress != null ? !macAddress.equals(that.macAddress) : that.macAddress != null) return false;
-        if (securityOpts != null ? !securityOpts.equals(that.securityOpts) : that.securityOpts != null) return false;
-        if (capabilitiesToAdd != null ? !capabilitiesToAdd.equals(that.capabilitiesToAdd) : that.capabilitiesToAdd != null) return false;
-        if (capabilitiesToDrop != null ? !capabilitiesToDrop.equals(that.capabilitiesToDrop) : that.capabilitiesToDrop != null) return false;
-        if (extraHosts != null ? !extraHosts.equals(that.extraHosts) : that.extraHosts != null) return false;
-        if (extraDockerLabels != null ? !extraDockerLabels.equals(that.extraDockerLabels) : that.extraDockerLabels != null) return false;
+        }
+        if (tty != that.tty) {
+            return false;
+        }
+        if (!image.equals(that.image)) {
+            return false;
+        }
+        if (!Objects.equals(pullCredentialsId, that.pullCredentialsId)) {
+            return false;
+        }
+        if (!Objects.equals(dockerCommand, that.dockerCommand)) {
+            return false;
+        }
+        if (!Objects.equals(hostname, that.hostname)) {
+            return false;
+        }
+        if (!Objects.equals(user, that.user)) {
+            return false;
+        }
+        if (!Objects.equals(extraGroups, that.extraGroups)) {
+            return false;
+        }
+        if (!Arrays.equals(dnsHosts, that.dnsHosts)) {
+            return false;
+        }
+        if (!Objects.equals(network, that.network)) {
+            return false;
+        }
+        if (!Arrays.equals(mounts, that.mounts)) {
+            return false;
+        }
+        if (!Arrays.equals(volumesFrom2, that.volumesFrom2)) {
+            return false;
+        }
+        if (!Arrays.equals(devices, that.devices)) {
+            return false;
+        }
+        if (!Arrays.equals(environment, that.environment)) {
+            return false;
+        }
+        if (!Objects.equals(bindPorts, that.bindPorts)) {
+            return false;
+        }
+        if (!Objects.equals(memoryLimit, that.memoryLimit)) {
+            return false;
+        }
+        if (!Objects.equals(memorySwap, that.memorySwap)) {
+            return false;
+        }
+        if (!Objects.equals(cpus, that.cpus)) {
+            return false;
+        }
+        if (!Objects.equals(cpuPeriod, that.cpuPeriod)) {
+            return false;
+        }
+        if (!Objects.equals(cpuQuota, that.cpuQuota)) {
+            return false;
+        }
+        if (!Objects.equals(cpuShares, that.cpuShares)) {
+            return false;
+        }
+        if (!Objects.equals(shmSize, that.shmSize)) {
+            return false;
+        }
+        if (!Objects.equals(macAddress, that.macAddress)) {
+            return false;
+        }
+        if (!Objects.equals(securityOpts, that.securityOpts)) {
+            return false;
+        }
+        if (!Objects.equals(capabilitiesToAdd, that.capabilitiesToAdd)) {
+            return false;
+        }
+        if (!Objects.equals(capabilitiesToDrop, that.capabilitiesToDrop)) {
+            return false;
+        }
+        if (!Objects.equals(extraHosts, that.extraHosts)) {
+            return false;
+        }
+        if (!Objects.equals(extraDockerLabels, that.extraDockerLabels)) {
+            return false;
+        }
         return true;
     }
 
@@ -1065,6 +1206,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (bindAllPorts ? 1 : 0);
         result = 31 * result + (memoryLimit != null ? memoryLimit.hashCode() : 0);
         result = 31 * result + (memorySwap != null ? memorySwap.hashCode() : 0);
+        result = 31 * result + (cpus != null ? cpus.hashCode() : 0);
         result = 31 * result + (cpuPeriod != null ? cpuPeriod.hashCode() : 0);
         result = 31 * result + (cpuQuota != null ? cpuQuota.hashCode() : 0);
         result = 31 * result + (cpuShares != null ? cpuShares.hashCode() : 0);
@@ -1102,6 +1244,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "bindAllPorts", bindAllPorts);
         bldToString(sb, "memoryLimit", memoryLimit);
         bldToString(sb, "memorySwap", memorySwap);
+        bldToString(sb, "cpus", cpus);
         bldToString(sb, "cpuPeriod", cpuPeriod);
         bldToString(sb, "cpuQuota", cpuQuota);
         bldToString(sb, "cpuShares", cpuShares);
@@ -1143,6 +1286,22 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             return FormValidation.ok();
         }
 
+        public FormValidation doCheckCpus(@QueryParameter String cpus) {
+            try {
+                if ((cpus == null) || cpus.isEmpty()) {
+                    return FormValidation.ok();
+                }
+
+                Pattern pat = Pattern.compile("^(\\d+(\\.\\d+)?)$");
+                if (!pat.matcher(cpus.trim()).matches()) {
+                    return FormValidation.error("Wrong cpus format: '%s' (floating point number expected) ", cpus);
+                }
+            } catch (Throwable t) {
+                return FormValidation.error(t.getMessage());
+            }
+            return FormValidation.ok();
+        }
+
         public FormValidation doCheckExtraHostsString(@QueryParameter String extraHostsString) {
             final List<String> extraHosts = splitAndFilterEmptyList(extraHostsString, "\n");
             for (String extraHost : extraHosts) {
@@ -1156,8 +1315,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         public FormValidation doCheckSecurityOptsString(@QueryParameter String securityOptsString) {
             final List<String> securityOpts = splitAndFilterEmptyList(securityOptsString, "\n");
             for (String securityOpt : securityOpts) {
-                if ( !( securityOpt.trim().split("=").length == 2 || securityOpt.trim().startsWith( "no-new-privileges" ) ) ) {
-                    return FormValidation.warning("Security option may be incorrect. Please double check syntax: '%s'", securityOpt);
+                if (!(securityOpt.trim().split("=").length == 2
+                        || securityOpt.trim().startsWith("no-new-privileges"))) {
+                    return FormValidation.warning(
+                            "Security option may be incorrect. Please double check syntax: '%s'", securityOpt);
                 }
             }
             return FormValidation.ok();
@@ -1176,7 +1337,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             for (String capability : capabilities) {
                 try {
                     Capability.valueOf(capability);
-                } catch(IllegalArgumentException handledByCode) {
+                } catch (IllegalArgumentException handledByCode) {
                     return FormValidation.error("Wrong capability : %s", capability);
                 }
             }
@@ -1205,9 +1366,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         }
 
         public ListBoxModel doFillPullCredentialsIdItems(@AncestorInPath Item context) {
-            final DockerRegistryEndpoint.DescriptorImpl descriptor =
-                    (DockerRegistryEndpoint.DescriptorImpl)
-                            Jenkins.get().getDescriptorOrDie(DockerRegistryEndpoint.class);
+            final DockerRegistryEndpoint.DescriptorImpl descriptor = (DockerRegistryEndpoint.DescriptorImpl)
+                    Jenkins.get().getDescriptorOrDie(DockerRegistryEndpoint.class);
             return descriptor.doFillCredentialsIdItems(context);
         }
 

@@ -3,6 +3,37 @@
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
 
+## 1.2.10
+_2022-09-27_
+
+* Fix PortUtilsTest unit test on Windows [#901](https://github.com/jenkinsci/docker-plugin/pull/901)
+* Fix JCasC parsing of volume/mounts [#852](https://github.com/jenkinsci/docker-plugin/issues/852)
+* Docker-attach should inject JAR before starting container [#898](https://github.com/jenkinsci/docker-plugin/pull/898)
+* Bump min Jenkins version from 2.204.4 to 2.303.3 [#897](https://github.com/jenkinsci/docker-plugin/pull/897)
+* Fix readonly parsing when mounting [#880](https://github.com/jenkinsci/docker-plugin/issues/880)
+* Enhancement: Supports mounting NPIPEs [#888](https://github.com/jenkinsci/docker-plugin/pull/888)
+* Enhancement: Add support for --cpus [#895](https://github.com/jenkinsci/docker-plugin/pull/895)
+* Enhancement: Improve help text for docker user field [#909](https://github.com/jenkinsci/docker-plugin/pull/909)
+* Fix volumes-from parsing [#878](https://github.com/jenkinsci/docker-plugin/issues/878)
+* :warning: Requires docker-java-api-plugin 3.2.x
+
+## 1.2.9
+_2022-04-27_
+* More loosening of the dependency on the exact docker-java version [#884](https://github.com/jenkinsci/docker-plugin/issues/884)
+* :warning: Compatible with both docker-java-api-plugin 3.2.x and 3.1.x
+
+## 1.2.8
+_2022-04-14_
+* Loosen the dependency on the exact docker-java version [#882](https://github.com/jenkinsci/docker-plugin/pull/882) and [dockder-java-api-plugin#9](https://github.com/jenkinsci/docker-java-api-plugin/pull/9)
+* :warning: Requires [docker-java-api-plugin 3.1.5-31](https://github.com/jenkinsci/docker-java-api-plugin/releases/tag/3.1.5-31.v70b0ca3e8310) or any later 3.1.x.
+* :warning: NOT compatible with docker-java-api-plugin 3.2.x (not yet).
+
+## 1.2.7
+_2022-04-07_
+* Enhancement: Add support for build-time variables (build args) [#730](https://github.com/jenkinsci/docker-plugin/issues/730), [JENKINS-48512](https://issues.jenkins.io/browse/JENKINS-48512)
+* Fix DockerOnceRetentionStrategy [#859](https://github.com/jenkinsci/docker-plugin/pull/859)
+* :information_source: Causes cosmetic issue on Jenkins Web-UI [#881](https://github.com/jenkinsci/docker-plugin/issues/881)
+
 ## 1.2.6
 _2021-12-13_
 * Prepare for sunset icon removal from core [#870](https://github.com/jenkinsci/docker-plugin/pull/870)
