@@ -515,7 +515,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                 }
             }
             if (injectedKey != null) {
-                DockerEnvUtils.addEnvToCmd("JENKINS_SLAVE_SSH_PUBKEY", injectedKey, cmd);
+                DockerEnvUtils.addEnvToCmd("JENKINS_AGENT_SSH_PUBKEY", injectedKey, cmd);
             }
         }
 
