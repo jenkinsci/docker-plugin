@@ -1,12 +1,10 @@
 package io.jenkins.docker.client;
 
-import java.lang.reflect.Method;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.dockerjava.core.AbstractDockerCmdExecFactory;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import java.lang.reflect.Method;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Wrapper class to allow compatibility between 3.1 and 3.2 APIs

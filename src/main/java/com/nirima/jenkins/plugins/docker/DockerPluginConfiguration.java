@@ -1,11 +1,10 @@
 package com.nirima.jenkins.plugins.docker;
 
+import java.util.Collections;
+import java.util.List;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
-
-import java.util.Collections;
-import java.util.List;
 
 @Deprecated
 public class DockerPluginConfiguration extends GlobalConfiguration {
@@ -30,14 +29,15 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
 
     @Override
     public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-        req.bindJSON(this,json);
+        req.bindJSON(this, json);
         return true;
     }
 
     public DockerRegistry getRegistryByName(String registryName) {
-        for(DockerRegistry registry : registryList) {
-            if( registry.registry.equalsIgnoreCase(registryName))
+        for (DockerRegistry registry : registryList) {
+            if (registry.registry.equalsIgnoreCase(registryName)) {
                 return registry;
+            }
         }
         // Not found
         return null;
@@ -59,6 +59,5 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
     }
 
     @SuppressWarnings("unused")
-    public final void setPullFix(boolean pullFix) {
-    }
+    public final void setPullFix(boolean pullFix) {}
 }

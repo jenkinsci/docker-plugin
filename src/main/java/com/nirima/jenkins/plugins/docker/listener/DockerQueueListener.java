@@ -1,6 +1,11 @@
 package com.nirima.jenkins.plugins.docker.listener;
 
+import com.nirima.jenkins.plugins.docker.DockerCloud;
+import com.nirima.jenkins.plugins.docker.DockerJobProperty;
+import com.nirima.jenkins.plugins.docker.DockerJobTemplateProperty;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.InvisibleAction;
 import hudson.model.Label;
@@ -12,18 +17,11 @@ import hudson.model.labels.LabelAssignmentAction;
 import hudson.model.labels.LabelAtom;
 import hudson.model.queue.QueueListener;
 import hudson.model.queue.SubTask;
-
-import com.nirima.jenkins.plugins.docker.DockerCloud;
-import com.nirima.jenkins.plugins.docker.DockerJobProperty;
-import com.nirima.jenkins.plugins.docker.DockerJobTemplateProperty;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import java.util.UUID;
 
 /**
  * This listener handles templates which are configured in a project.
- * 
+ *
  * @author Ingo Rissmann
  */
 @Extension
@@ -56,7 +54,7 @@ public class DockerQueueListener extends QueueListener {
 
     /**
      * Helper method to determine the template from a given item.
-     * 
+     *
      * @param item Item which includes a template.
      * @return If the item includes a template then the template will be returned. Otherwise <code>null</code>.
      */
@@ -65,7 +63,9 @@ public class DockerQueueListener extends QueueListener {
         if (item.task instanceof Project) {
             final Project<?, ?> project = (Project<?, ?>) item.task;
             final DockerJobTemplateProperty p = project.getProperty(DockerJobTemplateProperty.class);
-            if (p != null) return p;
+            if (p != null) {
+                return p;
+            }
             // backward compatibility. DockerJobTemplateProperty used to be a nested object in DockerJobProperty
             final DockerJobProperty property = project.getProperty(DockerJobProperty.class);
             if (property != null) {
@@ -83,7 +83,7 @@ public class DockerQueueListener extends QueueListener {
         }
 
         @Override
-        public Label getAssignedLabel(@Nonnull SubTask task) {
+        public Label getAssignedLabel(@NonNull SubTask task) {
             return new LabelAtom(uuid);
         }
     }

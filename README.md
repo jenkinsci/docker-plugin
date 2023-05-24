@@ -1,10 +1,11 @@
 # Docker plugin for Jenkins
 
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/docker-plugin.svg)](https://plugins.jenkins.io/docker-plugin)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/docker-plugin.svg?color=blue)](https://plugins.jenkins.io/docker-plugin)
-[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/docker-plugin/master)](https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/)
+Note: This plugin is officially ["up for adoption"](https://www.jenkins.io/doc/developer/plugin-governance/adopt-a-plugin/#faq).
+It would benefit from having a new maintainer who uses it "for real work"
+and is thus able to test things "for real" before release
+instead of relying purely on the unit tests.
 
-#### Overview
+## Overview
 
 This plugin allows containers to be dynamically provisioned as Jenkins nodes using Docker.
 It is a Jenkins Cloud plugin for Docker.
@@ -27,7 +28,7 @@ how to start it,
 etc)
 and Jenkins can then run docker containers to provide Jenkins (agent) Nodes on which Jenkins can run builds.
 
-#### See also
+## See also
 * [Software licence](LICENSE)
 * Support and [contribution guide](CONTRIBUTING.md)
 * [Changelog](CHANGELOG.md)
@@ -48,18 +49,26 @@ plugin and should go to its repository instead of this one.
 
 ----
 
-**Note:** This plugin does not _provide_ a Docker daemon; it allows Jenkins to _use_ a docker daemon.
-i.e. Once you've installed docker on your OS, this plugin will allow Jenkins to use it.
+**Note:** This plugin does not use the OS's native docker client;
+it uses [docker-java](https://github.com/docker-java/docker-java).
+You do not need to install a docker client on Jenkins or on your agents to use this plugin.
 
 ----
 
-# Setup
+**Note:** This plugin does not _provide_ a Docker daemon; it allows Jenkins to _use_ a docker daemon.
+i.e. Once you've installed docker somewhere, this plugin will allow Jenkins to make use of it.
+
+----
+
+## Setup
 
 A quick setup is :
 
 1. get a docker environment running
 1. follow the instructions for creating a docker image that can be used
 as a Jenkins Agent
+_or_ use one of the pre-built images
+e.g. [jenkins/inbound-agent](https://hub.docker.com/r/jenkins/inbound-agent/)
 
 ### Docker Environment
 
@@ -81,7 +90,6 @@ is likely to be
 or
 `/etc/default/docker.io`.
 
-
 ### Multiple Docker Hosts
 
 If you want to use more than just one physical node to run containers,
@@ -93,7 +101,6 @@ The docker engine swarm mode API is not supported
 
 To use the standalone swarm,
 follow docker swarm standalone instructions and configure Jenkins with the swarm's API endpoint.
-
 
 ### Jenkins Configuration
 
@@ -111,23 +118,22 @@ Then configure Agent templates,
 assigning them labels that you can use so your jobs select the appropriate template,
 and set the docker container to be run with whatever container settings you require.
 
-
 ### Creating a docker image
 
 You need a docker image that can be used to run Jenkins agent runtime.
 Depending on the launch method you select, there's some prerequisites
 for the Docker image to be used:
 
-#### Launch via SSH
+## Launch via SSH
 
 -   [sshd](https://linux.die.net/man/8/sshd) server and a JDK installed.
     You can use
     [jenkins/ssh-agent](https://hub.docker.com/r/jenkins/ssh-agent/)
     as a basis for a custom image.
--   a SSH key (based on unique Jenkins master instance identity) can be
+-   a SSH key (based on the unique Jenkins instance identity) can be
     injected in container on startup, you don't need any credential set
-    as long as you use standard openssl sshd.  
-    ![](docs/images/connect-with-ssh.png)  
+    as long as you use standard openssl sshd.
+    ![](docs/images/connect-with-ssh.png)
     For backward compatibility *or* non-standard sshd packaged in your
     docker image, you also have option to provide manually configured
     ssh credentials
@@ -135,22 +141,22 @@ for the Docker image to be used:
     Jenkins (usually the case) then you'll need to set the SSH host key
     verification method to "non-verifying".
 
-#### Launch via JNLP
+## Launch via JNLP
 
 -   a JDK installed.
     You can use
     [jenkins/inbound-agent](https://hub.docker.com/r/jenkins/inbound-agent/)
     as a basis for a custom image.
--   Jenkins master URL has to be reachable from container.
+-   Jenkins controller URL has to be reachable from container.
 -   container will be configured automatically with agent's name and
     secret, so you don't need any special configuration of the container.
 
-#### Launch attached
+## Launch attached
 
 -   a JDK installed.
     You can use
     [jenkins/agent](https://hub.docker.com/r/jenkins/agent/)
-    as a basis for a custom image. 
+    as a basis for a custom image.�
 
 To create a custom image and bundle your favorite tools,
 create a `Dockerfile` with the `FROM` to point to one of the
@@ -164,8 +170,7 @@ RUN apt-get update && apt-get install XXX
 COPY your-favorite-tool-here
 ```
 
-
-#### Note on ENTRYPOINT
+## Note on ENTRYPOINT
 
 Avoid overriding the docker command, as the SSH Launcher relies on it.
 
@@ -182,9 +187,15 @@ This,
 combined with knowledge of [docker itself](https://docs.docker.com/),
 should answer most questions.
 
-# Configure plugin via Groovy script
+## Configuration as code
 
-Jenkins can be configured using Groovy code, and the docker plugin is no exception.
+Jenkins and the docker-plugin can be configured using Groovy code
+and/or using the [JCasC plugin](https://plugins.jenkins.io/configuration-as-code/).
+
+If you're unsure which method to use, use JCasC.
+
+### Groovy script
+
 For example, this
 [configuration script](docs/attachments/docker-plugin-configuration-script.groovy)
 could be run automatically upon
@@ -192,6 +203,10 @@ could be run automatically upon
 or through the
 [Jenkins script console](https://wiki.jenkins.io/display/JENKINS/Jenkins+Script+Console).
 If run,
-this script will configure the docker-plugin to look for a docker daemon running within the same OS as the Jenkins master
+this script will configure the docker-plugin to look for a docker daemon running within the same OS as the Jenkins controller
 (connecting to Docker service through `unix:///var/run/docker.sock`)
 and with the containers connecting to Jenkins using the "attach" method.
+
+### JCasC plugin
+
+Install the [configuration-as-code plugin](https://plugins.jenkins.io/configuration-as-code/) and follow [its example](https://github.com/jenkinsci/configuration-as-code-plugin/tree/master/demos/docker).
