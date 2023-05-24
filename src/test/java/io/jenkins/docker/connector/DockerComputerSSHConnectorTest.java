@@ -83,7 +83,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
                 getLabelForTemplate(),
                 COMMON_IMAGE_HOMEDIR,
                 INSTANCE_CAP);
-        template.getDockerTemplateBase().setEnvironmentsString("JENKINS_SLAVE_SSH_PUBKEY=" + publicKey);
+        template.getDockerTemplateBase().setEnvironmentsString("JENKINS_AGENT_SSH_PUBKEY=" + publicKey);
         template.setName("connectAgentViaSSHUsingCredentialsKey");
         should_connect_agent(template);
     }
