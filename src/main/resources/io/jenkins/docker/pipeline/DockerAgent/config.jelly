@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+  <f:entry title="Docker image" field="image">
+    <f:textbox/>
+  </f:entry>
+
+  <f:advanced>
+
+      <f:entry title="Agent root directory" field="remoteFs">
+          <f:textbox/>
+      </f:entry>
+
+      <f:entry title="Docker Host" field="dockerHost">
+        <f:textbox/>
+      </f:entry>
+
+      <f:entry field="credentialsId" title="Docker API credentials">
+        <c:select/>
+      </f:entry>
+
+      <f:dropdownDescriptorSelector field="connector" title="Connect method" descriptors="${descriptor.getAcceptableConnectorDescriptors()}"/>
+
+  </f:advanced>
+
+</j:jelly>

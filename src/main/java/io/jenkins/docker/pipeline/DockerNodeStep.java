@@ -28,6 +28,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -116,6 +117,8 @@ public class DockerNodeStep extends Step {
             return "Docker Node (⚠️ Experimental)";
         }
 
+        @SuppressWarnings("lgtm[jenkins/no-permission-check]") // done in DockerServerEndpoint
+        @POST
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item, @QueryParameter String uri) {
             DockerServerEndpoint.DescriptorImpl descriptor =
                     (DockerServerEndpoint.DescriptorImpl) Jenkins.get().getDescriptorOrDie(DockerServerEndpoint.class);

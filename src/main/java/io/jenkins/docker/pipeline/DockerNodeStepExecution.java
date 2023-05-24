@@ -133,6 +133,7 @@ class DockerNodeStepExecution extends StepExecution {
     private DockerTransientNode createNode(TaskListener listener) {
         final String uuid = UUID.randomUUID().toString();
         final DockerTemplate t = new DockerTemplate(
+                // TODO call .setPullCredentialsId and also add option to .setRegistryUrl or similar
                 new DockerTemplateBase(image), (DockerComputerConnector) connector, uuid, remoteFs, "1");
         t.setMode(Node.Mode.EXCLUSIVE);
 

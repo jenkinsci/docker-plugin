@@ -66,7 +66,7 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.junit.Assume;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -80,8 +80,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class DockerNodeStepTest {
 
-    @Before
-    public void before() {
+    @BeforeClass
+    public static void before() {
         // FIXME on CI windows nodes don't have Docker4Windows
         Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     }
