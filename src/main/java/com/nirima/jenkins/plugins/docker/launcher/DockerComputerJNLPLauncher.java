@@ -14,7 +14,9 @@ import io.jenkins.docker.connector.DockerComputerJNLPConnector;
  *
  * @author Kanstantsin Shautsou
  */
-@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value="UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification="Deprecated; required for backwards compatibility only.")
+@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+        value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+        justification = "Deprecated; required for backwards compatibility only.")
 @Deprecated
 public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 

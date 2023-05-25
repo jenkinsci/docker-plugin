@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
+import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
@@ -18,6 +20,7 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
 import jenkins.model.Jenkins;
 import jenkins.model.OptionalJobProperty;
 import org.apache.commons.lang.StringUtils;
@@ -28,10 +31,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.export.Exported;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-
-import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
 
 public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerJobProperty.class.getName());
@@ -48,9 +47,7 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
     private DockerJobTemplateProperty dockerJobTemplate;
 
     @DataBoundConstructor
-    public DockerJobProperty(
-            String additionalTag,
-            boolean cleanImages) {
+    public DockerJobProperty(String additionalTag, boolean cleanImages) {
         this.additionalTag = additionalTag;
         this.cleanImages = cleanImages;
     }
@@ -85,9 +82,9 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
         return dockerJobTemplate;
     }
 
-
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws InterruptedException, IOException {
         final Node node = build.getBuiltOn();
         if (!(node instanceof DockerTransientNode)) {
             return true;
@@ -95,12 +92,18 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
         DockerTransientNode dockerNode = (DockerTransientNode) node;
         final String containerId = dockerNode.getContainerId();
         final DockerAPI dockerAPI = dockerNode.getDockerAPI();
-        try(final DockerClient client = dockerAPI.getClient()) {
+        try (final DockerClient client = dockerAPI.getClient()) {
             return perform(build, listener, containerId, dockerAPI, client);
         }
     }
 
-    private boolean perform(AbstractBuild<?, ?> build, BuildListener listener, String containerId, DockerAPI dockerAPI, DockerClient client) throws IOException {
+    private boolean perform(
+            AbstractBuild<?, ?> build,
+            BuildListener listener,
+            String containerId,
+            DockerAPI dockerAPI,
+            DockerClient client)
+            throws IOException {
         final String dockerHost = dockerAPI.getDockerHost().getUri();
         // Commit
         String tag_image = client.commitCmd(containerId)
@@ -117,7 +120,9 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
             if (!Strings.isNullOrEmpty(tagToken)) {
                 final NameParser.ReposTag reposTag = NameParser.parseRepositoryTag(tagToken);
                 final String commitTag = StringUtils.isEmpty(reposTag.tag) ? "latest" : reposTag.tag;
-                client.tagImageCmd(tag_image, reposTag.repos, commitTag).withForce().exec();
+                client.tagImageCmd(tag_image, reposTag.repos, commitTag)
+                        .withForce()
+                        .exec();
                 addJenkinsAction(build, dockerHost, containerId, tagToken);
                 if (pushOnSuccess) {
                     Identifier identifier = Identifier.fromCompoundString(tagToken);
@@ -130,10 +135,11 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
                     };
                     try {
                         PushImageCmd cmd = client.pushImageCmd(identifier);
-                        DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.getInstance());
+                        DockerCloud.setRegistryAuthentication(cmd, registry, Jenkins.get());
                         cmd.exec(resultCallback).awaitSuccess();
-                    } catch(DockerException ex) {
-                        LOGGER.error("Exception pushing docker image. Check that the destination registry is building.", ex);
+                    } catch (DockerException ex) {
+                        LOGGER.error(
+                                "Exception pushing docker image. Check that the destination registry is building.", ex);
                         throw ex;
                     }
                 }
@@ -142,9 +148,7 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
             LOGGER.error("Could not add additional tags", ex);
         }
         if (cleanImages) {
-            client.removeImageCmd(tag_image)
-                    .withForce(true)
-                    .exec();
+            client.removeImageCmd(tag_image).withForce(true).exec();
         }
         return true;
     }
@@ -157,15 +161,17 @@ public class DockerJobProperty extends OptionalJobProperty<AbstractProject<?, ?>
 
         // Do any macro expansions
         try {
-            if (!Strings.isNullOrEmpty(tagToken))
+            if (!Strings.isNullOrEmpty(tagToken)) {
                 tagToken = TokenMacro.expandAll(build, listener, tagToken);
+            }
         } catch (Exception e) {
             LOGGER.warn("can't expand macro", e);
         }
         return tagToken;
     }
 
-    private static void addJenkinsAction(AbstractBuild build, String dockerHost, String containerId, String tag_image) throws IOException {
+    private static void addJenkinsAction(AbstractBuild build, String dockerHost, String containerId, String tag_image)
+            throws IOException {
         build.addAction(new DockerBuildAction(dockerHost, containerId, tag_image));
         build.save();
     }

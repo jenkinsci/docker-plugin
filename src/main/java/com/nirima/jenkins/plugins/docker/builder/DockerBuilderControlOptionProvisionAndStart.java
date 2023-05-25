@@ -9,12 +9,12 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.PrintStream;
 
 /**
  * Build step that provision? container in Docker Cloud
@@ -37,8 +37,7 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
     }
 
     @Override
-    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
-            throws DockerException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener) throws DockerException {
         final PrintStream llog = listener.getLogger();
 
         final DockerCloud cloud = getCloud(build, launcher);
@@ -48,14 +47,15 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
                     "Template with ID " + templateId + " no longer exists in cloud " + cloud.name);
         }
         final DockerAPI dockerApi = cloud.getDockerApi();
-        try(final DockerClient client = dockerApi.getClient()) {
+        try (final DockerClient client = dockerApi.getClient()) {
             executeOnDocker(build, llog, cloud, template, client);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
-    private void executeOnDocker(Run<?, ?> build, PrintStream llog, DockerCloud cloud, DockerTemplate template, DockerClient client)
+    private void executeOnDocker(
+            Run<?, ?> build, PrintStream llog, DockerCloud cloud, DockerTemplate template, DockerClient client)
             throws DockerException {
         String containerId = DockerCloud.runContainer(template.getDockerTemplateBase(), client);
 

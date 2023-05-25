@@ -38,7 +38,7 @@
       <f:textbox />
     </f:entry>
 
-    <f:entry title="${%Volumes}" field="volumesString">
+    <f:entry title="${%Mounts}" field="mountsString">
       <f:expandableTextbox />
     </f:entry>
 
@@ -69,6 +69,19 @@
     <f:entry title="${%Swap Memory Limit in MB}" field="memorySwap">
       <f:number />
     </f:entry>
+
+     <f:entry title="${%CPU resources}" field="cpus">
+       <f:textbox />
+     </f:entry>
+
+     <f:entry title="${%CPU Period in us}" field="cpuPeriod">
+       <f:number clazz="positive-number" min="0" step="1"/>
+     </f:entry>
+
+     <f:entry title="${%CPU Quota in us}" field="cpuQuota">
+       <f:number clazz="positive-number" min="0" step="1"/>
+     </f:entry>
+
 
     <f:entry title="${%CPU Shares}" field="cpuShares">
       <f:number clazz="positive-number" min="0" step="1"/>

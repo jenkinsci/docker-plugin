@@ -1,5 +1,9 @@
 package com.nirima.jenkins.plugins.docker.cloudstat;
 
+import static java.util.Objects.nonNull;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.jenkins.docker.DockerComputer;
 import io.jenkins.docker.DockerTransientNode;
 import org.jenkinsci.plugins.cloudstats.CloudStatistics;
@@ -8,21 +12,15 @@ import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import static java.util.Objects.nonNull;
-
 @Restricted(NoExternalUse.class)
 class TrackedDockerComputer extends DockerComputer implements TrackedItem {
 
     private final ProvisioningActivity.Id id;
 
-    public TrackedDockerComputer(@Nonnull  DockerTransientNode node, @Nonnull ProvisioningActivity.Id id) {
+    public TrackedDockerComputer(@NonNull DockerTransientNode node, @NonNull ProvisioningActivity.Id id) {
         super(node);
         this.id = id;
     }
-
 
     @Nullable
     @Override
@@ -39,7 +37,7 @@ class TrackedDockerComputer extends DockerComputer implements TrackedItem {
         }
     }
 
-    private void _terminate(){
+    private void _terminate() {
         ProvisioningActivity activity = CloudStatistics.get().getActivityFor(this);
         if (nonNull(activity)) {
             activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);

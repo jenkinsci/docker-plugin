@@ -1,8 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Extension;
 import hudson.model.Describable;
@@ -10,13 +8,12 @@ import hudson.model.Descriptor;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import io.jenkins.docker.client.DockerAPI;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.StaplerProxy;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.StaplerProxy;
 
 /**
  * Manage the docker images. Docker page under "Manage Jenkins" page.
@@ -50,13 +47,11 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
+        return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
     }
 
     @Override
-    public void save() throws IOException {
-
-    }
+    public void save() throws IOException {}
 
     /**
      * Descriptor is only used for UI form bindings.
@@ -76,17 +71,12 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public Object getTarget() {
-        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         return this;
     }
 
     public Collection<String> getServerNames() {
-        return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, String>() {
-            @Override
-            public String apply(DockerCloud input) {
-                return input.getDisplayName();
-            }
-        });
+        return JenkinsUtils.getServerNames();
     }
 
     public static class ServerDetail {
@@ -109,17 +99,12 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
                 }
                 return "(" + containers.size() + ")";
             } catch (Exception ex) {
-                return "Error";
+                return "Error: " + ex;
             }
         }
     }
 
     public Collection<ServerDetail> getServers() {
-        return Collections2.transform(JenkinsUtils.getServers(), new Function<DockerCloud, ServerDetail>() {
-            @Override
-            public ServerDetail apply(@Nullable DockerCloud input) {
-                return new ServerDetail(input);
-            }
-        });
+        return DockerCloud.instances().stream().map(ServerDetail::new).collect(Collectors.toList());
     }
 }

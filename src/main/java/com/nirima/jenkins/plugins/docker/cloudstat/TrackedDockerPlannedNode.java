@@ -1,16 +1,15 @@
 package com.nirima.jenkins.plugins.docker.cloudstat;
 
+import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
+
 import com.nirima.jenkins.plugins.docker.DockerNodeFactory;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.model.Node;
+import java.util.concurrent.Future;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-
-import javax.annotation.Nullable;
-import java.util.concurrent.Future;
-
-import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
 
 @Restricted(NoExternalUse.class)
 class TrackedDockerPlannedNode extends DockerNodeFactory.DockerPlannedNode implements TrackedItem {
@@ -18,13 +17,11 @@ class TrackedDockerPlannedNode extends DockerNodeFactory.DockerPlannedNode imple
     private final ProvisioningActivity.Id id;
 
     @Restricted(NoExternalUse.class)
-    public TrackedDockerPlannedNode(String displayName, Future<Node> future, int numExecutors,
-                                    String cloud, String template, String node) {
+    public TrackedDockerPlannedNode(
+            String displayName, Future<Node> future, int numExecutors, String cloud, String template, String node) {
         super(displayName, future, numExecutors);
-        this.id = new ProvisioningActivity.Id(cloud,template,node);
+        this.id = new ProvisioningActivity.Id(cloud, template, node);
     }
-
-
 
     @Override
     public void notifyFailure(Throwable e) {
@@ -36,8 +33,8 @@ class TrackedDockerPlannedNode extends DockerNodeFactory.DockerPlannedNode imple
     public void notifySuccess(Node node) {
         get().onComplete(id, node);
         super.notifySuccess(node);
-        if(node instanceof TrackedDockerTransientNode){
-            ((TrackedDockerTransientNode)node).setId(id);
+        if (node instanceof TrackedDockerTransientNode) {
+            ((TrackedDockerTransientNode) node).setId(id);
         }
     }
 

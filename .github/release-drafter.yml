@@ -1,0 +1,2 @@
+_extends: .github
+tag-template: docker-plugin-$NEXT_PATCH_VERSION

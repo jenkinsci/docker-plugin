@@ -2,10 +2,79 @@
 
 ## Unreleased
 A pre-release can be downloaded from https://ci.jenkins.io/job/Plugins/job/docker-plugin/job/master/
+
+## 1.2.10
+_2022-09-27_
+
+* Fix PortUtilsTest unit test on Windows [#901](https://github.com/jenkinsci/docker-plugin/pull/901)
+* Fix JCasC parsing of volume/mounts [#852](https://github.com/jenkinsci/docker-plugin/issues/852)
+* Docker-attach should inject JAR before starting container [#898](https://github.com/jenkinsci/docker-plugin/pull/898)
+* Bump min Jenkins version from 2.204.4 to 2.303.3 [#897](https://github.com/jenkinsci/docker-plugin/pull/897)
+* Fix readonly parsing when mounting [#880](https://github.com/jenkinsci/docker-plugin/issues/880)
+* Enhancement: Supports mounting NPIPEs [#888](https://github.com/jenkinsci/docker-plugin/pull/888)
+* Enhancement: Add support for --cpus [#895](https://github.com/jenkinsci/docker-plugin/pull/895)
+* Enhancement: Improve help text for docker user field [#909](https://github.com/jenkinsci/docker-plugin/pull/909)
+* Fix volumes-from parsing [#878](https://github.com/jenkinsci/docker-plugin/issues/878)
+* :warning: Requires docker-java-api-plugin 3.2.x
+
+## 1.2.9
+_2022-04-27_
+* More loosening of the dependency on the exact docker-java version [#884](https://github.com/jenkinsci/docker-plugin/issues/884)
+* :warning: Compatible with both docker-java-api-plugin 3.2.x and 3.1.x
+
+## 1.2.8
+_2022-04-14_
+* Loosen the dependency on the exact docker-java version [#882](https://github.com/jenkinsci/docker-plugin/pull/882) and [dockder-java-api-plugin#9](https://github.com/jenkinsci/docker-java-api-plugin/pull/9)
+* :warning: Requires [docker-java-api-plugin 3.1.5-31](https://github.com/jenkinsci/docker-java-api-plugin/releases/tag/3.1.5-31.v70b0ca3e8310) or any later 3.1.x.
+* :warning: NOT compatible with docker-java-api-plugin 3.2.x (not yet).
+
+## 1.2.7
+_2022-04-07_
+* Enhancement: Add support for build-time variables (build args) [#730](https://github.com/jenkinsci/docker-plugin/issues/730), [JENKINS-48512](https://issues.jenkins.io/browse/JENKINS-48512)
+* Fix DockerOnceRetentionStrategy [#859](https://github.com/jenkinsci/docker-plugin/pull/859)
+* :information_source: Causes cosmetic issue on Jenkins Web-UI [#881](https://github.com/jenkinsci/docker-plugin/issues/881)
+
+## 1.2.6
+_2021-12-13_
+* Prepare for sunset icon removal from core [#870](https://github.com/jenkinsci/docker-plugin/pull/870)
+
+## 1.2.5
+_2021-12-09_
+* QA: Fix Javadoc warnings [#869](https://github.com/jenkinsci/docker-plugin/pull/869)
+
+## 1.2.4
+_2021-12-09_
+* Enhancement: Improve compatibility with jobConfigHistory plugin [#861](https://github.com/jenkinsci/docker-plugin/pull/861)
+* Enhancement: Watchdog logging improvements [#860](https://github.com/jenkinsci/docker-plugin/pull/860)
+* Enhancement: Documentation improvements [#857](https://github.com/jenkinsci/docker-plugin/pull/857),  [#864](https://github.com/jenkinsci/docker-plugin/pull/864)
+* QA: Stop using deprecated methods [#848](https://github.com/jenkinsci/docker-plugin/pull/848), [#851](https://github.com/jenkinsci/docker-plugin/pull/851),  [#862](https://github.com/jenkinsci/docker-plugin/pull/862),  [#865](https://github.com/jenkinsci/docker-plugin/pull/865)
+* QA: Update SSH-Connector unit test to work with new container [#858](https://github.com/jenkinsci/docker-plugin/pull/858)
+* QA: Fix PortUtilsTest unit test [#847](https://github.com/jenkinsci/docker-plugin/pull/847)
+
+## 1.2.3
+_2021-08-19_
+* Enhancement: Can now pull images by digest [#709](https://github.com/jenkinsci/docker-plugin/issues/709)
+* Fix DockerNodeStepTest unit test by bumping min Jenkins version from 2.73.3 to 2.204.4 [#836](https://github.com/jenkinsci/docker-plugin/pull/836)
+* Enhancement: volumes have been replaced by mounts, allowing use of tmpdir etc [#714](https://github.com/jenkinsci/docker-plugin/issues/714)
+* Prepare plugin for core Guava upgrade [JENKINS-66320](https://issues.jenkins.io/browse/JENKINS-66320), [PR#846](https://github.com/jenkinsci/docker-plugin/pull/846)
+* Added descriptor to SSH launcher used by InjectSSHKey strategy. [#834](https://github.com/jenkinsci/docker-plugin/issues/834)
+
+## 1.2.2
+_2021-01-25_
+* Fix groovy config script in docs [#799](https://github.com/jenkinsci/docker-plugin/issues/799)
+* Fix Attach connection issue with Jenkins 2.266 onwards [#818](https://github.com/jenkinsci/docker-plugin/issues/818), [JENKINS-64251](https://issues.jenkins-ci.org/browse/JENKINS-64251)
+* Fix JNLP (incoming-agent) connection bug [#789](https://github.com/jenkinsci/docker-plugin/pull/789), [#757](https://github.com/jenkinsci/docker-plugin/issues/757), [JENKINS-59790](https://issues.jenkins-ci.org/browse/JENKINS-59790)
+
+## 1.2.1
+_2020-09-25_
 * Enhancement: container stop timeout now configurable [#732](https://github.com/jenkinsci/docker-plugin/issues/732)
 * Fix possible resource leak [#786](https://github.com/jenkinsci/docker-plugin/issues/786)
 * Enhancement: can now add/drop docker capabilites [#696](https://github.com/jenkinsci/docker-plugin/issues/696)
 * Enhancement: can now customise "attach" connections [#790](https://github.com/jenkinsci/docker-plugin/issues/790)
+* QA: Made SpotBugs mandatory [#793](https://github.com/jenkinsci/docker-plugin/issues/793), [#794](https://github.com/jenkinsci/docker-plugin/issues/794), [#798](https://github.com/jenkinsci/docker-plugin/issues/798)
+* Improve errors when folks specify cloud names we don't have [#796](https://github.com/jenkinsci/docker-plugin/issues/796)
+* Update terminology and reference non-deprecated image names [#802](https://github.com/jenkinsci/docker-plugin/issues/802), [#811](https://github.com/jenkinsci/docker-plugin/issues/811)
+* Enhancement: templates can now specify cpu period and cpu quota [#795](https://github.com/jenkinsci/docker-plugin/issues/795)
 
 ## 1.2.0
 _2020-04-02_
@@ -102,7 +171,7 @@ _2017-12-05_
 * added support for variables in tags and Dockerfile directory
 * removed "mappedFsWorkspace" option, which only make sense for a local docker host.
 * refactoring
-* fix `-tunnel` option for JNLP slaves
+* fix `-tunnel` option for JNLP agents
 * fix UI data-binding issues
 
 ## 1.0.4
@@ -123,7 +192,7 @@ _2017-10-20_
 * re-implemented UI for SSH connector with explicit SSH key strategies
 * use configured user for JNLP launcher
 * wait for ssh service to be up before trying to connect
-* refactored launchers for extensibility and pipeline compatibility (reconnect slave after restart) 
+* refactored launchers for extensibility and pipeline compatibility (reconnect agent after restart) 
 
 ## 1.0.1
 _2017-10-17_
@@ -167,7 +236,7 @@ _2016-09-13_
 ## 0.16.0
 _2015-11-26_
 * Workflow support for build steps (publish, start/stop containers)
-* Enable the JNLP slave support (Experimental). 
+* Enable the JNLP agent support (Experimental). 
 * Add a credential type to allow TLS connections.
 * Work-around for pull status failures
 
@@ -233,8 +302,8 @@ _2015-07-21_
 _2015-07-06_
 * Unbunble launchers
 * Improve provisioning
-* Change '@' delimiter in slave name to '-'
-* Fix not removed "suspended" slaves introduced in 0.9.4
+* Change '@' delimiter in agent name to '-'
+* Fix not removed "suspended" agents introduced in 0.9.4
 
 ## 0.9.4
 _2015-07-03_
@@ -242,7 +311,7 @@ _2015-07-03_
 
 ## 0.9.3
 _2015-06-14_
-* Hide Docker strategies for non-docker slaves.
+* Hide Docker strategies for non-docker agents.
 
 ## 0.9.2
 _2015-05-30_
@@ -273,7 +342,7 @@ _2015-04-26_
 _2015-04-24_
 * Handle exception inspecting newly created container
 * Added experimental feature for choosing retention strategies and number of executors
-* Allow configure slave Mode: exclusive/inclusive
+* Allow configure agent Mode: exclusive/inclusive
 * Temp fix for tagging. Fixes container stop.
 * More help files
 * DockerJobProperty optional in job configuration
@@ -298,7 +367,7 @@ _2015-03-19_
 * Migration to java-docker library
 * Credentials support for docker connection
 * Fixed a race that may cause commit and push to fail
-* Wait for SSH port to be available on docker slave
+* Wait for SSH port to be available on docker agent
 * Be graceful on stop if container has already stopped
 
 ## 0.8
@@ -314,7 +383,7 @@ _2014-10-03_
 _2014-07-22_
 * Feature to delete images from repository when jenkins culls the job
 * Fixed #64 - storing of cloudName and templateId variables
-* Add timeout for a slave that gets provisioned but then has no work
+* Add timeout for a agent that gets provisioned but then has no work
 * Add a new feature that allows you to add a build step of constructing a docker image from a Dockerfile, and optionally push that image to a registry
 * Added 'volumes-from' functionality
 * Pull the image if we do not find it

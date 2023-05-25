@@ -1,29 +1,25 @@
 package com.nirima.jenkins.plugins.docker;
 
-import java.io.IOException;
-import java.time.Clock;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
-import org.junit.Assert;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.slf4j.Logger;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.model.Container;
-
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
+import java.time.Clock;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
+import org.junit.Assert;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
 
 public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     private static final String UNITTEST_JENKINS_ID = "f1b65f06-be3e-4dac-a760-b17e7592570f";
@@ -38,7 +34,7 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
 
     @Override
     protected List<DockerCloud> getAllClouds() {
-        return Collections.unmodifiableList(allClouds);
+        return List.copyOf(allClouds);
     }
 
     @Override
@@ -57,8 +53,13 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     }
 
     @Override
-    protected boolean stopAndRemoveContainer(DockerAPI dockerApi, Logger logger, String description,
-            boolean removeVolumes, String containerId, boolean stop) {
+    protected boolean stopAndRemoveContainer(
+            DockerAPI dockerApi,
+            Logger aLogger,
+            String description,
+            boolean removeVolumes,
+            String containerId,
+            boolean stop) {
         containersRemoved.add(containerId);
         return true;
     }
@@ -72,11 +73,11 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     }
 
     public List<DockerTransientNode> getAllRemovedNodes() {
-        return Collections.unmodifiableList(nodesRemoved);
+        return List.copyOf(nodesRemoved);
     }
 
     public List<String> getContainersRemoved() {
-        return Collections.unmodifiableList(containersRemoved);
+        return List.copyOf(containersRemoved);
     }
 
     public void runExecute() throws IOException, InterruptedException {
@@ -95,20 +96,22 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         ListContainersCmd listContainerCmd = Mockito.mock(ListContainersCmd.class);
         Mockito.when(client.listContainersCmd()).thenReturn(listContainerCmd);
         Mockito.when(listContainerCmd.withShowAll(true)).thenReturn(listContainerCmd);
-        Mockito.when(listContainerCmd.withLabelFilter(Matchers.anyMap())).thenAnswer( new Answer<ListContainersCmd>() {
-            @Override
-            public ListContainersCmd answer(InvocationOnMock invocation) throws Throwable {
-                Map<String, String> arg = invocation.getArgumentAt(0, Map.class);
-                String jenkinsInstanceIdInFilter = arg.get(DockerContainerLabelKeys.JENKINS_INSTANCE_ID);
-                Assert.assertEquals(UNITTEST_JENKINS_ID, jenkinsInstanceIdInFilter);
-                return listContainerCmd;
-            }
-        });
+        Mockito.when(listContainerCmd.withLabelFilter(ArgumentMatchers.anyMap()))
+                .thenAnswer(new Answer<ListContainersCmd>() {
+                    @Override
+                    public ListContainersCmd answer(InvocationOnMock invocation) throws Throwable {
+                        Map<String, String> arg = invocation.getArgument(0);
+                        String jenkinsInstanceIdInFilter = arg.get(DockerContainerLabelKeys.JENKINS_INSTANCE_ID);
+                        Assert.assertEquals(UNITTEST_JENKINS_ID, jenkinsInstanceIdInFilter);
+                        return listContainerCmd;
+                    }
+                });
         Mockito.when(listContainerCmd.exec()).thenReturn(containerList);
         return result;
     }
 
-    public static Container createMockedContainer(String containerId, String status, long createdOn, Map<String, String> labels) {
+    public static Container createMockedContainer(
+            String containerId, String status, long createdOn, Map<String, String> labels) {
         Container result = Mockito.mock(Container.class);
         Mockito.when(result.getId()).thenReturn(containerId);
         Mockito.when(result.getStatus()).thenReturn(status);
@@ -117,7 +120,8 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         return result;
     }
 
-    public static DockerTransientNode createMockedDockerTransientNode(String containerId, String nodeName, DockerCloud cloud, boolean offline) {
+    public static DockerTransientNode createMockedDockerTransientNode(
+            String containerId, String nodeName, DockerCloud cloud, boolean offline) {
         DockerTransientNode result = Mockito.mock(DockerTransientNode.class);
         Mockito.when(result.getContainerId()).thenReturn(containerId);
         Mockito.when(result.getNodeName()).thenReturn(nodeName);

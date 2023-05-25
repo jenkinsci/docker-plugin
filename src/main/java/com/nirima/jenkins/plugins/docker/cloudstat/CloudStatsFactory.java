@@ -1,12 +1,11 @@
 package com.nirima.jenkins.plugins.docker.cloudstat;
 
 import com.nirima.jenkins.plugins.docker.DockerNodeFactory;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.Descriptor;
 import hudson.model.Node;
 import hudson.slaves.ComputerLauncher;
 import io.jenkins.docker.DockerTransientNode;
-
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.concurrent.Future;
 
@@ -21,15 +20,19 @@ import java.util.concurrent.Future;
  */
 public class CloudStatsFactory implements DockerNodeFactory {
 
-    @Nonnull
+    private static final long serialVersionUID = 1;
+
+    @NonNull
     @Override
-    public DockerPlannedNode createPlannedNode(String displayName, Future<Node> future, int numExecutors, String cloud, String template, String node) {
-        return new TrackedDockerPlannedNode(displayName,future, numExecutors, cloud, template, node);
+    public DockerPlannedNode createPlannedNode(
+            String displayName, Future<Node> future, int numExecutors, String cloud, String template, String node) {
+        return new TrackedDockerPlannedNode(displayName, future, numExecutors, cloud, template, node);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DockerTransientNode createTransientNode(String nodeName, String containerId,  String effectiveRemoteFsDir,ComputerLauncher launcher)
+    public DockerTransientNode createTransientNode(
+            String nodeName, String containerId, String effectiveRemoteFsDir, ComputerLauncher launcher)
             throws Descriptor.FormException, IOException {
         return new TrackedDockerTransientNode(nodeName, containerId, effectiveRemoteFsDir, launcher);
     }

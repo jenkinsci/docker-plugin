@@ -1,10 +1,10 @@
 package com.nirima.jenkins.plugins.docker;
 
-import com.nirima.jenkins.plugins.docker.cloudstat.CloudStatsFactory;
-import org.junit.Test;
-
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+
+import com.nirima.jenkins.plugins.docker.cloudstat.CloudStatsFactory;
+import org.junit.Test;
 
 public class DockerNodeFactoryTest {
     @Test

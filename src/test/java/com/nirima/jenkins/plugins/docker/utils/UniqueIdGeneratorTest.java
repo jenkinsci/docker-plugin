@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.Test;
 
 public class UniqueIdGeneratorTest {
@@ -60,30 +59,30 @@ public class UniqueIdGeneratorTest {
                     synchronized (results) {
                         results.add(actual);
                     }
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignored) {
                     // should not happen
                 }
             }
         };
         final int numberOfThreads = 10;
         final List<Thread> threads = new ArrayList<>(numberOfThreads);
-        for( int i=0 ; i<numberOfThreads ; i++) {
-            final Thread t = new Thread(codeToRunInMultipleThreads, "testThread#"+i);
+        for (int i = 0; i < numberOfThreads; i++) {
+            final Thread t = new Thread(codeToRunInMultipleThreads, "testThread#" + i);
             threads.add(t);
             t.start();
         }
-        while( numberOfThreadsReady.get()!=numberOfThreads) {
+        while (numberOfThreadsReady.get() != numberOfThreads) {
             Thread.yield();
         }
-        
+
         // When
-        synchronized(startingGun) {
+        synchronized (startingGun) {
             startingGun.notifyAll();
         }
-        for( final Thread t : threads ) {
+        for (final Thread t : threads) {
             t.join();
         }
-        
+
         // Then
         assertThat(results, hasSize(numberOfThreads));
         final Set<String> uniqueResults = new TreeSet<>(results);
