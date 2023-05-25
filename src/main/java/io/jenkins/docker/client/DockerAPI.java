@@ -442,8 +442,14 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
 
         private static boolean optionIsAvailable(final String optionValue, final ListBoxModel available) {
             for (ListBoxModel.Option o : available) {
-                if (optionValue != null && optionValue.equals(o.value)) {
-                    return true;
+                if (o.value == null) {
+                    if (optionValue == null) {
+                        return true; // both null = match
+                    }
+                } else {
+                    if (optionValue != null && optionValue.equals(o.value)) {
+                        return true;
+                    }
                 }
             }
             return false;
