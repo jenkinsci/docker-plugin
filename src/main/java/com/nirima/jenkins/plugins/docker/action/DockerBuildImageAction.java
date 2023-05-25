@@ -89,7 +89,7 @@ public class DockerBuildImageAction implements Action, Serializable, Describable
 
     @Override
     public String getIconFileName() {
-        return "symbol-docker plugin-docker-plugin";
+        return "symbol-logo-docker plugin-ionicons-api";
     }
 
     @Override
