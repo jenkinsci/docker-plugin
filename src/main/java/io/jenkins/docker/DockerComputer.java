@@ -1,14 +1,12 @@
 package io.jenkins.docker;
 
-import com.google.common.base.Objects;
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.EnvVars;
-import hudson.slaves.SlaveComputer;
+import hudson.slaves.AbstractCloudComputer;
 import io.jenkins.docker.client.DockerAPI;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
 import java.io.IOException;
-
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -18,7 +16,7 @@ import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
  *
  * @author magnayn
  */
-public class DockerComputer extends SlaveComputer implements TrackedItem {
+public class DockerComputer extends AbstractCloudComputer<DockerTransientNode> implements TrackedItem {
     // private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
 
     public DockerComputer(DockerTransientNode node) {
@@ -29,12 +27,6 @@ public class DockerComputer extends SlaveComputer implements TrackedItem {
     public DockerCloud getCloud() {
         final DockerTransientNode nodeOrNull = getNode();
         return nodeOrNull == null ? null : nodeOrNull.getCloud();
-    }
-
-    @CheckForNull
-    @Override
-    public DockerTransientNode getNode() {
-        return (DockerTransientNode) super.getNode();
     }
 
     @CheckForNull
@@ -71,10 +63,7 @@ public class DockerComputer extends SlaveComputer implements TrackedItem {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
-                .add("name", super.getName())
-                .add("slave", getNode())
-                .toString();
+        return "DockerComputer{" + "name='" + super.getName() + '\'' + ", node='" + nodeName + '\'' + '}';
     }
 
     @Nullable

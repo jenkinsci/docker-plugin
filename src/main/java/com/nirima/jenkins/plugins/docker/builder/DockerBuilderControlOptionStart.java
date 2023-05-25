@@ -9,6 +9,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,17 +28,16 @@ public class DockerBuilderControlOptionStart extends DockerBuilderControlOptionS
     }
 
     @Override
-    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
-            throws DockerException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener) throws DockerException {
         LOG.info("Starting container {}", containerId);
         listener.getLogger().println("Starting container " + containerId);
 
-        final DockerCloud cloud = getCloud(build,launcher);
+        final DockerCloud cloud = getCloud(build, launcher);
         final DockerAPI dockerApi = cloud.getDockerApi();
-        try(final DockerClient client = dockerApi.getClient()) {
+        try (final DockerClient client = dockerApi.getClient()) {
             executeOnDocker(build, client);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

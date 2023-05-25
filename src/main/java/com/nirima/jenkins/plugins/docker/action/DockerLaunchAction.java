@@ -1,15 +1,13 @@
 package com.nirima.jenkins.plugins.docker.action;
 
 import com.github.dockerjava.api.DockerClient;
-
+import hudson.model.Action;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import hudson.model.Action;
-
 /**
- * Action to record launching of a slave.
+ * Action to record launching of an agent.
  */
 public class DockerLaunchAction implements Action, Serializable {
     private static final long serialVersionUID = 322300594612029744L;
@@ -25,11 +23,19 @@ public class DockerLaunchAction implements Action, Serializable {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Item item = (Item) o;
-            if (!client.equals(item.client)) return false;
-            if (!id.equals(item.id)) return false;
+            if (!client.equals(item.client)) {
+                return false;
+            }
+            if (!id.equals(item.id)) {
+                return false;
+            }
             return true;
         }
 
@@ -50,6 +56,8 @@ public class DockerLaunchAction implements Action, Serializable {
 
     /**
      * Initializes data structure that we don't persist.
+     *
+     * @return us, but populated.
      */
     private Object readResolve() {
         running = new ArrayList<>();
@@ -72,11 +80,11 @@ public class DockerLaunchAction implements Action, Serializable {
     }
 
     public void started(DockerClient client, String containerName) {
-        running.add( new Item(client, containerName) );
+        running.add(new Item(client, containerName));
     }
 
     public void stopped(DockerClient client, String containerName) {
-        running.remove( new Item(client, containerName) );
+        running.remove(new Item(client, containerName));
     }
 
     public Iterable<Item> getRunning() {

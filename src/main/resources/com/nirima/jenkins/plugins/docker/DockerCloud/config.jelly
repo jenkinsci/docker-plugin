@@ -26,7 +26,7 @@
     </f:advanced>
 
     <f:advanced title="${%Docker Agent templates}" align="left">
-        <f:entry title="${%Docker Agent templates}" description="${%List of Images to be launched as slaves}">
+        <f:entry title="${%Docker Agent templates}" description="${%List of Images to be launched as agents}">
             <f:repeatableProperty field="templates" header="Docker Agent templates" add="Add Docker Template">
                 <f:block>
                     <div align="right">
