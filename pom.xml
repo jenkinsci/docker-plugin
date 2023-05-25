@@ -106,7 +106,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>cloud-stats</artifactId>
-      <version>0.25</version>
+      <version>267.v577e3742c282</version>
       <optional>true</optional>
     </dependency>
     <dependency>
