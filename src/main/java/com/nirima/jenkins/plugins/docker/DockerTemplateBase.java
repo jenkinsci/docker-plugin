@@ -649,13 +649,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public DockerRegistryEndpoint getRegistry() {
         if (registry == null) {
-            /* TODO: Use DockerRegistryEndpoint#fromImageName when JENKINS-63243 is fixed */
-            String hostname =
-                    NameParser.resolveRepositoryName(NameParser.parseRepositoryTag(getImage()).repos).hostname;
-            if (!hostname.contains("://")) {
-                hostname = "https://" + hostname;
-            }
-            registry = new DockerRegistryEndpoint(hostname, pullCredentialsId);
+            registry = DockerRegistryEndpoint.fromImageName(getImage(), pullCredentialsId);
         }
         return registry;
     }
