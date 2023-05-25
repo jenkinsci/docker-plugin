@@ -9,6 +9,7 @@ import com.nirima.jenkins.plugins.docker.DockerOfflineCause;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -20,6 +21,8 @@ import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
@@ -30,7 +33,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-public class DockerTransientNode extends AbstractCloudSlave {
+public class DockerTransientNode extends AbstractCloudSlave implements TrackedItem {
     private static final long serialVersionUID = 1349729340506926183L;
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTransientNode.class.getName());
 
@@ -43,6 +46,8 @@ public class DockerTransientNode extends AbstractCloudSlave {
     private int stopTimeout = DockerTemplate.DEFAULT_STOP_TIMEOUT;
 
     private String cloudId;
+
+    private ProvisioningActivity.Id provisioningId;
 
     private AtomicBoolean acceptingTasks = new AtomicBoolean(true);
 
@@ -152,9 +157,23 @@ public class DockerTransientNode extends AbstractCloudSlave {
         this.cloudId = cloudId;
     }
 
+    public ProvisioningActivity.Id getProvisioningId() {
+        return provisioningId;
+    }
+
+    public void setProvisioningId(ProvisioningActivity.Id provisioningId) {
+        this.provisioningId = provisioningId.named(getNodeName());
+    }
+
     @Override
     public DockerComputer createComputer() {
         return new DockerComputer(this);
+    }
+
+    @Nullable
+    @Override
+    public ProvisioningActivity.Id getId() {
+        return provisioningId;
     }
 
     private interface ILogger {

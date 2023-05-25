@@ -47,6 +47,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -387,8 +389,10 @@ public class DockerCloud extends Cloud {
                 LOGGER.info(
                         "Will provision '{}', for label: '{}', in cloud: '{}'", t.getImage(), label, getDisplayName());
 
+                final ProvisioningActivity.Id id = new ProvisioningActivity.Id(
+                        DockerCloud.this.name, t.getName() + " (" + t.getImage() + ")", null);
                 final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
-                r.add(new NodeProvisioner.PlannedNode(t.getDisplayName(), plannedNode, t.getNumExecutors()));
+                r.add(new TrackedPlannedNode(id, t.getNumExecutors(), plannedNode));
 
                 final Runnable taskToCreateNewAgent = new Runnable() {
                     @Override
@@ -400,6 +404,7 @@ public class DockerCloud extends Cloud {
                             agent = t.provisionNode(api, TaskListener.NULL);
                             agent.setDockerAPI(api);
                             agent.setCloudId(DockerCloud.this.name);
+                            agent.setProvisioningId(id);
                             plannedNode.complete(agent);
 
                             // On provisioning completion, let's trigger NodeProvisioner
