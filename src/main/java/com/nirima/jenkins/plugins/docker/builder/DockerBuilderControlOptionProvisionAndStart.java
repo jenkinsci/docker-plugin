@@ -11,6 +11,7 @@ import hudson.model.TaskListener;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class DockerBuilderControlOptionProvisionAndStart extends DockerBuilderCo
         try (final DockerClient client = dockerApi.getClient()) {
             executeOnDocker(build, llog, cloud, template, client);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
