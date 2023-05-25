@@ -17,14 +17,13 @@ import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
+import java.io.PrintStream;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.PrintStream;
 
 /**
  * Build step that allows run container through existed DockerCloud
@@ -120,11 +119,10 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     }
 
     @Override
-    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener)
-            throws DockerException, IOException {
+    public void execute(Run<?, ?> build, Launcher launcher, TaskListener listener) throws DockerException, IOException {
         final PrintStream llog = listener.getLogger();
 
-        final DockerCloud cloud = getCloud(build,launcher);
+        final DockerCloud cloud = getCloud(build, launcher);
         final DockerAPI dockerApi = cloud.getDockerApi();
 
         String xImage = expand(build, image);
@@ -136,11 +134,11 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         llog.println("Pulling image " + xImage);
 
         // need a client that will tolerate lengthy pauses for a docker pull
-        try(final DockerClient clientWithoutReadTimeout = dockerApi.getClient(0)) {
+        try (final DockerClient clientWithoutReadTimeout = dockerApi.getClient(0)) {
             executePullOnDocker(build, llog, xImage, clientWithoutReadTimeout);
         }
         // but the remainder can use a normal client with the default timeout
-        try(final DockerClient client = dockerApi.getClient()) {
+        try (final DockerClient client = dockerApi.getClient()) {
             executeOnDocker(build, llog, xImage, xCommand, xHostname, xUser, client);
         }
     }
@@ -159,7 +157,8 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         };
 
         PullImageCmd cmd = client.pullImageCmd(xImage);
-        DockerCloud.setRegistryAuthentication(cmd, getRegistry(), build.getParent().getParent());
+        DockerCloud.setRegistryAuthentication(
+                cmd, getRegistry(), build.getParent().getParent());
         try {
             cmd.exec(resultCallback).awaitCompletion();
         } catch (InterruptedException e) {
@@ -167,7 +166,14 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         }
     }
 
-    private void executeOnDocker(Run<?, ?> build, PrintStream llog, String xImage, String xCommand, String xHostname, String xUser, DockerClient client)
+    private void executeOnDocker(
+            Run<?, ?> build,
+            PrintStream llog,
+            String xImage,
+            String xCommand,
+            String xHostname,
+            String xUser,
+            DockerClient client)
             throws DockerException {
         try {
             client.inspectImageCmd(xImage).exec();
@@ -176,9 +182,29 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         }
 
         DockerTemplateBase template = new DockerSimpleTemplate(
-                xImage, pullCredentialsId, dnsString, network, xCommand, mountsString, volumesFrom,
-                environmentsString, xHostname, xUser, extraGroupsString, memoryLimit, memorySwap, cpuPeriod, cpuQuota,
-                cpuShares, shmSize, bindPorts, bindAllPorts, privileged, tty, macAddress, null);
+                xImage,
+                pullCredentialsId,
+                dnsString,
+                network,
+                xCommand,
+                mountsString,
+                volumesFrom,
+                environmentsString,
+                xHostname,
+                xUser,
+                extraGroupsString,
+                memoryLimit,
+                memorySwap,
+                cpuPeriod,
+                cpuQuota,
+                cpuShares,
+                shmSize,
+                bindPorts,
+                bindAllPorts,
+                privileged,
+                tty,
+                macAddress,
+                null);
 
         LOG.info("Starting container for image {}", xImage);
         llog.println("Starting container for image " + xImage);

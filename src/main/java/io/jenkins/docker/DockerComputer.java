@@ -1,11 +1,14 @@
 package io.jenkins.docker;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.EnvVars;
 import hudson.slaves.AbstractCloudComputer;
 import io.jenkins.docker.client.DockerAPI;
-import javax.annotation.CheckForNull;
 import java.io.IOException;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 
 /**
@@ -13,7 +16,7 @@ import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
  *
  * @author magnayn
  */
-public class DockerComputer extends AbstractCloudComputer<DockerTransientNode> {
+public class DockerComputer extends AbstractCloudComputer<DockerTransientNode> implements TrackedItem {
     // private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
 
     public DockerComputer(DockerTransientNode node) {
@@ -60,9 +63,13 @@ public class DockerComputer extends AbstractCloudComputer<DockerTransientNode> {
 
     @Override
     public String toString() {
-        return "DockerComputer{" +
-                "name='" + super.getName() + '\'' +
-                ", node='" + nodeName + '\'' +
-                '}';
+        return "DockerComputer{" + "name='" + super.getName() + '\'' + ", node='" + nodeName + '\'' + '}';
+    }
+
+    @Nullable
+    @Override
+    public ProvisioningActivity.Id getId() {
+        final DockerTransientNode nodeOrNull = getNode();
+        return nodeOrNull == null ? null : nodeOrNull.getId();
     }
 }

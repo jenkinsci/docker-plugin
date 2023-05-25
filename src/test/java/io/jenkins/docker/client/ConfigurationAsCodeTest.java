@@ -9,18 +9,16 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 
-import org.junit.Rule;
-import org.junit.Test;
-
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
-
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import org.junit.Rule;
+import org.junit.Test;
 
 public class ConfigurationAsCodeTest {
 
@@ -38,8 +36,12 @@ public class ConfigurationAsCodeTest {
         DockerTemplate template = cloud.getTemplates().get(0);
         assertThat(template.getLabelString(), is("docker-agent"));
         assertThat(template.getImage(), is("jenkins/agent"));
-        assertThat(template.getMounts(), arrayContaining("type=tmpfs,destination=/run",
-                "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock", "type=volume,src=hello,dst=/world"));
+        assertThat(
+                template.getMounts(),
+                arrayContaining(
+                        "type=tmpfs,destination=/run",
+                        "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock",
+                        "type=volume,src=hello,dst=/world"));
         assertThat(template.getEnvironmentsString(), is("hello=world\nfoo=bar"));
         assertThat(template.getRemoteFs(), is("/home/jenkins/agent"));
         assertThat(template.getConnector(), instanceOf(DockerComputerAttachConnector.class));
@@ -50,7 +52,8 @@ public class ConfigurationAsCodeTest {
 
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
-        String exported = toYamlString(getJenkinsRoot(context).get("clouds").asSequence().get(0).asMapping());
+        String exported = toYamlString(
+                getJenkinsRoot(context).get("clouds").asSequence().get(0).asMapping());
         String expected = toStringFromYamlFile(this, "expected_output_current.yml");
 
         assertThat(exported, is(expected));
@@ -67,8 +70,10 @@ public class ConfigurationAsCodeTest {
         DockerTemplate template = cloud.getTemplates().get(0);
         assertThat(template.getLabelString(), is("docker-agent"));
         assertThat(template.getImage(), is("jenkins/agent"));
-        assertThat(template.getMounts(), arrayContaining("type=volume,source=hello,destination=/hello",
-                "type=volume,source=world,destination=/world"));
+        assertThat(
+                template.getMounts(),
+                arrayContaining(
+                        "type=volume,source=hello,destination=/hello", "type=volume,source=world,destination=/world"));
         assertThat(template.getEnvironmentsString(), is("hello=world\nfoo=bar"));
         assertThat(template.getRemoteFs(), is("/home/jenkins/agent"));
         assertThat(template.getConnector(), instanceOf(DockerComputerAttachConnector.class));
@@ -79,10 +84,10 @@ public class ConfigurationAsCodeTest {
 
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
-        String exported = toYamlString(getJenkinsRoot(context).get("clouds").asSequence().get(0).asMapping());
+        String exported = toYamlString(
+                getJenkinsRoot(context).get("clouds").asSequence().get(0).asMapping());
         String expected = toStringFromYamlFile(this, "expected_output_old.yml");
 
         assertThat(exported, is(expected));
     }
-
 }

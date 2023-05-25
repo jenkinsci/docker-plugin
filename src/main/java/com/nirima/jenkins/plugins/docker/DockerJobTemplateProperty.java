@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
+import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.slaves.Cloud;
 import hudson.util.ListBoxModel;
@@ -7,14 +8,12 @@ import jenkins.model.OptionalJobProperty;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.export.Exported;
 
-import hudson.Extension;
-
 /**
  * Represents an own section to specify a Docker Template in job configuration.
- * 
+ *
  * @author Ingo Rissmann
  */
-public class DockerJobTemplateProperty extends OptionalJobProperty<AbstractProject<?,?>> {
+public class DockerJobTemplateProperty extends OptionalJobProperty<AbstractProject<?, ?>> {
     public final String cloudname;
     public final DockerTemplate template;
 
@@ -33,7 +32,6 @@ public class DockerJobTemplateProperty extends OptionalJobProperty<AbstractProje
     public DockerTemplate getTemplate() {
         return template;
     }
-
 
     @Extension
     public static class DescriptorImpl extends OptionalJobPropertyDescriptor {

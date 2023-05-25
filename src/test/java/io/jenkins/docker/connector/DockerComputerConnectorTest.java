@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
-
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Label;
@@ -19,6 +18,13 @@ import hudson.tasks.Shell;
 import hudson.util.StreamTaskListener;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.SystemUtils;
 import org.hamcrest.number.OrderingComparison;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -29,14 +35,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -65,8 +63,10 @@ public abstract class DockerComputerConnectorTest {
             final String firstNumber = indexOfPeriod < 0 ? javaVersion : javaVersion.substring(0, indexOfPeriod);
             return Integer.parseInt(firstNumber);
         } catch (RuntimeException ex) {
-            throw new IllegalStateException("Unable to determine version of Java from system property '"
-                    + systemPropertyName + "' value '" + javaVersion + "'.", ex);
+            throw new IllegalStateException(
+                    "Unable to determine version of Java from system property '" + systemPropertyName + "' value '"
+                            + javaVersion + "'.",
+                    ex);
         }
     }
 
@@ -97,7 +97,7 @@ public abstract class DockerComputerConnectorTest {
 
     @BeforeClass
     public static void setUpClass() {
-        testNumber=0;
+        testNumber = 0;
     }
 
     @Before
@@ -113,7 +113,7 @@ public abstract class DockerComputerConnectorTest {
         final Long maxWaitTimeMs = 60 * 1000L;
         final long initialWaitTime = 50;
         long currentWaitTime = initialWaitTime;
-        while( dockerIsStillBusy()) {
+        while (dockerIsStillBusy()) {
             currentWaitTime = currentWaitTime * 2;
             Thread.sleep(currentWaitTime);
             terminateAllDockerNodes();
@@ -124,32 +124,32 @@ public abstract class DockerComputerConnectorTest {
     }
 
     private void terminateAllDockerNodes() {
-        final TaskListener tl = new StreamTaskListener(System.out, Charset.forName("UTF-8"));
-        for( final Node n : j.jenkins.getNodes() ) {
-            if( n instanceof DockerTransientNode ) {
-                final DockerTransientNode dn = (DockerTransientNode)n;
+        final TaskListener tl = new StreamTaskListener(System.out, StandardCharsets.UTF_8);
+        for (final Node n : j.jenkins.getNodes()) {
+            if (n instanceof DockerTransientNode) {
+                final DockerTransientNode dn = (DockerTransientNode) n;
                 dn._terminate(tl);
             }
         }
     }
 
     private boolean dockerIsStillBusy() throws Exception {
-        for( final Node n : j.jenkins.getNodes() ) {
-            if( n instanceof DockerTransientNode ) {
+        for (final Node n : j.jenkins.getNodes()) {
+            if (n instanceof DockerTransientNode) {
                 return true;
             }
         }
-        for( final Cloud c : j.jenkins.clouds) {
-            if( c instanceof DockerCloud) {
-                DockerCloud cloud = (DockerCloud)c;
-                for( final DockerTemplate t : cloud.getTemplates() ) {
+        for (final Cloud c : j.jenkins.clouds) {
+            if (c instanceof DockerCloud) {
+                DockerCloud cloud = (DockerCloud) c;
+                for (final DockerTemplate t : cloud.getTemplates()) {
                     final int containersInProgress = cloud.countContainersInProgress(t);
-                    if( containersInProgress > 0 ) {
+                    if (containersInProgress > 0) {
                         return true;
                     }
                 }
                 final int containersInDocker = cloud.countContainersInDocker(null);
-                if( containersInDocker > 0 ) {
+                if (containersInDocker > 0) {
                     return true;
                 }
             }
@@ -160,18 +160,20 @@ public abstract class DockerComputerConnectorTest {
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
-    protected void should_connect_agent(DockerTemplate template) throws IOException, ExecutionException, InterruptedException, TimeoutException {
+    protected void should_connect_agent(DockerTemplate template)
+            throws IOException, ExecutionException, InterruptedException, TimeoutException {
 
         // FIXME on CI windows nodes don't have Docker4Windows
         Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
 
         // Given
         final String templateLabel = template.getLabelString();
-        Assert.assertFalse("Error in test code - test template must be a single unique string",templateLabel.contains(" "));
+        Assert.assertFalse(
+                "Error in test code - test template must be a single unique string", templateLabel.contains(" "));
         final String expectedTextInBuildLog = "ourBuildDidActuallyRun" + System.nanoTime();
         final Builder buildStepToEchoExpectedText;
         final String dockerHost;
-        if ( SystemUtils.IS_OS_WINDOWS ) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             buildStepToEchoExpectedText = new BatchFile("echo " + expectedTextInBuildLog);
             dockerHost = "tcp://localhost:2375";
         } else {
@@ -179,9 +181,9 @@ public abstract class DockerComputerConnectorTest {
             dockerHost = "unix:///var/run/docker.sock";
         }
 
-        DockerCloud cloud = new DockerCloud(cloudName, new DockerAPI(new DockerServerEndpoint(dockerHost, null)),
-                Collections.singletonList(template));
-        j.jenkins.clouds.replaceBy(Collections.singleton(cloud));
+        DockerCloud cloud = new DockerCloud(
+                cloudName, new DockerAPI(new DockerServerEndpoint(dockerHost, null)), List.of(template));
+        j.jenkins.clouds.replaceBy(Set.of(cloud));
 
         // When
         final FreeStyleProject project = j.createFreeStyleProject("test-docker-agent-can-connect");
@@ -197,9 +199,9 @@ public abstract class DockerComputerConnectorTest {
         } finally {
             scheduledBuild.cancel(true);
         }
-        
+
         // Then
-        Assert.assertTrue(actualBuildResult == Result.SUCCESS);
+        Assert.assertEquals(Result.SUCCESS, actualBuildResult);
         Assert.assertTrue(actualBuildLog.contains(expectedTextInBuildLog));
     }
 }

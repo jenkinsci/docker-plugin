@@ -10,14 +10,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
-import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
-import org.junit.Test;
-
 import hudson.model.Executor;
 import hudson.model.OneOffExecutor;
 import hudson.model.Queue.FlyweightTask;
 import hudson.model.Queue.Task;
 import io.jenkins.docker.DockerComputer;
+import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
+import org.junit.Test;
 
 public class DockerOnceRetentionStrategyTest {
     @Test
@@ -126,8 +125,12 @@ public class DockerOnceRetentionStrategyTest {
         final long clockWithJustOverOneMinuteToGo = idleStartTime + idleMilliseconds - msInAminute - 1;
         final long clockWithExactlyOneMinuteToGo = idleStartTime + idleMilliseconds - msInAminute;
         final long clockWithOneMillisecondToGo = idleStartTime + idleMilliseconds - 1;
-        when(instance.mock.currentMilliseconds()).thenReturn(clockWithAllIdleTimeToRun, clockWithJustOverOneMinuteToGo,
-                clockWithExactlyOneMinuteToGo, clockWithOneMillisecondToGo);
+        when(instance.mock.currentMilliseconds())
+                .thenReturn(
+                        clockWithAllIdleTimeToRun,
+                        clockWithJustOverOneMinuteToGo,
+                        clockWithExactlyOneMinuteToGo,
+                        clockWithOneMillisecondToGo);
 
         // When
         final long actual1 = instance.check(mockComputer);
@@ -173,8 +176,8 @@ public class DockerOnceRetentionStrategyTest {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(1);
         final Executor mockLightweightExecutor = mock(OneOffExecutor.class);
-        final Executor mockContinuingExecutor = mock(Executor.class,
-                withSettings().extraInterfaces(ContinuableExecutable.class));
+        final Executor mockContinuingExecutor =
+                mock(Executor.class, withSettings().extraInterfaces(ContinuableExecutable.class));
         when(((ContinuableExecutable) mockContinuingExecutor).willContinue()).thenReturn(true);
         final Executor mockHeavyExecutor = mock(Executor.class);
         final Task mockLightweightTask = mock(FlyweightTask.class);
@@ -305,8 +308,8 @@ public class DockerOnceRetentionStrategyTest {
         final ClassUnderTest diff2 = new ClassUnderTest(124);
         final ClassUnderTest diff3 = new ClassUnderTest(122);
         final ClassUnderTest diff4 = new ClassUnderTest(0);
-        final ClassUnderTest[] same = { same1, same2, same3, same4 };
-        final ClassUnderTest[] diff = { diff1, diff2, diff3, diff4 };
+        final ClassUnderTest[] same = {same1, same2, same3, same4};
+        final ClassUnderTest[] diff = {diff1, diff2, diff3, diff4};
 
         // When/Then - hashCode
         for (final ClassUnderTest s1 : same) {

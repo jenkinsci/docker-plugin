@@ -12,19 +12,16 @@ import com.github.dockerjava.core.command.CreateContainerCmdImpl;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.trilead.ssh2.signature.RSAKeyAlgorithm;
-
 import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
 import io.jenkins.docker.client.DockerAPI;
+import java.io.IOException;
+import java.util.Base64;
+import java.util.Map;
 import jenkins.bouncycastle.api.PEMEncodable;
-
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import java.io.IOException;
-import java.util.Base64;
-import java.util.Map;
 
 public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
 
@@ -46,16 +43,19 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
 
     @Test
     public void connectAgentViaSSHUsingInjectSshKey() throws Exception {
-        final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy = new DockerComputerSSHConnector.InjectSSHKey(COMMON_IMAGE_USERNAME);
+        final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy =
+                new DockerComputerSSHConnector.InjectSSHKey(COMMON_IMAGE_USERNAME);
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
         connector.setJavaPath(SSH_AGENT_IMAGE_JAVAPATH);
-        final String imagenameAndVersion = SSH_AGENT_IMAGE_IMAGENAME + ':' + getJenkinsDockerImageVersionForThisEnvironment();
+        final String imagenameAndVersion =
+                SSH_AGENT_IMAGE_IMAGENAME + ':' + getJenkinsDockerImageVersionForThisEnvironment();
 
         final DockerTemplate template = new DockerTemplate(
                 new DockerTemplateBase(imagenameAndVersion),
                 connector,
-                getLabelForTemplate(), COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
-        );
+                getLabelForTemplate(),
+                COMMON_IMAGE_HOMEDIR,
+                INSTANCE_CAP);
         template.setName("connectAgentViaSSHUsingInjectSshKey");
         should_connect_agent(template);
     }
@@ -64,20 +64,26 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
     public void connectAgentViaSSHUsingCredentialsKey() throws Exception {
         final InstanceIdentity id = InstanceIdentity.get();
         final String privateKey = PEMEncodable.create(id.getPrivate()).encode();
-        final String publicKey = "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
+        final String publicKey =
+                "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey(id.getPublic()));
         final String credentialsId = "tempCredId";
-        final StandardUsernameCredentials credentials = DockerComputerSSHConnector.makeCredentials(credentialsId, COMMON_IMAGE_USERNAME, privateKey);
+        final StandardUsernameCredentials credentials =
+                DockerComputerSSHConnector.makeCredentials(credentialsId, COMMON_IMAGE_USERNAME, privateKey);
         SystemCredentialsProvider.getInstance().getCredentials().add(credentials);
-        final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy = new DockerComputerSSHConnector.ManuallyConfiguredSSHKey(credentialsId, new NonVerifyingKeyVerificationStrategy());
+        final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy =
+                new DockerComputerSSHConnector.ManuallyConfiguredSSHKey(
+                        credentialsId, new NonVerifyingKeyVerificationStrategy());
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
         connector.setJavaPath(SSH_AGENT_IMAGE_JAVAPATH);
-        final String imagenameAndVersion = SSH_AGENT_IMAGE_IMAGENAME + ':' + getJenkinsDockerImageVersionForThisEnvironment();
+        final String imagenameAndVersion =
+                SSH_AGENT_IMAGE_IMAGENAME + ':' + getJenkinsDockerImageVersionForThisEnvironment();
         final DockerTemplate template = new DockerTemplate(
                 new DockerTemplateBase(imagenameAndVersion),
                 connector,
-                getLabelForTemplate(), COMMON_IMAGE_HOMEDIR, INSTANCE_CAP
-        );
-        template.getDockerTemplateBase().setEnvironmentsString("JENKINS_SLAVE_SSH_PUBKEY=" + publicKey);
+                getLabelForTemplate(),
+                COMMON_IMAGE_HOMEDIR,
+                INSTANCE_CAP);
+        template.getDockerTemplateBase().setEnvironmentsString("JENKINS_AGENT_SSH_PUBKEY=" + publicKey);
         template.setName("connectAgentViaSSHUsingCredentialsKey");
         should_connect_agent(template);
     }
@@ -85,10 +91,12 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
     @Test
     public void testPortBinding() throws IOException, InterruptedException {
         // Given
-        DockerComputerSSHConnector connector = new DockerComputerSSHConnector(Mockito.mock(DockerComputerSSHConnector.SSHKeyStrategy.class));
-        CreateContainerCmdImpl cmd = new CreateContainerCmdImpl(Mockito.mock(CreateContainerCmd.Exec.class), Mockito.mock(AuthConfig.class), "");
+        DockerComputerSSHConnector connector =
+                new DockerComputerSSHConnector(Mockito.mock(DockerComputerSSHConnector.SSHKeyStrategy.class));
+        CreateContainerCmdImpl cmd = new CreateContainerCmdImpl(
+                Mockito.mock(CreateContainerCmd.Exec.class), Mockito.mock(AuthConfig.class), "");
         HostConfig hostConfig = cmd.getHostConfig();
-        if( hostConfig==null ) {
+        if (hostConfig == null) {
             hostConfig = new HostConfig();
             cmd.withHostConfig(hostConfig);
         }

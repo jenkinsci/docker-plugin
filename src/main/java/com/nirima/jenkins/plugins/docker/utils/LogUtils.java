@@ -7,8 +7,7 @@ import hudson.model.TaskListener;
  * @author Kanstantsin Shautsou
  */
 public class LogUtils {
-    private LogUtils() {
-    }
+    private LogUtils() {}
 
     public static void printResponseItemToListener(TaskListener listener, ResponseItem item) {
 

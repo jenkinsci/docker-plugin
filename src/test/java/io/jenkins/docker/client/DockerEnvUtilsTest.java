@@ -5,9 +5,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.Test;
-
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import org.junit.Test;
 
 public class DockerEnvUtilsTest {
 
@@ -47,11 +46,7 @@ public class DockerEnvUtilsTest {
     public void addEnvToCmdGivenExistingOtherEnvsThenAddsEnv() {
         // Given
         final CreateContainerCmd cmd = mock(CreateContainerCmd.class);
-        final String[] existingEnvs = new String[]{
-                "foo=bar",
-                "flibble",
-                "x="
-        };
+        final String[] existingEnvs = new String[] {"foo=bar", "flibble", "x="};
         when(cmd.getEnv()).thenReturn(existingEnvs);
         final String envName = "name";
         final String envValue = "value";
@@ -67,11 +62,7 @@ public class DockerEnvUtilsTest {
     public void addEnvToCmdGivenExistingClashingEnvsThenReplacesEnv() {
         // Given
         final CreateContainerCmd cmd = mock(CreateContainerCmd.class);
-        final String[] existingEnvs = new String[]{
-                "foo=bar",
-                "name=oldvalue",
-                "x="
-        };
+        final String[] existingEnvs = new String[] {"foo=bar", "name=oldvalue", "x="};
         when(cmd.getEnv()).thenReturn(existingEnvs);
         final String envName = "name";
         final String envValue = "value";
@@ -82,5 +73,4 @@ public class DockerEnvUtilsTest {
         // Then
         verify(cmd, times(1)).withEnv("foo=bar", "x=", "name=value");
     }
-
 }

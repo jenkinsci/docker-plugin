@@ -8,8 +8,8 @@ class DockerClientParameters {
     final Integer readTimeoutInMsOrNull;
     final Integer connectTimeoutInMsOrNull;
 
-    DockerClientParameters(String dockerUri, String credentialsId, Integer readTimeoutInMsOrNull,
-            Integer connectTimeoutInMsOrNull) {
+    DockerClientParameters(
+            String dockerUri, String credentialsId, Integer readTimeoutInMsOrNull, Integer connectTimeoutInMsOrNull) {
         this.dockerUri = dockerUri;
         this.credentialsId = credentialsId;
         this.readTimeoutInMsOrNull = readTimeoutInMsOrNull;
@@ -46,18 +46,18 @@ class DockerClientParameters {
             return false;
         }
         final DockerClientParameters other = (DockerClientParameters) obj;
-        return Objects.equals(dockerUri, other.dockerUri) && Objects.equals(credentialsId, other.credentialsId)
+        return Objects.equals(dockerUri, other.dockerUri)
+                && Objects.equals(credentialsId, other.credentialsId)
                 && Objects.equals(readTimeoutInMsOrNull, other.readTimeoutInMsOrNull)
                 && Objects.equals(connectTimeoutInMsOrNull, other.connectTimeoutInMsOrNull);
     }
 
     @Override
     public String toString() {
-        return "DockerClientParameters{" +
-                "dockerUri='" + dockerUri + '\'' +
-                ", credentialsId='" + credentialsId + '\'' +
-                ", readTimeoutInMsOrNull=" + readTimeoutInMsOrNull +
-                ", connectTimeoutInMsOrNull=" + connectTimeoutInMsOrNull +
-                '}';
+        return "DockerClientParameters{" + "dockerUri='"
+                + dockerUri + '\'' + ", credentialsId='"
+                + credentialsId + '\'' + ", readTimeoutInMsOrNull="
+                + readTimeoutInMsOrNull + ", connectTimeoutInMsOrNull="
+                + connectTimeoutInMsOrNull + '}';
     }
 }
