@@ -134,7 +134,7 @@ for the Docker image to be used:
     injected in container on startup, you don't need any credential set
     as long as you use standard openssl sshd.
     ![](docs/images/connect-with-ssh.png)
-    For backward compatibility *or* non-standard sshd packaged in your
+    For backward compatibility *or* non-standard sshd packaged in your
     docker image, you also have option to provide manually configured
     ssh credentials
 -   **Note:** If the docker container's host SSH key is not trusted by
@@ -156,7 +156,7 @@ for the Docker image to be used:
 -   a JDK installed.
     You can use
     [jenkins/agent](https://hub.docker.com/r/jenkins/agent/)
-    as a basis for a custom image.�
+    as a basis for a custom image.
 
 To create a custom image and bundle your favorite tools,
 create a `Dockerfile` with the `FROM` to point to one of the
