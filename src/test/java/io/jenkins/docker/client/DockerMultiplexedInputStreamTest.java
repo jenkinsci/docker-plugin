@@ -80,6 +80,10 @@ class DemuxTester implements AutoCloseable, Runnable {
                     // Demux EOF
                     eof = true;
                     return;
+                } else if (count == 0) {
+                    exc = new IOException(
+                            "the third argument to read() is nonzero, so we should never get a return value of zero from read()");
+                    return;
                 }
                 sink.write(buffer, 0, count);
                 sink.flush();
