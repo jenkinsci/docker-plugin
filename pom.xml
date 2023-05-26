@@ -10,7 +10,7 @@
 
   <groupId>io.jenkins.docker</groupId>
   <artifactId>docker-plugin</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>1.3.6</version>
   <packaging>hpi</packaging>
   <name>Docker plugin</name>
   <description>Provide Cloud Provisioning and other Docker features</description>
@@ -55,7 +55,7 @@
   <scm>
     <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
     <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
-    <tag>${scmTag}</tag>
+    <tag>docker-plugin-1.3.6</tag>
     <url>https://github.com/${gitHubRepo}</url>
   </scm>
 
