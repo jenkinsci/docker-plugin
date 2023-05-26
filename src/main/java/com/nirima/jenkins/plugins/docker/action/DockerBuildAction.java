@@ -44,6 +44,7 @@ public class DockerBuildAction implements Action, Serializable, Describable<Dock
                 containerDetails = client.inspectContainerCmd(containerId).exec();
             }
             this.inspect = new ObjectMapper()
+                    .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
                     .enable(SerializationFeature.INDENT_OUTPUT)
                     .writeValueAsString(containerDetails);
         } catch (IOException e) {
