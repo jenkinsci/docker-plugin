@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -372,7 +373,22 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         // Get the binding that goes to the port that we're interested in (e.g: 22)
         final Ports.Binding[] sshBindings = bindings.get(sshPort);
         // Find where it's mapped to
-        for (Ports.Binding b : sshBindings) {
+        /*
+         * TODO This code prioritizes IPv4 localhost over IPv6 localhost (and prioritizes
+         * non-localhost over both of the above). This is correct for the common case of users who
+         * have IPv4, IPv6, or both IPv4 and IPv6 enabled and whose Docker host is IPv4. It might
+         * not be correct for users who have IPv4 and IPv6 enabled and whose Docker host is IPv6,
+         * but such users are relatively uncommon. To handle that use case, we would need to figure
+         * out if the Docker host is IPv4 or IPv6, and it is not straightforward given the existing
+         * logic in getExternalIP(). The entire process could be rewritten to use the IP address
+         * from the Ports.Binding tuple, but that is a significant change that carries a high risk
+         * of regression. This ugly trick is the path of least resistance in the short term.
+         */
+        final Ports.Binding b = Stream.of(sshBindings)
+                .sorted(new HostPortComparator())
+                .findFirst()
+                .orElse(null);
+        if (b != null) {
             String hps = b.getHostPortSpec();
             port = Integer.valueOf(hps);
         }
@@ -391,7 +407,7 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         if (api.isSwarm()) {
             for (Ports.Binding b : sshBindings) {
                 String ipAddress = b.getHostIp();
-                if (ipAddress != null && !"0.0.0.0".equals(ipAddress)) {
+                if (ipAddress != null && !"0.0.0.0".equals(ipAddress) && !"::".equals(ipAddress)) {
                     return ipAddress;
                 }
             }
