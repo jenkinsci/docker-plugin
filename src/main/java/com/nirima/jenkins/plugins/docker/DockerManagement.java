@@ -23,7 +23,7 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public String getIconFileName() {
-        return com.nirima.jenkins.plugins.docker.utils.Consts.PLUGIN_IMAGES_URL + "/48x48/docker.png";
+        return "symbol-logo-docker plugin-ionicons-api";
     }
 
     @Override

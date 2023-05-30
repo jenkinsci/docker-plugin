@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core"
          xmlns:t="/lib/hudson"
         >
-    <t:summary icon="/plugin/docker-plugin/images/48x48/docker.png">
+    <t:summary icon="symbol-logo-docker plugin-ionicons-api">
 
         <h1>Docker Image Build / Publish</h1>
 

@@ -3,8 +3,21 @@
     <l:layout title="Docker">
     <l:main-panel>
 
-       <st:include page="summary.jelly" />
-
+      <h1>Docker Build Data</h1>
+      <ul>
+        <j:choose>
+          <j:when test="${it.cloudId != null}">
+            <li><b>Cloud:</b> ${it.cloudId}</li>
+          </j:when>
+          <j:otherwise>
+            <li><b>Host:</b> ${it.containerHost}</li>
+          </j:otherwise>
+        </j:choose>
+        <li><b>Container Id:</b> ${it.containerId}</li>
+        <j:if test="${it.taggedId != null}">
+          <li><b>Committed Container Id:</b> ${it.taggedId}</li>
+        </j:if>
+      </ul>
       <j:if test="${it.inspect != null}">
          <h2>Container details (docker inspect)</h2>
          <pre>${it.inspect}</pre>
