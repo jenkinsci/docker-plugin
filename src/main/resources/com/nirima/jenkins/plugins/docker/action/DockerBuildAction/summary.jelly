@@ -4,7 +4,7 @@
     xmlns:f="/lib/form" xmlns:i="jelly:fmt">
     <t:summary icon="symbol-logo-docker plugin-ionicons-api">
 
-    <h1>Docker Build Data</h1>
+    <p>Docker build metadata:</p>
 
     <ul>
       <j:choose>
