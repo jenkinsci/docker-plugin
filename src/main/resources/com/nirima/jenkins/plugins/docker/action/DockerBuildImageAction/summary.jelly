@@ -4,7 +4,7 @@
         >
     <t:summary icon="symbol-logo-docker plugin-ionicons-api">
 
-        <h1>Docker Image Build / Publish</h1>
+        <p>Docker image build metadata:</p>
 
         <b>Host:</b>
         ${it.containerHost}
