@@ -17,7 +17,7 @@ public class DockerMultiplexedInputStream extends InputStream {
 
     private final InputStream multiplexed;
     private final String name;
-    int next;
+    private int next;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerMultiplexedInputStream.class);
 
@@ -29,27 +29,39 @@ public class DockerMultiplexedInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        readInternal();
-        next--;
-        return multiplexed.read();
+        if (!readInternal()) {
+            return -1; // EOF reading header
+        }
+        int nextByte = multiplexed.read();
+        if (nextByte >= 0) {
+            next--;
+        }
+        return nextByte;
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        readInternal();
-        int byteRead = multiplexed.read(b, off, Math.min(next, len));
-        next -= byteRead;
-        return byteRead;
+        if (!readInternal()) {
+            return -1; // EOF reading header
+        }
+        int bytesRead = multiplexed.read(b, off, Math.min(next, len));
+        if (bytesRead >= 0) {
+            next -= bytesRead;
+        }
+        return bytesRead;
     }
 
-    private void readInternal() throws IOException {
+    /**
+     * @return False if we reached EOF while reading the header.
+     */
+    private boolean readInternal() throws IOException {
         while (next == 0) {
             byte[] header = new byte[8];
             int todo = 8;
             while (todo > 0) {
                 int i = multiplexed.read(header, 8 - todo, todo);
                 if (i < 0) {
-                    return; // EOF
+                    return false; // EOF
                 }
                 todo -= i;
             }
@@ -85,5 +97,6 @@ public class DockerMultiplexedInputStream extends InputStream {
                             "Unexpected application/vnd.docker.raw-stream frame type " + Arrays.toString(header));
             }
         }
+        return true;
     }
 }

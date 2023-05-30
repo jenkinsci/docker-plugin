@@ -76,9 +76,13 @@ class DemuxTester implements AutoCloseable, Runnable {
             int count;
             while (true) {
                 count = stream.read(buffer, 0, buffer.length);
-                if (count <= 0) {
+                if (count < 0) {
                     // Demux EOF
                     eof = true;
+                    return;
+                } else if (count == 0) {
+                    exc = new IOException(
+                            "the third argument to read() is nonzero, so we should never get a return value of zero from read()");
                     return;
                 }
                 sink.write(buffer, 0, count);
@@ -314,6 +318,17 @@ public class DockerMultiplexedInputStreamTest {
             Assert.assertNull(tester.exception());
         }
 
+        // empty header
+        try (DemuxTester tester = new DemuxTester()) {
+            tester.iteration(
+                    new byte[] {},
+                    new byte[] {},
+                    // send EOF
+                    true);
+            Assert.assertTrue(tester.isEof());
+            Assert.assertNull(tester.exception());
+        }
+
         // EOF in stdout
         try (DemuxTester tester = new DemuxTester()) {
             tester.iteration(
@@ -381,6 +396,100 @@ public class DockerMultiplexedInputStreamTest {
                         3,
                         68,
                         69,
+                    },
+                    new byte[] {65, 66, 67},
+                    // send EOF
+                    true);
+            Assert.assertTrue(tester.isEof());
+            Assert.assertNull(tester.exception());
+        }
+
+        // stdout frame empty in both header and body
+        try (DemuxTester tester = new DemuxTester()) {
+            tester.iteration(
+                    new byte[] {
+                        // empty stdout frame
+                        1, 0, 0, 0, 0, 0, 0, 0,
+                    },
+                    new byte[] {},
+                    // send EOF
+                    true);
+            Assert.assertTrue(tester.isEof());
+            Assert.assertNull(tester.exception());
+        }
+
+        // stdout frame nonempty in header but missing in body
+        try (DemuxTester tester = new DemuxTester()) {
+            tester.iteration(
+                    new byte[] {
+                        // stdout frame nonempty in header but missing in body
+                        1, 0, 0, 0, 0, 0, 0, 3,
+                    },
+                    new byte[] {},
+                    // send EOF
+                    true);
+            Assert.assertTrue(tester.isEof());
+            Assert.assertNull(tester.exception());
+        }
+
+        // stderr frame empty in both header and body
+        try (DemuxTester tester = new DemuxTester()) {
+            tester.iteration(
+                    new byte[] {
+                        // stdout frame (3 bytes)
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3,
+                        65,
+                        66,
+                        67,
+                        // empty stderr frame
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    },
+                    new byte[] {65, 66, 67},
+                    // send EOF
+                    true);
+            Assert.assertTrue(tester.isEof());
+            Assert.assertNull(tester.exception());
+        }
+
+        // stderr frame nonempty in header but missing in body
+        try (DemuxTester tester = new DemuxTester()) {
+            tester.iteration(
+                    new byte[] {
+                        // stdout frame (3 bytes)
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3,
+                        65,
+                        66,
+                        67,
+                        // stderr frame nonempty in header but missing in body
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3,
                     },
                     new byte[] {65, 66, 67},
                     // send EOF
