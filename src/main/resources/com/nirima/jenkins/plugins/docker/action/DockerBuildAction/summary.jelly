@@ -1,11 +1,7 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
-    xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
-    xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-    <t:summary icon="symbol-logo-docker plugin-ionicons-api">
-
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+  <t:summary icon="symbol-logo-docker plugin-ionicons-api">
     <p>Docker build metadata:</p>
-
     <ul>
       <j:choose>
         <j:when test="${it.cloudId != null}">
@@ -15,11 +11,10 @@
           <li><b>Host:</b> ${it.containerHost}</li>
         </j:otherwise>
       </j:choose>
-      <li><b>Container Id:</b> ${it.containerId}</li>
+      <li><b>Container ID:</b> ${it.containerId}</li>
       <j:if test="${it.taggedId != null}">
-        <li><b>Committed Container Id:</b> ${it.taggedId}</li>
+        <li><b>Committed Container ID:</b> ${it.taggedId}</li>
       </j:if>
     </ul>
-
-    </t:summary>
+  </t:summary>
 </j:jelly>
