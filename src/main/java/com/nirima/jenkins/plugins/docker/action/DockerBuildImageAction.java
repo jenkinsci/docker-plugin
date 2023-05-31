@@ -1,13 +1,15 @@
 package com.nirima.jenkins.plugins.docker.action;
 
 import hudson.Extension;
-import hudson.model.Action;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.Run;
 import java.io.Serializable;
 import java.util.List;
 import jenkins.model.Jenkins;
+import jenkins.model.RunAction2;
 import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.export.ExportedBean;
 
@@ -15,7 +17,7 @@ import org.kohsuke.stapler.export.ExportedBean;
  * Created by magnayn on 10/01/2014.
  */
 @ExportedBean
-public class DockerBuildImageAction implements Action, Serializable, Describable<DockerBuildImageAction> {
+public class DockerBuildImageAction implements RunAction2, Serializable, Describable<DockerBuildImageAction> {
 
     public final String containerHost;
     public final String containerId;
@@ -32,6 +34,8 @@ public class DockerBuildImageAction implements Action, Serializable, Describable
     public final boolean pushOnSuccess;
     public /* almost final */ boolean noCache;
     public /* almost final */ boolean pull;
+
+    private transient Run<?, ?> run;
 
     @Deprecated
     public DockerBuildImageAction(
@@ -87,6 +91,11 @@ public class DockerBuildImageAction implements Action, Serializable, Describable
         this.noCache = noCache;
     }
 
+    @Restricted(DoNotUse.class) // for Jelly
+    public Run<?, ?> getRun() {
+        return run;
+    }
+
     @Override
     public String getIconFileName() {
         return "symbol-logo-docker plugin-ionicons-api";
@@ -99,12 +108,22 @@ public class DockerBuildImageAction implements Action, Serializable, Describable
 
     @Override
     public String getUrlName() {
-        return "docker";
+        return "dockerImage";
     }
 
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) Jenkins.get().getDescriptorOrDie(getClass());
+    }
+
+    @Override
+    public void onAttached(Run<?, ?> run) {
+        this.run = run;
+    }
+
+    @Override
+    public void onLoad(Run<?, ?> run) {
+        this.run = run;
     }
 
     /**
