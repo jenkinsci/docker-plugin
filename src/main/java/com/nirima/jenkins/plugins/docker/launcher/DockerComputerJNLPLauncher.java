@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker.launcher;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.slaves.JNLPLauncher;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import io.jenkins.docker.connector.DockerComputerJNLPConnector;
@@ -14,7 +15,7 @@ import io.jenkins.docker.connector.DockerComputerJNLPConnector;
  *
  * @author Kanstantsin Shautsou
  */
-@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+@SuppressFBWarnings(
         value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
         justification = "Deprecated; required for backwards compatibility only.")
 @Deprecated

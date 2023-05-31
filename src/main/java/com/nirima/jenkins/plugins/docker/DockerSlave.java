@@ -1,6 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.model.Descriptor;
 import hudson.model.Slave;
 import hudson.slaves.ComputerLauncher;
@@ -13,7 +14,7 @@ import java.io.UncheckedIOException;
  * @deprecated use {@link DockerTransientNode}
  */
 @Deprecated
-@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+@SuppressFBWarnings(
         value = "SE_NO_SERIALVERSIONID",
         justification = "Deprecated; required for backwards compatibility only.")
 public class DockerSlave extends Slave {

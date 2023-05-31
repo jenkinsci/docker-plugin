@@ -497,9 +497,6 @@ public class DockerTemplate implements Describable<DockerTemplate> {
      * Initializes data structure that we don't persist.
      * @return this, but populated
      */
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
-            value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
-            justification = "This method's job is to ensure that things aren't null where they shouldn't be.")
     protected Object readResolve() {
         try {
             // https://github.com/jenkinsci/docker-plugin/issues/270
