@@ -108,7 +108,7 @@ public class DockerBuildImageAction implements RunAction2, Serializable, Describ
 
     @Override
     public String getUrlName() {
-        return "docker";
+        return "dockerImage";
     }
 
     @Override
