@@ -1,6 +1,7 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
     <l:layout title="Docker">
+        <st:include it="${it.run}" page="sidepanel.jelly" />
         <l:main-panel>
             <h1>Docker Image Build / Publish</h1>
 

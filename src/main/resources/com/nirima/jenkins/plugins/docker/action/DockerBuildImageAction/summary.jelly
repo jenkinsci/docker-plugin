@@ -1,21 +1,11 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core"
-         xmlns:t="/lib/hudson"
-        >
-    <t:summary icon="symbol-logo-docker plugin-ionicons-api">
-
-        <p>Docker image build metadata:</p>
-
-        <b>Host:</b>
-        ${it.containerHost}
-        <br/>
-
-        <b>Original Container Id:</b>
-        ${it.containerId}
-        <br/>
-        <b>Committed Container Id(s):</b>
-        ${it.tags}
-        <br/>
-
-    </t:summary>
+<j:jelly xmlns:j="jelly:core" xmlns:t="/lib/hudson">
+  <t:summary icon="symbol-logo-docker plugin-ionicons-api">
+    <p>Docker image build metadata:</p>
+    <ul>
+      <li><b>Host:</b> ${it.containerHost}</li>
+      <li><b>Original Container ID:</b> ${it.containerId}</li>
+      <li><b>Committed Container ID(s):</b> ${it.tags}</li>
+    </ul>
+  </t:summary>
 </j:jelly>

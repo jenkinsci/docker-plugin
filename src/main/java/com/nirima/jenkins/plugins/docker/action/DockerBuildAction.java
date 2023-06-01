@@ -5,27 +5,32 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import hudson.Extension;
-import hudson.model.Action;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.Run;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
 import java.io.Serializable;
 import jenkins.model.Jenkins;
+import jenkins.model.RunAction2;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * Created by magnayn on 10/01/2014.
  */
 @ExportedBean
-public class DockerBuildAction implements Action, Serializable, Describable<DockerBuildAction> {
+public class DockerBuildAction implements RunAction2, Serializable, Describable<DockerBuildAction> {
 
     private String cloudId;
     private final String containerHost;
     private final String containerId;
     private String inspect;
     private String taggedId;
+
+    private transient Run<?, ?> run;
 
     public DockerBuildAction(String containerHost, String containerId, String taggedId) {
         this.containerHost = containerHost;
@@ -72,6 +77,11 @@ public class DockerBuildAction implements Action, Serializable, Describable<Dock
         return inspect;
     }
 
+    @Restricted(DoNotUse.class) // for Jelly
+    public Run<?, ?> getRun() {
+        return run;
+    }
+
     @Override
     public String getIconFileName() {
         return "symbol-logo-docker plugin-ionicons-api";
@@ -90,6 +100,16 @@ public class DockerBuildAction implements Action, Serializable, Describable<Dock
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) Jenkins.get().getDescriptorOrDie(getClass());
+    }
+
+    @Override
+    public void onAttached(Run<?, ?> run) {
+        this.run = run;
+    }
+
+    @Override
+    public void onLoad(Run<?, ?> run) {
+        this.run = run;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.nirima.jenkins.plugins.docker.launcher;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.plugins.sshslaves.SSHConnector;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import io.jenkins.docker.connector.DockerComputerSSHConnector;
@@ -8,7 +9,7 @@ import io.jenkins.docker.connector.DockerComputerSSHConnector;
  * Configurable SSH launcher that expected ssh port to be exposed from docker container.
  */
 @Deprecated
-@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+@SuppressFBWarnings(
         value = {
             "UWF_UNWRITTEN_FIELD",
             "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
