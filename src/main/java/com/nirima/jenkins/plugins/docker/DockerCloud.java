@@ -602,21 +602,21 @@ public class DockerCloud extends Cloud {
             templates.remove(t);
         }
     }
-    
+
     /**
      * @deprecated use countContainersInDocker(String, String) instead
      * @see DockerCloud#countContainersInDocker(String, String)
      */
     @Deprecated
     public int countContainersInDocker(final String imageName) throws Exception {
-    	return countContainersInDocker(imageName, null);
+        return countContainersInDocker(imageName, null);
     }
 
     /**
      * Counts the number of instances currently running in Docker that are using
      * the specified image and template.<br>
      * Returns all containers matching the given filter parameters.
-     * 
+     *
      * <p>
      * <b>WARNING:</b> This method can be slow so it should be called sparingly.
      *
@@ -637,13 +637,13 @@ public class DockerCloud extends Cloud {
             labelFilter.put(DockerContainerLabelKeys.CONTAINER_IMAGE, imageName);
         }
         if (templateName != null) {
-        	labelFilter.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
+            labelFilter.put(DockerContainerLabelKeys.TEMPLATE_NAME, templateName);
         }
         final List<Container> containers;
         try (final DockerClient client = dockerApi.getClient()) {
             containers = client.listContainersCmd().withLabelFilter(labelFilter).exec();
         }
-       
+
         final int count = containers.size();
         return count;
     }
@@ -677,7 +677,7 @@ public class DockerCloud extends Cloud {
         }
         final int estimatedTemplateAgents;
         if (haveTemplateContainerCap) {
-			final int totalContainersOfThisTemplateInCloud = countContainersInDocker(templateImage, templateName);
+            final int totalContainersOfThisTemplateInCloud = countContainersInDocker(templateImage, templateName);
             final int containersInProgress = countContainersInProgress(t);
             estimatedTemplateAgents = totalContainersOfThisTemplateInCloud + containersInProgress;
             if (estimatedTemplateAgents >= templateContainerCap) {
