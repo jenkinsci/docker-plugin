@@ -220,7 +220,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
 
             DockerDisabled dcDisabled = dc.getDisabled();
             if (dcDisabled.isDisabled()) {
-                LOGGER.info(
+                LOGGER.debug(
                         "Will not cleanup superfluous containers on DockerCloud [name={}, dockerURI={}], as it is disabled",
                         dc.getDisplayName(),
                         dc.getDockerApi().getDockerHost().getUri());
