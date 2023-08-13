@@ -21,9 +21,9 @@ public class DockerComputerAttachConnectorTest extends DockerComputerConnectorTe
     @Test
     public void connectAgentViaDirectAttachWithCustomCmd() throws Exception {
         final DockerComputerAttachConnector connector = new DockerComputerAttachConnector(COMMON_IMAGE_USERNAME);
-        // We could setJavaExe("/usr/local/openjdk-8/bin/java") too, but that'd mean
-        // we'd break the instant that the public docker image's JVM updates to 9 or
-        // higher; best stick to just using the $PATH.
+        // We could setJavaExe("/opt/jdk-11/bin/java") too, but that'd
+        // mean we'd break the instant that the public docker image's JVM
+        // updates to a newer JDK; best stick to just using the $PATH.
         connector.setJvmArgsString("-Xmx1g" + "\n" + "-Dfoo=bar\n");
         connector.setEntryPointCmdString("java\n"
                 + "${" + ArgumentVariables.JvmArgs.getName() + "}\n"
