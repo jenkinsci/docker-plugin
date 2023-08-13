@@ -48,19 +48,12 @@ public abstract class DockerComputerConnectorTest {
         final String systemPropertyName = "java.version";
         final String javaVersion = System.getProperty(systemPropertyName);
         try {
-            if (javaVersion.startsWith("1.")) {
-                // we're using Java 8 or lower so the syntax is 1.x where x is the version we
-                // want.
-                // ... and we know that x will be a single digit.
-                // e.g. 1.8.1 is Java 8, 1.6.3 is Java 6 etc.
-                final String secondNumber = javaVersion.substring(2, 3);
-                return Integer.parseInt(secondNumber);
-            }
-            // otherwise we're using Java 9 or higher so the syntax is x.n...
+            // We're using Java 9 or higher so the syntax is x.n...
             // ... but x might be multiple digits.
             // e.g. 9.0 is Java 9, 11.123.4 is Java 11 etc.
+            // Early access builds report as "21-ea".  Remove all text after "-".
             final int indexOfPeriod = javaVersion.indexOf('.');
-            final String firstNumber = indexOfPeriod < 0 ? javaVersion : javaVersion.substring(0, indexOfPeriod);
+            final String firstNumber = javaVersion.replaceAll("[-.].*$", "");
             return Integer.parseInt(firstNumber);
         } catch (RuntimeException ex) {
             throw new IllegalStateException(
