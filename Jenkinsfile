@@ -2,6 +2,8 @@
 
 /* `buildPlugin` step provided by: https://github.com/jenkins-infra/pipeline-library */
 buildPlugin(
+  // Run a JVM per core in tests
+  forkCount: '1C',
   // Container agents won't work for testing this plugin
   useContainerAgent: false,
   // Show failures on all configurations
