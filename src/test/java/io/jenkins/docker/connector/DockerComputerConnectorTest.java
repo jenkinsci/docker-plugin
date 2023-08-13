@@ -53,7 +53,7 @@ public abstract class DockerComputerConnectorTest {
             // e.g. 9.0 is Java 9, 11.123.4 is Java 11 etc.
             // Early access builds report as "21-ea".  Remove all text after "-".
             final int indexOfPeriod = javaVersion.indexOf('.');
-            final String firstNumber = javaVersion.replaceAll("[-.].*$", "");
+            final String firstNumber = javaVersion.replaceAll("[-.].*", "");
             return Integer.parseInt(firstNumber);
         } catch (RuntimeException ex) {
             throw new IllegalStateException(
