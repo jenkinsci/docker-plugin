@@ -45,22 +45,8 @@ public abstract class DockerComputerConnectorTest {
     protected static final String INSTANCE_CAP = "10";
 
     private static int getJavaVersion() {
-        final String systemPropertyName = "java.version";
-        final String javaVersion = System.getProperty(systemPropertyName);
-        try {
-            // We're using Java 9 or higher so the syntax is x.n...
-            // ... but x might be multiple digits.
-            // e.g. 9.0 is Java 9, 11.123.4 is Java 11 etc.
-            // Early access builds report as "21-ea".  Remove all text after "-".
-            final int indexOfPeriod = javaVersion.indexOf('.');
-            final String firstNumber = javaVersion.replaceAll("[-.].*", "");
-            return Integer.parseInt(firstNumber);
-        } catch (RuntimeException ex) {
-            throw new IllegalStateException(
-                    "Unable to determine version of Java from system property '" + systemPropertyName + "' value '"
-                            + javaVersion + "'.",
-                    ex);
-        }
+        Runtime.Version runtimeVersion = Runtime.version();
+        return runtimeVersion.version().get(0);
     }
 
     protected static String getJenkinsDockerImageVersionForThisEnvironment() {
