@@ -120,7 +120,7 @@ public class DockerDisabled extends AbstractDescribableImpl<DockerDisabled> impl
         final long now = readTimeNowInNanoseconds();
         final long howLongAgoInNanoseconds = now - nanotimeWhenDisabledBySystem;
         final long howLongAgoInMilliseconds = TimeUnit.NANOSECONDS.toMillis(howLongAgoInNanoseconds);
-        return Util.getPastTimeString(howLongAgoInMilliseconds);
+        return Util.getTimeSpanString(howLongAgoInMilliseconds);
     }
 
     /**
