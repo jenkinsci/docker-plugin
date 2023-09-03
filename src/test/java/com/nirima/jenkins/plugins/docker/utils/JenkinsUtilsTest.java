@@ -28,12 +28,11 @@ public class JenkinsUtilsTest {
     public void getCloudByNameOrThrowGivenNameThenReturnsCloud() throws Exception {
         // Given
         final DockerAPI dockerApi = new DockerAPI(new DockerServerEndpoint("uri", "credentialsId"));
-        final DockerCloud cloudEmpty = new DockerCloud("", dockerApi, Collections.emptyList());
         final String expectedCloudName = "expectedCloudName";
         final DockerCloud cloudExpected = new DockerCloud(expectedCloudName, dockerApi, Collections.emptyList());
         final DockerCloud cloudOther = new DockerCloud("otherCloudName", dockerApi, Collections.emptyList());
         final OtherTypeOfCloud cloudForeign = new OtherTypeOfCloud("foreign");
-        final List<Cloud> clouds = List.of(cloudEmpty, cloudOther, cloudExpected, cloudForeign);
+        final List<Cloud> clouds = List.of(cloudOther, cloudExpected, cloudForeign);
         jenkins.getInstance().clouds.replaceBy(clouds);
 
         // When
@@ -47,14 +46,13 @@ public class JenkinsUtilsTest {
     public void getCloudByNameOrThrowGivenUnknownNameThenThrows() throws Exception {
         // Given
         final DockerAPI dockerApi = new DockerAPI(new DockerServerEndpoint("uri", "credentialsId"));
-        final DockerCloud cloudEmpty = new DockerCloud("", dockerApi, Collections.emptyList());
         final String requestedCloudName = "anUnknownCloudName";
         final String cloudName1 = "expectedCloudName";
         final DockerCloud cloud1 = new DockerCloud(cloudName1, dockerApi, Collections.emptyList());
         final String cloudName2 = "otherCloudName";
         final DockerCloud cloud2 = new DockerCloud(cloudName2, dockerApi, Collections.emptyList());
         final OtherTypeOfCloud cloudForeign = new OtherTypeOfCloud("foreign");
-        final List<Cloud> clouds = List.of(cloudEmpty, cloud2, cloud1, cloudForeign);
+        final List<Cloud> clouds = List.of(cloud2, cloud1, cloudForeign);
         jenkins.getInstance().clouds.replaceBy(clouds);
 
         try {
@@ -75,14 +73,13 @@ public class JenkinsUtilsTest {
     public void getCloudByNameOrThrowGivenForeignCloudNameThenThrows() throws Exception {
         // Given
         final DockerAPI dockerApi = new DockerAPI(new DockerServerEndpoint("uri", "credentialsId"));
-        final DockerCloud cloudEmpty = new DockerCloud("", dockerApi, Collections.emptyList());
         final String requestedCloudName = "foreign";
         final String cloudName1 = "DockerCloud1Name";
         final DockerCloud cloud1 = new DockerCloud(cloudName1, dockerApi, Collections.emptyList());
         final String cloudName2 = "DockerCloud2Name";
         final DockerCloud cloud2 = new DockerCloud(cloudName2, dockerApi, Collections.emptyList());
         final OtherTypeOfCloud cloudForeign = new OtherTypeOfCloud(requestedCloudName);
-        final List<Cloud> clouds = List.of(cloudEmpty, cloud2, cloud1, cloudForeign);
+        final List<Cloud> clouds = List.of(cloud2, cloud1, cloudForeign);
         jenkins.getInstance().clouds.replaceBy(clouds);
 
         try {
