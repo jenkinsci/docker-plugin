@@ -18,12 +18,17 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.core.IsIterableContaining;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.LoggerRule;
 
 /**
  * @author Kanstantsin Shautsou
@@ -32,6 +37,9 @@ public class DockerCloudTest {
 
     @Rule
     public JenkinsRule jenkins = new JenkinsRule();
+
+    @Rule
+    public LoggerRule lr = new LoggerRule();
 
     @SuppressWarnings("unused")
     @Test
@@ -46,6 +54,28 @@ public class DockerCloudTest {
                 null, // credentialsId,
                 null, // version
                 null); // dockerHostname
+    }
+
+    private static final String LOG_MESSAGE = "Docker cloud requires a non-blank name after Jenkins 2.402";
+
+    @Issue("JENKINS-70729") // Warn if cloud name is empty
+    @Test
+    public void testConstructorWithEmptyName() {
+        lr.record(DockerCloud.class.getName(), Level.ALL).capture(16);
+        DockerCloud cloud =
+                new DockerCloud("", new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")), List.of());
+        Assert.assertEquals(cloud.getDisplayName(), "");
+        MatcherAssert.assertThat(lr.getMessages(), IsIterableContaining.hasItem(LOG_MESSAGE));
+    }
+
+    @Issue("JENKINS-70729") // Warn if cloud name is null
+    @Test
+    public void testConstructorWithNullName() {
+        lr.record(DockerCloud.class.getName(), Level.ALL).capture(16);
+        DockerCloud cloud =
+                new DockerCloud(null, new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")), List.of());
+        Assert.assertEquals(cloud.getDisplayName(), null);
+        MatcherAssert.assertThat(lr.getMessages(), IsIterableContaining.hasItem(LOG_MESSAGE));
     }
 
     @Test
