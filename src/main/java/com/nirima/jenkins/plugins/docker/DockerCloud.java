@@ -138,6 +138,9 @@ public class DockerCloud extends Cloud {
         super(name);
         this.dockerApi = dockerApi;
         this.templates = templates;
+        if (name == null || name.isBlank()) {
+            LOGGER.warn("Docker cloud requires a non-blank name after Jenkins 2.402");
+        }
     }
 
     @Deprecated
