@@ -78,6 +78,21 @@ public class DockerCloudTest {
         MatcherAssert.assertThat(lr.getMessages(), IsIterableContaining.hasItem(LOG_MESSAGE));
     }
 
+    @Issue("JENKINS-70729") // Handle null or empty cloud name
+    @Test
+    public void testCopyConstructor() {
+        lr.record(DockerCloud.class.getName(), Level.ALL).capture(16);
+        DockerCloud cloud =
+                new DockerCloud(null, new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")), List.of());
+        Assert.assertEquals(cloud.getDisplayName(), null);
+        MatcherAssert.assertThat(lr.getMessages(), IsIterableContaining.hasItem(LOG_MESSAGE));
+        String newName = "docker-cloud-" + Integer.toHexString(cloud.hashCode());
+        DockerCloud copy = new DockerCloud(newName, cloud);
+        Assert.assertEquals(cloud.getDockerApi(), copy.getDockerApi());
+        Assert.assertEquals(cloud.getTemplates().hashCode(), copy.getTemplates().hashCode());
+        Assert.assertEquals(newName, copy.getDisplayName());
+    }
+
     @Test
     public void globalConfigRoundtrip() throws Exception {
 

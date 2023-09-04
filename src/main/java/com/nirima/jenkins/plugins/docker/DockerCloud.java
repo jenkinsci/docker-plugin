@@ -143,6 +143,13 @@ public class DockerCloud extends Cloud {
         }
     }
 
+    /* Constructor to create a new DockerCloud based on an existing DockerCloud */
+    public DockerCloud(@NonNull String name, @NonNull DockerCloud source) {
+        super(name);
+        this.dockerApi = source.dockerApi;
+        this.templates = source.templates;
+    }
+
     @Deprecated
     public DockerCloud(
             String name,
@@ -731,7 +738,9 @@ public class DockerCloud extends Cloud {
         }
 
         if (name == null || name.isBlank()) {
-            LOGGER.warn("Docker cloud requires a non-blank name after Jenkins 2.402");
+            String newName = "docker-cloud-" + Integer.toHexString(hashCode());
+            LOGGER.warn("Docker cloud requires a non-blank name after Jenkins 2.402, using '" + newName + "'");
+            return new DockerCloud(newName, this);
         }
 
         return this;
