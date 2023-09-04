@@ -730,6 +730,10 @@ public class DockerCloud extends Cloud {
             dockerApi = new DockerAPI(dockerHost, connectTimeout, readTimeout, version, dockerHostname);
         }
 
+        if (name == null || name.isBlank()) {
+            LOGGER.warn("Docker cloud requires a non-blank name after Jenkins 2.402");
+        }
+
         return this;
     }
 
