@@ -110,7 +110,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>cloud-stats</artifactId>
-      <version>316.vd6d6b_292238d</version>
+      <version>320.v96b_65297a_4b_b_</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
