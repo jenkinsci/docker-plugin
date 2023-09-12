@@ -62,7 +62,8 @@
   <properties>
     <revision>1.6</revision>
     <changelist>-SNAPSHOT</changelist>
-    <jenkins.version>2.387.3</jenkins.version>
+    <jenkins.version>2.423-rc34199.8c3d6c65b_758</jenkins.version>
+    <!-- TODO: https://github.com/jenkinsci/jenkins/pull/8310 -->
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
     <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
     <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
@@ -76,7 +77,7 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.387.x</artifactId>
+        <artifactId>bom-2.414.x</artifactId>
         <version>2401.v7a_d68f8d0b_09</version>
         <type>pom</type>
         <scope>import</scope>
