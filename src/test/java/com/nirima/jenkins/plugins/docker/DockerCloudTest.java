@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.core.IsIterableContaining;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.Assert;
