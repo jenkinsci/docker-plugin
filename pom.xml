@@ -62,7 +62,7 @@
   <properties>
     <revision>1.6</revision>
     <changelist>-SNAPSHOT</changelist>
-    <jenkins.version>2.423-rc34199.8c3d6c65b_758</jenkins.version>
+    <jenkins.version>2.423-rc34200.231db_9490cb_c</jenkins.version>
     <!-- TODO: https://github.com/jenkinsci/jenkins/pull/8310 -->
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
     <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
