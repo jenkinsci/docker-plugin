@@ -69,7 +69,7 @@
     <spotbugs.effort>Max</spotbugs.effort>
     <spotbugs.threshold>Low</spotbugs.threshold>
     <spotless.check.skip>false</spotless.check.skip>
-    <junixsocket.version>2.7.2</junixsocket.version>
+    <junixsocket.version>2.8.1</junixsocket.version>
   </properties>
 
   <dependencyManagement>
