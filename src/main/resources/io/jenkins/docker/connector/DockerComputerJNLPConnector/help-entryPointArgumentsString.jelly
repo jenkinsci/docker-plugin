@@ -34,7 +34,7 @@
       <blockquote>
         <tt>sh</tt><br/>
         <tt>-c</tt><br/>
-        <tt>wget $${JENKINS_URL}jnlpJars/agent.jar &amp;&amp; java -jar agent.jar -jnlpUrl $${JENKINS_URL}computer/$${NODE_NAME}/slave-agent.jnlp -secret $${JNLP_SECRET}</tt><br/>
+        <tt>wget $${JENKINS_URL}jnlpJars/agent.jar &amp;&amp; java -jar agent.jar -url $${JENKINS_URL} -secret $${JNLP_SECRET} -name $${NODE_NAME}</tt><br/>
       </blockquote>
     </p>
     <p>
