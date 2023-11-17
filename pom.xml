@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.73</version>
+    <version>4.75</version>
     <relativePath />
   </parent>
 
@@ -70,7 +70,7 @@
     <spotbugs.effort>Max</spotbugs.effort>
     <spotbugs.threshold>Low</spotbugs.threshold>
     <spotless.check.skip>false</spotless.check.skip>
-    <junixsocket.version>2.7.0</junixsocket.version>
+    <junixsocket.version>2.8.2</junixsocket.version>
   </properties>
 
   <dependencyManagement>
@@ -78,7 +78,7 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-2.414.x</artifactId>
-        <version>2401.v7a_d68f8d0b_09</version>
+        <version>2543.vfb_1a_5fb_9496d</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

@@ -4,9 +4,13 @@ version: 2
 updates:
   - package-ecosystem: "maven"
     directory: "/"
+    labels:
+      - "dependencies"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
   - package-ecosystem: "github-actions"
     directory: "/"
+    labels:
+      - "skip-changelog"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
