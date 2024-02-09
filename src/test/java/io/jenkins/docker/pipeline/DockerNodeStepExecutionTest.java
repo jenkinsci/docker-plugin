@@ -54,7 +54,7 @@ public class DockerNodeStepExecutionTest {
                 return "attach";
             }
         };
-        final DockerComputerConnector jnlp = new DockerComputerJNLPConnector(null) {
+        final DockerComputerConnector jnlp = new DockerComputerJNLPConnector() {
             @Override
             public String toString() {
                 return "jnlpNotSerializable";
