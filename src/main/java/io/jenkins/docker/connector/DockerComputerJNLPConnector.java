@@ -49,8 +49,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     private String[] entryPointArguments;
 
     @DataBoundConstructor
-    public DockerComputerJNLPConnector() {
-    }
+    public DockerComputerJNLPConnector() {}
 
     @CheckForNull
     public String getUser() {
@@ -178,8 +177,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
                 StringUtils.isEmpty(jenkinsUrl) ? Jenkins.get().getRootUrl() : jenkinsUrl;
         final String nodeName = DockerTemplate.getNodeNameFromContainerConfig(cmd);
         final String secret = JnlpAgentReceiver.SLAVE_SECRET.mac(nodeName);
-        final EnvVars knownVariables =
-                calculateVariablesForVariableSubstitution(nodeName, secret, effectiveJenkinsUrl);
+        final EnvVars knownVariables = calculateVariablesForVariableSubstitution(nodeName, secret, effectiveJenkinsUrl);
         final String configuredArgString = getEntryPointArgumentsString();
         final String effectiveConfiguredArgString =
                 StringUtils.isNotBlank(configuredArgString) ? configuredArgString : DEFAULT_ENTRY_POINT_ARGUMENTS;
