@@ -2,7 +2,6 @@ package io.jenkins.docker.connector;
 
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
-import hudson.slaves.JNLPLauncher;
 import java.net.URI;
 import jenkins.model.JenkinsLocationConfiguration;
 import org.apache.commons.lang3.SystemUtils;
@@ -40,7 +39,7 @@ public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest
                 JNLP_AGENT_IMAGE_IMAGENAME + ':' + getJenkinsDockerImageVersionForThisEnvironment();
         final DockerTemplate template = new DockerTemplate(
                 new DockerTemplateBase(imagenameAndVersion),
-                new DockerComputerJNLPConnector(new JNLPLauncher(null))
+                new DockerComputerJNLPConnector()
                         .withUser(COMMON_IMAGE_USERNAME)
                         .withJenkinsUrl(uri.toString()),
                 getLabelForTemplate(),

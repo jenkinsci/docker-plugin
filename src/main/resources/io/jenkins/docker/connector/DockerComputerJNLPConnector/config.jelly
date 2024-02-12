@@ -28,5 +28,4 @@
         <f:expandableTextbox />
     </f:entry>
 
-    <f:property field="jnlpLauncher"/>
 </j:jelly>

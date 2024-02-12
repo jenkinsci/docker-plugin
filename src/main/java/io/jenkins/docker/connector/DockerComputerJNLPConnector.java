@@ -3,7 +3,6 @@ package io.jenkins.docker.connector;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.bldToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.endToString;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
-import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.makeCopy;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmpty;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
 
@@ -43,23 +42,14 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     @CheckForNull
     private String user;
 
-    private final JNLPLauncher jnlpLauncher;
-
     @CheckForNull
     private String jenkinsUrl;
 
     @CheckForNull
     private String[] entryPointArguments;
 
-    @Restricted(NoExternalUse.class)
-    public DockerComputerJNLPConnector() {
-        this(new JNLPLauncher(false));
-    }
-
     @DataBoundConstructor
-    public DockerComputerJNLPConnector(JNLPLauncher jnlpLauncher) {
-        this.jnlpLauncher = jnlpLauncher;
-    }
+    public DockerComputerJNLPConnector() {}
 
     @CheckForNull
     public String getUser() {
@@ -113,16 +103,12 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         return this;
     }
 
-    public JNLPLauncher getJnlpLauncher() {
-        return jnlpLauncher;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + Arrays.hashCode(entryPointArguments);
-        result = prime * result + Objects.hash(jenkinsUrl, jnlpLauncher, user);
+        result = prime * result + Objects.hash(jenkinsUrl, user);
         return result;
     }
 
@@ -137,7 +123,6 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         DockerComputerJNLPConnector other = (DockerComputerJNLPConnector) obj;
         return Arrays.equals(entryPointArguments, other.entryPointArguments)
                 && Objects.equals(jenkinsUrl, other.jenkinsUrl)
-                && Objects.equals(jnlpLauncher, other.jnlpLauncher)
                 && Objects.equals(user, other.user);
     }
 
@@ -145,7 +130,6 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     public String toString() {
         final StringBuilder sb = startToString(this);
         bldToString(sb, "user", user);
-        bldToString(sb, "jnlpLauncher", jnlpLauncher);
         bldToString(sb, "jenkinsUrl", jenkinsUrl);
         bldToString(sb, "entryPointArguments", entryPointArguments);
         endToString(sb);
@@ -156,7 +140,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     protected ComputerLauncher createLauncher(
             final DockerAPI api, final String workdir, final InspectContainerResponse inspect, TaskListener listener)
             throws IOException, InterruptedException {
-        return makeCopy(jnlpLauncher);
+        return new JNLPLauncher();
     }
 
     @Restricted(NoExternalUse.class)
@@ -165,11 +149,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         Secret(
                 "JNLP_SECRET",
                 "The secret that must be passed to agent.jar's -secret argument to pass JNLP authentication."), //
-        JenkinsUrl("JENKINS_URL", "The Jenkins root URL."), //
-        TunnelArgument(
-                "TUNNEL_ARG",
-                "If a JNLP tunnel has been specified then this evaluates to '-tunnel', otherwise it evaluates to the empty string"), //
-        TunnelValue("TUNNEL", "The JNLP tunnel value");
+        JenkinsUrl("JENKINS_URL", "The Jenkins root URL.");
         private final String name;
         private final String description;
 
@@ -187,8 +167,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
         }
     }
 
-    private static final String DEFAULT_ENTRY_POINT_ARGUMENTS = "${" + ArgumentVariables.TunnelArgument.getName()
-            + "}\n${" + ArgumentVariables.TunnelValue.getName() + "}\n-url\n${" + ArgumentVariables.JenkinsUrl.getName()
+    private static final String DEFAULT_ENTRY_POINT_ARGUMENTS = "-url\n${" + ArgumentVariables.JenkinsUrl.getName()
             + "}\n${" + ArgumentVariables.Secret.getName() + "}\n${" + ArgumentVariables.NodeName.getName() + "}";
 
     @Override
@@ -198,8 +177,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
                 StringUtils.isEmpty(jenkinsUrl) ? Jenkins.get().getRootUrl() : jenkinsUrl;
         final String nodeName = DockerTemplate.getNodeNameFromContainerConfig(cmd);
         final String secret = JnlpAgentReceiver.SLAVE_SECRET.mac(nodeName);
-        final EnvVars knownVariables =
-                calculateVariablesForVariableSubstitution(nodeName, secret, jnlpLauncher.tunnel, effectiveJenkinsUrl);
+        final EnvVars knownVariables = calculateVariablesForVariableSubstitution(nodeName, secret, effectiveJenkinsUrl);
         final String configuredArgString = getEntryPointArgumentsString();
         final String effectiveConfiguredArgString =
                 StringUtils.isNotBlank(configuredArgString) ? configuredArgString : DEFAULT_ENTRY_POINT_ARGUMENTS;
@@ -224,7 +202,7 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     }
 
     private static EnvVars calculateVariablesForVariableSubstitution(
-            final String nodeName, final String secret, final String jnlpTunnel, final String jenkinsUrl)
+            final String nodeName, final String secret, final String jenkinsUrl)
             throws IOException, InterruptedException {
         final EnvVars knownVariables = new EnvVars();
         final Jenkins j = Jenkins.get();
@@ -236,12 +214,6 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
             switch (v) {
                 case JenkinsUrl:
                     argValue = jenkinsUrl;
-                    break;
-                case TunnelArgument:
-                    argValue = StringUtils.isNotBlank(jnlpTunnel) ? "-tunnel" : "";
-                    break;
-                case TunnelValue:
-                    argValue = jnlpTunnel;
                     break;
                 case Secret:
                     argValue = secret;

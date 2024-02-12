@@ -196,19 +196,51 @@ and/or using the [JCasC plugin](https://plugins.jenkins.io/configuration-as-code
 
 If you're unsure which method to use, use JCasC.
 
+### JCasC plugin
+
+Install the [configuration-as-code plugin](https://plugins.jenkins.io/configuration-as-code/) and follow [its example](https://github.com/jenkinsci/configuration-as-code-plugin/tree/master/demos/docker).
+
+As another alternative, a Docker daemon can listen to requests from remote hosts by following the [Docker documentation](https://docs.docker.com/config/daemon/remote-access/).
+The following configuration as code example creates a cloud named "my-docker-cloud" that uses the docker daemon at port 2375 on dockerhost.example.com to run up to 3 containerized agents at a time.
+Agents run the [Jenkins Alpine inbound agent container image](https://hub.docker.com/r/jenkins/inbound-agent) with Java 21.
+Thay use an inbound connection and run as the user ID 1000 with the home directory "/home/jenkins/agent".
+
+```yaml
+jenkins:
+  clouds:
+  - docker:
+      containerCap: 3
+      dockerApi:
+        connectTimeout: 23
+        dockerHost:
+          uri: "tcp://dockerhost.example.com:2375"
+        readTimeout: 43
+      errorDuration: 313
+      name: "my-docker-cloud"
+      templates:
+      - connector:
+          jnlp:
+            jenkinsUrl: "https://jenkins.example.com/"
+            user: "1000"
+        dockerTemplateBase:
+          cpuPeriod: 0
+          cpuQuota: 0
+          image: "jenkins/inbound-agent:latest-alpine-jdk21"
+        labelString: "alpine jdk21 alpine-jdk21 git-2.43"
+        name: "alpine-jdk21"
+        pullTimeout: 171
+        remoteFs: "/home/jenkins/agent"
+```
+
 ### Groovy script
 
 For example, this
 [configuration script](docs/attachments/docker-plugin-configuration-script.groovy)
 could be run automatically upon
-[Jenkins post-initialization](https://wiki.jenkins.io/display/JENKINS/Post-initialization+script)
+[Jenkins post-initialization](https://www.jenkins.io/doc/book/managing/groovy-hook-scripts/)
 or through the
-[Jenkins script console](https://wiki.jenkins.io/display/JENKINS/Jenkins+Script+Console).
+[Jenkins script console](https://www.jenkins.io/doc/book/managing/script-console/).
 If run,
 this script will configure the docker-plugin to look for a docker daemon running within the same OS as the Jenkins controller
 (connecting to Docker service through `unix:///var/run/docker.sock`)
 and with the containers connecting to Jenkins using the "attach" method.
-
-### JCasC plugin
-
-Install the [configuration-as-code plugin](https://plugins.jenkins.io/configuration-as-code/) and follow [its example](https://github.com/jenkinsci/configuration-as-code-plugin/tree/master/demos/docker).
