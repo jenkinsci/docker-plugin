@@ -262,7 +262,8 @@ public class DockerTemplateBaseTest {
         testFillContainerConfigCgroupParent("not existing", "", false);
     }
 
-    private static void testFillContainerConfigCgroupParent(final String imageName, final String cgroupParent, final boolean wasSet) {
+    private static void testFillContainerConfigCgroupParent(
+            final String imageName, final String cgroupParent, final boolean wasSet) {
         // Given
         final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
         final HostConfig mockHostConfig = mock(HostConfig.class);
