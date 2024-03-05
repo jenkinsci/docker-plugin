@@ -253,6 +253,35 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
+    public void fillContainerConfigCgroupParent() {
+        testFillContainerConfigCgroupParent("not existing", "dummy_cgroup_parent", true);
+    }
+
+    @Test
+    public void fillContainerConfigNoCgroupParent() {
+        testFillContainerConfigCgroupParent("not existing", "", false);
+    }
+
+    private static void testFillContainerConfigCgroupParent(final String imageName, final String cgroupParent, final boolean wasSet) {
+        // Given
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setCgroupParent(cgroupParent);
+
+        // When
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        // Then
+        if (wasSet) {
+            verify(mockHostConfig, times(1)).withCgroupParent(cgroupParent);
+        } else {
+            verify(mockHostConfig, never()).withCgroupParent(cgroupParent);
+        }
+    }
+
+    @Test
     public void fillContainerConfigCpus() {
         testFillContainerConfigCpus("not existing", "1.5", 1500000000L);
     }

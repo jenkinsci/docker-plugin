@@ -70,6 +70,10 @@
       <f:number />
     </f:entry>
 
+    <f:entry title="${%CGroup Parent}" field="cgroupParent">
+      <f:textbox/>
+    </f:entry>
+
      <f:entry title="${%CPU resources}" field="cpus">
        <f:textbox />
      </f:entry>

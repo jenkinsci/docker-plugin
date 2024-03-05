@@ -18,6 +18,7 @@ public class DockerTemplateTest {
     String javaPath = " javaPath";
     Integer memoryLimit = 1024;
     Integer memorySwap = 1280;
+    String cgroupParent = "cgroupParent";
     Long cpuPeriod = 0L;
     Long cpuQuota = 0L;
     Integer cpuShares = 1000;
@@ -72,6 +73,7 @@ public class DockerTemplateTest {
         dockerTemplateBase.setCapabilitiesToAddString(capabilitiesToAddString);
         dockerTemplateBase.setCapabilitiesToDropString(capabilitiesToDropString);
         dockerTemplateBase.setSecurityOptsString(securityOptsString);
+        dockerTemplateBase.setCgroupParent(cgroupParent);
 
         return new DockerTemplate(dockerTemplateBase, null, labelString, remoteFs, instanceCapStr);
     }
