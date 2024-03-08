@@ -1,7 +1,6 @@
 package com.nirima.jenkins.plugins.docker.launcher;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import hudson.slaves.JNLPLauncher;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import io.jenkins.docker.connector.DockerComputerJNLPConnector;
 
@@ -21,13 +20,11 @@ import io.jenkins.docker.connector.DockerComputerJNLPConnector;
 @Deprecated
 public class DockerComputerJNLPLauncher extends DockerComputerLauncher {
 
-    protected JNLPLauncher jnlpLauncher;
-
     protected String user;
 
     @Override
     public DockerComputerConnector convertToConnector() {
-        final DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector(jnlpLauncher);
+        final DockerComputerJNLPConnector connector = new DockerComputerJNLPConnector();
         connector.setUser(user);
         return connector;
     }

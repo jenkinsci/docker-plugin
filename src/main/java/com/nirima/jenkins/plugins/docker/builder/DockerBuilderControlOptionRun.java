@@ -51,6 +51,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     public final String bindPorts;
     public final Integer memoryLimit;
     public final Integer memorySwap;
+    public final String cgroupParent;
     public final String cpus;
     public final Long cpuPeriod;
     public final Long cpuQuota;
@@ -75,6 +76,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String extraGroupsString,
             Integer memoryLimit,
             Integer memorySwap,
+            String cgroupParent,
             String cpus,
             Long cpuPeriod,
             Long cpuQuota,
@@ -102,6 +104,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.bindPorts = bindPorts;
         this.memoryLimit = memoryLimit;
         this.memorySwap = memorySwap;
+        this.cgroupParent = cgroupParent;
         this.cpus = cpus;
         this.cpuPeriod = cpuPeriod;
         this.cpuQuota = cpuQuota;
@@ -205,6 +208,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
                 tty,
                 macAddress,
                 null);
+        template.setCgroupParent(cgroupParent);
 
         LOG.info("Starting container for image {}", xImage);
         llog.println("Starting container for image " + xImage);

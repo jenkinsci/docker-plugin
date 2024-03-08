@@ -112,6 +112,7 @@ public class DockerCloudTest {
         templateBase.setCapabilitiesToAddString("SYS_ADMIN");
         templateBase.setCapabilitiesToDropString("CHOWN");
         templateBase.setSecurityOptsString("seccomp=unconfined");
+        templateBase.setCgroupParent("");
         final DockerTemplate template = new DockerTemplate(
                 templateBase, new DockerComputerAttachConnector("jenkins"), "labelString", "remoteFs", "10");
         template.setPullStrategy(DockerImagePullStrategy.PULL_NEVER);

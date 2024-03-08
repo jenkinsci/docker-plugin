@@ -7,6 +7,18 @@
     <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"/>
     <Class name="com.nirima.jenkins.plugins.docker.DockerPluginConfiguration"/>
   </Match>
+  <Match>
+    <!-- Already suppressed at a different level, continue suppressing -->
+    <Bug pattern="URF_UNREAD_FIELD"/>
+    <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderNewTemplate"/>
+    <Field name="version"/>
+  </Match>
+  <Match>
+    <!-- Deprecated field -->
+    <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
+    <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderPublisher"/>
+    <Field name="tag"/>
+  </Match>
 
   <!--
     Here lies technical debt. Exclusions in this section have not yet been triaged. When working on
@@ -148,5 +160,13 @@
   </Match>
   <Match>
     <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+  </Match>
+  <Match>
+    <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE"/>
+  </Match>
+  <Match>
+    <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+    <Class name="com.nirima.jenkins.plugins.docker.DockerSlave"/>
+    <Field name="dockerTemplate"/>
   </Match>
 </FindBugsFilter>
