@@ -124,6 +124,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public @CheckForNull Integer memoryLimit;
     public @CheckForNull Integer memorySwap;
+    public @CheckForNull String cgroupParent;
     public @CheckForNull String cpus;
     public @CheckForNull Long cpuPeriod;
     public @CheckForNull Long cpuQuota;
@@ -458,6 +459,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setMemorySwap(Integer memorySwap) {
         this.memorySwap = memorySwap;
+    }
+
+    @CheckForNull
+    public String getCgroupParent() {
+        return Util.fixEmpty(cgroupParent);
+    }
+
+    @DataBoundSetter
+    public void setCgroupParent(String cgroupParent) {
+        this.cgroupParent = Util.fixEmpty(cgroupParent);
     }
 
     @CheckForNull
@@ -817,6 +828,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             }
         }
 
+        final String cgroupParentOrNull = getCgroupParent();
+        if (cgroupParentOrNull != null && !Strings.isNullOrEmpty(cgroupParentOrNull)) {
+            hostConfig(containerConfig).withCgroupParent(cgroupParentOrNull);
+        }
+
         final String[] dnsHostsOrNull = getDnsHosts();
         if (dnsHostsOrNull != null && dnsHostsOrNull.length > 0) {
             hostConfig(containerConfig).withDns(dnsHostsOrNull);
@@ -1149,6 +1165,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (!Objects.equals(memorySwap, that.memorySwap)) {
             return false;
         }
+        if (!Objects.equals(cgroupParent, that.cgroupParent)) {
+            return false;
+        }
         if (!Objects.equals(cpus, that.cpus)) {
             return false;
         }
@@ -1206,6 +1225,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (bindAllPorts ? 1 : 0);
         result = 31 * result + (memoryLimit != null ? memoryLimit.hashCode() : 0);
         result = 31 * result + (memorySwap != null ? memorySwap.hashCode() : 0);
+        result = 31 * result + (cgroupParent != null ? cgroupParent.hashCode() : 0);
         result = 31 * result + (cpus != null ? cpus.hashCode() : 0);
         result = 31 * result + (cpuPeriod != null ? cpuPeriod.hashCode() : 0);
         result = 31 * result + (cpuQuota != null ? cpuQuota.hashCode() : 0);
@@ -1244,6 +1264,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "bindAllPorts", bindAllPorts);
         bldToString(sb, "memoryLimit", memoryLimit);
         bldToString(sb, "memorySwap", memorySwap);
+        bldToString(sb, "cgroupParent", cgroupParent);
         bldToString(sb, "cpus", cpus);
         bldToString(sb, "cpuPeriod", cpuPeriod);
         bldToString(sb, "cpuQuota", cpuQuota);
