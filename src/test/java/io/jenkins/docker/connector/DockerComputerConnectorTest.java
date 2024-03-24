@@ -127,7 +127,7 @@ public abstract class DockerComputerConnectorTest {
                         return true;
                     }
                 }
-                final int containersInDocker = cloud.countContainersInDocker(null);
+                final int containersInDocker = cloud.countContainersInDocker(null, null);
                 if (containersInDocker > 0) {
                     return true;
                 }
