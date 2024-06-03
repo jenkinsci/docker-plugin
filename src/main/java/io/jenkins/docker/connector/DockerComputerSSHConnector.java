@@ -54,8 +54,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import jenkins.bouncycastle.api.PEMEncodable;
 import jenkins.model.Jenkins;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.tools.tar.TarEntry;
+import org.apache.tools.tar.TarOutputStream;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.kohsuke.accmod.Restricted;
@@ -302,13 +302,13 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
                     + "|| :";
             final byte[] authorizedKeysCommandAsBytes = authorizedKeysCommand.getBytes(StandardCharsets.UTF_8);
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    TarArchiveOutputStream tar = new TarArchiveOutputStream(bos)) {
-                TarArchiveEntry entry = new TarArchiveEntry("authorized_key");
+                    TarOutputStream tar = new TarOutputStream(bos)) {
+                TarEntry entry = new TarEntry("authorized_key");
                 entry.setSize(authorizedKeysCommandAsBytes.length);
                 entry.setMode(0700);
-                tar.putArchiveEntry(entry);
+                tar.putNextEntry(entry);
                 tar.write(authorizedKeysCommandAsBytes);
-                tar.closeArchiveEntry();
+                tar.closeEntry();
                 tar.close();
                 try (InputStream is = new ByteArrayInputStream(bos.toByteArray());
                         DockerClient client = api.getClient()) {
