@@ -278,10 +278,12 @@ public class DockerComputerSSHConnector extends DockerComputerConnector {
         }
         final Ports portBindings = hostConfig.getPortBindings();
         if (portBindings != null) {
-            if(portBindings.getBindings().get(sshPortBinding.getExposedPort()).length == 0) {
-               portBindings.add(sshPortBinding);
-               hostConfig.withPortBindings(portBindings);
+            final Ports.Binding[] portBinding = portBindings.getBindings().get(sshPortBinding.getExposedPort());
+            // Only add default ssh port Binding when it is not already configured
+            if (portBinding == null || portBinding.length == 0) {
+                portBindings.add(sshPortBinding);
             }
+            hostConfig.withPortBindings(portBindings);
         } else {
             hostConfig.withPortBindings(sshPortBinding);
         }
