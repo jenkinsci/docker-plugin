@@ -128,7 +128,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         final String actualHostPortSpecForPort22 = actualBindingsForPort22[0].getHostPortSpec();
         Assert.assertNull(actualHostPortSpecForPort22);
     }
-    
+
     @Test
     public void testPortBindingPort22() throws IOException, InterruptedException {
         // Given
@@ -168,6 +168,6 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         Assert.assertNotNull(actualBindingsForPort22);
         Assert.assertEquals(1, actualBindingsForPort22.length);
         final String actualHostPortSpecForPort22 = actualBindingsForPort22[0].getHostPortSpec();
-        Assert.assertEquals("3022",actualHostPortSpecForPort22);
+        Assert.assertEquals("3022", actualHostPortSpecForPort22);
     }
 }
