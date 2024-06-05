@@ -128,4 +128,46 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
         final String actualHostPortSpecForPort22 = actualBindingsForPort22[0].getHostPortSpec();
         Assert.assertNull(actualHostPortSpecForPort22);
     }
+
+    @Test
+    public void testPortBindingPort22() throws IOException, InterruptedException {
+        // Given
+        DockerComputerSSHConnector connector =
+                new DockerComputerSSHConnector(Mockito.mock(DockerComputerSSHConnector.SSHKeyStrategy.class));
+        CreateContainerCmdImpl cmd = new CreateContainerCmdImpl(
+                Mockito.mock(CreateContainerCmd.Exec.class), Mockito.mock(AuthConfig.class), "");
+        HostConfig hostConfig = cmd.getHostConfig();
+        if (hostConfig == null) {
+            hostConfig = new HostConfig();
+            cmd.withHostConfig(hostConfig);
+        }
+        final PortBinding exportContainerPort42 = PortBinding.parse("42:42");
+        final PortBinding exportContainerPort22 = PortBinding.parse("3022:22");
+        hostConfig.withPortBindings(exportContainerPort42, exportContainerPort22);
+        final ExposedPort port42 = new ExposedPort(42);
+        final ExposedPort port22 = new ExposedPort(22);
+
+        // When
+        connector.setPort(22);
+        connector.beforeContainerCreated(Mockito.mock(DockerAPI.class), "/workdir", cmd);
+
+        // Then
+        final Ports actualPortBindings = cmd.getHostConfig().getPortBindings();
+        Assert.assertNotNull(actualPortBindings);
+        final Map<ExposedPort, Ports.Binding[]> actualBindingMap = actualPortBindings.getBindings();
+        Assert.assertNotNull(actualBindingMap);
+        Assert.assertEquals(2, actualBindingMap.size());
+
+        final Ports.Binding[] actualBindingsForPort42 = actualBindingMap.get(port42);
+        Assert.assertNotNull(actualBindingsForPort42);
+        Assert.assertEquals(1, actualBindingsForPort42.length);
+        final String actualHostPortSpecForPort42 = actualBindingsForPort42[0].getHostPortSpec();
+        Assert.assertEquals("42", actualHostPortSpecForPort42);
+
+        final Ports.Binding[] actualBindingsForPort22 = actualBindingMap.get(port22);
+        Assert.assertNotNull(actualBindingsForPort22);
+        Assert.assertEquals(1, actualBindingsForPort22.length);
+        final String actualHostPortSpecForPort22 = actualBindingsForPort22[0].getHostPortSpec();
+        Assert.assertEquals("3022", actualHostPortSpecForPort22);
+    }
 }
