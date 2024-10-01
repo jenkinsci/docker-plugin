@@ -187,7 +187,7 @@ public class DockerCloudTest {
     }
 
     @Test
-    public void testRegistryCredentials() throws IOException {
+    public void testRegistryCredentials() throws Exception {
 
         final CredentialsStore store = CredentialsProvider.lookupStores(jenkins.getInstance())
                 .iterator()
