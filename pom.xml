@@ -162,6 +162,15 @@
       <artifactId>test-harness</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- tests fail with newer httpcomponents-client-5 -->
+    <!-- httpcomponents-client-5 5.4-118.v199115451c4d shows the failure -->
+    <!-- https://github.com/jenkinsci/docker-plugin/issues/1103 -->
+    <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>apache-httpcomponents-client-5-api</artifactId>
+      <version>5.3.1-110.v77252fb_d4da_5</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-support</artifactId>
