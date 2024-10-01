@@ -14,7 +14,6 @@ import hudson.model.Node;
 import hudson.util.Secret;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
