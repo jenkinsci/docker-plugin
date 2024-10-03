@@ -34,6 +34,10 @@
       <f:textbox />
     </f:entry>
 
+    <f:entry title="${%DNS Search}" field="dnsSearchString">
+      <f:textbox />
+    </f:entry>
+
     <f:entry title="${%Network}" field="network">
       <f:textbox />
     </f:entry>

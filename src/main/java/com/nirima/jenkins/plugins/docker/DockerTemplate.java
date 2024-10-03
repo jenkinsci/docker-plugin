@@ -161,6 +161,10 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return dockerTemplateBase.getDnsString();
     }
 
+    public String getDnsSearchString() {
+        return dockerTemplateBase.getDnsSearchString();
+    }
+
     @CheckForNull
     public String[] getMounts() {
         return dockerTemplateBase.getMounts();
