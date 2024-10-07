@@ -27,6 +27,7 @@ public class DockerTemplateTest {
     String suffixStartAgentCmd = " suffixStartAgentCmd";
     String instanceCapStr = "";
     String network = "";
+    String dnsSearchString = "docker.com";
 
     String dockerCommand = "dockerCommand";
     String mountsString = "mounts";
@@ -50,6 +51,7 @@ public class DockerTemplateTest {
                 image,
                 null,
                 dnsString,
+                dnsSearchString,
                 network,
                 dockerCommand,
                 mountsString,
@@ -96,6 +98,16 @@ public class DockerTemplateTest {
 
         assertEquals(2, instance.getDockerTemplateBase().dnsHosts.length);
         assertArrayEquals(expected, instance.getDockerTemplateBase().dnsHosts);
+    }
+
+    @Test
+    public void testDnsSearch() {
+        DockerTemplate instance;
+        String[] expected;
+
+        instance = getDockerTemplateInstanceWithDNSHost("");
+        expected = new String[] {"docker.com"};
+        assertArrayEquals(expected, instance.getDockerTemplateBase().dnsSearch);
     }
 
     @Test

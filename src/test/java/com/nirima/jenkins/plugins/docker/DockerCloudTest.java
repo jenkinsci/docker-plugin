@@ -88,6 +88,7 @@ public class DockerCloudTest {
                 "image",
                 "pullCredentialsId",
                 "dnsString",
+                "dnsSearchString",
                 "network",
                 "dockerCommand",
                 "mountsString",
