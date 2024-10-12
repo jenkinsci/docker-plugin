@@ -38,6 +38,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
     private String pullCredentialsId;
     private transient DockerRegistryEndpoint registry;
     public final String dnsString;
+    public final String dnsSearchString;
     public final String network;
     public final String dockerCommand;
     public final String mountsString;
@@ -66,6 +67,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
             String image,
             String pullCredentialsId,
             String dnsString,
+            String dnsSearchString,
             String network,
             String dockerCommand,
             String mountsString,
@@ -91,6 +93,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
         this.image = image;
         this.pullCredentialsId = pullCredentialsId;
         this.dnsString = dnsString;
+        this.dnsSearchString = dnsSearchString;
         this.network = network;
         this.dockerCommand = dockerCommand;
         this.mountsString = mountsString;
@@ -188,6 +191,7 @@ public class DockerBuilderControlOptionRun extends DockerBuilderControlCloudOpti
                 xImage,
                 pullCredentialsId,
                 dnsString,
+                dnsSearchString,
                 network,
                 xCommand,
                 mountsString,

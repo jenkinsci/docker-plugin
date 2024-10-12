@@ -39,6 +39,7 @@ def templateBaseParameters = [
   // cpuShares:                (Integer)null,
   // devicesString:            '',
   // dnsString:                '',
+  // dnsSearchString:          '',
   // dockerCommand:            '',
   // environmentsString:       '',
   // extraDockerLabelsString:  '',

@@ -88,6 +88,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     public @CheckForNull String[] dnsHosts;
 
+    public @CheckForNull String[] dnsSearch;
+
     public @CheckForNull String network;
 
     /**
@@ -158,6 +160,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * @param image              See {@link #DockerTemplateBase(String)}
      * @param pullCredentialsId  See {@link #setPullCredentialsId(String)}
      * @param dnsString          See {@link #setDnsString(String)}
+     * @param dnsSearchString    See {@link #setDnsSearchString(String)}
      * @param network            See {@link #setNetwork(String)}
      * @param dockerCommand      See {@link #setDockerCommand(String)}
      * @param mountsString       See {@link #setMountsString(String)}
@@ -184,6 +187,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             String image,
             String pullCredentialsId,
             String dnsString,
+            String dnsSearchString,
             String network,
             String dockerCommand,
             String mountsString,
@@ -207,6 +211,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         this(image);
         setPullCredentialsId(pullCredentialsId);
         setDnsString(dnsString);
+        setDnsSearchString(dnsSearchString);
         setNetwork(network);
         setDockerCommand(dockerCommand);
         setMountsString(mountsString);
@@ -333,6 +338,28 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     @DataBoundSetter
     public void setDnsString(String dnsString) {
         setDnsHosts(splitAndFilterEmpty(dnsString, " "));
+    }
+
+    @CheckForNull
+    public String[] getDnsSearch() {
+        return fixEmpty(dnsSearch);
+    }
+
+    @NonNull
+    public String getDnsSearchString() {
+        if (dnsSearch == null) {
+            return "";
+        }
+        return Joiner.on(" ").join(dnsSearch);
+    }
+
+    public void setDnsSearch(String[] dnsSearch) {
+        this.dnsSearch = fixEmpty(dnsSearch);
+    }
+
+    @DataBoundSetter
+    public void setDnsSearchString(String dnsSearchString) {
+        setDnsSearch(splitAndFilterEmpty(dnsSearchString, " "));
     }
 
     @CheckForNull
@@ -838,6 +865,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             hostConfig(containerConfig).withDns(dnsHostsOrNull);
         }
 
+        final String[] dnsSearchOrNull = getDnsSearch();
+        if (dnsSearchOrNull != null && dnsSearchOrNull.length > 0) {
+            hostConfig(containerConfig).withDnsSearch(dnsSearchOrNull);
+        }
+
         final String networkOrNull = getNetwork();
         if (networkOrNull != null && networkOrNull.length() > 0) {
             containerConfig.withNetworkDisabled(false);
@@ -1141,6 +1173,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (!Arrays.equals(dnsHosts, that.dnsHosts)) {
             return false;
         }
+        if (!Arrays.equals(dnsSearch, that.dnsSearch)) {
+            return false;
+        }
         if (!Objects.equals(network, that.network)) {
             return false;
         }
@@ -1216,6 +1251,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (user != null ? user.hashCode() : 0);
         result = 31 * result + (extraGroups != null ? extraGroups.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(dnsHosts);
+        result = 31 * result + Arrays.hashCode(dnsSearch);
         result = 31 * result + (network != null ? network.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(mounts);
         result = 31 * result + Arrays.hashCode(volumesFrom2);
@@ -1255,6 +1291,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "user", user);
         bldToString(sb, "extraGroups", extraGroups);
         bldToString(sb, "dnsHosts", dnsHosts);
+        bldToString(sb, "dnsSearch", dnsSearch);
         bldToString(sb, "network'", network);
         bldToString(sb, "mounts", mounts);
         bldToString(sb, "volumesFrom2", volumesFrom2);
