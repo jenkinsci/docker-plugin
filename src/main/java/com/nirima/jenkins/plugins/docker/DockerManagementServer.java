@@ -72,10 +72,6 @@ public class DockerManagementServer implements Describable<DockerManagementServe
         return dt.toString();
     }
 
-    public String getJsUrl(String jsName) {
-        return Consts.PLUGIN_JS_URL + jsName;
-    }
-
     @SuppressWarnings("unused")
     @RequirePOST
     public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest req, StaplerResponse rsp)
