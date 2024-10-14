@@ -1,7 +1,6 @@
 package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
-import com.nirima.jenkins.plugins.docker.utils.Consts;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.Extension;
 import hudson.model.Describable;
@@ -70,10 +69,6 @@ public class DockerManagementServer implements Describable<DockerManagementServe
         long when = System.currentTimeMillis() - time;
         Date dt = new Date(when);
         return dt.toString();
-    }
-
-    public String getJsUrl(String jsName) {
-        return Consts.PLUGIN_JS_URL + jsName;
     }
 
     @SuppressWarnings("unused")
