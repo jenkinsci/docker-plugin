@@ -62,7 +62,8 @@
   <properties>
     <revision>1.7.1</revision>
     <changelist>-SNAPSHOT</changelist>
-    <jenkins.version>2.452.4</jenkins.version>
+    <jenkins.baseline>2.452</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.4</jenkins.version>
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
     <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
     <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
@@ -76,8 +77,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.440.x</artifactId>
-        <version>3435.v238d66a_043fb_</version>
+        <artifactId>bom-${jenkins.baseline}.x</artifactId>
+        <version>3613.v584fca_12cf5c</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -162,13 +163,9 @@
       <artifactId>test-harness</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- tests fail with newer httpcomponents-client-5 -->
-    <!-- httpcomponents-client-5 5.4-118.v199115451c4d shows the failure -->
-    <!-- https://github.com/jenkinsci/docker-plugin/issues/1103 -->
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
       <artifactId>apache-httpcomponents-client-5-api</artifactId>
-      <version>5.3.1-110.v77252fb_d4da_5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
