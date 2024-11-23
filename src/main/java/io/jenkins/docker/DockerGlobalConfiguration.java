@@ -1,9 +1,9 @@
 package io.jenkins.docker;
 
-import jenkins.model.GlobalConfiguration;
-import org.kohsuke.stapler.DataBoundSetter;
 import hudson.Extension;
 import hudson.ExtensionList;
+import jenkins.model.GlobalConfiguration;
+import org.kohsuke.stapler.DataBoundSetter;
 
 @Extension
 public class DockerGlobalConfiguration extends GlobalConfiguration {
