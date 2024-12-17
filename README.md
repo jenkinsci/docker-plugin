@@ -118,6 +118,19 @@ Then configure Agent templates,
 assigning them labels that you can use so your jobs select the appropriate template,
 and set the docker container to be run with whatever container settings you require.
 
+### Running self-made local Docker images
+
+By default the Jenkins Docker plugin will try to download ('pull') the latest version of the image. This will fail with custom images that are not on Docker Hub. You will see logs like:
+
+> com.nirima.jenkins.plugins.docker.DockerTemplate pullImage    
+> Pulling image '..'. This may take awhile...
+
+> com.github.dockerjava.api.exception.NotFoundException: Status 404: {"message":"pull access denied for .., repository does not exist or may require 'docker login': denied: requested access to the resource is denied"}
+
+On the _Docker Agent template_ set **Pull strategy** to **Never pull**, Name, Docker Image, Remote File System Root, and checkbox Enabled.
+
+If you have docker only on your local Jenkins machine, set on _Docker Cloud details_ the textbox **Docker Host URI** to `unix:///var/run/docker.sock`, and checkbox Enabled.
+
 ### Creating a docker image
 
 You need a docker image that can be used to run Jenkins agent runtime.
