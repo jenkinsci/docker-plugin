@@ -122,7 +122,7 @@ and set the docker container to be run with whatever container settings you requ
 
 By default the Jenkins Docker plugin will try to download ('pull') the latest version of the image. This will fail with custom images that are not on Docker Hub. You will see logs like:
 
-> com.nirima.jenkins.plugins.docker.DockerTemplate pullImage    
+> com.nirima.jenkins.plugins.docker.DockerTemplate pullImage
 > Pulling image '..'. This may take awhile...
 
 > com.github.dockerjava.api.exception.NotFoundException: Status 404: {"message":"pull access denied for .., repository does not exist or may require 'docker login': denied: requested access to the resource is denied"}
