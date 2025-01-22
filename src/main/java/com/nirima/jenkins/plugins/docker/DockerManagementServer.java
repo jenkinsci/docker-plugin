@@ -13,8 +13,8 @@ import java.util.Collections;
 import java.util.Date;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
@@ -73,7 +73,7 @@ public class DockerManagementServer implements Describable<DockerManagementServe
 
     @SuppressWarnings("unused")
     @RequirePOST
-    public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest req, StaplerResponse rsp)
+    public void doControlSubmit(@QueryParameter("stopId") String stopId, StaplerRequest2 req, StaplerResponse2 rsp)
             throws IOException {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         final DockerAPI dockerApi = theCloud.getDockerApi();

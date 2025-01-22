@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 @Deprecated
 public class DockerPluginConfiguration extends GlobalConfiguration {
@@ -28,7 +28,7 @@ public class DockerPluginConfiguration extends GlobalConfiguration {
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
+    public boolean configure(StaplerRequest2 req, JSONObject json) throws FormException {
         req.bindJSON(this, json);
         return true;
     }
