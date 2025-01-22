@@ -56,15 +56,15 @@ public abstract class DockerComputerConnectorTest {
          */
         final int javaVersion = getJavaVersion();
         if (SystemUtils.IS_OS_WINDOWS) {
-            if (javaVersion >= 11) {
-                return "jdk11-nanoserver-1809";
+            if (javaVersion >= 21) {
+                return "jdk21-nanoserver-1809";
             }
-            return "jdk8-nanoserver-1809";
+            return "jdk17-nanoserver-1809";
         }
-        if (javaVersion >= 11) {
-            return "latest-jdk11";
+        if (javaVersion >= 21) {
+            return "latest-jdk21";
         }
-        return "latest-jdk8";
+        return "latest-jdk17";
     }
 
     protected String getLabelForTemplate() {

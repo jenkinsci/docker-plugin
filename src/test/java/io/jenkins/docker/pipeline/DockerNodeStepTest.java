@@ -384,7 +384,7 @@ public class DockerNodeStepTest {
                     Collections.emptyList()));
             WorkflowJob j = r.createProject(WorkflowJob.class, "p");
             j.setDefinition(new CpsFlowDefinition(
-                    dockerNodeWithImage("openjdk:11") + " {\n"
+                    dockerNodeWithImage("eclipse-temurin:17-jre") + " {\n"
                             + "  sh 'java -version && whoami && pwd && touch stuff && ls -lat . ..'\n"
                             + "}\n",
                     true));
