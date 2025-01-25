@@ -20,8 +20,10 @@ import java.util.Map;
 import jenkins.bouncycastle.api.PEMEncodable;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.testcontainers.DockerClientFactory;
 
 public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
 
@@ -43,6 +45,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
 
     @Test
     public void connectAgentViaSSHUsingInjectSshKey() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy =
                 new DockerComputerSSHConnector.InjectSSHKey(COMMON_IMAGE_USERNAME);
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
@@ -62,6 +65,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
 
     @Test
     public void connectAgentViaSSHUsingCredentialsKey() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         final InstanceIdentity id = InstanceIdentity.get();
         final String privateKey = PEMEncodable.create(id.getPrivate()).encode();
         final String publicKey =

@@ -6,6 +6,7 @@ import java.util.Collections;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -13,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.testcontainers.DockerClientFactory;
 
 public class DockerAgentTest {
 
@@ -38,6 +40,7 @@ public class DockerAgentTest {
 
     @Test
     public void smokes() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         WorkflowJob j = r.createProject(WorkflowJob.class, "p");
         j.setDefinition(new CpsFlowDefinition(
                 "pipeline {\n" + "  agent {\n"
@@ -57,6 +60,7 @@ public class DockerAgentTest {
 
     @Test
     public void withArgs() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         WorkflowJob j = r.createProject(WorkflowJob.class, "p");
         j.setDefinition(new CpsFlowDefinition(
                 "pipeline {\n" + "  agent {\n"

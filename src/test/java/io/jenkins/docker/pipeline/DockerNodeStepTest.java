@@ -77,6 +77,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.testcontainers.DockerClientFactory;
 
 public class DockerNodeStepTest {
 
@@ -170,6 +171,7 @@ public class DockerNodeStepTest {
 
     @Test
     public void simpleProvision() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -192,6 +194,7 @@ public class DockerNodeStepTest {
 
     @Test
     public void withinNode() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -219,6 +222,7 @@ public class DockerNodeStepTest {
     @Issue("JENKINS-36913")
     @Test
     public void toolInstall() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -259,6 +263,7 @@ public class DockerNodeStepTest {
     @Issue("JENKINS-33510")
     @Test
     public void changeDir() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -288,6 +293,7 @@ public class DockerNodeStepTest {
     @Issue("JENKINS-41894")
     @Test
     public void deleteDir() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -319,6 +325,7 @@ public class DockerNodeStepTest {
     @Issue("JENKINS-46831")
     @Test
     public void nodeWithinDockerNodeWithinNode() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -368,6 +375,7 @@ public class DockerNodeStepTest {
 
     @Test
     public void defaults() {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.then(r -> {
             DockerNodeStep s = new DockerNodeStep("foo");
             s.setCredentialsId("");
@@ -395,6 +403,7 @@ public class DockerNodeStepTest {
     @Issue("JENKINS-47805")
     @Test
     public void pathModification() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -423,6 +432,7 @@ public class DockerNodeStepTest {
 
     @Test
     public void dockerBuilderPublisher() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
