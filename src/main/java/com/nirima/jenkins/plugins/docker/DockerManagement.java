@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -73,6 +74,12 @@ public class DockerManagement extends ManagementLink implements StaplerProxy, De
     public Object getTarget() {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         return this;
+    }
+
+    @NonNull
+    @Override
+    public Category getCategory() {
+        return ManagementLink.Category.CONFIGURATION;
     }
 
     public Collection<String> getServerNames() {
