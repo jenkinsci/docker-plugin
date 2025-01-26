@@ -6,13 +6,16 @@ import io.jenkins.docker.connector.DockerComputerAttachConnector.ArgumentVariabl
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import org.junit.Assume;
 import org.junit.Test;
+import org.testcontainers.DockerClientFactory;
 
 public class DockerComputerAttachConnectorTest extends DockerComputerConnectorTest {
     private static final String ATTACH_AGENT_IMAGE_IMAGENAME = "jenkins/agent";
 
     @Test
     public void connectAgentViaDirectAttach() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         final DockerComputerAttachConnector connector = new DockerComputerAttachConnector(COMMON_IMAGE_USERNAME);
         final String testName = "connectAgentViaDirectAttach";
         testAgentCanStartAndConnect(connector, testName);
@@ -20,6 +23,7 @@ public class DockerComputerAttachConnectorTest extends DockerComputerConnectorTe
 
     @Test
     public void connectAgentViaDirectAttachWithCustomCmd() throws Exception {
+        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         final DockerComputerAttachConnector connector = new DockerComputerAttachConnector(COMMON_IMAGE_USERNAME);
         // We could setJavaExe("/opt/jdk-11/bin/java") too, but that'd
         // mean we'd break the instant that the public docker image's JVM
