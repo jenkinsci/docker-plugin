@@ -24,34 +24,6 @@
     </license>
   </licenses>
 
-  <developers>
-    <developer>
-      <id>magnayn</id>
-      <name>Nigel Magnay</name>
-      <roles>
-        <role>maintainer (retired)</role>
-      </roles>
-    </developer>
-    <developer>
-      <id>ndeloof</id>
-      <name>Nicolas De Loof</name>
-      <roles>
-        <role>maintainer (retired)</role>
-      </roles>
-    </developer>
-    <developer>
-      <id>pjdarton</id>
-      <name>Peter Darton</name>
-      <roles>
-        <role>maintainer (retired)</role>
-      </roles>
-    </developer>
-    <!--
-      You could have your name here.
-      https://www.jenkins.io/doc/developer/plugin-governance/adopt-a-plugin/
-    -->
-  </developers>
-
   <scm>
     <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
     <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
