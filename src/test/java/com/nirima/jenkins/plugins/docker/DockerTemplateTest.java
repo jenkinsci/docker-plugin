@@ -1,12 +1,12 @@
 package com.nirima.jenkins.plugins.docker;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DockerTemplateTest {
+class DockerTemplateTest {
     String image = "image";
     String labelString;
     String remoteFs = "remoteFs";
@@ -46,6 +46,7 @@ public class DockerTemplateTest {
     String capabilitiesToDropString = "NET_ADMIN";
     String securityOptsString = "seccomp=unconfined";
 
+    @SuppressWarnings("deprecation")
     private DockerTemplate getDockerTemplateInstanceWithDNSHost(String dnsString) {
         final DockerTemplateBase dockerTemplateBase = new DockerTemplateBase(
                 image,
@@ -81,7 +82,7 @@ public class DockerTemplateTest {
     }
 
     @Test
-    public void testDnsHosts() {
+    void testDnsHosts() {
         DockerTemplate instance;
         String[] expected;
 
@@ -101,7 +102,7 @@ public class DockerTemplateTest {
     }
 
     @Test
-    public void testDnsSearch() {
+    void testDnsSearch() {
         DockerTemplate instance;
         String[] expected;
 
@@ -111,38 +112,23 @@ public class DockerTemplateTest {
     }
 
     @Test
-    public void testLimits() {
+    void testLimits() {
         DockerTemplate instance;
         instance = getDockerTemplateInstanceWithDNSHost("");
 
-        assertEquals(
-                "Error, wrong memoryLimit",
-                1024,
-                instance.getDockerTemplateBase().memoryLimit.intValue());
-        assertEquals(
-                "Error, wrong memorySwap",
-                1280,
-                instance.getDockerTemplateBase().memorySwap.intValue());
-        assertEquals(
-                "Error, wrong cpuShares",
-                1000,
-                instance.getDockerTemplateBase().cpuShares.intValue());
-        assertEquals(
-                "Error, wrong shmSize",
-                1002,
-                instance.getDockerTemplateBase().shmSize.intValue());
+        assertEquals(1024, instance.getDockerTemplateBase().memoryLimit.intValue(), "Error, wrong memoryLimit");
+        assertEquals(1280, instance.getDockerTemplateBase().memorySwap.intValue(), "Error, wrong memorySwap");
+        assertEquals(1000, instance.getDockerTemplateBase().cpuShares.intValue(), "Error, wrong cpuShares");
+        assertEquals(1002, instance.getDockerTemplateBase().shmSize.intValue(), "Error, wrong shmSize");
     }
 
     @Test
-    public void testCapabilities() {
+    void testCapabilities() {
         DockerTemplate instance;
         instance = getDockerTemplateInstanceWithDNSHost("");
 
+        assertTrue(instance.getDockerTemplateBase().getCapabilitiesToAdd().contains("CHOWN"), "Error, wrong capAdd");
         assertTrue(
-                "Error, wrong capAdd",
-                instance.getDockerTemplateBase().getCapabilitiesToAdd().contains("CHOWN"));
-        assertTrue(
-                "Error, wrong capDrop",
-                instance.getDockerTemplateBase().getCapabilitiesToDrop().contains("NET_ADMIN"));
+                instance.getDockerTemplateBase().getCapabilitiesToDrop().contains("NET_ADMIN"), "Error, wrong capDrop");
     }
 }

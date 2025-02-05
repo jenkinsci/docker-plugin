@@ -1,16 +1,16 @@
 package io.jenkins.docker.connector;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.dockerjava.api.model.Ports;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class HostPortComparatorTest {
+class HostPortComparatorTest {
 
     @Test
-    public void testHostPortComparator() {
+    void testHostPortComparator() {
         assertEquals(
                 List.of(new Ports.Binding("0.0.0.0", "9000"), new Ports.Binding("0.0.0.0", "9001")),
                 List.of(new Ports.Binding("0.0.0.0", "9000"), new Ports.Binding("0.0.0.0", "9001")).stream()

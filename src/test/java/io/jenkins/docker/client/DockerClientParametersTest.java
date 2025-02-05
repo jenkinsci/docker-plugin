@@ -2,14 +2,15 @@ package io.jenkins.docker.client;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DockerClientParametersTest {
+class DockerClientParametersTest {
     @Test
-    public void testHashCodeAndEquals() {
+    void testHashCodeAndEquals() {
         final String dockerUri1 = "dockerUri1";
         final String dockerUri1a = new String(dockerUri1);
         final String dockerUri2 = "dockerUri2";
@@ -53,8 +54,8 @@ public class DockerClientParametersTest {
         assertEquals(i2, e2);
         assertEquals(e2, i2);
         assertEquals(i2.hashCode(), e2.hashCode());
-        assertNotEquals(i1, null);
-        assertNotEquals(i1, "Foo");
+        assertNotNull(i1);
+        assertNotEquals("Foo", i1);
         assertNotEquals(i1, d01);
         assertNotEquals(d01, i1);
         assertNotEquals(i1.hashCode(), d01.hashCode());
@@ -76,7 +77,7 @@ public class DockerClientParametersTest {
     }
 
     @Test
-    public void testGetters() {
+    void testGetters() {
         final String dockerUri1 = "dockerUri";
         final String credentialsId1 = "credentialsId";
         final Integer readTimeoutInMsOrNull1 = Integer.valueOf(123);
@@ -97,7 +98,7 @@ public class DockerClientParametersTest {
     }
 
     @Test
-    public void testToString() {
+    void testToString() {
         final String dockerUri1 = "MyDockerURI";
         final String credentialsId1 = "MyCredentials";
         final Integer readTimeoutInMsOrNull1 = Integer.valueOf(1928);

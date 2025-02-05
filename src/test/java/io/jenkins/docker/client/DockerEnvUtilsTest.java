@@ -6,12 +6,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DockerEnvUtilsTest {
+class DockerEnvUtilsTest {
 
     @Test
-    public void addEnvToCmdGivenNullExistingEnvsThenSetsEnv() {
+    void addEnvToCmdGivenNullExistingEnvsThenSetsEnv() {
         // Given
         final CreateContainerCmd cmd = mock(CreateContainerCmd.class);
         final String[] existingEnvs = null;
@@ -27,7 +27,7 @@ public class DockerEnvUtilsTest {
     }
 
     @Test
-    public void addEnvToCmdGivenEmptyExistingEnvsThenSetsEnv() {
+    void addEnvToCmdGivenEmptyExistingEnvsThenSetsEnv() {
         // Given
         final CreateContainerCmd cmd = mock(CreateContainerCmd.class);
         final String[] existingEnvs = new String[0];
@@ -43,7 +43,7 @@ public class DockerEnvUtilsTest {
     }
 
     @Test
-    public void addEnvToCmdGivenExistingOtherEnvsThenAddsEnv() {
+    void addEnvToCmdGivenExistingOtherEnvsThenAddsEnv() {
         // Given
         final CreateContainerCmd cmd = mock(CreateContainerCmd.class);
         final String[] existingEnvs = new String[] {"foo=bar", "flibble", "x="};
@@ -59,7 +59,7 @@ public class DockerEnvUtilsTest {
     }
 
     @Test
-    public void addEnvToCmdGivenExistingClashingEnvsThenReplacesEnv() {
+    void addEnvToCmdGivenExistingClashingEnvsThenReplacesEnv() {
         // Given
         final CreateContainerCmd cmd = mock(CreateContainerCmd.class);
         final String[] existingEnvs = new String[] {"foo=bar", "name=oldvalue", "x="};

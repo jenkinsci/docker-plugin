@@ -26,20 +26,20 @@ package io.jenkins.docker.pipeline;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import io.jenkins.docker.connector.DockerComputerConnector;
 import io.jenkins.docker.connector.DockerComputerJNLPConnector;
 import io.jenkins.docker.connector.DockerComputerSSHConnector;
 import java.io.Serializable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DockerNodeStepExecutionTest {
+class DockerNodeStepExecutionTest {
 
     @Test
-    public void testIsSerializableDockerComputerConnector() throws Exception {
+    void testIsSerializableDockerComputerConnector() throws Exception {
         // Given
         final Serializable serialisable = new Serializable() {
             @Override

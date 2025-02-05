@@ -3,6 +3,7 @@ package com.nirima.jenkins.plugins.docker;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWithIgnoringCase;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyLong;
@@ -25,24 +26,25 @@ import com.github.dockerjava.api.model.VolumesFrom;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.util.FormValidation;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-public class DockerTemplateBaseTest {
+class DockerTemplateBaseTest {
 
-    @BeforeClass
-    public static void setUpClass() {
+    @BeforeAll
+    static void setUpClass() {
         JenkinsUtils.setTestInstanceId(DockerTemplateBaseTest.class.getSimpleName());
     }
 
-    @AfterClass
-    public static void tearDownClass() {
+    @AfterAll
+    static void tearDownClass() {
         JenkinsUtils.setTestInstanceId(null);
     }
 
-    @Test // https://github.com/jenkinsci/docker-plugin/pull/643
-    public void fillContainerConfigGivenShmSizeThenSetsShmSize() {
+    // https://github.com/jenkinsci/docker-plugin/pull/643
+    @Test
+    void fillContainerConfigGivenShmSizeThenSetsShmSize() {
         // null/empty/negative values result in no value being set, so the
         // defaults are used
         testFillContainerShmSize("null", null, false, null);
@@ -78,8 +80,9 @@ public class DockerTemplateBaseTest {
         }
     }
 
-    @Test // https://github.com/jenkinsci/docker-plugin/issues/642
-    public void fillContainerConfigGivenEnvironmentThenSetsEnvs() {
+    // https://github.com/jenkinsci/docker-plugin/issues/642
+    @Test
+    void fillContainerConfigGivenEnvironmentThenSetsEnvs() {
         // null/empty values result in no value being set
         testFillContainerEnvironmentVariable("null", null, false);
         testFillContainerEnvironmentVariable("empty", "", false);
@@ -114,7 +117,7 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigGivenExtraGroupsThenSetsGroupAdd() {
+    void fillContainerConfigGivenExtraGroupsThenSetsGroupAdd() {
         // null/empty values result in no value being set
         testFillContainerGroupAdd("null", null, false);
         testFillContainerGroupAdd("empty", "", false);
@@ -150,7 +153,7 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigGivenSecurityOptions() {
+    void fillContainerConfigGivenSecurityOptions() {
         testFillContainerSecurityOpts("null", null, false, null);
         String seccompSecurityOptUnconfined = "seccomp=unconfined";
         testFillContainerSecurityOpts(
@@ -181,16 +184,18 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigGivenCapabilitiesToAdd() {
+    void fillContainerConfigGivenCapabilitiesToAdd() {
         testFillContainerCapabilitiesToAdd("null", null, false, null);
         String toAddInString = "AUDIT_CONTROL";
         Capability toAdd = Capability.AUDIT_CONTROL;
         testFillContainerCapabilitiesToAdd("toAdd", List.of(toAddInString), true, new Capability[] {toAdd});
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void fillContainerConfigGivenCapabilitiesToAddWithException() {
-        testFillContainerCapabilitiesToAdd("not existing", List.of("DUMMY"), false, null);
+    @Test
+    void fillContainerConfigGivenCapabilitiesToAddWithException() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> testFillContainerCapabilitiesToAdd("not existing", List.of("DUMMY"), false, null));
     }
 
     private static void testFillContainerCapabilitiesToAdd(
@@ -217,16 +222,18 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigGivenCapabilitiesToDrop() {
+    void fillContainerConfigGivenCapabilitiesToDrop() {
         testFillContainerCapabilitiesToDrop("null", null, false, null);
         String toDropInString = "AUDIT_CONTROL";
         Capability toDrop = Capability.AUDIT_CONTROL;
         testFillContainerCapabilitiesToDrop("toDrop", List.of(toDropInString), true, new Capability[] {toDrop});
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void fillContainerConfigGivenCapabilitiesToDropWithException() {
-        testFillContainerCapabilitiesToDrop("not existing", List.of("DUMMY"), false, null);
+    @Test
+    void fillContainerConfigGivenCapabilitiesToDropWithException() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> testFillContainerCapabilitiesToDrop("not existing", List.of("DUMMY"), false, null));
     }
 
     private static void testFillContainerCapabilitiesToDrop(
@@ -253,12 +260,12 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigCgroupParent() {
+    void fillContainerConfigCgroupParent() {
         testFillContainerConfigCgroupParent("not existing", "dummy_cgroup_parent", true);
     }
 
     @Test
-    public void fillContainerConfigNoCgroupParent() {
+    void fillContainerConfigNoCgroupParent() {
         testFillContainerConfigCgroupParent("not existing", "", false);
     }
 
@@ -283,12 +290,12 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigCpus() {
+    void fillContainerConfigCpus() {
         testFillContainerConfigCpus("not existing", "1.5", 1500000000L);
     }
 
     @Test
-    public void fillContainerConfigCpusNotSet() {
+    void fillContainerConfigCpusNotSet() {
         testFillContainerConfigCpus("not existing", "", 0L);
     }
 
@@ -312,7 +319,7 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void validateContainerConfigCpusString() {
+    void validateContainerConfigCpusString() {
         testValidateContainerConfigCpusString("", FormValidation.Kind.OK);
         testValidateContainerConfigCpusString("10.3", FormValidation.Kind.OK);
         testValidateContainerConfigCpusString("asd10.3", FormValidation.Kind.ERROR);
@@ -335,7 +342,7 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void doNotOverrideDigestsWhenCalculatingFullName() {
+    void doNotOverrideDigestsWhenCalculatingFullName() {
         String simpleBaseImage = "jenkins/inbound-agent";
         String imageWithRegistry = "registry.example.org/" + simpleBaseImage;
         String tag = ":4.3-9-jdk8-nanoserver-1809";
@@ -383,7 +390,7 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigGivenVolumes() {
+    void fillContainerConfigGivenVolumes() {
         testFillContainerVolume(
                 "randomVolume",
                 "/some/path",
@@ -443,7 +450,7 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigGivenMounts() {
+    void fillContainerConfigGivenMounts() {
         testFillContainerMount(
                 "randomVolume",
                 "dst=/some/path",
@@ -601,7 +608,7 @@ public class DockerTemplateBaseTest {
     }
 
     @Test
-    public void fillContainerConfigGivenVolumesFrom() {
+    void fillContainerConfigGivenVolumesFrom() {
         testFillContainerVolumesFrom("randomContainer", "aContainer", new VolumesFrom("aContainer"));
         testFillContainerVolumesFrom("containerRO", "aContainer:ro", new VolumesFrom("aContainer", AccessMode.ro));
         testFillContainerVolumesFrom("containerRW", "aContainer:rw", new VolumesFrom("aContainer", AccessMode.rw));
