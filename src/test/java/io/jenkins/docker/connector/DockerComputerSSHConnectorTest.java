@@ -1,5 +1,10 @@
 package io.jenkins.docker.connector;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -19,13 +24,13 @@ import java.util.Base64;
 import java.util.Map;
 import jenkins.bouncycastle.api.PEMEncodable;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.mockito.Mockito;
 import org.testcontainers.DockerClientFactory;
 
-public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
+@WithJenkins
+class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
 
     private static final String SSH_AGENT_IMAGE_IMAGENAME = "jenkins/ssh-agent";
     /**
@@ -44,8 +49,8 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
     private static final String SSH_AGENT_IMAGE_JAVAPATH = null;
 
     @Test
-    public void connectAgentViaSSHUsingInjectSshKey() throws Exception {
-        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
+    void connectAgentViaSSHUsingInjectSshKey() throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         final DockerComputerSSHConnector.SSHKeyStrategy sshKeyStrategy =
                 new DockerComputerSSHConnector.InjectSSHKey(COMMON_IMAGE_USERNAME);
         final DockerComputerSSHConnector connector = new DockerComputerSSHConnector(sshKeyStrategy);
@@ -64,8 +69,8 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
     }
 
     @Test
-    public void connectAgentViaSSHUsingCredentialsKey() throws Exception {
-        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
+    void connectAgentViaSSHUsingCredentialsKey() throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         final InstanceIdentity id = InstanceIdentity.get();
         final String privateKey = PEMEncodable.create(id.getPrivate()).encode();
         final String publicKey =
@@ -93,7 +98,7 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
     }
 
     @Test
-    public void testPortBinding() throws IOException, InterruptedException {
+    void testPortBinding() throws IOException, InterruptedException {
         // Given
         DockerComputerSSHConnector connector =
                 new DockerComputerSSHConnector(Mockito.mock(DockerComputerSSHConnector.SSHKeyStrategy.class));
@@ -115,26 +120,26 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
 
         // Then
         final Ports actualPortBindings = cmd.getHostConfig().getPortBindings();
-        Assert.assertNotNull(actualPortBindings);
+        assertNotNull(actualPortBindings);
         final Map<ExposedPort, Ports.Binding[]> actualBindingMap = actualPortBindings.getBindings();
-        Assert.assertNotNull(actualBindingMap);
-        Assert.assertEquals(2, actualBindingMap.size());
+        assertNotNull(actualBindingMap);
+        assertEquals(2, actualBindingMap.size());
 
         final Ports.Binding[] actualBindingsForPort42 = actualBindingMap.get(port42);
-        Assert.assertNotNull(actualBindingsForPort42);
-        Assert.assertEquals(1, actualBindingsForPort42.length);
+        assertNotNull(actualBindingsForPort42);
+        assertEquals(1, actualBindingsForPort42.length);
         final String actualHostPortSpecForPort42 = actualBindingsForPort42[0].getHostPortSpec();
-        Assert.assertEquals("42", actualHostPortSpecForPort42);
+        assertEquals("42", actualHostPortSpecForPort42);
 
         final Ports.Binding[] actualBindingsForPort22 = actualBindingMap.get(port22);
-        Assert.assertNotNull(actualBindingsForPort22);
-        Assert.assertEquals(1, actualBindingsForPort22.length);
+        assertNotNull(actualBindingsForPort22);
+        assertEquals(1, actualBindingsForPort22.length);
         final String actualHostPortSpecForPort22 = actualBindingsForPort22[0].getHostPortSpec();
-        Assert.assertNull(actualHostPortSpecForPort22);
+        assertNull(actualHostPortSpecForPort22);
     }
 
     @Test
-    public void testPortBindingPort22() throws IOException, InterruptedException {
+    void testPortBindingPort22() throws IOException, InterruptedException {
         // Given
         DockerComputerSSHConnector connector =
                 new DockerComputerSSHConnector(Mockito.mock(DockerComputerSSHConnector.SSHKeyStrategy.class));
@@ -157,21 +162,21 @@ public class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest 
 
         // Then
         final Ports actualPortBindings = cmd.getHostConfig().getPortBindings();
-        Assert.assertNotNull(actualPortBindings);
+        assertNotNull(actualPortBindings);
         final Map<ExposedPort, Ports.Binding[]> actualBindingMap = actualPortBindings.getBindings();
-        Assert.assertNotNull(actualBindingMap);
-        Assert.assertEquals(2, actualBindingMap.size());
+        assertNotNull(actualBindingMap);
+        assertEquals(2, actualBindingMap.size());
 
         final Ports.Binding[] actualBindingsForPort42 = actualBindingMap.get(port42);
-        Assert.assertNotNull(actualBindingsForPort42);
-        Assert.assertEquals(1, actualBindingsForPort42.length);
+        assertNotNull(actualBindingsForPort42);
+        assertEquals(1, actualBindingsForPort42.length);
         final String actualHostPortSpecForPort42 = actualBindingsForPort42[0].getHostPortSpec();
-        Assert.assertEquals("42", actualHostPortSpecForPort42);
+        assertEquals("42", actualHostPortSpecForPort42);
 
         final Ports.Binding[] actualBindingsForPort22 = actualBindingMap.get(port22);
-        Assert.assertNotNull(actualBindingsForPort22);
-        Assert.assertEquals(1, actualBindingsForPort22.length);
+        assertNotNull(actualBindingsForPort22);
+        assertEquals(1, actualBindingsForPort22.length);
         final String actualHostPortSpecForPort22 = actualBindingsForPort22[0].getHostPortSpec();
-        Assert.assertEquals("3022", actualHostPortSpecForPort22);
+        assertEquals("3022", actualHostPortSpecForPort22);
     }
 }

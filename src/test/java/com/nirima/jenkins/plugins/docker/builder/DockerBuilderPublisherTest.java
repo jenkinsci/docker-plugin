@@ -2,11 +2,11 @@ package com.nirima.jenkins.plugins.docker.builder;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DockerBuilderPublisherTest {
+class DockerBuilderPublisherTest {
     private static final String VALID1 = "myimage";
     private static final String VALID2 = "my/image-2";
     private static final String VALID3 = "myimage_3:tag";
@@ -23,7 +23,7 @@ public class DockerBuilderPublisherTest {
     private static final String INVALID4 = "funnyhost£name:5000/myimage4";
 
     @Test
-    public void verifyTagsGivenValidTagsThenPasses() {
+    void verifyTagsGivenValidTagsThenPasses() {
         // Given
         final String validTags =
                 String.join("\n", VALID1, VALID2, VALID3, VALID4, VALID5, VALID6, VALID7, VALID8, VALID9, VALID10);
@@ -36,66 +36,58 @@ public class DockerBuilderPublisherTest {
     }
 
     @Test
-    public void verifyTagsGivenInvalidTag1ThenThrows() {
+    void verifyTagsGivenInvalidTag1ThenThrows() {
         // Given
         final String invalidTag = INVALID1;
         final String tags = String.join("\n", VALID1, invalidTag, VALID2);
 
         // When
-        try {
-            DockerBuilderPublisher.verifyTags(tags);
-            Assert.fail("Expected exception");
-        } catch (IllegalArgumentException ex) {
-            // Then
-            assertThat(ex.getMessage(), containsString(invalidTag));
-        }
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> DockerBuilderPublisher.verifyTags(tags));
+
+        // Then
+        assertThat(ex.getMessage(), containsString(invalidTag));
     }
 
     @Test
-    public void verifyTagsGivenInvalidTag2ThenThrows() {
+    void verifyTagsGivenInvalidTag2ThenThrows() {
         // Given
         final String invalidTag = INVALID2;
         final String tags = String.join("\n", VALID1, invalidTag, VALID2);
 
         // When
-        try {
-            DockerBuilderPublisher.verifyTags(tags);
-            Assert.fail("Expected exception");
-        } catch (IllegalArgumentException ex) {
-            // Then
-            assertThat(ex.getMessage(), containsString(invalidTag));
-        }
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> DockerBuilderPublisher.verifyTags(tags));
+
+        // Then
+        assertThat(ex.getMessage(), containsString(invalidTag));
     }
 
     @Test
-    public void verifyTagsGivenInvalidTag3ThenThrows() {
+    void verifyTagsGivenInvalidTag3ThenThrows() {
         // Given
         final String invalidTag = INVALID3;
         final String tags = String.join("\n", VALID1, invalidTag, VALID2);
 
         // When
-        try {
-            DockerBuilderPublisher.verifyTags(tags);
-            Assert.fail("Expected exception");
-        } catch (IllegalArgumentException ex) {
-            // Then
-            assertThat(ex.getMessage(), containsString(invalidTag));
-        }
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> DockerBuilderPublisher.verifyTags(tags));
+
+        // Then
+        assertThat(ex.getMessage(), containsString(invalidTag));
     }
 
     @Test
-    public void verifyTagsGivenInvalidTag4ThenThrows() {
+    void verifyTagsGivenInvalidTag4ThenThrows() {
         // Given
         final String invalidTag = INVALID4;
         final String tags = String.join("\n", VALID1, invalidTag, VALID2);
 
         // When
-        try {
-            DockerBuilderPublisher.verifyTags(tags);
-            Assert.fail("Expected exception");
-        } catch (IllegalArgumentException ex) {
-            // Then
-            assertThat(ex.getMessage(), containsString(invalidTag));
-        }
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> DockerBuilderPublisher.verifyTags(tags));
+
+        // Then
+        assertThat(ex.getMessage(), containsString(invalidTag));
     }
 }

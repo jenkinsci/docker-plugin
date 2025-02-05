@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class UniqueIdGeneratorTest {
+class UniqueIdGeneratorTest {
 
     @Test
-    public void getUniqueIdWhenCalledMultipleTimesThenReturnsUniqueIds() {
+    void getUniqueIdWhenCalledMultipleTimesThenReturnsUniqueIds() {
         // Given
         final UniqueIdGenerator instance = new UniqueIdGenerator(16);
 
@@ -41,7 +41,7 @@ public class UniqueIdGeneratorTest {
     }
 
     @Test
-    public void getUniqueIdWhenCalledFromMultipleThreadsAtOnceThenReturnsUniqueIds() throws InterruptedException {
+    void getUniqueIdWhenCalledFromMultipleThreadsAtOnceThenReturnsUniqueIds() throws InterruptedException {
         // Given
         final UniqueIdGenerator instance = new UniqueIdGenerator(16);
         final Object startingGun = new Object();
@@ -90,7 +90,7 @@ public class UniqueIdGeneratorTest {
     }
 
     @Test
-    public void getUniqueIdWhenCalledWithRadixThenReturnsPaddedString() {
+    void getUniqueIdWhenCalledWithRadixThenReturnsPaddedString() {
         // Given
         final UniqueIdGenerator i2 = new UniqueIdGenerator(2);
         final UniqueIdGenerator i10 = new UniqueIdGenerator(10);

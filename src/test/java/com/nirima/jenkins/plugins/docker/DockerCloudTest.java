@@ -1,6 +1,8 @@
 package com.nirima.jenkins.plugins.docker;
 
 import static com.cloudbees.plugins.credentials.CredentialsScope.SYSTEM;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsStore;
@@ -17,30 +19,22 @@ import io.jenkins.docker.connector.DockerComputerAttachConnector;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.LoggerRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * @author Kanstantsin Shautsou
  */
-public class DockerCloudTest {
+@WithJenkins
+class DockerCloudTest {
 
-    @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
-
-    @Rule
-    public LoggerRule lr = new LoggerRule();
-
-    @SuppressWarnings("unused")
+    @SuppressWarnings("deprecation")
     @Test
-    public void testConstructor_0_10_2() {
+    void testConstructor_0_10_2(@SuppressWarnings("unused") JenkinsRule jenkins) {
         new DockerCloud(
                 "name",
                 List.of(), // templates
@@ -53,25 +47,22 @@ public class DockerCloudTest {
                 null); // dockerHostname
     }
 
-    private static final String LOG_MESSAGE = "Docker cloud requires a non-blank name after Jenkins 2.402";
-
     @Issue("JENKINS-70729") // Handle null or empty cloud name
     @Test
-    public void testCopyConstructor() {
-        lr.record(DockerCloud.class.getName(), Level.ALL).capture(16);
+    void testCopyConstructor(@SuppressWarnings("unused") JenkinsRule jenkins) {
         DockerCloud cloud =
                 new DockerCloud("tmp", new DockerAPI(new DockerServerEndpoint("uri", "credentialsId")), List.of());
         cloud.name = null;
-        Assert.assertEquals(cloud.getDisplayName(), null);
+        assertNull(cloud.getDisplayName());
         String newName = "docker-cloud-" + Integer.toHexString(cloud.hashCode());
         DockerCloud copy = new DockerCloud(newName, cloud);
-        Assert.assertEquals(cloud.getDockerApi(), copy.getDockerApi());
-        Assert.assertEquals(cloud.getTemplates().hashCode(), copy.getTemplates().hashCode());
-        Assert.assertEquals(newName, copy.getDisplayName());
+        assertEquals(cloud.getDockerApi(), copy.getDockerApi());
+        assertEquals(cloud.getTemplates().hashCode(), copy.getTemplates().hashCode());
+        assertEquals(newName, copy.getDisplayName());
     }
 
     @Test
-    public void globalConfigRoundtrip() throws Exception {
+    void globalConfigRoundtrip(@SuppressWarnings("unused") JenkinsRule jenkins) throws Exception {
 
         // Create fake credentials, so they are selectable on configuration for during configuration roundtrip
         final CredentialsStore store = CredentialsProvider.lookupStores(jenkins.getInstance())
@@ -128,11 +119,11 @@ public class DockerCloudTest {
 
         jenkins.configRoundtrip();
 
-        Assert.assertEquals(cloud, jenkins.getInstance().clouds.get(0));
+        assertEquals(cloud, jenkins.getInstance().clouds.get(0));
     }
 
     @Test
-    public void keepTrackOfContainersInProgress() {
+    void keepTrackOfContainersInProgress(@SuppressWarnings("unused") JenkinsRule jenkins) {
         final DockerTemplate i1 = new DockerTemplate(new DockerTemplateBase("image1"), null, null, null, null);
         final DockerTemplate i2 = new DockerTemplate(new DockerTemplateBase("image2"), null, null, null, null);
         final String uniqueId = Integer.toString(hashCode(), 36);
@@ -140,10 +131,10 @@ public class DockerCloudTest {
         final DockerCloud c2 = new DockerCloud("cloud2." + uniqueId, null, null);
 
         assertCount(c1, c2, i1, i2, 0, 0, 0, 0);
-        Assert.assertEquals(
-                "DockerCloud.CONTAINERS_IN_PROGRESS is empty to start with",
+        assertEquals(
                 DockerCloud.CONTAINERS_IN_PROGRESS,
-                Map.of());
+                Map.of(),
+                "DockerCloud.CONTAINERS_IN_PROGRESS is empty to start with");
 
         c1.incrementContainersInProgress(i1);
         assertCount(c1, c2, i1, i2, 1, 0, 0, 0);
@@ -162,8 +153,8 @@ public class DockerCloudTest {
         assertCount(c1, c2, i1, i2, 0, 0, 1, 0);
         c2.decrementContainersInProgress(i1);
         assertCount(c1, c2, i1, i2, 0, 0, 0, 0);
-        Assert.assertEquals(
-                "DockerCloud.CONTAINERS_IN_PROGRESS is empty afterwards", DockerCloud.CONTAINERS_IN_PROGRESS, Map.of());
+        assertEquals(
+                DockerCloud.CONTAINERS_IN_PROGRESS, Map.of(), "DockerCloud.CONTAINERS_IN_PROGRESS is empty afterwards");
     }
 
     private static void assertCount(
@@ -178,16 +169,16 @@ public class DockerCloudTest {
         final int c1All = c1i1 + c1i2;
         final int c2All = c2i1 + c2i2;
         final String state = "when c1(" + c1i1 + "," + c1i2 + "), c2(" + c2i1 + "," + c2i2 + "), ";
-        Assert.assertEquals(state + "c1.countContainersInProgress()", c1All, c1.countContainersInProgress());
-        Assert.assertEquals(state + "c2.countContainersInProgress()", c2All, c2.countContainersInProgress());
-        Assert.assertEquals(state + "c1.countContainersInProgress(i1)", c1i1, c1.countContainersInProgress(i1));
-        Assert.assertEquals(state + "c1.countContainersInProgress(i2)", c1i2, c1.countContainersInProgress(i2));
-        Assert.assertEquals(state + "c2.countContainersInProgress(i1)", c2i1, c2.countContainersInProgress(i1));
-        Assert.assertEquals(state + "c2.countContainersInProgress(i2)", c2i2, c2.countContainersInProgress(i2));
+        assertEquals(c1All, c1.countContainersInProgress(), state + "c1.countContainersInProgress()");
+        assertEquals(c2All, c2.countContainersInProgress(), state + "c2.countContainersInProgress()");
+        assertEquals(c1i1, c1.countContainersInProgress(i1), state + "c1.countContainersInProgress(i1)");
+        assertEquals(c1i2, c1.countContainersInProgress(i2), state + "c1.countContainersInProgress(i2)");
+        assertEquals(c2i1, c2.countContainersInProgress(i1), state + "c2.countContainersInProgress(i1)");
+        assertEquals(c2i2, c2.countContainersInProgress(i2), state + "c2.countContainersInProgress(i2)");
     }
 
     @Test
-    public void testRegistryCredentials() throws Exception {
+    void testRegistryCredentials(JenkinsRule jenkins) throws Exception {
 
         final CredentialsStore store = CredentialsProvider.lookupStores(jenkins.getInstance())
                 .iterator()
@@ -201,61 +192,61 @@ public class DockerCloudTest {
         dtb1.setPullCredentialsId(rc.getId());
         AuthConfig authConfig = DockerCloud.getAuthConfig(
                 dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
-        Assert.assertEquals("test", authConfig.getUsername());
-        Assert.assertEquals("secret", authConfig.getPassword());
-        Assert.assertEquals(AuthConfig.DEFAULT_SERVER_ADDRESS, authConfig.getRegistryAddress());
+        assertEquals("test", authConfig.getUsername());
+        assertEquals("secret", authConfig.getPassword());
+        assertEquals(AuthConfig.DEFAULT_SERVER_ADDRESS, authConfig.getRegistryAddress());
 
         // Test default registry / tag
         dtb1 = new DockerTemplateBase("user/image1:tag");
         dtb1.setPullCredentialsId(rc.getId());
         authConfig = DockerCloud.getAuthConfig(
                 dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
-        Assert.assertEquals("test", authConfig.getUsername());
-        Assert.assertEquals("secret", authConfig.getPassword());
-        Assert.assertEquals(AuthConfig.DEFAULT_SERVER_ADDRESS, authConfig.getRegistryAddress());
+        assertEquals("test", authConfig.getUsername());
+        assertEquals("secret", authConfig.getPassword());
+        assertEquals(AuthConfig.DEFAULT_SERVER_ADDRESS, authConfig.getRegistryAddress());
 
         // Test custom registry / tag
         dtb1 = new DockerTemplateBase("my.docker.registry/repo/image1:tag");
         dtb1.setPullCredentialsId(rc.getId());
         authConfig = DockerCloud.getAuthConfig(
                 dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
-        Assert.assertEquals("test", authConfig.getUsername());
-        Assert.assertEquals("secret", authConfig.getPassword());
-        Assert.assertEquals("https://my.docker.registry", authConfig.getRegistryAddress());
+        assertEquals("test", authConfig.getUsername());
+        assertEquals("secret", authConfig.getPassword());
+        assertEquals("https://my.docker.registry", authConfig.getRegistryAddress());
 
         // Test custom registry / port / tag
         dtb1 = new DockerTemplateBase("my.docker.registry:12345/repo/image1:tag");
         dtb1.setPullCredentialsId(rc.getId());
         authConfig = DockerCloud.getAuthConfig(
                 dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
-        Assert.assertEquals("test", authConfig.getUsername());
-        Assert.assertEquals("secret", authConfig.getPassword());
-        Assert.assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
+        assertEquals("test", authConfig.getUsername());
+        assertEquals("secret", authConfig.getPassword());
+        assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
 
         // Test custom registry / port / tag / sha
         dtb1 = new DockerTemplateBase("my.docker.registry:12345/repo/image@sha256:sha256");
         dtb1.setPullCredentialsId(rc.getId());
         authConfig = DockerCloud.getAuthConfig(
                 dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
-        Assert.assertEquals("test", authConfig.getUsername());
-        Assert.assertEquals("secret", authConfig.getPassword());
-        Assert.assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
+        assertEquals("test", authConfig.getUsername());
+        assertEquals("secret", authConfig.getPassword());
+        assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
 
         // Test V2
         dtb1 = new DockerTemplateBase("my.docker.registry:12345/namespace/repo/image1:tag");
         dtb1.setPullCredentialsId(rc.getId());
         authConfig = DockerCloud.getAuthConfig(
                 dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
-        Assert.assertEquals("test", authConfig.getUsername());
-        Assert.assertEquals("secret", authConfig.getPassword());
-        Assert.assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
+        assertEquals("test", authConfig.getUsername());
+        assertEquals("secret", authConfig.getPassword());
+        assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
 
         dtb1 = new DockerTemplateBase("my.docker.registry:12345/namespace/repo/image@sha256:sha256");
         dtb1.setPullCredentialsId(rc.getId());
         authConfig = DockerCloud.getAuthConfig(
                 dtb1.getRegistry(), jenkins.getInstance().getItemGroup());
-        Assert.assertEquals("test", authConfig.getUsername());
-        Assert.assertEquals("secret", authConfig.getPassword());
-        Assert.assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
+        assertEquals("test", authConfig.getUsername());
+        assertEquals("secret", authConfig.getPassword());
+        assertEquals("https://my.docker.registry:12345", authConfig.getRegistryAddress());
     }
 }

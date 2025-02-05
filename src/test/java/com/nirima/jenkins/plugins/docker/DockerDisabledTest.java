@@ -2,18 +2,19 @@ package com.nirima.jenkins.plugins.docker;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DockerDisabledTest {
+class DockerDisabledTest {
 
     @Test
-    public void testHashCodeAndEquals() {
+    void testHashCodeAndEquals() {
         final DockerDisabled i1 = new DockerDisabled();
         final DockerDisabled i2 = new DockerDisabled();
         i2.setDisabledByChoice(true);
@@ -29,12 +30,12 @@ public class DockerDisabledTest {
         assertEquals(i2.hashCode(), e2.hashCode());
         assertNotEquals(i1, i2);
         assertNotEquals(i1.hashCode(), i2.hashCode());
-        assertNotEquals(i1, null);
-        assertNotEquals(i1, "foo");
+        assertNotNull(i1);
+        assertNotEquals("foo", i1);
     }
 
     @Test
-    public void isDisabledGivenDefaultsThenReturnsFalse() {
+    void isDisabledGivenDefaultsThenReturnsFalse() {
         final TestClass i = new TestClass();
 
         final boolean actual = i.isDisabled();
@@ -43,7 +44,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void isDisabledGivenUserNotDisabledThenReturnsFalse() {
+    void isDisabledGivenUserNotDisabledThenReturnsFalse() {
         final TestClass i = new TestClass();
         i.setDisabledByChoice(false);
 
@@ -53,7 +54,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void isDisabledGivenUserDisabledThenReturnsTrue() {
+    void isDisabledGivenUserDisabledThenReturnsTrue() {
         final TestClass i = new TestClass();
         i.setDisabledByChoice(true);
 
@@ -63,7 +64,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void isDisabledGivenSystemDisabledThenReturnsTrue() {
+    void isDisabledGivenSystemDisabledThenReturnsTrue() {
         final TestClass i = new TestClass();
         final long duration = 10000L;
         i.disableBySystem("non", duration, null);
@@ -74,7 +75,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void isDisabledGivenSystemDisabledButTimeHasPassesThenReturnsFalseAfterTimeHasPassed() {
+    void isDisabledGivenSystemDisabledButTimeHasPassesThenReturnsFalseAfterTimeHasPassed() {
         final TestClass i = new TestClass();
         final long duration = 10000L;
         i.disableBySystem("non", duration, null);
@@ -94,7 +95,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void testEnabledByChoiceIsOppositeOfDisabledByChoice() {
+    void testEnabledByChoiceIsOppositeOfDisabledByChoice() {
         final DockerDisabled i1 = new DockerDisabled();
         final DockerDisabled i2 = new DockerDisabled();
         i1.setDisabledByChoice(false);
@@ -119,7 +120,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void getReasonWhyDisabledBySystemGivenGivenDefaultsThenReturnsEmptyString() {
+    void getReasonWhyDisabledBySystemGivenGivenDefaultsThenReturnsEmptyString() {
         final TestClass i = new TestClass();
 
         final String actual = i.getReasonWhyDisabledBySystem();
@@ -128,7 +129,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void getReasonWhyDisabledBySystemGivenSystemDisabledThenReturnsReasonUntilTimeHasPassed() {
+    void getReasonWhyDisabledBySystemGivenSystemDisabledThenReturnsReasonUntilTimeHasPassed() {
         final TestClass i = new TestClass();
         final long duration = 10000L;
         final String reasonGiven = "SomeError";
@@ -149,7 +150,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void getWhenDisabledBySystemStringGivenDefaultsThenReturnsEmptyString() {
+    void getWhenDisabledBySystemStringGivenDefaultsThenReturnsEmptyString() {
         final TestClass i = new TestClass();
 
         final String actual = i.getWhenDisabledBySystemString();
@@ -158,7 +159,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void getWhenDisabledBySystemStringGivenSystemDisabledThenReturnsReasonUntilTimeHasPassed() {
+    void getWhenDisabledBySystemStringGivenSystemDisabledThenReturnsReasonUntilTimeHasPassed() {
         final TestClass i = new TestClass();
         final long duration = 60001L;
         final String expected1 = "0 ms";
@@ -180,7 +181,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void getWhenReEnableBySystemStringGivenDefaultsThenReturnsEmptyString() {
+    void getWhenReEnableBySystemStringGivenDefaultsThenReturnsEmptyString() {
         final TestClass i = new TestClass();
 
         final String actual = i.getWhenReEnableBySystemString();
@@ -189,7 +190,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void getWhenReEnableBySystemStringGivenSystemDisabledThenReturnsReasonUntilTimeHasPassed() {
+    void getWhenReEnableBySystemStringGivenSystemDisabledThenReturnsReasonUntilTimeHasPassed() {
         final TestClass i = new TestClass();
         final long duration = 120000L;
         final String expected1 = "2 min 0 sec";
@@ -211,7 +212,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void getExceptionWhenDisabledBySystemStringGivenGivenDefaultsThenReturnsEmptyString() {
+    void getExceptionWhenDisabledBySystemStringGivenGivenDefaultsThenReturnsEmptyString() {
         final TestClass i = new TestClass();
 
         final String actual = i.getExceptionWhenDisabledBySystemString();
@@ -220,7 +221,7 @@ public class DockerDisabledTest {
     }
 
     @Test
-    public void getExceptionWhenDisabledBySystemStringGivenSystemDisabledThenReturnsReasonUntilTimeHasPassed() {
+    void getExceptionWhenDisabledBySystemStringGivenSystemDisabledThenReturnsReasonUntilTimeHasPassed() {
         final TestClass i = new TestClass();
         final long duration = 10000L;
         final String reasonGiven = "SomeError";

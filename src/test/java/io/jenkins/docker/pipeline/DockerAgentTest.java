@@ -1,36 +1,33 @@
 package io.jenkins.docker.pipeline;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import io.jenkins.docker.client.DockerAPI;
 import java.util.Collections;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.BuildWatcher;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.testcontainers.DockerClientFactory;
 
-public class DockerAgentTest {
+@WithJenkins
+class DockerAgentTest {
 
-    @BeforeClass
-    public static void before() {
+    @BeforeAll
+    static void before() {
         DockerNodeStepTest.before();
     }
 
-    @ClassRule
-    public static BuildWatcher buildWatcher = new BuildWatcher();
+    private JenkinsRule r;
 
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
-
-    @Before
-    public void setUpCloud() {
+    @BeforeEach
+    void setUpCloud(JenkinsRule r) {
+        this.r = r;
         // as in DockerNodeStepTest.defaults:
         r.jenkins.clouds.add(new DockerCloud(
                 "whatever",
@@ -39,8 +36,8 @@ public class DockerAgentTest {
     }
 
     @Test
-    public void smokes() throws Exception {
-        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
+    void smokes() throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         WorkflowJob j = r.createProject(WorkflowJob.class, "p");
         j.setDefinition(new CpsFlowDefinition(
                 "pipeline {\n" + "  agent {\n"
@@ -59,8 +56,8 @@ public class DockerAgentTest {
     }
 
     @Test
-    public void withArgs() throws Exception {
-        Assume.assumeTrue(DockerClientFactory.instance().isDockerAvailable());
+    void withArgs() throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         WorkflowJob j = r.createProject(WorkflowJob.class, "p");
         j.setDefinition(new CpsFlowDefinition(
                 "pipeline {\n" + "  agent {\n"
