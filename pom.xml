@@ -37,7 +37,9 @@
     <jenkins.baseline>2.479</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <!-- TODO until in BOM -->
-    <pipeline-model-definition.version>2.2236.va_b_88ceec798f</pipeline-model-definition.version>
+    <!-- TODO https://github.com/jenkinsci/pipeline-model-definition-plugin/pull/770 -->
+    <pipeline-model-definition.version>2.2243.v46879d3a_96b_e</pipeline-model-definition.version>
+    <useBeta>true</useBeta>
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
     <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
     <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
