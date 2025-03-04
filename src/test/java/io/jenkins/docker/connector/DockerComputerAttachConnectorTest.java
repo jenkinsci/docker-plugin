@@ -1,25 +1,30 @@
 package io.jenkins.docker.connector;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import io.jenkins.docker.connector.DockerComputerAttachConnector.ArgumentVariables;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.DockerClientFactory;
 
-public class DockerComputerAttachConnectorTest extends DockerComputerConnectorTest {
+class DockerComputerAttachConnectorTest extends DockerComputerConnectorTest {
     private static final String ATTACH_AGENT_IMAGE_IMAGENAME = "jenkins/agent";
 
     @Test
-    public void connectAgentViaDirectAttach() throws Exception {
+    void connectAgentViaDirectAttach() throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         final DockerComputerAttachConnector connector = new DockerComputerAttachConnector(COMMON_IMAGE_USERNAME);
         final String testName = "connectAgentViaDirectAttach";
         testAgentCanStartAndConnect(connector, testName);
     }
 
     @Test
-    public void connectAgentViaDirectAttachWithCustomCmd() throws Exception {
+    void connectAgentViaDirectAttachWithCustomCmd() throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
         final DockerComputerAttachConnector connector = new DockerComputerAttachConnector(COMMON_IMAGE_USERNAME);
         // We could setJavaExe("/opt/jdk-11/bin/java") too, but that'd
         // mean we'd break the instant that the public docker image's JVM

@@ -1,17 +1,23 @@
 package io.jenkins.docker.connector;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import java.net.URI;
 import jenkins.model.JenkinsLocationConfiguration;
 import org.apache.commons.lang3.SystemUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+import org.testcontainers.DockerClientFactory;
 
-public class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
+@WithJenkins
+class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
     private static final String JNLP_AGENT_IMAGE_IMAGENAME = "jenkins/inbound-agent";
 
     @Test
-    public void connectAgentViaJNLP() throws Exception {
+    void connectAgentViaJNLP() throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
 
         final JenkinsLocationConfiguration location = JenkinsLocationConfiguration.get();
         URI uri = URI.create(location.getUrl());

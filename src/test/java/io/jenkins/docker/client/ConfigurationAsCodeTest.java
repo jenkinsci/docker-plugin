@@ -17,17 +17,15 @@ import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
-import org.junit.Rule;
-import org.junit.Test;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
+import org.junit.jupiter.api.Test;
 
-public class ConfigurationAsCodeTest {
-
-    @Rule
-    public JenkinsConfiguredWithCodeRule r = new JenkinsConfiguredWithCodeRule();
+@WithJenkinsConfiguredWithCode
+class ConfigurationAsCodeTest {
 
     @Test
     @ConfiguredWithCode("configuration-as-code_current.yml")
-    public void should_support_current_configuration() throws Exception {
+    void should_support_current_configuration(JenkinsConfiguredWithCodeRule r) throws Exception {
         DockerCloud cloud = (DockerCloud) r.jenkins.clouds.get(0);
         assertThat(cloud.getDisplayName(), is("docker"));
         assertThat(cloud.getDockerApi().getDockerHost().getUri(), is("unix:///var/run/docker.sock"));
@@ -61,7 +59,7 @@ public class ConfigurationAsCodeTest {
 
     @Test
     @ConfiguredWithCode("configuration-as-code_old.yml")
-    public void should_support_old_configuration() throws Exception {
+    void should_support_old_configuration(JenkinsConfiguredWithCodeRule r) throws Exception {
         DockerCloud cloud = (DockerCloud) r.jenkins.clouds.get(0);
         assertThat(cloud.getDisplayName(), is("docker"));
         assertThat(cloud.getDockerApi().getDockerHost().getUri(), is("unix:///var/run/docker.sock"));

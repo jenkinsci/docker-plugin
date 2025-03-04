@@ -1,6 +1,10 @@
 package io.jenkins.docker.connector;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
@@ -28,21 +32,22 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.SystemUtils;
 import org.hamcrest.number.OrderingComparison;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
+@WithJenkins
 public abstract class DockerComputerConnectorTest {
     protected static final String COMMON_IMAGE_USERNAME = "jenkins";
     protected static final String COMMON_IMAGE_HOMEDIR = "/home/jenkins/agent";
     protected static final String INSTANCE_CAP = "10";
+
+    protected JenkinsRule j;
 
     private static int getJavaVersion() {
         Runtime.Version runtimeVersion = Runtime.version();
@@ -56,15 +61,15 @@ public abstract class DockerComputerConnectorTest {
          */
         final int javaVersion = getJavaVersion();
         if (SystemUtils.IS_OS_WINDOWS) {
-            if (javaVersion >= 11) {
-                return "jdk11-nanoserver-1809";
+            if (javaVersion >= 21) {
+                return "jdk21-nanoserver-1809";
             }
-            return "jdk8-nanoserver-1809";
+            return "jdk17-nanoserver-1809";
         }
-        if (javaVersion >= 11) {
-            return "latest-jdk11";
+        if (javaVersion >= 21) {
+            return "latest-jdk21";
         }
-        return "latest-jdk8";
+        return "latest-jdk17";
     }
 
     protected String getLabelForTemplate() {
@@ -74,18 +79,19 @@ public abstract class DockerComputerConnectorTest {
     private static int testNumber;
     private String cloudName;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         testNumber = 0;
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    public void setUp(JenkinsRule j) {
+        this.j = j;
         testNumber++;
         cloudName = "DockerCloud" + testNumber + "For" + this.getClass().getSimpleName();
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws Exception {
         terminateAllDockerNodes();
         final long startTimeMs = System.currentTimeMillis();
@@ -136,19 +142,15 @@ public abstract class DockerComputerConnectorTest {
         return false;
     }
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
-
     protected void should_connect_agent(DockerTemplate template)
             throws IOException, ExecutionException, InterruptedException, TimeoutException {
 
         // FIXME on CI windows nodes don't have Docker4Windows
-        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+        assumeFalse(SystemUtils.IS_OS_WINDOWS);
 
         // Given
         final String templateLabel = template.getLabelString();
-        Assert.assertFalse(
-                "Error in test code - test template must be a single unique string", templateLabel.contains(" "));
+        assertFalse(templateLabel.contains(" "), "Error in test code - test template must be a single unique string");
         final String expectedTextInBuildLog = "ourBuildDidActuallyRun" + System.nanoTime();
         final Builder buildStepToEchoExpectedText;
         final String dockerHost;
@@ -180,7 +182,7 @@ public abstract class DockerComputerConnectorTest {
         }
 
         // Then
-        Assert.assertEquals(Result.SUCCESS, actualBuildResult);
-        Assert.assertTrue(actualBuildLog.contains(expectedTextInBuildLog));
+        assertEquals(Result.SUCCESS, actualBuildResult);
+        assertTrue(actualBuildLog.contains(expectedTextInBuildLog));
     }
 }

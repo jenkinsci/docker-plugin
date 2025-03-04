@@ -16,11 +16,11 @@ import hudson.model.Queue.FlyweightTask;
 import hudson.model.Queue.Task;
 import io.jenkins.docker.DockerComputer;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DockerOnceRetentionStrategyTest {
+class DockerOnceRetentionStrategyTest {
     @Test
-    public void isAcceptingTasksGivenTerminateOnceDoneIsFalseThenReturnsTrue() {
+    void isAcceptingTasksGivenTerminateOnceDoneIsFalseThenReturnsTrue() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(0);
         instance.setTerminateOnceDone(false);
@@ -34,7 +34,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void isAcceptingTasksGivenTerminateOnceDoneIsTrueThenReturnsFalse() {
+    void isAcceptingTasksGivenTerminateOnceDoneIsTrueThenReturnsFalse() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(0);
         instance.setTerminateOnceDone(true);
@@ -48,7 +48,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void constructorGivenNoDataThenDefaults() {
+    void constructorGivenNoDataThenDefaults() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(0);
 
@@ -64,7 +64,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void settersSetData() {
+    void settersSetData() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(0);
 
@@ -92,7 +92,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void checkGivenNonIdleComputerThenReturnsMaxIdleTime() {
+    void checkGivenNonIdleComputerThenReturnsMaxIdleTime() {
         // Given
         final ClassUnderTest instance1 = new ClassUnderTest(1);
         final ClassUnderTest instance123 = new ClassUnderTest(123);
@@ -111,7 +111,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void checkGivenRecentlyIdleComputerThenReturnsMinutesUntilNextCheck() {
+    void checkGivenRecentlyIdleComputerThenReturnsMinutesUntilNextCheck() {
         // Given
         final long idleMinutes = 123;
         final long msInAminute = 60L * 1000L;
@@ -147,7 +147,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void checkGivenVeryIdleComputerThenTerminates() {
+    void checkGivenVeryIdleComputerThenTerminates() {
         // Given
         final long idleMinutes = 234;
         final long msInAminute = 60L * 1000L;
@@ -172,7 +172,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void taskAcceptedGivenTrivialTasksThenRecordsStartButDoesNotEnableTermination() {
+    void taskAcceptedGivenTrivialTasksThenRecordsStartButDoesNotEnableTermination() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(1);
         final Executor mockLightweightExecutor = mock(OneOffExecutor.class);
@@ -198,7 +198,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void taskAcceptedGivenHeavyweightThenRecordsStartAndEnablesTermination() {
+    void taskAcceptedGivenHeavyweightThenRecordsStartAndEnablesTermination() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(1);
         final Executor mockExecutor = mock(Executor.class);
@@ -215,7 +215,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void taskAcceptedGivenNonContinuingContinuableThenRecordsStartAndEnablesTermination() {
+    void taskAcceptedGivenNonContinuingContinuableThenRecordsStartAndEnablesTermination() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(1);
         final Executor mockExecutor = mock(Executor.class, withSettings().extraInterfaces(ContinuableExecutable.class));
@@ -233,7 +233,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void taskCompletedGivenTasksStillInProgressThenRecordsCompletionOnly() {
+    void taskCompletedGivenTasksStillInProgressThenRecordsCompletionOnly() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(1);
         final Executor mockExecutor = mock(Executor.class);
@@ -253,7 +253,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void taskCompletedGivenLastTaskAndTerminationNotEnabledThenRecordsCompletionOnly() {
+    void taskCompletedGivenLastTaskAndTerminationNotEnabledThenRecordsCompletionOnly() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(1);
         final Executor mockExecutor = mock(Executor.class);
@@ -272,7 +272,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void taskCompletedGivenLastTaskAndTerminationEnabledThenRecordsCompletionAndTerminates() {
+    void taskCompletedGivenLastTaskAndTerminationEnabledThenRecordsCompletionAndTerminates() {
         // Given
         final ClassUnderTest instance = new ClassUnderTest(1);
         final Executor mockExecutor = mock(Executor.class);
@@ -291,7 +291,7 @@ public class DockerOnceRetentionStrategyTest {
     }
 
     @Test
-    public void testHashCodeAndEquals() {
+    void testHashCodeAndEquals() {
         // hashCode & equals need to ignore the dynamic config and only pay attention to
         // the user-configured idle-time.
 

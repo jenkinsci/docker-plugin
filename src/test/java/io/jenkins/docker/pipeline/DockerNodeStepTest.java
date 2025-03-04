@@ -24,7 +24,9 @@
 
 package io.jenkins.docker.pipeline;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerContainerWatchdog;
@@ -65,25 +67,22 @@ import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runners.model.Statement;
-import org.jvnet.hudson.test.BuildWatcher;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.RestartableJenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.testcontainers.DockerClientFactory;
 
-public class DockerNodeStepTest {
+@WithJenkins
+class DockerNodeStepTest {
 
-    @BeforeClass
-    public static void before() {
+    @BeforeAll
+    static void before() {
         // FIXME on CI windows nodes don't have Docker4Windows
-        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+        assumeFalse(SystemUtils.IS_OS_WINDOWS);
     }
 
     private static String dockerNodeJenkinsAgent() {
@@ -120,17 +119,10 @@ public class DockerNodeStepTest {
         return s.toString();
     }
 
-    @ClassRule
-    public static BuildWatcher buildWatcher = new BuildWatcher();
-
-    @Rule
-    public RestartableJenkinsRule story = new RestartableJenkinsRule();
-
-    private void doCleanUp() {
+    private void doCleanUp(JenkinsRule rule) {
         try {
             // remove all nodes
-            final JenkinsRule j = story.j;
-            final Jenkins jenkins = j.jenkins;
+            final Jenkins jenkins = rule.jenkins;
             final List<Node> nodes = jenkins.getNodes();
             for (final Node node : nodes) {
                 jenkins.removeNode(node);
@@ -169,315 +161,244 @@ public class DockerNodeStepTest {
     }
 
     @Test
-    public void simpleProvision() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
+    void simpleProvision(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
 
-            private void runTest() throws Throwable {
-                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "simpleProvision");
-                j.setDefinition(new CpsFlowDefinition(
-                        dockerNodeJenkinsAgent() + " {\n" + "  sh 'echo \"hello there\"'\n" + "}\n", true));
-                WorkflowRun r = story.j.buildAndAssertSuccess(j);
-                story.j.assertLogContains("hello there", r);
-            }
-        });
+        try {
+            WorkflowJob j = rule.jenkins.createProject(WorkflowJob.class, "simpleProvision");
+            j.setDefinition(new CpsFlowDefinition(
+                    dockerNodeJenkinsAgent() + " {\n" + "  sh 'echo \"hello there\"'\n" + "}\n", true));
+            WorkflowRun r = rule.buildAndAssertSuccess(j);
+            rule.assertLogContains("hello there", r);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     @Test
-    public void withinNode() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
+    void withinNode(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
 
-            private void runTest() throws Throwable {
-                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "withinNode");
-                j.setDefinition(new CpsFlowDefinition(
-                        "node {\n" + "  "
-                                + dockerNodeJenkinsAgent() + " {\n" + "    sh 'echo \"hello there\"'\n"
-                                + "  }\n"
-                                + "}\n",
-                        true));
-                WorkflowRun r = story.j.buildAndAssertSuccess(j);
-                story.j.assertLogContains("hello there", r);
-            }
-        });
+        try {
+            WorkflowJob j = rule.jenkins.createProject(WorkflowJob.class, "withinNode");
+            j.setDefinition(new CpsFlowDefinition(
+                    "node {\n" + "  "
+                            + dockerNodeJenkinsAgent() + " {\n" + "    sh 'echo \"hello there\"'\n"
+                            + "  }\n"
+                            + "}\n",
+                    true));
+            WorkflowRun r = rule.buildAndAssertSuccess(j);
+            rule.assertLogContains("hello there", r);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     @Issue("JENKINS-36913")
     @Test
-    public void toolInstall() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
+    void toolInstall(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
 
-            private void runTest() throws Throwable {
-                // I feel like there's a way to do this without downloading the JSON, but at the moment I can't figure
-                // it out.
-                DownloadService.Downloadable mvnDl =
-                        DownloadService.Downloadable.get("hudson.tasks.Maven.MavenInstaller");
-                mvnDl.updateNow();
-                DownloadFromUrlInstaller.Installable ins = story.j
-                        .get(Maven.MavenInstaller.DescriptorImpl.class)
-                        .getInstallables()
-                        .get(0);
-                Maven.MavenInstaller installer = new Maven.MavenInstaller(ins.id);
+        try {
+            // I feel like there's a way to do this without downloading the JSON, but at the moment I can't figure
+            // it out.
+            DownloadService.Downloadable mvnDl = DownloadService.Downloadable.get("hudson.tasks.Maven.MavenInstaller");
+            mvnDl.updateNow();
+            DownloadFromUrlInstaller.Installable ins = rule.get(Maven.MavenInstaller.DescriptorImpl.class)
+                    .getInstallables()
+                    .get(0);
+            Maven.MavenInstaller installer = new Maven.MavenInstaller(ins.id);
 
-                InstallSourceProperty mvnIsp = new InstallSourceProperty(List.of(installer));
+            InstallSourceProperty mvnIsp = new InstallSourceProperty(List.of(installer));
 
-                Maven.MavenInstallation mvnInst = new Maven.MavenInstallation("myMaven", null, List.of(mvnIsp));
-                story.j.jenkins.getDescriptorByType(Maven.DescriptorImpl.class).setInstallations(mvnInst);
-                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "toolInstall");
-                j.setDefinition(new CpsFlowDefinition(
-                        dockerNodeJenkinsAgent() + " {\n" + "  def mvnHome = tool name: 'myMaven'\n"
-                                + "  assert fileExists(mvnHome + '/bin/mvn')\n"
-                                + "}\n",
-                        true));
-                story.j.buildAndAssertSuccess(j);
-            }
-        });
+            Maven.MavenInstallation mvnInst = new Maven.MavenInstallation("myMaven", null, List.of(mvnIsp));
+            rule.jenkins.getDescriptorByType(Maven.DescriptorImpl.class).setInstallations(mvnInst);
+            WorkflowJob j = rule.jenkins.createProject(WorkflowJob.class, "toolInstall");
+            j.setDefinition(new CpsFlowDefinition(
+                    dockerNodeJenkinsAgent() + " {\n" + "  def mvnHome = tool name: 'myMaven'\n"
+                            + "  assert fileExists(mvnHome + '/bin/mvn')\n"
+                            + "}\n",
+                    true));
+            rule.buildAndAssertSuccess(j);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     @Issue("JENKINS-33510")
     @Test
-    public void changeDir() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
-
-            private void runTest() throws Throwable {
-                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "changeDir");
-                j.setDefinition(new CpsFlowDefinition(
-                        dockerNodeJenkinsAgent() + " {\n" + "  echo \"dir is '${pwd()}'\"\n"
-                                + "  dir('subdir') {\n"
-                                + "    echo \"dir now is '${pwd()}'\"\n"
-                                + "  }\n"
-                                + "}\n",
-                        true));
-                WorkflowRun r = story.j.buildAndAssertSuccess(j);
-                story.j.assertLogContains("dir is '/home/jenkins/workspace'", r);
-                story.j.assertLogContains("dir now is '/home/jenkins/workspace/subdir'", r);
-            }
-        });
+    void changeDir(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
+        try {
+            WorkflowJob j = rule.jenkins.createProject(WorkflowJob.class, "changeDir");
+            j.setDefinition(new CpsFlowDefinition(
+                    dockerNodeJenkinsAgent() + " {\n" + "  echo \"dir is '${pwd()}'\"\n"
+                            + "  dir('subdir') {\n"
+                            + "    echo \"dir now is '${pwd()}'\"\n"
+                            + "  }\n"
+                            + "}\n",
+                    true));
+            WorkflowRun r = rule.buildAndAssertSuccess(j);
+            rule.assertLogContains("dir is '/home/jenkins/workspace'", r);
+            rule.assertLogContains("dir now is '/home/jenkins/workspace/subdir'", r);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     @Issue("JENKINS-41894")
     @Test
-    public void deleteDir() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
+    void deleteDir(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
 
-            private void runTest() throws Throwable {
-                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "deleteDir");
-                j.setDefinition(new CpsFlowDefinition(
-                        dockerNodeJenkinsAgent() + " {\n" + "  sh 'mkdir -p subdir'\n"
-                                + "  assert fileExists('subdir')\n"
-                                + "  dir('subdir') {\n"
-                                + "    echo \"dir now is '${pwd()}'\"\n"
-                                + "    deleteDir()\n"
-                                + "  }\n"
-                                + "  assert !fileExists('subdir')\n"
-                                + "}\n",
-                        true));
-                WorkflowRun r = story.j.buildAndAssertSuccess(j);
-                story.j.assertLogContains("dir now is '/home/jenkins/workspace/subdir'", r);
-            }
-        });
+        try {
+            WorkflowJob j = rule.jenkins.createProject(WorkflowJob.class, "deleteDir");
+            j.setDefinition(new CpsFlowDefinition(
+                    dockerNodeJenkinsAgent() + " {\n" + "  sh 'mkdir -p subdir'\n"
+                            + "  assert fileExists('subdir')\n"
+                            + "  dir('subdir') {\n"
+                            + "    echo \"dir now is '${pwd()}'\"\n"
+                            + "    deleteDir()\n"
+                            + "  }\n"
+                            + "  assert !fileExists('subdir')\n"
+                            + "}\n",
+                    true));
+            WorkflowRun r = rule.buildAndAssertSuccess(j);
+            rule.assertLogContains("dir now is '/home/jenkins/workspace/subdir'", r);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     @Issue("JENKINS-46831")
     @Test
-    public void nodeWithinDockerNodeWithinNode() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
+    void nodeWithinDockerNodeWithinNode(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
 
-            private void runTest() throws Throwable {
-                Slave s1 = story.j.createOnlineSlave();
-                s1.setLabelString("first-agent");
-                s1.setMode(Node.Mode.EXCLUSIVE);
-                s1.getNodeProperties()
-                        .add(new EnvironmentVariablesNodeProperty(
-                                new EnvironmentVariablesNodeProperty.Entry("ONAGENT", "true"),
-                                new EnvironmentVariablesNodeProperty.Entry("WHICH_AGENT", "first")));
+        try {
+            Slave s1 = rule.createOnlineSlave();
+            s1.setLabelString("first-agent");
+            s1.setMode(Node.Mode.EXCLUSIVE);
+            s1.getNodeProperties()
+                    .add(new EnvironmentVariablesNodeProperty(
+                            new EnvironmentVariablesNodeProperty.Entry("ONAGENT", "true"),
+                            new EnvironmentVariablesNodeProperty.Entry("WHICH_AGENT", "first")));
 
-                Slave s2 = story.j.createOnlineSlave();
-                s2.setLabelString("other-agent");
-                s2.setMode(Node.Mode.EXCLUSIVE);
-                s2.getNodeProperties()
-                        .add(new EnvironmentVariablesNodeProperty(
-                                new EnvironmentVariablesNodeProperty.Entry("ONAGENT", "true"),
-                                new EnvironmentVariablesNodeProperty.Entry("WHICH_AGENT", "second")));
+            Slave s2 = rule.createOnlineSlave();
+            s2.setLabelString("other-agent");
+            s2.setMode(Node.Mode.EXCLUSIVE);
+            s2.getNodeProperties()
+                    .add(new EnvironmentVariablesNodeProperty(
+                            new EnvironmentVariablesNodeProperty.Entry("ONAGENT", "true"),
+                            new EnvironmentVariablesNodeProperty.Entry("WHICH_AGENT", "second")));
 
-                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "nodeWithinDockerNode");
-                j.setDefinition(new CpsFlowDefinition(
-                        "node('first-agent') {\n" + "  sh 'echo \"FIRST: WHICH_AGENT=|$WHICH_AGENT|\"'\n"
-                                + "  "
-                                + dockerNodeJenkinsAgent() + " {\n"
-                                + "    sh 'echo \"DOCKER: WHICH_AGENT=|$WHICH_AGENT|\"'\n"
-                                + "    node('other-agent') {\n"
-                                + "      sh 'echo \"SECOND: WHICH_AGENT=|$WHICH_AGENT|\"'\n"
-                                + "    }\n"
-                                + "  }\n"
-                                + "}\n",
-                        true));
-                WorkflowRun r = story.j.buildAndAssertSuccess(j);
-                story.j.assertLogContains("FIRST: WHICH_AGENT=|first|", r);
-                story.j.assertLogContains("SECOND: WHICH_AGENT=|second|", r);
-                story.j.assertLogContains("DOCKER: WHICH_AGENT=||", r);
-            }
-        });
+            WorkflowJob j = rule.jenkins.createProject(WorkflowJob.class, "nodeWithinDockerNode");
+            j.setDefinition(new CpsFlowDefinition(
+                    "node('first-agent') {\n" + "  sh 'echo \"FIRST: WHICH_AGENT=|$WHICH_AGENT|\"'\n"
+                            + "  "
+                            + dockerNodeJenkinsAgent() + " {\n"
+                            + "    sh 'echo \"DOCKER: WHICH_AGENT=|$WHICH_AGENT|\"'\n"
+                            + "    node('other-agent') {\n"
+                            + "      sh 'echo \"SECOND: WHICH_AGENT=|$WHICH_AGENT|\"'\n"
+                            + "    }\n"
+                            + "  }\n"
+                            + "}\n",
+                    true));
+            WorkflowRun r = rule.buildAndAssertSuccess(j);
+            rule.assertLogContains("FIRST: WHICH_AGENT=|first|", r);
+            rule.assertLogContains("SECOND: WHICH_AGENT=|second|", r);
+            rule.assertLogContains("DOCKER: WHICH_AGENT=||", r);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     @Test
-    public void defaults() {
-        story.then(r -> {
-            DockerNodeStep s = new DockerNodeStep("foo");
-            s.setCredentialsId("");
-            s.setDockerHost("");
-            s.setRemoteFs("");
-            UninstantiatedDescribable uninstantiated = new DescribableModel<>(DockerNodeStep.class).uninstantiate2(s);
-            assertEquals(
-                    uninstantiated.toString(),
-                    Set.of("image"),
-                    uninstantiated.getArguments().keySet());
-            r.jenkins.clouds.add(new DockerCloud(
-                    "whatever",
-                    new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)),
-                    Collections.emptyList()));
-            WorkflowJob j = r.createProject(WorkflowJob.class, "p");
-            j.setDefinition(new CpsFlowDefinition(
-                    dockerNodeWithImage("openjdk:11") + " {\n"
-                            + "  sh 'java -version && whoami && pwd && touch stuff && ls -lat . ..'\n"
-                            + "}\n",
-                    true));
-            r.buildAndAssertSuccess(j);
-        });
+    void defaults(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
+
+        DockerNodeStep s = new DockerNodeStep("foo");
+        s.setCredentialsId("");
+        s.setDockerHost("");
+        s.setRemoteFs("");
+        UninstantiatedDescribable uninstantiated = new DescribableModel<>(DockerNodeStep.class).uninstantiate2(s);
+        assertEquals(Set.of("image"), uninstantiated.getArguments().keySet(), uninstantiated.toString());
+        rule.jenkins.clouds.add(new DockerCloud(
+                "whatever",
+                new DockerAPI(new DockerServerEndpoint("unix:///var/run/docker.sock", null)),
+                Collections.emptyList()));
+        WorkflowJob j = rule.createProject(WorkflowJob.class, "p");
+        j.setDefinition(new CpsFlowDefinition(
+                dockerNodeWithImage("eclipse-temurin:17-jre") + " {\n"
+                        + "  sh 'java -version && whoami && pwd && touch stuff && ls -lat . ..'\n"
+                        + "}\n",
+                true));
+        rule.buildAndAssertSuccess(j);
     }
 
     @Issue("JENKINS-47805")
     @Test
-    public void pathModification() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
+    void pathModification(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
 
-            private void runTest() throws Throwable {
-                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "pathModification");
-                j.setDefinition(new CpsFlowDefinition(
-                        dockerNodeJenkinsAgent() + " {\n" + "  echo \"Original PATH: ${env.PATH}\"\n"
-                                + "  def origPath = env.PATH\n"
-                                + "  pathModifier('/some/fake/path') {\n"
-                                + "    echo \"Modified PATH: ${env.PATH}\"\n"
-                                + "    assert env.PATH == '/some/fake/path:' + origPath"
-                                + "  }\n"
-                                + "}\n",
-                        true));
-                story.j.buildAndAssertSuccess(j);
-            }
-        });
+        try {
+            WorkflowJob j = rule.jenkins.createProject(WorkflowJob.class, "pathModification");
+            j.setDefinition(new CpsFlowDefinition(
+                    dockerNodeJenkinsAgent() + " {\n" + "  echo \"Original PATH: ${env.PATH}\"\n"
+                            + "  def origPath = env.PATH\n"
+                            + "  pathModifier('/some/fake/path') {\n"
+                            + "    echo \"Modified PATH: ${env.PATH}\"\n"
+                            + "    assert env.PATH == '/some/fake/path:' + origPath"
+                            + "  }\n"
+                            + "}\n",
+                    true));
+            rule.buildAndAssertSuccess(j);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     @Test
-    public void dockerBuilderPublisher() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
+    void dockerBuilderPublisher(JenkinsRule rule) throws Exception {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable());
 
-            private void runTest() throws Throwable {
-                WorkflowJob j = story.j.jenkins.createProject(WorkflowJob.class, "dockerBuilderPublisher");
-                j.setDefinition(new CpsFlowDefinition(
-                        dockerNodeJenkinsAgent() + " {\n"
-                                + "  writeFile(file: 'Dockerfile', text: 'FROM jenkins/agent')\n"
-                                + "  step([$class: 'DockerBuilderPublisher', dockerFileDirectory: ''])\n"
-                                + "}\n",
-                        true));
-                WorkflowRun r = story.j.buildAndAssertSuccess(j);
-                story.j.assertLogContains("Successfully built", r);
-            }
-        });
+        try {
+            WorkflowJob j = rule.jenkins.createProject(WorkflowJob.class, "dockerBuilderPublisher");
+            j.setDefinition(new CpsFlowDefinition(
+                    dockerNodeJenkinsAgent() + " {\n"
+                            + "  writeFile(file: 'Dockerfile', text: 'FROM jenkins/agent')\n"
+                            + "  step([$class: 'DockerBuilderPublisher', dockerFileDirectory: ''])\n"
+                            + "}\n",
+                    true));
+            WorkflowRun r = rule.buildAndAssertSuccess(j);
+            rule.assertLogContains("Successfully built", r);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     @Test
-    public void getAcceptableConnectorDescriptors() throws Exception {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    runTest();
-                } finally {
-                    doCleanUp();
-                }
-            }
+    void getAcceptableConnectorDescriptors(JenkinsRule rule) throws Exception {
+        try {
+            // Given
+            final Jenkins jenkins = rule.getInstance();
+            final Descriptor ourDesc = jenkins.getDescriptor(DockerNodeStep.class);
+            final Descriptor expectedDesc = jenkins.getDescriptor(DockerComputerAttachConnector.class);
+            final DockerNodeStep.DescriptorImpl ourInstance = (DockerNodeStep.DescriptorImpl) ourDesc;
+            final DockerComputerAttachConnector.DescriptorImpl attachDescriptor =
+                    (DockerComputerAttachConnector.DescriptorImpl) expectedDesc;
+            final List<Descriptor<? extends DockerComputerConnector>> expected = new ArrayList<>();
+            expected.add(attachDescriptor);
 
-            private void runTest() throws Throwable {
-                // Given
-                final Jenkins jenkins = story.j.getInstance();
-                final Descriptor ourDesc = jenkins.getDescriptor(DockerNodeStep.class);
-                final Descriptor expectedDesc = jenkins.getDescriptor(DockerComputerAttachConnector.class);
-                final DockerNodeStep.DescriptorImpl ourInstance = (DockerNodeStep.DescriptorImpl) ourDesc;
-                final DockerComputerAttachConnector.DescriptorImpl attachDescriptor =
-                        (DockerComputerAttachConnector.DescriptorImpl) expectedDesc;
-                final List<Descriptor<? extends DockerComputerConnector>> expected = new ArrayList<>();
-                expected.add(attachDescriptor);
+            // When
+            final List<Descriptor<? extends DockerComputerConnector>> actual =
+                    ourInstance.getAcceptableConnectorDescriptors();
 
-                // When
-                final List<Descriptor<? extends DockerComputerConnector>> actual =
-                        ourInstance.getAcceptableConnectorDescriptors();
-
-                // Then
-                assertEquals(expected, actual);
-            }
-        });
+            // Then
+            assertEquals(expected, actual);
+        } finally {
+            doCleanUp(rule);
+        }
     }
 
     public static class PathModifierStep extends Step {

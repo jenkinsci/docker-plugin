@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.88</version>
+    <version>5.7</version>
     <relativePath />
   </parent>
 
@@ -24,34 +24,6 @@
     </license>
   </licenses>
 
-  <developers>
-    <developer>
-      <id>magnayn</id>
-      <name>Nigel Magnay</name>
-      <roles>
-        <role>maintainer (retired)</role>
-      </roles>
-    </developer>
-    <developer>
-      <id>ndeloof</id>
-      <name>Nicolas De Loof</name>
-      <roles>
-        <role>maintainer (retired)</role>
-      </roles>
-    </developer>
-    <developer>
-      <id>pjdarton</id>
-      <name>Peter Darton</name>
-      <roles>
-        <role>maintainer (retired)</role>
-      </roles>
-    </developer>
-    <!--
-      You could have your name here.
-      https://www.jenkins.io/doc/developer/plugin-governance/adopt-a-plugin/
-    -->
-  </developers>
-
   <scm>
     <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
     <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
@@ -60,10 +32,12 @@
   </scm>
 
   <properties>
-    <revision>1.7.1</revision>
+    <revision>1.10.1</revision>
     <changelist>-SNAPSHOT</changelist>
-    <jenkins.baseline>2.452</jenkins.baseline>
-    <jenkins.version>${jenkins.baseline}.4</jenkins.version>
+    <jenkins.baseline>2.479</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
+    <!-- TODO until in BOM -->
+    <pipeline-model-definition.version>2.2236.va_b_88ceec798f</pipeline-model-definition.version>
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
     <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
     <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
@@ -78,9 +52,35 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>3613.v584fca_12cf5c</version>
+        <version>4228.v0a_71308d905b_</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkinsci.plugins</groupId>
+        <artifactId>pipeline-model-api</artifactId>
+        <version>${pipeline-model-definition.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkinsci.plugins</groupId>
+        <artifactId>pipeline-model-definition</artifactId>
+        <version>${pipeline-model-definition.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkinsci.plugins</groupId>
+        <artifactId>pipeline-model-definition</artifactId>
+        <version>${pipeline-model-definition.version}</version>
+        <classifier>tests</classifier>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkinsci.plugins</groupId>
+        <artifactId>pipeline-model-extensions</artifactId>
+        <version>${pipeline-model-definition.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jenkinsci.plugins</groupId>
+        <artifactId>pipeline-stage-tags-metadata</artifactId>
+        <version>${pipeline-model-definition.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -111,7 +111,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>cloud-stats</artifactId>
-      <version>336.v788e4055508b_</version>
+      <version>377.vd8a_6c953e98e</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
@@ -182,6 +182,12 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.20.5</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

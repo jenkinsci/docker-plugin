@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import hudson.model.Label;
@@ -14,18 +15,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class JenkinsUtilsTest {
-
-    @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
+@WithJenkins
+class JenkinsUtilsTest {
 
     @Test
-    public void getCloudByNameOrThrowGivenNameThenReturnsCloud() throws Exception {
+    void getCloudByNameOrThrowGivenNameThenReturnsCloud(JenkinsRule jenkins) throws Exception {
         // Given
         final DockerAPI dockerApi = new DockerAPI(new DockerServerEndpoint("uri", "credentialsId"));
         final String expectedCloudName = "expectedCloudName";
@@ -43,7 +41,7 @@ public class JenkinsUtilsTest {
     }
 
     @Test
-    public void getCloudByNameOrThrowGivenUnknownNameThenThrows() throws Exception {
+    void getCloudByNameOrThrowGivenUnknownNameThenThrows(JenkinsRule jenkins) throws Exception {
         // Given
         final DockerAPI dockerApi = new DockerAPI(new DockerServerEndpoint("uri", "credentialsId"));
         final String requestedCloudName = "anUnknownCloudName";
@@ -55,22 +53,20 @@ public class JenkinsUtilsTest {
         final List<Cloud> clouds = List.of(cloud2, cloud1, cloudForeign);
         jenkins.getInstance().clouds.replaceBy(clouds);
 
-        try {
-            // When
-            JenkinsUtils.getCloudByNameOrThrow(requestedCloudName);
-            Assert.fail("Expected " + IllegalArgumentException.class.getCanonicalName());
-        } catch (IllegalArgumentException ex) {
-            // Then
-            final String actualMsg = ex.getMessage();
-            assertThat(actualMsg, containsString(requestedCloudName));
-            assertThat(actualMsg, containsString(cloudName1));
-            assertThat(actualMsg, containsString(cloudName2));
-            assertThat(actualMsg, not(containsString(cloudForeign.name)));
-        }
+        // When
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> JenkinsUtils.getCloudByNameOrThrow(requestedCloudName));
+
+        // Then
+        final String actualMsg = ex.getMessage();
+        assertThat(actualMsg, containsString(requestedCloudName));
+        assertThat(actualMsg, containsString(cloudName1));
+        assertThat(actualMsg, containsString(cloudName2));
+        assertThat(actualMsg, not(containsString(cloudForeign.name)));
     }
 
     @Test
-    public void getCloudByNameOrThrowGivenForeignCloudNameThenThrows() throws Exception {
+    void getCloudByNameOrThrowGivenForeignCloudNameThenThrows(JenkinsRule jenkins) throws Exception {
         // Given
         final DockerAPI dockerApi = new DockerAPI(new DockerServerEndpoint("uri", "credentialsId"));
         final String requestedCloudName = "foreign";
@@ -82,17 +78,15 @@ public class JenkinsUtilsTest {
         final List<Cloud> clouds = List.of(cloud2, cloud1, cloudForeign);
         jenkins.getInstance().clouds.replaceBy(clouds);
 
-        try {
-            // When
-            JenkinsUtils.getCloudByNameOrThrow(requestedCloudName);
-            Assert.fail("Expected " + IllegalArgumentException.class.getCanonicalName());
-        } catch (IllegalArgumentException ex) {
-            // Then
-            final String actualMsg = ex.getMessage();
-            assertThat(actualMsg, containsString(requestedCloudName));
-            assertThat(actualMsg, containsString(cloudName1));
-            assertThat(actualMsg, containsString(cloudName2));
-        }
+        // When
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> JenkinsUtils.getCloudByNameOrThrow(requestedCloudName));
+
+        // Then
+        final String actualMsg = ex.getMessage();
+        assertThat(actualMsg, containsString(requestedCloudName));
+        assertThat(actualMsg, containsString(cloudName1));
+        assertThat(actualMsg, containsString(cloudName2));
     }
 
     private static class OtherTypeOfCloud extends Cloud {

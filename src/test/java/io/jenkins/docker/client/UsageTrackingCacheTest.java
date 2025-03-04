@@ -1,19 +1,19 @@
 package io.jenkins.docker.client;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class UsageTrackingCacheTest {
+class UsageTrackingCacheTest {
 
     @Test
-    public void getAndIncrementUsageGivenEmptyCacheThenReturnsNull() {
+    void getAndIncrementUsageGivenEmptyCacheThenReturnsNull() {
         final String key = "key";
         final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
@@ -26,7 +26,7 @@ public class UsageTrackingCacheTest {
     }
 
     @Test
-    public void cacheAndIncrementUsageGivenClashingEntryThenThrows() {
+    void cacheAndIncrementUsageGivenClashingEntryThenThrows() {
         final String key = "key";
         final Object value = value("value");
         final List<Object> expiryList = new ArrayList<>();
@@ -34,16 +34,12 @@ public class UsageTrackingCacheTest {
         final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.DAYS, expiryHandler);
         instance.cacheAndIncrementUsage(key, value);
 
-        try {
-            instance.cacheAndIncrementUsage(key, value);
-            fail("Expected an exception by now");
-        } catch (IllegalStateException expected) {
-        }
+        assertThrows(IllegalStateException.class, () -> instance.cacheAndIncrementUsage(key, value));
         assertNothingExpired(expiryList);
     }
 
     @Test
-    public void getAndIncrementUsageGivenActiveDataThenReturnsSameDataEveryTime() {
+    void getAndIncrementUsageGivenActiveDataThenReturnsSameDataEveryTime() {
         final String key = "key";
         final Object value = value("value");
         final List<Object> expiryList = new ArrayList<>();
@@ -62,22 +58,18 @@ public class UsageTrackingCacheTest {
     }
 
     @Test
-    public void decrementUsageGivenNoActivityThenThrows() {
+    void decrementUsageGivenNoActivityThenThrows() {
         final Object value = value("value");
         final List<Object> expiryList = new ArrayList<>();
         final UsageTrackingCache.ExpiryHandler<String, Object> expiryHandler = expiryTracker(expiryList);
         final UsageTrackingCache<String, Object> instance = new UsageTrackingCache<>(1, TimeUnit.DAYS, expiryHandler);
 
-        try {
-            instance.decrementUsage(value);
-            fail("Expected an exception by now");
-        } catch (IllegalStateException expected) {
-        }
+        assertThrows(IllegalStateException.class, () -> instance.decrementUsage(value));
         assertNothingExpired(expiryList);
     }
 
     @Test
-    public void decrementUsageGivenOneTooManyCallsThenThrows() {
+    void decrementUsageGivenOneTooManyCallsThenThrows() {
         final String key = "key";
         final Object value = value("value");
         final List<Object> expiryList = new ArrayList<>();
@@ -89,16 +81,12 @@ public class UsageTrackingCacheTest {
         instance.decrementUsage(value); // count=1
         instance.decrementUsage(value); // count=0 so inactive
 
-        try {
-            instance.decrementUsage(value);
-            fail("Expected an exception by now");
-        } catch (IllegalStateException expected) {
-        }
+        assertThrows(IllegalStateException.class, () -> instance.decrementUsage(value));
         assertNothingExpired(expiryList);
     }
 
     @Test
-    public void getAndIncrementUsageGivenRecentButInactiveDataInCacheThenReturnsCachedData() {
+    void getAndIncrementUsageGivenRecentButInactiveDataInCacheThenReturnsCachedData() {
         final String key = "key";
         final Object value = value("value");
         final List<Object> expiryList = new ArrayList<>();
@@ -114,7 +102,7 @@ public class UsageTrackingCacheTest {
     }
 
     @Test
-    public void getAndIncrementUsageGivenOldInactiveDataInCacheThenDiscardsOldDataAndReturnsNull() throws Exception {
+    void getAndIncrementUsageGivenOldInactiveDataInCacheThenDiscardsOldDataAndReturnsNull() throws Exception {
         final String key = "key";
         final Object value = value("value");
         final List<Object> expiryList = new ArrayList<>();
@@ -133,7 +121,7 @@ public class UsageTrackingCacheTest {
     }
 
     @Test
-    public void expiryHandlerGivenOldActiveDataInCacheThenNotCalled() throws Exception {
+    void expiryHandlerGivenOldActiveDataInCacheThenNotCalled() throws Exception {
         final String key = "key";
         final Object value = value("value");
         final List<Object> expiryList = new ArrayList<>();
@@ -161,26 +149,23 @@ public class UsageTrackingCacheTest {
 
     private static <K extends L, V extends L, L> UsageTrackingCache.ExpiryHandler<K, V> expiryTracker(
             final List<L> expiryList) {
-        return new UsageTrackingCache.ExpiryHandler<>() {
-            @Override
-            public void entryDroppedFromCache(K key, V value) {
-                expiryList.add(key);
-                expiryList.add(value);
-            }
+        return (key, value) -> {
+            expiryList.add(key);
+            expiryList.add(value);
         };
     }
 
     private static <L> void assertNothingExpired(List<L> list) {
         assertNotNull(list);
-        assertEquals("Number of keys and values in the expiryList", 0, list.size());
+        assertEquals(0, list.size(), "Number of keys and values in the expiryList");
     }
 
     private static <K extends L, V extends L, L> void assertExpired(List<L> expiryList, K key, V value) {
         assertNotNull(expiryList);
-        assertEquals("Number of keys and values in the expiryList", 2, expiryList.size());
+        assertEquals(2, expiryList.size(), "Number of keys and values in the expiryList");
         final L actualExpiredKey = expiryList.get(0);
-        assertEquals("Expired key", key, actualExpiredKey);
+        assertEquals(key, actualExpiredKey, "Expired key");
         final L actualExpiredValue = expiryList.get(1);
-        assertEquals("Expired value", value, actualExpiredValue);
+        assertEquals(value, actualExpiredValue, "Expired value");
     }
 }

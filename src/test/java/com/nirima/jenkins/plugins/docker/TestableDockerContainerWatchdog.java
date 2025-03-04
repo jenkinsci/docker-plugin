@@ -1,5 +1,7 @@
 package com.nirima.jenkins.plugins.docker;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.model.Container;
@@ -14,10 +16,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
-import org.junit.Assert;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
@@ -25,8 +25,8 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
     private static final String UNITTEST_JENKINS_ID = "f1b65f06-be3e-4dac-a760-b17e7592570f";
     private List<Node> allNodes;
     private List<DockerCloud> allClouds;
-    private List<DockerTransientNode> nodesRemoved = new LinkedList<>();
-    private List<String> containersRemoved = new LinkedList<>();
+    private final List<DockerTransientNode> nodesRemoved = new LinkedList<>();
+    private final List<String> containersRemoved = new LinkedList<>();
 
     public static void setClockOn(DockerContainerWatchdog i, Clock clock) {
         i.setClock(clock);
@@ -97,14 +97,11 @@ public class TestableDockerContainerWatchdog extends DockerContainerWatchdog {
         Mockito.when(client.listContainersCmd()).thenReturn(listContainerCmd);
         Mockito.when(listContainerCmd.withShowAll(true)).thenReturn(listContainerCmd);
         Mockito.when(listContainerCmd.withLabelFilter(ArgumentMatchers.anyMap()))
-                .thenAnswer(new Answer<ListContainersCmd>() {
-                    @Override
-                    public ListContainersCmd answer(InvocationOnMock invocation) throws Throwable {
-                        Map<String, String> arg = invocation.getArgument(0);
-                        String jenkinsInstanceIdInFilter = arg.get(DockerContainerLabelKeys.JENKINS_INSTANCE_ID);
-                        Assert.assertEquals(UNITTEST_JENKINS_ID, jenkinsInstanceIdInFilter);
-                        return listContainerCmd;
-                    }
+                .thenAnswer((Answer<ListContainersCmd>) invocation -> {
+                    Map<String, String> arg = invocation.getArgument(0);
+                    String jenkinsInstanceIdInFilter = arg.get(DockerContainerLabelKeys.JENKINS_INSTANCE_ID);
+                    assertEquals(UNITTEST_JENKINS_ID, jenkinsInstanceIdInFilter);
+                    return listContainerCmd;
                 });
         Mockito.when(listContainerCmd.exec()).thenReturn(containerList);
         return result;

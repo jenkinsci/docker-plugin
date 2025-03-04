@@ -1,12 +1,17 @@
 package io.jenkins.docker.client;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Arrays;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,16 +150,16 @@ class DemuxTester implements AutoCloseable, Runnable {
         }
 
         //  3. ensure the output equals 'expected_output'
-        Assert.assertArrayEquals(expected_output, sink.toByteArray());
+        assertArrayEquals(expected_output, sink.toByteArray());
         sink.reset();
     }
 }
 
-public class DockerMultiplexedInputStreamTest {
+class DockerMultiplexedInputStreamTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerMultiplexedInputStream.class);
 
     @Test
-    public void testIncompleteFrames() throws Exception {
+    void testIncompleteFrames() throws Exception {
         try (DemuxTester tester = new DemuxTester()) {
             tester.iteration(
                     new byte[] {
@@ -189,8 +194,8 @@ public class DockerMultiplexedInputStreamTest {
                     },
                     new byte[] {75, 76, 77});
 
-            Assert.assertFalse(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertFalse(tester.isEof());
+            assertNull(tester.exception());
         }
     }
 
@@ -220,20 +225,20 @@ public class DockerMultiplexedInputStreamTest {
     }
 
     @Test
-    public void testLargeFrames() throws Exception {
+    void testLargeFrames() throws Exception {
         try (DemuxTester tester = new DemuxTester()) {
             subtestLargeFrame(tester, 24);
             subtestLargeFrame(tester, 327);
             subtestLargeFrame(tester, 76893);
             subtestLargeFrame(tester, 7);
 
-            Assert.assertFalse(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertFalse(tester.isEof());
+            assertNull(tester.exception());
         }
     }
 
     @Test
-    public void testStderr() throws Exception {
+    void testStderr() throws Exception {
         try (DemuxTester tester = new DemuxTester()) {
             tester.iteration(
                     new byte[] {
@@ -280,13 +285,13 @@ public class DockerMultiplexedInputStreamTest {
                     // output (8 bytes)
                     new byte[] {65, 66, 67, 72, 73, 74, 75, 76});
 
-            Assert.assertFalse(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertFalse(tester.isEof());
+            assertNull(tester.exception());
         }
     }
 
     @Test
-    public void testEof() throws Exception {
+    void testEof() throws Exception {
         // EOF in header
         try (DemuxTester tester = new DemuxTester()) {
             tester.iteration(
@@ -314,8 +319,8 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {65, 66, 67},
                     // send EOF
                     true);
-            Assert.assertTrue(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertTrue(tester.isEof());
+            assertNull(tester.exception());
         }
 
         // empty header
@@ -325,8 +330,8 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {},
                     // send EOF
                     true);
-            Assert.assertTrue(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertTrue(tester.isEof());
+            assertNull(tester.exception());
         }
 
         // EOF in stdout
@@ -360,8 +365,8 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {65, 66, 67, 68, 69},
                     // send EOF
                     true);
-            Assert.assertTrue(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertTrue(tester.isEof());
+            assertNull(tester.exception());
         }
 
         // EOF in stderr
@@ -400,8 +405,8 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {65, 66, 67},
                     // send EOF
                     true);
-            Assert.assertTrue(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertTrue(tester.isEof());
+            assertNull(tester.exception());
         }
 
         // stdout frame empty in both header and body
@@ -414,8 +419,8 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {},
                     // send EOF
                     true);
-            Assert.assertTrue(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertTrue(tester.isEof());
+            assertNull(tester.exception());
         }
 
         // stdout frame nonempty in header but missing in body
@@ -428,8 +433,8 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {},
                     // send EOF
                     true);
-            Assert.assertTrue(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertTrue(tester.isEof());
+            assertNull(tester.exception());
         }
 
         // stderr frame empty in both header and body
@@ -461,8 +466,8 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {65, 66, 67},
                     // send EOF
                     true);
-            Assert.assertTrue(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertTrue(tester.isEof());
+            assertNull(tester.exception());
         }
 
         // stderr frame nonempty in header but missing in body
@@ -494,13 +499,13 @@ public class DockerMultiplexedInputStreamTest {
                     new byte[] {65, 66, 67},
                     // send EOF
                     true);
-            Assert.assertTrue(tester.isEof());
-            Assert.assertNull(tester.exception());
+            assertTrue(tester.isEof());
+            assertNull(tester.exception());
         }
     }
 
     @Test
-    public void testUnknownFrameType() throws Exception {
+    void testUnknownFrameType() throws Exception {
         // EOF in header
         try (DemuxTester tester = new DemuxTester()) {
             tester.iteration(
@@ -531,8 +536,8 @@ public class DockerMultiplexedInputStreamTest {
                     },
                     new byte[] {65, 66, 67});
 
-            Assert.assertFalse(tester.isEof());
-            Assert.assertNotNull(tester.exception());
+            assertFalse(tester.isEof());
+            assertNotNull(tester.exception());
         }
     }
 }
