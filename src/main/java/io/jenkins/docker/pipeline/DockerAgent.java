@@ -130,7 +130,7 @@ public class DockerAgent extends DeclarativeAgent<DockerAgent> {
         }
     }
 
-    @Extension
+    @Extension(optional = true)
     public static final class Compat implements CompatibilityLoader {
         @Override
         public URL loadGroovySource(String clazz) {
