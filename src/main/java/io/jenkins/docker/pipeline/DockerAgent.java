@@ -8,6 +8,7 @@ import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.util.ListBoxModel;
 import io.jenkins.docker.connector.DockerComputerConnector;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgent;
 import org.jenkinsci.plugins.pipeline.modeldefinition.agent.DeclarativeAgentDescriptor;
+import org.jenkinsci.plugins.pipeline.modeldefinition.parser.CompatibilityLoader;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -125,6 +127,16 @@ public class DockerAgent extends DeclarativeAgent<DockerAgent> {
         public List<Descriptor<? extends DockerComputerConnector>> getAcceptableConnectorDescriptors() {
             return ExtensionList.lookupSingleton(DockerNodeStep.DescriptorImpl.class)
                     .getAcceptableConnectorDescriptors();
+        }
+    }
+
+    @Extension(optional = true)
+    public static final class Compat implements CompatibilityLoader {
+        @Override
+        public URL loadGroovySource(String clazz) {
+            return "io.jenkins.docker.pipeline.DockerAgentScript".equals(clazz)
+                    ? DockerAgent.class.getResource("DockerAgentScript-old.groovy")
+                    : null;
         }
     }
 }
