@@ -18,11 +18,11 @@ class DockerClientParametersTest {
         final String credentialsId1a = new String(credentialsId1);
         final String credentialsId2 = "credentialsId2";
         final Integer readTimeoutInMsOrNull1 = Integer.valueOf(1234);
-        final Integer readTimeoutInMsOrNull1a = new Integer(1234);
+        final Integer readTimeoutInMsOrNull1a = Integer.valueOf(1234);
         final Integer readTimeoutInMsOrNull2 = Integer.valueOf(5678);
         final Integer readTimeoutInMsOrNull3 = null;
         final Integer connectTimeoutInMsOrNull1 = Integer.valueOf(5678);
-        final Integer connectTimeoutInMsOrNull1a = new Integer(5678);
+        final Integer connectTimeoutInMsOrNull1a = Integer.valueOf(5678);
         final Integer connectTimeoutInMsOrNull2 = Integer.valueOf(1234);
         final Integer connectTimeoutInMsOrNull3 = null;
         final DockerClientParameters i1 = new DockerClientParameters(

@@ -206,7 +206,13 @@ class DockerNodeStepExecution extends StepExecution {
             env.put("NODE_NAME", computer.getName());
             env.put("EXECUTOR_NUMBER", "0");
             env.put("NODE_LABELS", join(node.getAssignedLabels(), " "));
-            env.put("WORKSPACE", ws.getRemote());
+            if (ws != null) {
+                // Silence spotbugs warning ws could be null
+                env.put("WORKSPACE", ws.getRemote());
+            } else {
+                // If ws is null, warn and do not try to dereference it
+                listener.getLogger().println("Unexpected null workspace, WORKSPACE not added to environment");
+            }
             FilePath tempDir = WorkspaceList.tempDir(ws);
             if (tempDir != null) {
                 env.put("WORKSPACE_TMP", tempDir.getRemote()); // JENKINS-60634
