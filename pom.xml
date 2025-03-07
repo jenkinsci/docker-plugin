@@ -187,7 +187,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
-      <version>1.20.5</version>
+      <version>1.20.6</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -206,20 +206,4 @@
     </pluginRepository>
   </pluginRepositories>
 
-  <profiles>
-    <profile>
-      <id>skip-spotless-on-windows-ci</id>
-      <activation>
-        <os>
-          <family>Windows</family>
-        </os>
-        <property>
-          <name>env.CI</name>
-        </property>
-      </activation>
-      <properties>
-        <spotless.check.skip>true</spotless.check.skip>
-      </properties>
-    </profile>
-  </profiles>
 </project>
