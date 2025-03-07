@@ -10,7 +10,7 @@
 
   <groupId>io.jenkins.docker</groupId>
   <artifactId>docker-plugin</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Docker plugin</name>
   <description>Provide Cloud Provisioning and other Docker features</description>
@@ -32,8 +32,7 @@
   </scm>
 
   <properties>
-    <revision>1.10.1</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <changelist>999999-SNAPSHOT</changelist>
     <jenkins.baseline>2.479</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <!-- TODO until in BOM -->
