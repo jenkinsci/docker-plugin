@@ -121,7 +121,7 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
     @Override
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
         if (!JenkinsUtils.getSystemPropertyBoolean(DockerContainerWatchdog.class.getName() + ".enabled", true)) {
-            LOGGER.info("Docker Container Watchdog is disabled based on system configuration");
+            LOGGER.debug("Docker Container Watchdog is disabled based on system configuration");
             return;
         }
 
