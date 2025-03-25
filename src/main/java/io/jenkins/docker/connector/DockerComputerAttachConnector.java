@@ -186,7 +186,7 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
         private final String name;
         private final String description;
 
-        ArgumentVariables(String name, String description) {
+        ArgumentVariables(final String name, final String description) {
             this.name = name;
             this.description = description;
         }

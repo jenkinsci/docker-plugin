@@ -172,7 +172,7 @@ public class DockerTransientNode extends AbstractCloudSlave implements TrackedIt
 
     @Nullable
     @Override
-    public ProvisioningActivity.Id getId() {
+    public final ProvisioningActivity.Id getId() {
         return provisioningId;
     }
 
@@ -184,7 +184,7 @@ public class DockerTransientNode extends AbstractCloudSlave implements TrackedIt
 
     @Override
     @Restricted(NoExternalUse.class)
-    public void _terminate(final TaskListener listener) {
+    public final void _terminate(final TaskListener listener) {
         final ILogger tl = createILoggerForTaskListener(listener);
         try {
             terminate(tl);
