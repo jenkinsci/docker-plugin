@@ -37,8 +37,7 @@ plugin and should go to its repository instead of this one.
 
 ----
 
-**Note:** This plugin does not use the OS's native Docker client;
-it uses [docker-java](https://github.com/docker-java/docker-java).
+**Note:** This plugin uses [docker-java](https://github.com/docker-java/docker-java) rather than relying on a commmand line docker client.
 You do not need to install a Docker client on Jenkins or on your agents to use this plugin.
 
 ----
