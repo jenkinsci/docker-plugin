@@ -190,7 +190,11 @@ It can also be configured from a Groovy script
 
 If you're unsure which method to use, use the [configuration as code plugin](https://plugins.jenkins.io/configuration-as-code/).
 
-### Configuration as Code plugin
+Many configuration as code settings are available for the plugin.
+They can be reviewed from a [configuration as code export](https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/configExport.md).
+Use the cloud configuration page in your Jenkins controller to configure the cloud, then export the configuration as code settings and save them in your configuration as code definition.
+
+### Configuration as Code example
 
 Install the [configuration-as-code plugin](https://plugins.jenkins.io/configuration-as-code/) and follow [its example](https://github.com/jenkinsci/configuration-as-code-plugin/tree/master/demos/docker).
 
@@ -205,11 +209,8 @@ jenkins:
   - docker:
       containerCap: 3
       dockerApi:
-        connectTimeout: 23
         dockerHost:
           uri: "tcp://dockerhost.example.com:2375"
-        readTimeout: 43
-      errorDuration: 313
       name: "my-docker-cloud"
       templates:
       - connector:
@@ -217,10 +218,9 @@ jenkins:
             jenkinsUrl: "https://jenkins.example.com/"
             user: "1000"
         dockerTemplateBase:
-          cpuPeriod: 0
-          cpuQuota: 0
           image: "jenkins/inbound-agent:latest-alpine-jdk21"
-        labelString: "alpine jdk21 alpine-jdk21 git-2.43"
+        labelString: "alpine jdk21 alpine-jdk21"
+        mode: EXCLUSIVE
         name: "alpine-jdk21"
         pullTimeout: 171
         remoteFs: "/home/jenkins/agent"
