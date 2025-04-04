@@ -15,9 +15,7 @@ one or more "templates"
 that describe
 the labels/tags provided by the template,
 the Docker image,
-how to start it,
-etc)
-and Jenkins can creates agents on-demand using those Docker containers.
+and Jenkins creates agents on-demand using those Docker containers.
 
 ## See also
 * [Changelog](https://plugins.jenkins.io/docker-plugin/releases/) and [archive](https://github.com/jenkinsci/docker-plugin/blob/docker-plugin-1.3.0/CHANGELOG.md)
@@ -190,9 +188,9 @@ This, combined with knowledge of [Docker itself](https://docs.docker.com/), shou
 ## Configuration as code
 
 Jenkins and the Docker plugin can be configured as code  using the [configuration as code plugin](https://plugins.jenkins.io/configuration-as-code/).
-It can also be configured from the Groovy script
+It can also be configured from a Groovy script
 
-If you're unsure which method to use, use the configuration as code plugin.
+If you're unsure which method to use, use the [configuration as code plugin](https://plugins.jenkins.io/configuration-as-code/).
 
 ### Configuration as Code plugin
 
