@@ -20,7 +20,6 @@ and Jenkins creates agents on-demand using those Docker containers.
 ## See also
 * [Changelog](https://plugins.jenkins.io/docker-plugin/releases/) and [archive](https://github.com/jenkinsci/docker-plugin/blob/docker-plugin-1.3.0/CHANGELOG.md)
 * Support and [contribution guide](CONTRIBUTING.md)
-* [Software license](LICENSE)
 
 ----
 
