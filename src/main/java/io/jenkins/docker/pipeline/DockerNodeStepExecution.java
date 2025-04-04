@@ -186,7 +186,7 @@ class DockerNodeStepExecution extends StepExecution {
                 "Must either specify dockerHost/credentialsId, or define at least one Docker cloud");
     }
 
-    private void invokeBody(DockerTransientNode node, TaskListener listener) {
+    private void invokeBody(final DockerTransientNode node, final TaskListener listener) {
         this.nodeName = node.getNodeName();
         FilePath ws = null;
         Computer computer = null;
@@ -256,7 +256,7 @@ class DockerNodeStepExecution extends StepExecution {
     private static class Callback extends BodyExecutionCallback.TailCall {
         private final String nodeName;
 
-        public Callback(Node node) {
+        Callback(Node node) {
             this.nodeName = node.getNodeName();
         }
 

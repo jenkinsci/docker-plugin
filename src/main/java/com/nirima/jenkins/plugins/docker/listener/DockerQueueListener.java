@@ -28,24 +28,37 @@ import java.util.UUID;
 public class DockerQueueListener extends QueueListener {
 
     @Override
-    public void onEnterWaiting(WaitingItem wi) {
+    public void onEnterWaiting(final WaitingItem wi) {
         final DockerJobTemplateProperty jobTemplate = getJobTemplate(wi);
         if (jobTemplate != null) {
-            final DockerCloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
+            final DockerCloud cloud = 
+                DockerCloud.getCloudByName(jobTemplate.getCloudname());
             if (cloud != null) {
                 final String uuid = UUID.randomUUID().toString();
-                final DockerTemplate template = jobTemplate.getTemplate().cloneWithLabel(uuid);
+                final DockerTemplate template = 
+                    jobTemplate.getTemplate().cloneWithLabel(uuid);
                 cloud.addJobTemplate(wi.getId(), template);
                 wi.addAction(new DockerTemplateLabelAssignmentAction(uuid));
             }
         }
     }
-
+    /**
+    * Called when an item leaves the queue.
+    * Subclasses can override this method to provide custom behavior when an item is removed from the queue.
+    *
+    * <p>When overriding this method, ensure that you:
+    * 1. Call the superclass's `onLeft` method if needed, to preserve the default behavior.
+    * 2. Handle null checks for `jobTemplate` and `cloud` objects, as they can be `null`.
+    * 3. Avoid making any long-running or blocking operations in this method, as it is called within Jenkins' queue management thread.
+    * 
+    * @param li the {@link LeftItem} that left the queue. This parameter should not be null.
+    */
     @Override
-    public void onLeft(LeftItem li) {
+    public void onLeft(final LeftItem li) {
         final DockerJobTemplateProperty jobTemplate = getJobTemplate(li);
         if (jobTemplate != null) {
-            final DockerCloud cloud = DockerCloud.getCloudByName(jobTemplate.getCloudname());
+            final DockerCloud cloud = 
+                DockerCloud.getCloudByName(jobTemplate.getCloudname());
             if (cloud != null) {
                 cloud.removeJobTemplate(li.getId());
             }
@@ -59,15 +72,17 @@ public class DockerQueueListener extends QueueListener {
      * @return If the item includes a template then the template will be returned. Otherwise <code>null</code>.
      */
     @CheckForNull
-    private static DockerJobTemplateProperty getJobTemplate(Item item) {
+    private static DockerJobTemplateProperty getJobTemplate(final Item item) {
         if (item.task instanceof Project) {
             final Project<?, ?> project = (Project<?, ?>) item.task;
-            final DockerJobTemplateProperty p = project.getProperty(DockerJobTemplateProperty.class);
+            final DockerJobTemplateProperty p = project.getProperty(
+                DockerJobTemplateProperty.class);
             if (p != null) {
                 return p;
             }
             // backward compatibility. DockerJobTemplateProperty used to be a nested object in DockerJobProperty
-            final DockerJobProperty property = project.getProperty(DockerJobProperty.class);
+            final DockerJobProperty property = project.getProperty(
+                DockerJobProperty.class);
             if (property != null) {
                 return property.getDockerJobTemplate();
             }
@@ -75,7 +90,8 @@ public class DockerQueueListener extends QueueListener {
         return null;
     }
 
-    private static class DockerTemplateLabelAssignmentAction extends InvisibleAction implements LabelAssignmentAction {
+    private static final class DockerTemplateLabelAssignmentAction extends InvisibleAction 
+        implements LabelAssignmentAction {
         private final String uuid;
 
         private DockerTemplateLabelAssignmentAction(String uuid) {
