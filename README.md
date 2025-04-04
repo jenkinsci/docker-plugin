@@ -27,7 +27,7 @@ and Jenkins creates agents on-demand using those Docker containers.
 While this can be confusing for end-users, it's even more confusing when end users report bugs in the wrong place.
 For example, if you are using Jenkins
 [Pipeline](https://jenkins.io/doc/book/pipeline/docker/)
-builds with code including terms like
+builds with code including steps like
 `docker.withDockerRegistry`
 or
 `docker.image`
