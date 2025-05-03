@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
+import hudson.Functions;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Label;
@@ -29,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.apache.commons.lang3.SystemUtils;
 import org.hamcrest.number.OrderingComparison;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.jupiter.api.AfterEach;
@@ -49,7 +49,7 @@ public abstract class DockerComputerConnectorTest {
 
     protected JenkinsRule j;
 
-    private static int getJavaVersion() {
+    protected static int getJavaVersion() {
         Runtime.Version runtimeVersion = Runtime.version();
         return runtimeVersion.version().get(0);
     }
@@ -60,7 +60,7 @@ public abstract class DockerComputerConnectorTest {
          * https://hub.docker.com/r/jenkins/agent/tags etc.
          */
         final int javaVersion = getJavaVersion();
-        if (SystemUtils.IS_OS_WINDOWS) {
+        if (Functions.isWindows()) {
             if (javaVersion >= 21) {
                 return "jdk21-nanoserver-1809";
             }
@@ -146,7 +146,7 @@ public abstract class DockerComputerConnectorTest {
             throws IOException, ExecutionException, InterruptedException, TimeoutException {
 
         // FIXME on CI windows nodes don't have Docker4Windows
-        assumeFalse(SystemUtils.IS_OS_WINDOWS);
+        assumeFalse(Functions.isWindows());
 
         // Given
         final String templateLabel = template.getLabelString();
@@ -154,7 +154,7 @@ public abstract class DockerComputerConnectorTest {
         final String expectedTextInBuildLog = "ourBuildDidActuallyRun" + System.nanoTime();
         final Builder buildStepToEchoExpectedText;
         final String dockerHost;
-        if (SystemUtils.IS_OS_WINDOWS) {
+        if (Functions.isWindows()) {
             buildStepToEchoExpectedText = new BatchFile("echo " + expectedTextInBuildLog);
             dockerHost = "tcp://localhost:2375";
         } else {

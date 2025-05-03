@@ -38,7 +38,7 @@
     <useBeta>true</useBeta>
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
     <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
-    <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
+    <!-- <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount> -->
     <spotbugs.effort>Max</spotbugs.effort>
     <spotbugs.threshold>Low</spotbugs.threshold>
     <spotless.check.skip>false</spotless.check.skip>
@@ -159,7 +159,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
-      <version>1.20.6</version>
+      <version>1.21.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
