@@ -17,6 +17,7 @@ import com.github.dockerjava.core.command.CreateContainerCmdImpl;
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import com.trilead.ssh2.signature.RSAKeyAlgorithm;
+import hudson.Functions;
 import hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy;
 import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
@@ -47,6 +48,19 @@ class DockerComputerSSHConnectorTest extends DockerComputerConnectorTest {
      * to.
      */
     private static final String SSH_AGENT_IMAGE_JAVAPATH = null;
+
+    protected static String getJenkinsDockerImageVersionForThisEnvironment() {
+        /*
+         * Maintenance note: This code needs to follow the tagging strategy used in
+         * https://hub.docker.com/r/jenkins/ssh-agent/tags etc.
+         */
+        // TODO Switch to "latest" after adapting to https://github.com/jenkinsci/docker-ssh-agent/issues/513
+        String label = "6.11.1";
+        if (Functions.isWindows()) {
+            label = label + "-nanoserver-ltsc2019";
+        }
+        return getJavaVersion() >= 21 ? label + "-jdk21" : label + "-jdk17";
+    }
 
     @Test
     void connectAgentViaSSHUsingInjectSshKey() throws Exception {
