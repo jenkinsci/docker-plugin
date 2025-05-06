@@ -16,7 +16,9 @@ import hudson.model.Queue;
 import hudson.model.queue.QueueListener;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
@@ -36,12 +38,19 @@ public class FastNodeProvisionerStrategy extends Strategy {
         if (Jenkins.get().isQuietingDown()) {
             return CONSULT_REMAINING_STRATEGIES;
         }
+        ArrayList<DockerCloud> dockerClouds = new ArrayList<DockerCloud>();
         for (Cloud cloud : Jenkins.get().clouds) {
             if (cloud instanceof DockerCloud) {
-                final StrategyDecision decision = applyToCloud(state, (DockerCloud) cloud);
-                if (decision == PROVISIONING_COMPLETED) {
-                    return decision;
-                }
+                dockerClouds.add((DockerCloud) cloud);
+            }
+        }
+        if (DockerGlobalConfiguration.get().getRandomizeCloudsOrder()) {
+            Collections.shuffle(dockerClouds);
+        }
+        for (DockerCloud cloud : dockerClouds) {
+            final StrategyDecision decision = applyToCloud(state, cloud);
+            if (decision == PROVISIONING_COMPLETED) {
+                return decision;
             }
         }
         return CONSULT_REMAINING_STRATEGIES;
