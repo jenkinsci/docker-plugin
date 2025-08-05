@@ -4,13 +4,13 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>5.7</version>
+    <version>5.18</version>
     <relativePath />
   </parent>
 
   <groupId>io.jenkins.docker</groupId>
   <artifactId>docker-plugin</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Docker plugin</name>
   <description>Provide Cloud Provisioning and other Docker features</description>
@@ -32,15 +32,13 @@
   </scm>
 
   <properties>
-    <revision>1.10.1</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <changelist>999999-SNAPSHOT</changelist>
     <jenkins.baseline>2.479</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-    <!-- TODO until in BOM -->
-    <pipeline-model-definition.version>2.2236.va_b_88ceec798f</pipeline-model-definition.version>
+    <useBeta>true</useBeta>
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
     <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
-    <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
+    <!-- <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount> -->
     <spotbugs.effort>Max</spotbugs.effort>
     <spotbugs.threshold>Low</spotbugs.threshold>
     <spotless.check.skip>false</spotless.check.skip>
@@ -52,35 +50,9 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>4228.v0a_71308d905b_</version>
+        <version>5054.v620b_5d2b_d5e6</version>
         <type>pom</type>
         <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jenkinsci.plugins</groupId>
-        <artifactId>pipeline-model-api</artifactId>
-        <version>${pipeline-model-definition.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jenkinsci.plugins</groupId>
-        <artifactId>pipeline-model-definition</artifactId>
-        <version>${pipeline-model-definition.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jenkinsci.plugins</groupId>
-        <artifactId>pipeline-model-definition</artifactId>
-        <version>${pipeline-model-definition.version}</version>
-        <classifier>tests</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jenkinsci.plugins</groupId>
-        <artifactId>pipeline-model-extensions</artifactId>
-        <version>${pipeline-model-definition.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jenkinsci.plugins</groupId>
-        <artifactId>pipeline-stage-tags-metadata</artifactId>
-        <version>${pipeline-model-definition.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -187,7 +159,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
-      <version>1.20.5</version>
+      <version>1.21.3</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -206,20 +178,4 @@
     </pluginRepository>
   </pluginRepositories>
 
-  <profiles>
-    <profile>
-      <id>skip-spotless-on-windows-ci</id>
-      <activation>
-        <os>
-          <family>Windows</family>
-        </os>
-        <property>
-          <name>env.CI</name>
-        </property>
-      </activation>
-      <properties>
-        <spotless.check.skip>true</spotless.check.skip>
-      </properties>
-    </profile>
-  </profiles>
 </project>

@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
+import hudson.Platform;
 import java.net.URI;
 import jenkins.model.JenkinsLocationConfiguration;
-import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.testcontainers.DockerClientFactory;
@@ -21,7 +21,7 @@ class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
 
         final JenkinsLocationConfiguration location = JenkinsLocationConfiguration.get();
         URI uri = URI.create(location.getUrl());
-        if (SystemUtils.IS_OS_MAC) {
+        if (Platform.isDarwin()) { // Mac OS
             uri = new URI(
                     uri.getScheme(),
                     uri.getUserInfo(),
@@ -30,7 +30,7 @@ class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
                     uri.getPath(),
                     uri.getQuery(),
                     uri.getFragment());
-        } else if (SystemUtils.IS_OS_WINDOWS) {
+        } else if (Platform.current() == Platform.WINDOWS) {
             uri = new URI(
                     uri.getScheme(),
                     uri.getUserInfo(),
@@ -52,7 +52,7 @@ class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
                 COMMON_IMAGE_HOMEDIR,
                 INSTANCE_CAP);
 
-        if (SystemUtils.IS_OS_LINUX) {
+        if (Platform.current() == Platform.UNIX && !Platform.isDarwin()) {
             template.getDockerTemplateBase().setNetwork("host");
         }
 

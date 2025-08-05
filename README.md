@@ -15,14 +15,11 @@ one or more "templates"
 that describe
 the labels/tags provided by the template,
 the Docker image,
-how to start it,
-etc)
-and Jenkins can creates agents on-demand using those Docker containers.
+and Jenkins creates agents on-demand using those Docker containers.
 
 ## See also
 * [Changelog](https://plugins.jenkins.io/docker-plugin/releases/) and [archive](https://github.com/jenkinsci/docker-plugin/blob/docker-plugin-1.3.0/CHANGELOG.md)
 * Support and [contribution guide](CONTRIBUTING.md)
-* [Software license](LICENSE)
 
 ----
 
@@ -30,7 +27,7 @@ and Jenkins can creates agents on-demand using those Docker containers.
 While this can be confusing for end-users, it's even more confusing when end users report bugs in the wrong place.
 For example, if you are using Jenkins
 [Pipeline](https://jenkins.io/doc/book/pipeline/docker/)
-builds with code including terms like
+builds with code including steps like
 `docker.withDockerRegistry`
 or
 `docker.image`
@@ -40,8 +37,7 @@ plugin and should go to its repository instead of this one.
 
 ----
 
-**Note:** This plugin does not use the OS's native Docker client;
-it uses [docker-java](https://github.com/docker-java/docker-java).
+**Note:** This plugin uses [docker-java](https://github.com/docker-java/docker-java) rather than relying on a commmand line docker client.
 You do not need to install a Docker client on Jenkins or on your agents to use this plugin.
 
 ----
@@ -190,11 +186,15 @@ This, combined with knowledge of [Docker itself](https://docs.docker.com/), shou
 ## Configuration as code
 
 Jenkins and the Docker plugin can be configured as code  using the [configuration as code plugin](https://plugins.jenkins.io/configuration-as-code/).
-It can also be configured from the Groovy script
+It can also be configured from a Groovy script
 
-If you're unsure which method to use, use the configuration as code plugin.
+If you're unsure which method to use, use the [configuration as code plugin](https://plugins.jenkins.io/configuration-as-code/).
 
-### Configuration as Code plugin
+Many configuration as code settings are available for the plugin.
+They can be reviewed from a [configuration as code export](https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/configExport.md).
+Use the cloud configuration page in your Jenkins controller to configure the cloud, then export the configuration as code settings and save them in your configuration as code definition.
+
+### Configuration as Code example
 
 Install the [configuration-as-code plugin](https://plugins.jenkins.io/configuration-as-code/) and follow [its example](https://github.com/jenkinsci/configuration-as-code-plugin/tree/master/demos/docker).
 
@@ -209,11 +209,8 @@ jenkins:
   - docker:
       containerCap: 3
       dockerApi:
-        connectTimeout: 23
         dockerHost:
           uri: "tcp://dockerhost.example.com:2375"
-        readTimeout: 43
-      errorDuration: 313
       name: "my-docker-cloud"
       templates:
       - connector:
@@ -221,10 +218,9 @@ jenkins:
             jenkinsUrl: "https://jenkins.example.com/"
             user: "1000"
         dockerTemplateBase:
-          cpuPeriod: 0
-          cpuQuota: 0
           image: "jenkins/inbound-agent:latest-alpine-jdk21"
-        labelString: "alpine jdk21 alpine-jdk21 git-2.43"
+        labelString: "alpine jdk21 alpine-jdk21"
+        mode: EXCLUSIVE
         name: "alpine-jdk21"
         pullTimeout: 171
         remoteFs: "/home/jenkins/agent"

@@ -33,6 +33,7 @@ import com.nirima.jenkins.plugins.docker.DockerContainerWatchdog;
 import com.nirima.jenkins.plugins.docker.TestableDockerContainerWatchdog;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.FilePath;
+import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.DownloadService;
 import hudson.model.Node;
@@ -53,7 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang3.SystemUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.jenkinsci.plugins.structs.describable.DescribableModel;
 import org.jenkinsci.plugins.structs.describable.UninstantiatedDescribable;
@@ -82,11 +82,11 @@ class DockerNodeStepTest {
     @BeforeAll
     static void before() {
         // FIXME on CI windows nodes don't have Docker4Windows
-        assumeFalse(SystemUtils.IS_OS_WINDOWS);
+        assumeFalse(Functions.isWindows());
     }
 
     private static String dockerNodeJenkinsAgent() {
-        final String dockerHostUri = SystemUtils.IS_OS_WINDOWS ? "tcp://localhost:2375" : "unix:///var/run/docker.sock";
+        final String dockerHostUri = Functions.isWindows() ? "tcp://localhost:2375" : "unix:///var/run/docker.sock";
         final String dockerImage = "jenkins/agent";
         final String remoteFsInImage = "/home/jenkins";
         return dockerNode(dockerHostUri, dockerImage, remoteFsInImage);
