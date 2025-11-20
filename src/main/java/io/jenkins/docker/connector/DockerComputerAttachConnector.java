@@ -298,25 +298,30 @@ public class DockerComputerAttachConnector extends DockerComputerConnector imple
                     + Joiner.on(" ").join(resolvedEntryPointCmd));
 
             final String execId;
+            final String actualApiVersion;
             try (final DockerClient client = api.getClient()) {
-                final ExecCreateCmd cmd = client.execCreateCmd(containerId)
+                final ExecCreateCmd execCmd = client.execCreateCmd(containerId)
                         .withAttachStdin(true)
                         .withAttachStdout(true)
                         .withAttachStderr(true)
                         .withTty(false)
                         .withCmd(resolvedEntryPointCmd);
                 if (StringUtils.isNotBlank(userOrNull)) {
-                    cmd.withUser(userOrNull);
+                    execCmd.withUser(userOrNull);
                 }
-                final ExecCreateCmdResponse exec = cmd.exec();
-                execId = exec.getId();
+                final ExecCreateCmdResponse execResponse = execCmd.exec();
+                execId = execResponse.getId();
+
+                final VersionCmd versionCmd = client.versionCmd();
+                final Version version = versionCmd.exec();
+                actualApiVersion = version.getApiVersion();
             }
             final String js = "{ \"Detach\": false, \"Tty\": false }";
             final Socket socket = api.getSocket();
             final OutputStream out = socket.getOutputStream();
             final InputStream in = socket.getInputStream();
             final PrintWriter w = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.US_ASCII));
-            w.println("POST /v1.32/exec/" + execId + "/start HTTP/1.1");
+            w.println("POST /v" + actualApiVersion + "/exec/" + execId + "/start HTTP/1.1");
             w.println("Host: docker.sock");
             w.println("Content-Type: application/json");
             w.println("Upgrade: tcp");
