@@ -204,7 +204,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         if (DISABLE_CLIENT_CACHE) {
             SharableDockerClient client = makeClient(
                     dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
-            LOGGER.info("Created non-cached connection {} to {}", client, dockerUri);
+            LOGGER.debug("Created non-cached connection {} to {}", client, dockerUri);
             return client;
         }
 
@@ -217,7 +217,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
                         dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
                 CLIENT_CACHE.cacheAndIncrementUsage(cacheKey, client);
                 client.setCached(true);
-                LOGGER.info("Cached connection {} to {}", client, cacheKey);
+                LOGGER.debug("Cached connection {} to {}", client, cacheKey);
             }
             return client;
         }
