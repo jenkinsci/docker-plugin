@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
+import jenkins.util.SystemProperties;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
@@ -63,6 +64,9 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     private String apiVersion;
 
     private String hostname;
+
+    private static boolean DISABLE_CLIENT_CACHE =
+            SystemProperties.getBoolean("io.jenkins.docker.client.DockerAPI.DISABLE_CLIENT_CACHE", false);
 
     /**
      * Is this host actually a swarm?
@@ -204,7 +208,9 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
                 client = makeClient(
                         dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
                 LOGGER.info("Cached connection {} to {}", client, cacheKey);
-                CLIENT_CACHE.cacheAndIncrementUsage(cacheKey, client);
+                if (!DISABLE_CLIENT_CACHE) {
+                    CLIENT_CACHE.cacheAndIncrementUsage(cacheKey, client);
+                }
             }
             return client;
         }
