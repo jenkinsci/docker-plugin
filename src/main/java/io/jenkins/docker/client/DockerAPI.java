@@ -200,6 +200,14 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
             final String dockerUri, final String credentialsId, final int readTimeout, final int connectTimeout) {
         final Integer readTimeoutInMillisecondsOrNull = readTimeout > 0 ? readTimeout * 1000 : null;
         final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? connectTimeout * 1000 : null;
+
+        if (DISABLE_CLIENT_CACHE) {
+            SharableDockerClient client = makeClient(
+                    dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
+            LOGGER.info("Created non-cached connection {} to {}", client, dockerUri);
+            return client;
+        }
+
         final DockerClientParameters cacheKey = new DockerClientParameters(
                 dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
         synchronized (CLIENT_CACHE) {
@@ -207,10 +215,9 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
             if (client == null) {
                 client = makeClient(
                         dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
+                CLIENT_CACHE.cacheAndIncrementUsage(cacheKey, client);
+                client.setCached(true);
                 LOGGER.info("Cached connection {} to {}", client, cacheKey);
-                if (!DISABLE_CLIENT_CACHE) {
-                    CLIENT_CACHE.cacheAndIncrementUsage(cacheKey, client);
-                }
             }
             return client;
         }
@@ -223,18 +230,32 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
      */
     private static class SharableDockerClient extends DelegatingDockerClient {
 
+        private boolean cached = false;
+
         public SharableDockerClient(DockerClient delegate) {
             super(delegate);
         }
 
         /**
+         * Sets whether this client is managed by the cache.
+         */
+        public void setCached(boolean cached) {
+            this.cached = cached;
+        }
+
+        /**
          * Tell the cache we no longer need the {@link DockerClient} and it can
          * be thrown away if it remains unused.
+         * If the client is not cached, close it immediately.
          */
         @Override
-        public void close() {
-            synchronized (CLIENT_CACHE) {
-                CLIENT_CACHE.decrementUsage(this);
+        public void close() throws IOException {
+            if (cached) {
+                synchronized (CLIENT_CACHE) {
+                    CLIENT_CACHE.decrementUsage(this);
+                }
+            } else {
+                reallyClose();
             }
         }
 
