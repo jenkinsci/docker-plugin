@@ -225,8 +225,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
 
     /**
      * A docker-client that, when {@link Closeable#close()} is called, merely
-     * decrements the usage count. It'll only get properly closed once it's
-     * purged from the cache.
+     * decrements the usage count - when {@code DISABLE_CLIENT_CACHE} is not enabled. It'll only get properly closed
+     * once it's purged from the cache.
      */
     private static class SharableDockerClient extends DelegatingDockerClient {
 
