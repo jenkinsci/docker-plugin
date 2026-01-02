@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
+import jenkins.util.SystemProperties;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
@@ -63,6 +64,9 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
     private String apiVersion;
 
     private String hostname;
+
+    private static boolean DISABLE_CLIENT_CACHE =
+            SystemProperties.getBoolean("io.jenkins.docker.client.DockerAPI.DISABLE_CLIENT_CACHE", false);
 
     /**
      * Is this host actually a swarm?
@@ -196,6 +200,14 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
             final String dockerUri, final String credentialsId, final int readTimeout, final int connectTimeout) {
         final Integer readTimeoutInMillisecondsOrNull = readTimeout > 0 ? readTimeout * 1000 : null;
         final Integer connectTimeoutInMillisecondsOrNull = connectTimeout > 0 ? connectTimeout * 1000 : null;
+
+        if (DISABLE_CLIENT_CACHE) {
+            SharableDockerClient client = makeClient(
+                    dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
+            LOGGER.debug("Created non-cached connection {} to {}", client, dockerUri);
+            return client;
+        }
+
         final DockerClientParameters cacheKey = new DockerClientParameters(
                 dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
         synchronized (CLIENT_CACHE) {
@@ -203,8 +215,9 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
             if (client == null) {
                 client = makeClient(
                         dockerUri, credentialsId, readTimeoutInMillisecondsOrNull, connectTimeoutInMillisecondsOrNull);
-                LOGGER.info("Cached connection {} to {}", client, cacheKey);
                 CLIENT_CACHE.cacheAndIncrementUsage(cacheKey, client);
+                client.setCached(true);
+                LOGGER.debug("Cached connection {} to {}", client, cacheKey);
             }
             return client;
         }
@@ -212,23 +225,37 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
 
     /**
      * A docker-client that, when {@link Closeable#close()} is called, merely
-     * decrements the usage count. It'll only get properly closed once it's
-     * purged from the cache.
+     * decrements the usage count - when {@code DISABLE_CLIENT_CACHE} is not enabled. It'll only get properly closed
+     * once it's purged from the cache.
      */
     private static class SharableDockerClient extends DelegatingDockerClient {
+
+        private boolean cached = false;
 
         public SharableDockerClient(DockerClient delegate) {
             super(delegate);
         }
 
         /**
+         * Sets whether this client is managed by the cache.
+         */
+        public void setCached(boolean cached) {
+            this.cached = cached;
+        }
+
+        /**
          * Tell the cache we no longer need the {@link DockerClient} and it can
          * be thrown away if it remains unused.
+         * If the client is not cached, close it immediately.
          */
         @Override
-        public void close() {
-            synchronized (CLIENT_CACHE) {
-                CLIENT_CACHE.decrementUsage(this);
+        public void close() throws IOException {
+            if (cached) {
+                synchronized (CLIENT_CACHE) {
+                    CLIENT_CACHE.decrementUsage(this);
+                }
+            } else {
+                reallyClose();
             }
         }
 
