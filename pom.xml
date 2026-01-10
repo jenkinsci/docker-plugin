@@ -37,6 +37,8 @@
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <useBeta>true</useBeta>
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
+    <hpi.bundledArtifacts>junixsocket-common,junixsocket-native-common</hpi.bundledArtifacts>
+    <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
     <!-- Our unit-tests that talk to a real docker deamon aren't very stable -->
     <!-- <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount> -->
     <spotbugs.effort>Max</spotbugs.effort>
