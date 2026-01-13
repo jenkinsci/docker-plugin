@@ -126,8 +126,8 @@ public class DockerCloud extends Cloud {
      * Disables slow Docker API capacity checks during provisioning.
      * WARNING: When enabled, capacity limits are not enforced.
      */
-    private static final boolean DISABLE_PROVISION_CAPACITY_CHECK = Boolean.parseBoolean(
-        System.getProperty("com.nirima.jenkins.plugins.docker.DockerCloud.DISABLE_PROVISION_CAPACITY_CHECK", "false"));
+    private static final boolean DISABLE_PROVISION_CAPACITY_CHECK = Boolean.parseBoolean(System.getProperty(
+            "com.nirima.jenkins.plugins.docker.DockerCloud.DISABLE_PROVISION_CAPACITY_CHECK", "false"));
 
     /**
      * Indicate if docker host used to run container is exposed inside container as DOCKER_HOST environment variable
