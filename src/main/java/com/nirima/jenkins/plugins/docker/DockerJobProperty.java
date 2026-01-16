@@ -23,7 +23,7 @@ import io.jenkins.docker.client.DockerAPI;
 import java.io.IOException;
 import jenkins.model.Jenkins;
 import jenkins.model.OptionalJobProperty;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
