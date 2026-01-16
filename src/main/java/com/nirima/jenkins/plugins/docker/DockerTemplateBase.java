@@ -8,7 +8,7 @@ import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilte
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmptyList;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmptyMap;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.startToString;
-import static org.apache.commons.lang.StringUtils.trimToNull;
+import static org.apache.commons.lang3.StringUtils.trimToNull;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.AccessMode;
@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;

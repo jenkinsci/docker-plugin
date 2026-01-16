@@ -4,7 +4,7 @@ import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.fixEmpty;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndFilterEmptyMap;
 import static com.nirima.jenkins.plugins.docker.utils.JenkinsUtils.splitAndTrimFilterEmptyList;
 import static com.nirima.jenkins.plugins.docker.utils.LogUtils.printResponseItemToListener;
-import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
@@ -57,7 +57,7 @@ import java.util.regex.Pattern;
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
