@@ -1,5 +1,5 @@
 <?jelly escape-by-default='true'?>
 <div>
   Provisions Jenkins agents on demand as <a href="https://www.docker.com/">Docker</a> containers.
-  Runs builds in isolated, disposable environments while reducing static agents and enabling scalable build capacity.
+  Runs builds in isolated, disposable environments.
 </div>
