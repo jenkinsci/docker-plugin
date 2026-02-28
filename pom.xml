@@ -13,8 +13,6 @@
   <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Docker plugin</name>
-  <description>Provisions Jenkins agents on demand as Docker containers.
-  Runs builds in isolated, disposable environments while reducing static agents and enabling scalable build capacity.</description>
   <url>https://github.com/jenkinsci/${project.artifactId}</url>
 
   <licenses>
