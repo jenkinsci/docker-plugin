@@ -13,7 +13,6 @@
   <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Docker plugin</name>
-  <description>Provide Cloud Provisioning and other Docker features</description>
   <url>https://github.com/jenkinsci/${project.artifactId}</url>
 
   <licenses>

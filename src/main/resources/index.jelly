@@ -1,5 +1,5 @@
 <?jelly escape-by-default='true'?>
 <div>
-  This plugin integrates Jenkins with
-  <a href="http://docker.io/">Docker</a>
+  Provisions Jenkins agents on demand as <a href="https://www.docker.com/">Docker</a> containers.
+  Runs builds in isolated, disposable environments.
 </div>
