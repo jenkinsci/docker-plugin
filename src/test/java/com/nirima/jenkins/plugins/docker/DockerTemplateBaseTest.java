@@ -626,4 +626,32 @@ class DockerTemplateBaseTest {
 
         verify(mockHostConfig).withVolumesFrom(expectedVolumesFromSet);
     }
+
+    @Test
+    void fillContainerConfigGivenRuntimeThenSetsRuntime() {
+        testFillContainerRuntime("null", null, false, null);
+        testFillContainerRuntime("empty", "", false, null);
+        testFillContainerRuntime("containerd", "containerd", true, "containerd");
+        testFillContainerRuntime("runc", "runc", true, "runc");
+    }
+
+    private static void testFillContainerRuntime(
+            final String imageName,
+            final String runtimeToSet,
+            final boolean runtimeIsExpectedToBeSet,
+            final String expectedRuntime) {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase(imageName);
+        instanceUnderTest.setRuntime(runtimeToSet);
+
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        if (runtimeIsExpectedToBeSet) {
+            verify(mockHostConfig, times(1)).withRuntime(expectedRuntime);
+        } else {
+            verify(mockHostConfig, never()).withRuntime(any());
+        }
+    }
 }
