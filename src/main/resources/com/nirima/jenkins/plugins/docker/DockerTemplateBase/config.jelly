@@ -108,6 +108,10 @@
       <f:expandableTextbox />
     </f:entry>
 
+    <f:entry title="${%Runtime}" field="runtime">
+      <f:textbox />
+    </f:entry>
+
     <f:entry title="${%Capabilities to add}" field="capabilitiesToAddString">
       <f:expandableTextbox />
     </f:entry>

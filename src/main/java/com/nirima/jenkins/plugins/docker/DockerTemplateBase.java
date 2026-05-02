@@ -145,6 +145,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     private @CheckForNull List<String> capabilitiesToAdd;
     private @CheckForNull List<String> capabilitiesToDrop;
 
+    private @CheckForNull String runtime;
+
     private @CheckForNull Map<String, String> extraDockerLabels;
 
     @DataBoundConstructor
@@ -683,6 +685,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setExtraDockerLabels(splitAndFilterEmptyMap(extraDockerLabelsString, "\n"));
     }
 
+    @CheckForNull
+    public String getRuntime() {
+        return runtime;
+    }
+
+    @DataBoundSetter
+    public void setRuntime(@CheckForNull String runtime) {
+        this.runtime = runtime == null || runtime.isEmpty() ? null : runtime;
+    }
+
     // -- UI binding End
 
     public DockerRegistryEndpoint getRegistry() {
@@ -938,6 +950,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         final List<String> capabilitiesToDropOrNull = getCapabilitiesToDrop();
         if (CollectionUtils.isNotEmpty(capabilitiesToDropOrNull)) {
             hostConfig(containerConfig).withCapDrop(toCapabilities(capabilitiesToDropOrNull));
+        }
+
+        final String runtimeOrNull = getRuntime();
+        if (runtimeOrNull != null) {
+            hostConfig(containerConfig).withRuntime(runtimeOrNull);
         }
 
         return containerConfig;
