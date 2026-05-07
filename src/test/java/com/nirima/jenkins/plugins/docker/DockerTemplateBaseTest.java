@@ -631,7 +631,9 @@ class DockerTemplateBaseTest {
     void fillContainerConfigGivenRuntimeThenSetsRuntime() {
         testFillContainerRuntime("null", null, false, null);
         testFillContainerRuntime("empty", "", false, null);
+        testFillContainerRuntime("blank", "   ", false, null);
         testFillContainerRuntime("containerd", "containerd", true, "containerd");
+        testFillContainerRuntime("trimmed-containerd", "  containerd  ", true, "containerd");
         testFillContainerRuntime("runc", "runc", true, "runc");
     }
 

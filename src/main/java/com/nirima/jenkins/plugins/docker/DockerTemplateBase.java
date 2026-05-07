@@ -692,7 +692,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
 
     @DataBoundSetter
     public void setRuntime(@CheckForNull String runtime) {
-        this.runtime = runtime == null || runtime.isEmpty() ? null : runtime;
+        this.runtime = trimToNull(runtime);
     }
 
     // -- UI binding End
@@ -1250,6 +1250,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (!Objects.equals(extraHosts, that.extraHosts)) {
             return false;
         }
+        if (!Objects.equals(runtime, that.runtime)) {
+            return false;
+        }
         if (!Objects.equals(extraDockerLabels, that.extraDockerLabels)) {
             return false;
         }
@@ -1291,6 +1294,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (tty ? 1 : 0);
         result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
         result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
+        result = 31 * result + (runtime != null ? runtime.hashCode() : 0);
         result = 31 * result + (extraDockerLabels != null ? extraDockerLabels.hashCode() : 0);
         return result;
     }
@@ -1331,6 +1335,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "securityOpts", securityOpts);
         bldToString(sb, "capabilitiesToAdd", capabilitiesToAdd);
         bldToString(sb, "capabilitiesToDrop", capabilitiesToDrop);
+        bldToString(sb, "runtime", runtime);
         bldToString(sb, "extraDockerLabels", extraDockerLabels);
         endToString(sb);
         return sb.toString();
