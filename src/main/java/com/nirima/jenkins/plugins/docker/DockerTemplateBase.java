@@ -145,6 +145,8 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
     private @CheckForNull List<String> capabilitiesToAdd;
     private @CheckForNull List<String> capabilitiesToDrop;
 
+    private @CheckForNull String runtime;
+
     private @CheckForNull Map<String, String> extraDockerLabels;
 
     @DataBoundConstructor
@@ -683,6 +685,16 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         setExtraDockerLabels(splitAndFilterEmptyMap(extraDockerLabelsString, "\n"));
     }
 
+    @CheckForNull
+    public String getRuntime() {
+        return runtime;
+    }
+
+    @DataBoundSetter
+    public void setRuntime(@CheckForNull String runtime) {
+        this.runtime = trimToNull(runtime);
+    }
+
     // -- UI binding End
 
     public DockerRegistryEndpoint getRegistry() {
@@ -938,6 +950,11 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         final List<String> capabilitiesToDropOrNull = getCapabilitiesToDrop();
         if (CollectionUtils.isNotEmpty(capabilitiesToDropOrNull)) {
             hostConfig(containerConfig).withCapDrop(toCapabilities(capabilitiesToDropOrNull));
+        }
+
+        final String runtimeOrNull = getRuntime();
+        if (runtimeOrNull != null) {
+            hostConfig(containerConfig).withRuntime(runtimeOrNull);
         }
 
         return containerConfig;
@@ -1233,6 +1250,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (!Objects.equals(extraHosts, that.extraHosts)) {
             return false;
         }
+        if (!Objects.equals(runtime, that.runtime)) {
+            return false;
+        }
         if (!Objects.equals(extraDockerLabels, that.extraDockerLabels)) {
             return false;
         }
@@ -1274,6 +1294,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         result = 31 * result + (tty ? 1 : 0);
         result = 31 * result + (macAddress != null ? macAddress.hashCode() : 0);
         result = 31 * result + (extraHosts != null ? extraHosts.hashCode() : 0);
+        result = 31 * result + (runtime != null ? runtime.hashCode() : 0);
         result = 31 * result + (extraDockerLabels != null ? extraDockerLabels.hashCode() : 0);
         return result;
     }
@@ -1314,6 +1335,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         bldToString(sb, "securityOpts", securityOpts);
         bldToString(sb, "capabilitiesToAdd", capabilitiesToAdd);
         bldToString(sb, "capabilitiesToDrop", capabilitiesToDrop);
+        bldToString(sb, "runtime", runtime);
         bldToString(sb, "extraDockerLabels", extraDockerLabels);
         endToString(sb);
         return sb.toString();
