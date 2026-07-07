@@ -6,6 +6,7 @@ import static hudson.slaves.NodeProvisioner.StrategyDecision.CONSULT_REMAINING_S
 import static hudson.slaves.NodeProvisioner.StrategyDecision.PROVISIONING_COMPLETED;
 import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.FINEST;
+import static java.util.logging.Level.SEVERE;
 
 import com.nirima.jenkins.plugins.docker.DockerCloud;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -15,6 +16,7 @@ import hudson.model.LoadStatistics;
 import hudson.model.Queue;
 import hudson.model.queue.QueueListener;
 import hudson.slaves.Cloud;
+import hudson.slaves.CloudProvisioningListener;
 import hudson.slaves.NodeProvisioner;
 import java.util.Collection;
 import java.util.logging.Logger;
@@ -70,6 +72,7 @@ public class FastNodeProvisionerStrategy extends Strategy {
             Collection<NodeProvisioner.PlannedNode> plannedNodes =
                     cloud.provision(label, currentDemand - availableCapacity);
             LOGGER.log(FINE, "Planned {0} new nodes", plannedNodes.size());
+            fireOnStarted(cloud, label, plannedNodes);
             state.recordPendingLaunches(plannedNodes);
             availableCapacity += plannedNodes.size();
             LOGGER.log(FINE, "After provisioning, available capacity={0}, currentDemand={1}", new Object[] {
@@ -83,6 +86,23 @@ public class FastNodeProvisionerStrategy extends Strategy {
         }
         LOGGER.log(FINE, "Provisioning not complete, consulting remaining strategies");
         return CONSULT_REMAINING_STRATEGIES;
+    }
+
+    /**
+     * Fire {@code onStarted} on all {@link CloudProvisioningListener}s for the given planned nodes.
+     * Mirrors {@code NodeProvisioner#fireOnStarted}. The custom strategy provisions directly,
+     * so it must fire CloudProvisioningListener.onStarted manually.
+     */
+    private static void fireOnStarted(Cloud cloud, Label label, Collection<NodeProvisioner.PlannedNode> plannedNodes) {
+        for (CloudProvisioningListener cl : CloudProvisioningListener.all()) {
+            try {
+                cl.onStarted(cloud, label, plannedNodes);
+            } catch (Error e) {
+                throw e;
+            } catch (Throwable e) {
+                LOGGER.log(SEVERE, "Unexpected uncaught exception in onStarted() of " + cl + " for label " + label, e);
+            }
+        }
     }
 
     /**
