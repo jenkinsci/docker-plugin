@@ -419,7 +419,9 @@ public class DockerCloud extends Cloud {
 
                             // On provisioning completion, let's trigger NodeProvisioner
                             agent.robustlyAddToJenkins();
-
+                            LOGGER.info("Creating 1 new agent in cloud '{}' from template '{}' for label '{}', "
+                                        + "instanceCap of template is '{}'",
+                                        DockerCloud.this.getDisplayName(), t.getName(), label, t.getInstanceCap());
                         } catch (Exception ex) {
                             LOGGER.error(
                                     "Error in provisioning; template='{}' for cloud='{}'", t, getDisplayName(), ex);
