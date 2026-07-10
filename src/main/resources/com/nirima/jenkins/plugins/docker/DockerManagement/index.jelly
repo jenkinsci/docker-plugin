@@ -1,38 +1,28 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-    <l:layout title="${%Docker hosts}" norefresh="true" permission="${it.requiredPermission}">
-        <l:side-panel>
-            <l:tasks>
-                <l:task icon="icon-up icon-md" href="${rootURL}/" title="${%Back to Dashboard}"/>
-            </l:tasks>
-        </l:side-panel>
-        <l:main-panel>
-            <j:set var="instance" value="${it}"/>
-            <j:set var="descriptor" value="${it.descriptor}"/>
+    <l:settings-subpage permission="${it.requiredPermission}">
+        <j:set var="instance" value="${it}"/>
+        <j:set var="descriptor" value="${it.descriptor}"/>
 
-            <h1>${%Docker Servers}</h1>
-
-
-            <table border="0" cellpadding="2" cellspacing="0"
-                   class="pane bigtable"
-                   style="margin-top: 0">
-                <tr>
-
-                    <td class="pane-header">${%Name}</td>
-                    <td class="pane-header">${%Active Hosts}</td>
-                </tr>
-
-                <j:forEach var="res" items="${it.servers}">
-                    <tr>
-                        <td><a href="server/${res.name}"> ${res.name} </a></td>
-                        <td>${res.activeHosts}</td>
-                    </tr>
-                </j:forEach>
-
-
-            </table>
-
-        </l:main-panel>
-    </l:layout>
+        <j:choose>
+            <j:when test="${!empty(it.servers)}">
+                <table class="jenkins-table">
+                    <thead>
+                        <th>${%Name}</th>
+                        <th>${%Active Hosts}</th>
+                    </thead>
+                    <j:forEach var="res" items="${it.servers}">
+                        <tr>
+                            <td><a href="server/${res.name}"> ${res.name} </a></td>
+                            <td>${res.activeHosts}</td>
+                        </tr>
+                    </j:forEach>
+                </table>
+            </j:when>
+            <j:otherwise>
+                <l:notice title="No hosts" icon="symbol-logo-docker plugin-ionicons-api" />
+            </j:otherwise>
+        </j:choose>
+    </l:settings-subpage>
 </j:jelly>

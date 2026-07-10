@@ -33,7 +33,7 @@
   <properties>
     <changelist>999999-SNAPSHOT</changelist>
     <jenkins.baseline>2.504</jenkins.baseline>
-    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
+    <jenkins.version>2.541</jenkins.version>
     <useBeta>true</useBeta>
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
     <hpi.bundledArtifacts>junixsocket-common,junixsocket-native-common</hpi.bundledArtifacts>
