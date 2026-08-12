@@ -127,5 +127,4 @@ public class DockerAgent extends DeclarativeAgent<DockerAgent> {
                     .getAcceptableConnectorDescriptors();
         }
     }
-
 }
