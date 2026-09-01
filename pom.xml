@@ -44,7 +44,7 @@
     <spotbugs.threshold>Low</spotbugs.threshold>
     <spotless.check.skip>false</spotless.check.skip>
     <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
-    <junixsocket.version>2.10.1</junixsocket.version>
+    <junixsocket.version>2.11.0</junixsocket.version>
     <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
   </properties>
 
