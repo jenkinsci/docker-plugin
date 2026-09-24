@@ -300,7 +300,12 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         DockerServerCredentials credentials = firstOrNull(
                 lookupCredentials(DockerServerCredentials.class, Jenkins.get(), ACL.SYSTEM, List.of()),
                 withId(credentialsId));
-        return credentials == null ? null : new DockerServerCredentialsSSLConfig(credentials);
+        if (credentials == null) {
+            // Falling back to plain HTTP here would build a client that the cache then keeps
+            // serving after the credentials appear, for as long as the cloud stays busy.
+            throw new IllegalStateException("Docker Server Credentials '" + credentialsId + "' not found");
+        }
+        return new DockerServerCredentialsSSLConfig(credentials);
     }
 
     /**

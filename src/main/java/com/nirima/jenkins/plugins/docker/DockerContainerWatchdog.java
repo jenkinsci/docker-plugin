@@ -235,6 +235,14 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                     e);
         } catch (ContainersRetrievalException handledByCode) {
             csmMerged.setContainerListIncomplete(true);
+        } catch (IllegalStateException e) {
+            // Typically unresolvable credentials: skip this cloud, not the whole run.
+            LOGGER.warn(
+                    "Unable to connect to DockerCloud [name={}, dockerURI={}]",
+                    dc.getDisplayName(),
+                    dockerApi.getDockerHost().getUri(),
+                    e);
+            csmMerged.setContainerListIncomplete(true);
         }
 
         return csmMerged;
