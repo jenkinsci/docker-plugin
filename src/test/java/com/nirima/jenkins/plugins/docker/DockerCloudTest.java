@@ -3,6 +3,13 @@ package com.nirima.jenkins.plugins.docker;
 import static com.cloudbees.plugins.credentials.CredentialsScope.SYSTEM;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsStore;
@@ -12,13 +19,17 @@ import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
+import hudson.model.Label;
 import hudson.model.Node;
 import hudson.util.Secret;
 import io.jenkins.docker.client.DockerAPI;
 import io.jenkins.docker.connector.DockerComputerAttachConnector;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerCredentials;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.jupiter.api.Test;
@@ -155,6 +166,34 @@ class DockerCloudTest {
         assertCount(c1, c2, i1, i2, 0, 0, 0, 0);
         assertEquals(
                 DockerCloud.CONTAINERS_IN_PROGRESS, Map.of(), "DockerCloud.CONTAINERS_IN_PROGRESS is empty afterwards");
+    }
+
+    @Test
+    void fatalProvisioningErrorCompletesPlannedNode(@SuppressWarnings("unused") JenkinsRule jenkins) throws Exception {
+        DockerTemplate template = mock(DockerTemplate.class);
+        when(template.getDisabled()).thenReturn(new DockerDisabled());
+        when(template.getMode()).thenReturn(Node.Mode.NORMAL);
+        when(template.getImage()).thenReturn("image");
+        when(template.getName()).thenReturn("template");
+        when(template.getNumExecutors()).thenReturn(1);
+        OutOfMemoryError failure = new OutOfMemoryError("unable to create native thread");
+        doThrow(failure).when(template).provisionNode(any(), any());
+        DockerCloud cloud = new DockerCloud("cloud", null, List.of(template));
+        cloud.setContainerCap(Integer.MAX_VALUE);
+
+        var plannedNodes = cloud.provision((Label) null, 1);
+
+        assertEquals(1, plannedNodes.size());
+        var plannedNode = plannedNodes.iterator().next();
+        assertSame(
+                failure,
+                assertThrows(ExecutionException.class, () -> plannedNode.future.get(10, TimeUnit.SECONDS))
+                        .getCause());
+        assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
+            while (cloud.countContainersInProgress() != 0) {
+                Thread.sleep(10);
+            }
+        });
     }
 
     private static void assertCount(
