@@ -215,7 +215,21 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged, Instant snapshotInstant) {
         DockerAPI dockerApi = dc.getDockerApi();
 
-        try (final DockerClient client = dockerApi.getClient()) {
+        final DockerClient client;
+        try {
+            client = dockerApi.getClient();
+        } catch (IllegalStateException e) {
+            // Typically unresolvable credentials: skip this cloud, not the whole run.
+            LOGGER.warn(
+                    "Unable to create a Docker client for DockerCloud [name={}, dockerURI={}]",
+                    dc.getDisplayName(),
+                    dockerApi.getDockerHost().getUri(),
+                    e);
+            csmMerged.setContainerListIncomplete(true);
+            return csmMerged;
+        }
+
+        try (client) {
             ContainerNodeNameMap csm = retrieveContainers(dc, client);
 
             DockerDisabled dcDisabled = dc.getDisabled();
@@ -234,14 +248,6 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
                     "Failed to properly close a DockerClient instance after reading the list of containers and cleaning them up; ignoring",
                     e);
         } catch (ContainersRetrievalException handledByCode) {
-            csmMerged.setContainerListIncomplete(true);
-        } catch (IllegalStateException e) {
-            // Typically unresolvable credentials: skip this cloud, not the whole run.
-            LOGGER.warn(
-                    "Unable to connect to DockerCloud [name={}, dockerURI={}]",
-                    dc.getDisplayName(),
-                    dockerApi.getDockerHost().getUri(),
-                    e);
             csmMerged.setContainerListIncomplete(true);
         }
 

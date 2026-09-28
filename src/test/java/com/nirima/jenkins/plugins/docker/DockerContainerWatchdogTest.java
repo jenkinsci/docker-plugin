@@ -1,8 +1,10 @@
 package com.nirima.jenkins.plugins.docker;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import hudson.model.Node;
 import io.jenkins.docker.DockerTransientNode;
@@ -592,5 +594,28 @@ class DockerContainerWatchdogTest {
         // no node must have been removed: the container list is known to be incomplete because
         // the broken cloud could not be interrogated
         assertEquals(0, subject.getAllRemovedNodes().size());
+    }
+
+    /**
+     * Only a failure to obtain the client means the cloud is unreachable. An
+     * {@code IllegalStateException} raised later, once the client is in hand, is an unrelated
+     * bug and must not be swallowed as if the Docker connection were unavailable.
+     */
+    @Test
+    void testIllegalStateExceptionAfterObtainingClientIsNotSwallowed() throws IOException {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(new LinkedList<>());
+        DockerClient client = dockerApi.getClient();
+        IllegalStateException unrelatedFailure = new IllegalStateException("unrelated failure while closing");
+        Mockito.doThrow(unrelatedFailure).when(client).close();
+
+        List<DockerCloud> listOfCloud = new LinkedList<>();
+        listOfCloud.add(new DockerCloud("cloud", dockerApi, new LinkedList<>()));
+        subject.setAllClouds(listOfCloud);
+        subject.setAllNodes(new LinkedList<>());
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, subject::runExecute);
+        assertEquals(unrelatedFailure, thrown);
     }
 }
