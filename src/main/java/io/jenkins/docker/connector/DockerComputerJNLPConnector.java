@@ -168,7 +168,8 @@ public class DockerComputerJNLPConnector extends DockerComputerConnector {
     }
 
     private static final String DEFAULT_ENTRY_POINT_ARGUMENTS = "-url\n${" + ArgumentVariables.JenkinsUrl.getName()
-            + "}\n${" + ArgumentVariables.Secret.getName() + "}\n${" + ArgumentVariables.NodeName.getName() + "}";
+            + "}\n-secret\n${" + ArgumentVariables.Secret.getName() + "}\n-name\n${"
+            + ArgumentVariables.NodeName.getName() + "}";
 
     @Override
     public void beforeContainerCreated(DockerAPI api, String workdir, CreateContainerCmd cmd)

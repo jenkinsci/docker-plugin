@@ -1,11 +1,13 @@
 package io.jenkins.docker.connector;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.DockerTemplateBase;
 import hudson.Platform;
 import java.net.URI;
+import java.util.List;
 import jenkins.model.JenkinsLocationConfiguration;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
@@ -14,6 +16,13 @@ import org.testcontainers.DockerClientFactory;
 @WithJenkins
 class DockerComputerJNLPConnectorTest extends DockerComputerConnectorTest {
     private static final String JNLP_AGENT_IMAGE_IMAGENAME = "jenkins/inbound-agent";
+
+    @Test
+    void defaultEntryPointArgumentsUseNamedSecretAndAgentNameOptions() {
+        assertEquals(
+                List.of("-url", "${JENKINS_URL}", "-secret", "${JNLP_SECRET}", "-name", "${NODE_NAME}"),
+                new DockerComputerJNLPConnector.DescriptorImpl().getDefaultEntryPointArguments());
+    }
 
     @Test
     void connectAgentViaJNLP() throws Exception {
