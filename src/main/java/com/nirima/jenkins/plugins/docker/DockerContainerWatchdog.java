@@ -10,6 +10,7 @@ import hudson.model.TaskListener;
 import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.client.MissingDockerServerCredentialsException;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -218,8 +219,8 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
         final DockerClient client;
         try {
             client = dockerApi.getClient();
-        } catch (IllegalStateException e) {
-            // Typically unresolvable credentials: skip this cloud, not the whole run.
+        } catch (MissingDockerServerCredentialsException e) {
+            // Expected while the credentials are being recreated: skip this cloud, not the whole run.
             LOGGER.warn(
                     "Unable to create a Docker client for DockerCloud [name={}, dockerURI={}]",
                     dc.getDisplayName(),

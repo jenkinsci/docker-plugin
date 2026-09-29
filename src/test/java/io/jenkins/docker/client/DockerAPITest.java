@@ -135,7 +135,8 @@ class DockerAPITest {
         final DockerServerEndpoint endpoint = new DockerServerEndpoint(uniqueUri("missing"), credentialsId);
         final DockerAPI api = new DockerAPI(endpoint);
 
-        final IllegalStateException thrown = assertThrows(IllegalStateException.class, api::getClient);
+        final MissingDockerServerCredentialsException thrown =
+                assertThrows(MissingDockerServerCredentialsException.class, api::getClient);
 
         assertTrue(
                 thrown.getMessage().contains(credentialsId),
@@ -149,10 +150,10 @@ class DockerAPITest {
         final DockerServerEndpoint endpoint = new DockerServerEndpoint(uniqueUri("missing-repeat"), credentialsId);
         final DockerAPI api = new DockerAPI(endpoint);
 
-        assertThrows(IllegalStateException.class, api::getClient);
+        assertThrows(MissingDockerServerCredentialsException.class, api::getClient);
         // A second call for the very same (uri, credentialsId) pair must throw again: nothing must
         // have been cached under that key by the first, failing call.
-        assertThrows(IllegalStateException.class, api::getClient);
+        assertThrows(MissingDockerServerCredentialsException.class, api::getClient);
     }
 
     @Test
@@ -166,11 +167,26 @@ class DockerAPITest {
         final DockerServerEndpoint endpoint = new DockerServerEndpoint(uniqueUri("wrong-type"), credentialsId);
         final DockerAPI api = new DockerAPI(endpoint);
 
-        final IllegalStateException thrown = assertThrows(IllegalStateException.class, api::getClient);
+        final MissingDockerServerCredentialsException thrown =
+                assertThrows(MissingDockerServerCredentialsException.class, api::getClient);
 
         assertTrue(
                 thrown.getMessage().contains(credentialsId),
                 "Exception message should mention the unresolved credentials id, but was: " + thrown.getMessage());
+    }
+
+    @Test
+    void getClientIgnoresAnUnresolvableCredentialsIdOnAUnixSocket(@SuppressWarnings("unused") JenkinsRule jenkins) {
+        final String credentialsId = "missing-credentials-" + UUID.randomUUID();
+        final DockerServerEndpoint endpoint =
+                new DockerServerEndpoint("unix:///var/run/docker-" + UUID.randomUUID() + ".sock", credentialsId);
+        final DockerAPI api = new DockerAPI(endpoint);
+
+        assertDoesNotThrow(() -> {
+            try (DockerClient client = api.getClient()) {
+                assertNotNull(client);
+            }
+        });
     }
 
     @Test
@@ -193,7 +209,7 @@ class DockerAPITest {
         final DockerAPI api = new DockerAPI(endpoint);
 
         // Before the credential exists, resolving the client must fail...
-        assertThrows(IllegalStateException.class, api::getClient);
+        assertThrows(MissingDockerServerCredentialsException.class, api::getClient);
 
         // ...and once it has been added, the very same endpoint must build a working TLS client:
         // SSLConfig#getSSLContext() is called eagerly while building the client, so this would

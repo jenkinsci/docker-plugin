@@ -9,6 +9,7 @@ import com.github.dockerjava.api.model.Container;
 import hudson.model.Node;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.client.MissingDockerServerCredentialsException;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -532,9 +533,8 @@ class DockerContainerWatchdogTest {
     }
 
     /**
-     * Expected behaviour once DockerAPI#getClient() throws for a cloud whose credentials cannot be
-     * resolved (e.g. {@code IllegalStateException}, see DockerAPITest): that failure must be caught
-     * for that one cloud only, so that:
+     * If DockerAPI#getClient() throws {@link MissingDockerServerCredentialsException} for one cloud
+     * (see DockerAPITest), that failure must be caught for that cloud only, so that:
      * <ul>
      *     <li>processing continues with the other, healthy clouds (their orphan containers still get
      *     cleaned up), and</li>
@@ -552,7 +552,7 @@ class DockerContainerWatchdogTest {
         Mockito.when(brokenEndpoint.getUri()).thenReturn("tcp://unresolvable-credentials-host:2376");
         Mockito.when(brokenDockerApi.getDockerHost()).thenReturn(brokenEndpoint);
         Mockito.when(brokenDockerApi.getClient())
-                .thenThrow(new IllegalStateException("Docker server credentials 'missing-cred-id' not found"));
+                .thenThrow(new MissingDockerServerCredentialsException("missing-cred-id"));
         DockerCloud brokenCloud =
                 new DockerCloud("cloud-with-missing-credentials", brokenDockerApi, new LinkedList<>());
 
@@ -597,18 +597,21 @@ class DockerContainerWatchdogTest {
     }
 
     /**
-     * Only a failure to obtain the client means the cloud is unreachable. An
-     * {@code IllegalStateException} raised later, once the client is in hand, is an unrelated
-     * bug and must not be swallowed as if the Docker connection were unavailable.
+     * Only missing credentials are an expected reason for {@code getClient()} to fail. Any other
+     * {@code IllegalStateException} it raises, such as a broken invariant of the client cache,
+     * is a bug and must propagate.
      */
     @Test
-    void testIllegalStateExceptionAfterObtainingClientIsNotSwallowed() throws IOException {
+    void testOtherIllegalStateExceptionFromGetClientIsNotSwallowed() {
         TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
 
-        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(new LinkedList<>());
-        DockerClient client = dockerApi.getClient();
-        IllegalStateException unrelatedFailure = new IllegalStateException("unrelated failure while closing");
-        Mockito.doThrow(unrelatedFailure).when(client).close();
+        DockerAPI dockerApi = Mockito.mock(DockerAPI.class);
+        DockerServerEndpoint endpoint = Mockito.mock(DockerServerEndpoint.class);
+        Mockito.when(endpoint.getUri()).thenReturn("tcp://some-host:2376");
+        Mockito.when(dockerApi.getDockerHost()).thenReturn(endpoint);
+        IllegalStateException cacheInvariantFailure =
+                new IllegalStateException("Cannot cache record because there's already a record present");
+        Mockito.when(dockerApi.getClient()).thenThrow(cacheInvariantFailure);
 
         List<DockerCloud> listOfCloud = new LinkedList<>();
         listOfCloud.add(new DockerCloud("cloud", dockerApi, new LinkedList<>()));
@@ -616,6 +619,31 @@ class DockerContainerWatchdogTest {
         subject.setAllNodes(new LinkedList<>());
 
         IllegalStateException thrown = assertThrows(IllegalStateException.class, subject::runExecute);
+        assertEquals(cacheInvariantFailure, thrown);
+    }
+
+    /**
+     * Missing credentials are only skipped when {@code getClient()} reports them. The same
+     * exception raised later, once the client is in hand, is an unrelated bug and must not be
+     * swallowed as if the Docker connection were unavailable.
+     */
+    @Test
+    void testMissingCredentialsExceptionAfterObtainingClientIsNotSwallowed() throws IOException {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(new LinkedList<>());
+        DockerClient client = dockerApi.getClient();
+        MissingDockerServerCredentialsException unrelatedFailure =
+                new MissingDockerServerCredentialsException("unrelated-failure-while-closing");
+        Mockito.doThrow(unrelatedFailure).when(client).close();
+
+        List<DockerCloud> listOfCloud = new LinkedList<>();
+        listOfCloud.add(new DockerCloud("cloud", dockerApi, new LinkedList<>()));
+        subject.setAllClouds(listOfCloud);
+        subject.setAllNodes(new LinkedList<>());
+
+        MissingDockerServerCredentialsException thrown =
+                assertThrows(MissingDockerServerCredentialsException.class, subject::runExecute);
         assertEquals(unrelatedFailure, thrown);
     }
 }

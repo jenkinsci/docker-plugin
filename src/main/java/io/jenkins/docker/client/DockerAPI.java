@@ -149,6 +149,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
      *
      * @return A raw {@link DockerClient} pointing at our docker service
      *         endpoint.
+     * @throws MissingDockerServerCredentialsException if a tcp endpoint has a
+     *         credentials id that cannot be resolved.
      */
     public DockerClient getClient() {
         return getClient(readTimeout);
@@ -166,6 +168,8 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
      *            no timeout.
      * @return A raw {@link DockerClient} pointing at our docker service
      *         endpoint.
+     * @throws MissingDockerServerCredentialsException if a tcp endpoint has a
+     *         credentials id that cannot be resolved.
      */
     public DockerClient getClient(int activityTimeoutInSeconds) {
         return getOrMakeClient(
@@ -253,9 +257,13 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         DockerHttpClient httpClient = null;
         DockerClient actualClient = null;
         try {
+            final URI dockerHostUri = URI.create(dockerUri);
+            // docker-java only uses TLS for tcp endpoints: a credentials id left on a unix or npipe
+            // endpoint has always been ignored, so it must not fail for being unresolvable.
+            final SSLConfig sslConfig = "tcp".equals(dockerHostUri.getScheme()) ? toSSlConfig(credentialsId) : null;
             httpClient = new ApacheDockerHttpClient.Builder() //
-                    .dockerHost(URI.create(dockerUri)) //
-                    .sslConfig(toSSlConfig(credentialsId)) //
+                    .dockerHost(dockerHostUri) //
+                    .sslConfig(sslConfig) //
                     .connectionTimeout(
                             connectTimeoutInMillisecondsOrNull != null
                                     ? Duration.ofMillis(connectTimeoutInMillisecondsOrNull.intValue())
@@ -303,7 +311,7 @@ public class DockerAPI extends AbstractDescribableImpl<DockerAPI> {
         if (credentials == null) {
             // Falling back to plain HTTP here would build a client that the cache then keeps
             // serving after the credentials appear, for as long as the cloud stays busy.
-            throw new IllegalStateException("Docker Server Credentials '" + credentialsId + "' not found");
+            throw new MissingDockerServerCredentialsException(credentialsId);
         }
         return new DockerServerCredentialsSSLConfig(credentials);
     }
