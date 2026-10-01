@@ -103,6 +103,13 @@ Then configure Agent templates,
 assigning them labels that you can use so your jobs select the appropriate template,
 and set the Docker container to be run with whatever container settings you require.
 
+An Agent template image may reference a build parameter. For example, configure the image as
+`registry.example.com/ci/build-agent:${IMAGE_TAG}` and define `IMAGE_TAG` with a default such as `latest` in the job.
+Each queued build receives a temporary template using its resolved image while retaining the configured
+container settings, so builds can test tags such as `pr-1234` independently.
+If provisioning that temporary template fails, the build remains in the queue with the Docker error displayed
+as its waiting reason. Jenkins retries provisioning after the cloud's configured error duration.
+
 ### Running self-made local Docker images
 
 By default the Jenkins Docker plugin will download ('pull') the latest version of the image.

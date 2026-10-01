@@ -5,7 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+@WithJenkins
 class DockerTemplateTest {
     String image = "image";
     String labelString;
@@ -130,5 +133,26 @@ class DockerTemplateTest {
         assertTrue(instance.getDockerTemplateBase().getCapabilitiesToAdd().contains("CHOWN"), "Error, wrong capAdd");
         assertTrue(
                 instance.getDockerTemplateBase().getCapabilitiesToDrop().contains("NET_ADMIN"), "Error, wrong capDrop");
+    }
+
+    @Test
+    void cloneWithImagePreservesTemplateConfiguration(JenkinsRule rule) {
+        DockerTemplate original = getDockerTemplateInstanceWithDNSHost("8.8.8.8");
+        original.setPullStrategy(DockerImagePullStrategy.PULL_NEVER);
+        original.setPullTimeout(42);
+        original.setRemoveVolumes(true);
+        original.setStopTimeout(33);
+
+        DockerTemplate clone = original.cloneWithImageAndLabel("image:pr-1234", "unique-label");
+
+        assertEquals("image:pr-1234", clone.getImage());
+        assertEquals("unique-label", clone.getLabelString());
+        assertEquals(
+                original.getDockerTemplateBase().getDnsString(),
+                clone.getDockerTemplateBase().getDnsString());
+        assertEquals(original.getPullStrategy(), clone.getPullStrategy());
+        assertEquals(original.getPullTimeout(), clone.getPullTimeout());
+        assertEquals(original.isRemoveVolumes(), clone.isRemoveVolumes());
+        assertEquals(original.getStopTimeout(), clone.getStopTimeout());
     }
 }
