@@ -10,6 +10,7 @@ import hudson.model.TaskListener;
 import hudson.slaves.SlaveComputer;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.client.MissingDockerServerCredentialsException;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -215,7 +216,21 @@ public class DockerContainerWatchdog extends AsyncPeriodicWork {
             DockerCloud dc, Map<String, Node> nodeMap, ContainerNodeNameMap csmMerged, Instant snapshotInstant) {
         DockerAPI dockerApi = dc.getDockerApi();
 
-        try (final DockerClient client = dockerApi.getClient()) {
+        final DockerClient client;
+        try {
+            client = dockerApi.getClient();
+        } catch (MissingDockerServerCredentialsException e) {
+            // Expected while the credentials are being recreated: skip this cloud, not the whole run.
+            LOGGER.warn(
+                    "Unable to create a Docker client for DockerCloud [name={}, dockerURI={}]",
+                    dc.getDisplayName(),
+                    dockerApi.getDockerHost().getUri(),
+                    e);
+            csmMerged.setContainerListIncomplete(true);
+            return csmMerged;
+        }
+
+        try (client) {
             ContainerNodeNameMap csm = retrieveContainers(dc, client);
 
             DockerDisabled dcDisabled = dc.getDisabled();

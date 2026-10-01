@@ -10,6 +10,7 @@ import com.nirima.jenkins.plugins.docker.DockerTemplate;
 import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -184,6 +185,7 @@ public class DockerTransientNode extends AbstractCloudSlave implements TrackedIt
 
     @Override
     @Restricted(NoExternalUse.class)
+    @SuppressFBWarnings(value = "IAOM_DO_NOT_INCREASE_METHOD_ACCESSIBILITY", justification = "Compatibility.")
     public void _terminate(final TaskListener listener) {
         final ILogger tl = createILoggerForTaskListener(listener);
         try {

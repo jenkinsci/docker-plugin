@@ -57,6 +57,10 @@ as a Jenkins Agent
 _or_ use one of the pre-built images
 like the [jenkins/inbound-agent](https://hub.docker.com/r/jenkins/inbound-agent/)
 
+**Note:** The examples in this section assume a Linux host.
+The plugin also works with Windows containers;
+see [Windows containers](#windows-containers).
+
 ### Docker Environment
 
 Follow the installation steps on [the Docker website](https://docs.docker.com/).
@@ -182,6 +186,55 @@ You _can_ use an Entrypoint to run some side service inside your build agent con
 More information can be obtained from the online help built into the Jenkins web UI.
 Most configurable fields have explanatory text.
 This, combined with knowledge of [Docker itself](https://docs.docker.com/), should answer most questions.
+
+## Windows containers
+
+The plugin can run Windows containers as ephemeral, on-demand Jenkins agents.
+Below is a configuration summary that may help you set up a Jenkins controller to launch builds in Windows containers with process isolation.
+The described scenario should work on Windows 11, Windows Server 2022 and 2025.
+
+**Note:** Tested and working: [**'Connect with JNLP'**](#launch-via-jnlp) connect method over WebSocket, 'process isolation' with `ltsc2022` and `ltsc2025` Windows base images.
+
+### Environment
+
+-   a Windows host running both the Jenkins controller and the Docker engine
+    (tested with Jenkins 2.568.1 and `docker-plugin` 1324.v2fb_b_df97fe1d).
+    For simplicity, this summary assumes the controller listens on plain HTTP on TCP port 8080, which it does out of the box.
+    **Windows Firewall on the host must allow inbound connections to TCP port 8080**, at least from the agent containers' network.
+-   a Docker engine configured to run Windows containers
+    (tested with Docker version 29.5.2, build 79eb04c. [VisualDock Server](https://www.axiorema.com/visualdock-server/) was used for testing;
+    but other Docker distributions for Windows should work as well).
+-   the user or service account running the Jenkins controller must be a member of the local Windows group that is granted access to the
+    Docker engine named pipe (e.g. `docker-users`; it is named `VisualDock Server Users` for VisualDock Server).
+-   a Windows-based [Jenkins `inbound-agent`](https://hub.docker.com/r/jenkins/inbound-agent/) image with your project's build
+    dependencies added.
+    The image is configured with `ENV REMOTING_OPTS="-webSocket"` so that the agent connects to the controller through its HTTP port via WebSocket.
+-   a custom NAT Docker network with a fixed subnet: `docker network create -d "nat" --subnet "10.244.0.0/24" jenkins_agent_nat`.
+    A fixed subnet gives the containers a stable gateway address (`10.244.0.1` here), which is how the agents reach the controller running on the host.
+-   (optional) a named Docker volume: `docker volume create jenkins-artifacts`.
+    The agent containers are ephemeral: every build starts from a clean filesystem.
+    Jenkins' built-in artifact archiving (`archiveArtifacts`) already lets build outputs outlive the container.
+    Anything else that should survive between builds needs a volume: typically package caches
+    (e.g. the NuGet or npm cache), or build outputs that must be accessible on the host filesystem
+    rather than through `archiveArtifacts`.
+
+On the Jenkins side, the Docker cloud and Docker Agent template configuration is very similar to the Linux one.
+
+#### Docker cloud details
+
+-    Docker Host URI: `npipe:////./pipe/docker_engine`
+     (points to the Docker daemon installed on the Windows host)
+
+#### Docker Agent template details
+
+-    Container settings | Network: `jenkins_agent_nat`
+     (the network is created per the [Environment](#environment) section)
+-    Container settings | Mounts: `type=volume,source=jenkins-artifacts,destination=C:\artifacts`
+     (optional; the volume is created per the [Environment](#environment) section)
+-    Connect method: **Connect with JNLP**
+-    Jenkins URL: `http://10.244.0.1:8080`
+     (the gateway address of the `jenkins_agent_nat` network, i.e. the Windows host)
+-    Pull strategy: [Never pull](#running-self-made-local-docker-images) if you are using a self-built local Docker image.
 
 ## Configuration as code
 
