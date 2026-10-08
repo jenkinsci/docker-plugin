@@ -1,12 +1,15 @@
 package com.nirima.jenkins.plugins.docker;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import hudson.model.Node;
 import io.jenkins.docker.DockerTransientNode;
 import io.jenkins.docker.client.DockerAPI;
+import io.jenkins.docker.client.MissingDockerServerCredentialsException;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -17,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -526,5 +530,120 @@ class DockerContainerWatchdogTest {
 
         DockerTransientNode removedNode = nodes.get(0);
         assertEquals(node1, removedNode);
+    }
+
+    /**
+     * If DockerAPI#getClient() throws {@link MissingDockerServerCredentialsException} for one cloud
+     * (see DockerAPITest), that failure must be caught for that cloud only, so that:
+     * <ul>
+     *     <li>processing continues with the other, healthy clouds (their orphan containers still get
+     *     cleaned up), and</li>
+     *     <li>no node gets removed as "superfluous" in that run, since the merged container list is
+     *     known to be incomplete.</li>
+     * </ul>
+     */
+    @Test
+    void testCloudFailingToObtainClientDoesNotAbortProcessingOfOtherClouds() throws IOException, InterruptedException {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+
+        /* cloud1: credentials cannot be resolved, DockerAPI#getClient() throws */
+        DockerAPI brokenDockerApi = Mockito.mock(DockerAPI.class);
+        DockerServerEndpoint brokenEndpoint = Mockito.mock(DockerServerEndpoint.class);
+        Mockito.when(brokenEndpoint.getUri()).thenReturn("tcp://unresolvable-credentials-host:2376");
+        Mockito.when(brokenDockerApi.getDockerHost()).thenReturn(brokenEndpoint);
+        Mockito.when(brokenDockerApi.getClient())
+                .thenThrow(new MissingDockerServerCredentialsException("missing-cred-id"));
+        DockerCloud brokenCloud =
+                new DockerCloud("cloud-with-missing-credentials", brokenDockerApi, new LinkedList<>());
+
+        /* cloud2: healthy, has one orphan container (agent missing) that must still be cleaned up */
+        final String orphanContainerNodeName = "unittest-orphan-container";
+        final String orphanContainerId = UUID.randomUUID().toString();
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put(DockerContainerLabelKeys.NODE_NAME, orphanContainerNodeName);
+        labelMap.put(DockerContainerLabelKeys.TEMPLATE_NAME, "unittesttemplate");
+        labelMap.put(DockerContainerLabelKeys.REMOVE_VOLUMES, "false");
+
+        List<Container> containerList = new LinkedList<>();
+        containerList.add(
+                TestableDockerContainerWatchdog.createMockedContainer(orphanContainerId, "Running", 0L, labelMap));
+
+        DockerAPI healthyDockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(containerList);
+        DockerCloud healthyCloud = new DockerCloud("healthy-cloud", healthyDockerApi, new LinkedList<>());
+
+        List<DockerCloud> listOfCloud = new LinkedList<>();
+        listOfCloud.add(brokenCloud);
+        listOfCloud.add(healthyCloud);
+        subject.setAllClouds(listOfCloud);
+
+        /* an agent whose container no longer exists: would normally be removed as superfluous */
+        LinkedList<Node> allNodes = new LinkedList<>();
+        DockerTransientNode nodeWithoutContainer = TestableDockerContainerWatchdog.createMockedDockerTransientNode(
+                UUID.randomUUID().toString(), "unittest-agent-without-container", healthyCloud, true);
+        allNodes.add(nodeWithoutContainer);
+        subject.setAllNodes(allNodes);
+
+        subject.runExecute();
+
+        // the healthy cloud must still have been processed despite the broken cloud throwing first
+        List<String> containersRemoved = subject.getContainersRemoved();
+        assertEquals(1, containersRemoved.size());
+        assertEquals(orphanContainerId, containersRemoved.get(0));
+
+        // no node must have been removed: the container list is known to be incomplete because
+        // the broken cloud could not be interrogated
+        assertEquals(0, subject.getAllRemovedNodes().size());
+    }
+
+    /**
+     * Only missing credentials are an expected reason for {@code getClient()} to fail. Any other
+     * {@code IllegalStateException} it raises, such as a broken invariant of the client cache,
+     * is a bug and must propagate.
+     */
+    @Test
+    void testOtherIllegalStateExceptionFromGetClientIsNotSwallowed() {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+
+        DockerAPI dockerApi = Mockito.mock(DockerAPI.class);
+        DockerServerEndpoint endpoint = Mockito.mock(DockerServerEndpoint.class);
+        Mockito.when(endpoint.getUri()).thenReturn("tcp://some-host:2376");
+        Mockito.when(dockerApi.getDockerHost()).thenReturn(endpoint);
+        IllegalStateException cacheInvariantFailure =
+                new IllegalStateException("Cannot cache record because there's already a record present");
+        Mockito.when(dockerApi.getClient()).thenThrow(cacheInvariantFailure);
+
+        List<DockerCloud> listOfCloud = new LinkedList<>();
+        listOfCloud.add(new DockerCloud("cloud", dockerApi, new LinkedList<>()));
+        subject.setAllClouds(listOfCloud);
+        subject.setAllNodes(new LinkedList<>());
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, subject::runExecute);
+        assertEquals(cacheInvariantFailure, thrown);
+    }
+
+    /**
+     * Missing credentials are only skipped when {@code getClient()} reports them. The same
+     * exception raised later, once the client is in hand, is an unrelated bug and must not be
+     * swallowed as if the Docker connection were unavailable.
+     */
+    @Test
+    void testMissingCredentialsExceptionAfterObtainingClientIsNotSwallowed() throws IOException {
+        TestableDockerContainerWatchdog subject = new TestableDockerContainerWatchdog();
+
+        DockerAPI dockerApi = TestableDockerContainerWatchdog.createMockedDockerAPI(new LinkedList<>());
+        DockerClient client = dockerApi.getClient();
+        MissingDockerServerCredentialsException unrelatedFailure =
+                new MissingDockerServerCredentialsException("unrelated-failure-while-closing");
+        Mockito.doThrow(unrelatedFailure).when(client).close();
+
+        List<DockerCloud> listOfCloud = new LinkedList<>();
+        listOfCloud.add(new DockerCloud("cloud", dockerApi, new LinkedList<>()));
+        subject.setAllClouds(listOfCloud);
+        subject.setAllNodes(new LinkedList<>());
+
+        MissingDockerServerCredentialsException thrown =
+                assertThrows(MissingDockerServerCredentialsException.class, subject::runExecute);
+        assertEquals(unrelatedFailure, thrown);
     }
 }

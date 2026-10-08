@@ -96,6 +96,8 @@ class ContainerNodeNameMap {
         result.containerSet.addAll(containerSet);
         result.containerSet.addAll(other.containerSet);
 
+        result.containerListIncomplete = containerListIncomplete || other.containerListIncomplete;
+
         return result;
     }
 
