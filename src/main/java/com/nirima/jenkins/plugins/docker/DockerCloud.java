@@ -420,16 +420,14 @@ public class DockerCloud extends Cloud {
                             // On provisioning completion, let's trigger NodeProvisioner
                             agent.robustlyAddToJenkins();
 
-                        } catch (Throwable ex) {
+                        } catch (Exception ex) {
                             LOGGER.error(
                                     "Error in provisioning; template='{}' for cloud='{}'", t, getDisplayName(), ex);
                             plannedNode.completeExceptionally(ex);
                             if (agent != null) {
                                 agent.terminate(LOGGER);
                             }
-                            if (ex instanceof Error) {
-                                throw (Error) ex;
-                            } else if (ex instanceof RuntimeException) {
+                            if (ex instanceof RuntimeException) {
                                 throw (RuntimeException) ex;
                             } else if (ex instanceof IOException) {
                                 throw new UncheckedIOException((IOException) ex);
