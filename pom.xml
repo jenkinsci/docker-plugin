@@ -32,7 +32,7 @@
 
   <properties>
     <changelist>999999-SNAPSHOT</changelist>
-    <jenkins.baseline>2.504</jenkins.baseline>
+    <jenkins.baseline>2.555</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <useBeta>true</useBeta>
     <gitHubRepo>jenkinsci/docker-plugin</gitHubRepo>
@@ -53,7 +53,7 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>5983.v443959746f1f</version>
+        <version>7169.vb_32a_cfd93fa_6</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -103,6 +103,11 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>durable-task</artifactId>
+    </dependency>
+    <dependency>
+      <!-- Required for Docker Java API -->
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>jackson2-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
