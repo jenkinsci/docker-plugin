@@ -329,7 +329,7 @@ class DockerNodeStepTest {
                 Collections.emptyList()));
         WorkflowJob j = rule.createProject(WorkflowJob.class, "p");
         j.setDefinition(new CpsFlowDefinition(
-                dockerNodeWithImage("eclipse-temurin:17-jre") + " {\n"
+                dockerNodeWithImage("eclipse-temurin:25-jre") + " {\n"
                         + "  sh 'java -version && whoami && pwd && touch stuff && ls -lat . ..'\n"
                         + "}\n",
                 true));
