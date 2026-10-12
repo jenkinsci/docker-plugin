@@ -53,6 +53,8 @@ import jenkins.model.Jenkins;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -153,6 +155,48 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             throw new IllegalArgumentException("Image can't be null");
         }
         this.image = image.trim();
+    }
+
+    /**
+     * Creates a copy of this template with a different image.
+     *
+     * <p>The image is final because configured templates are immutable with respect to their image. A
+     * parameterized queue item therefore needs a copy rather than mutating the configured template.</p>
+     */
+    @Restricted(NoExternalUse.class)
+    public DockerTemplateBase cloneWithImage(String image) {
+        DockerTemplateBase copy = new DockerTemplateBase(image);
+        copy.setPullCredentialsId(getPullCredentialsId());
+        copy.setDockerCommand(getDockerCommand());
+        copy.setHostname(getHostname());
+        copy.setUser(getUser());
+        copy.setExtraGroups(getExtraGroups());
+        copy.setDnsHosts(dnsHosts == null ? null : dnsHosts.clone());
+        copy.setDnsSearch(dnsSearch == null ? null : dnsSearch.clone());
+        copy.setNetwork(getNetwork());
+        copy.setMounts(mounts == null ? null : mounts.clone());
+        copy.setVolumesFrom2(volumesFrom2 == null ? null : volumesFrom2.clone());
+        copy.setDevices(devices == null ? null : devices.clone());
+        copy.setEnvironment(environment == null ? null : environment.clone());
+        copy.setBindPorts(getBindPorts());
+        copy.setBindAllPorts(bindAllPorts);
+        copy.setMemoryLimit(getMemoryLimit());
+        copy.setMemorySwap(getMemorySwap());
+        copy.setCgroupParent(getCgroupParent());
+        copy.setCpus(getCpus());
+        copy.setCpuPeriod(getCpuPeriod());
+        copy.setCpuQuota(getCpuQuota());
+        copy.setCpuShares(getCpuShares());
+        copy.setShmSize(getShmSize());
+        copy.setPrivileged(privileged);
+        copy.setTty(tty);
+        copy.setMacAddress(getMacAddress());
+        copy.setExtraHosts(getExtraHosts());
+        copy.setSecurityOpts(getSecurityOpts());
+        copy.setCapabilitiesToAdd(getCapabilitiesToAdd());
+        copy.setCapabilitiesToDrop(getCapabilitiesToDrop());
+        copy.setExtraDockerLabels(getExtraDockerLabels());
+        return copy;
     }
 
     /**
