@@ -27,7 +27,9 @@ import jenkins.model.Jenkins;
  *
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
-@Extension
+// Account for connecting Docker executors before core's smoothed estimates can
+// mistake them for unmet demand during a single-use worker replacement.
+@Extension(ordinal = 1)
 public class FastNodeProvisionerStrategy extends Strategy {
 
     private static final Logger LOGGER = Logger.getLogger(FastNodeProvisionerStrategy.class.getName());
@@ -63,18 +65,26 @@ public class FastNodeProvisionerStrategy extends Strategy {
         });
         int availableCapacity = snapshot.getAvailableExecutors()
                 + snapshot.getConnectingExecutors()
-                + state.getPlannedCapacitySnapshot();
+                + state.getPlannedCapacitySnapshot()
+                + state.getAdditionalPlannedCapacity();
 
         int currentDemand = snapshot.getQueueLength();
         LOGGER.log(FINE, "Available capacity={0}, currentDemand={1}", new Object[] {availableCapacity, currentDemand});
 
         if (availableCapacity < currentDemand) {
-            Collection<NodeProvisioner.PlannedNode> plannedNodes =
-                    cloud.provision(label, currentDemand - availableCapacity);
+            Cloud.CloudState cloudState = new Cloud.CloudState(label, state.getAdditionalPlannedCapacity());
+            int excessWorkload = currentDemand - availableCapacity;
+            for (CloudProvisioningListener listener : CloudProvisioningListener.all()) {
+                if (listener.canProvision(cloud, cloudState, excessWorkload) != null) {
+                    return CONSULT_REMAINING_STRATEGIES;
+                }
+            }
+            Collection<NodeProvisioner.PlannedNode> plannedNodes = cloud.provision(cloudState, excessWorkload);
             LOGGER.log(FINE, "Planned {0} new nodes", plannedNodes.size());
             fireOnStarted(cloud, label, plannedNodes);
             state.recordPendingLaunches(plannedNodes);
-            availableCapacity += plannedNodes.size();
+            availableCapacity +=
+                    plannedNodes.stream().mapToInt(node -> node.numExecutors).sum();
             LOGGER.log(FINE, "After provisioning, available capacity={0}, currentDemand={1}", new Object[] {
                 availableCapacity, currentDemand
             });
