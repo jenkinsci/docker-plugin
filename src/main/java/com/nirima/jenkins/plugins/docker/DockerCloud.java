@@ -48,7 +48,6 @@ import java.util.concurrent.TimeUnit;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
-import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryEndpoint;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerRegistryToken;
 import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
@@ -300,6 +299,13 @@ public class DockerCloud extends Cloud {
         adjustContainersInProgress(this, template, +1);
     }
 
+    @Restricted(NoExternalUse.class)
+    void requestProvisioningReview(Label label) {
+        final Jenkins jenkins = Jenkins.get();
+        final NodeProvisioner provisioner = label == null ? jenkins.unlabeledNodeProvisioner : label.nodeProvisioner;
+        provisioner.suggestReviewNow();
+    }
+
     private static void adjustContainersInProgress(DockerCloud cloud, DockerTemplate template, int adjustment) {
         final String cloudId = cloud.name;
         final String templateId = getTemplateId(template);
@@ -402,12 +408,13 @@ public class DockerCloud extends Cloud {
                 final ProvisioningActivity.Id id = new ProvisioningActivity.Id(
                         DockerCloud.this.name, t.getName() + " (" + t.getImage() + ")", null);
                 final CompletableFuture<Node> plannedNode = new CompletableFuture<>();
-                r.add(new TrackedPlannedNode(id, t.getNumExecutors(), plannedNode));
+                r.add(new DockerPlannedNode(id, t.getNumExecutors(), plannedNode));
 
                 final Runnable taskToCreateNewAgent = new Runnable() {
                     @Override
                     public void run() {
                         DockerTransientNode agent = null;
+                        boolean deliveredToCore = false;
                         try {
                             // TODO where can we log provisioning progress ?
                             final DockerAPI api = DockerCloud.this.getDockerApi();
@@ -415,16 +422,29 @@ public class DockerCloud extends Cloud {
                             agent.setDockerAPI(api);
                             agent.setCloudId(DockerCloud.this.name);
                             agent.setProvisioningId(id);
-                            plannedNode.complete(agent);
-
-                            // On provisioning completion, let's trigger NodeProvisioner
-                            agent.robustlyAddToJenkins();
+                            // NodeProvisioner owns registration of completed planned nodes.
+                            // Registering here as well can resurrect a worker whose first
+                            // build has already completed and removed it.
+                            deliveredToCore = plannedNode.complete(agent);
+                            if (deliveredToCore) {
+                                // Consume the ready node promptly rather than waiting for
+                                // core's next periodic review (or the orphan watchdog).
+                                try {
+                                    requestProvisioningReview(label);
+                                } catch (RuntimeException reviewFailure) {
+                                    // Delivery succeeded: core, not this task, now owns cleanup.
+                                    LOGGER.warn("Unable to request completed provisioning review", reviewFailure);
+                                }
+                            } else {
+                                // A cancelled future cannot transfer cleanup ownership to core.
+                                agent.terminate(LOGGER);
+                            }
 
                         } catch (Throwable ex) {
                             LOGGER.error(
                                     "Error in provisioning; template='{}' for cloud='{}'", t, getDisplayName(), ex);
                             plannedNode.completeExceptionally(ex);
-                            if (agent != null) {
+                            if (agent != null && !deliveredToCore) {
                                 agent.terminate(LOGGER);
                             }
                             if (ex instanceof Error) {
