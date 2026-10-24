@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWithIgnoringCase;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
@@ -648,12 +649,15 @@ class DockerTemplateBaseTest {
     void validateTmpfsNoexecMountOption() {
         final DockerTemplateBase.DescriptorImpl descriptor = new DockerTemplateBase.DescriptorImpl();
 
-        assertThat(descriptor.doCheckMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=true").kind
-                == FormValidation.Kind.OK);
-        assertThat(descriptor.doCheckMountsString("type=bind,destination=/tmp,tmpfs-noexec=true").kind
-                == FormValidation.Kind.ERROR);
-        assertThat(descriptor.doCheckMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=maybe").kind
-                == FormValidation.Kind.ERROR);
+        assertThat(
+                descriptor.doCheckMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=true").kind,
+                is(FormValidation.Kind.OK));
+        assertThat(
+                descriptor.doCheckMountsString("type=bind,destination=/tmp,tmpfs-noexec=true").kind,
+                is(FormValidation.Kind.ERROR));
+        assertThat(
+                descriptor.doCheckMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=maybe").kind,
+                is(FormValidation.Kind.ERROR));
     }
 
     @Test
