@@ -1015,15 +1015,17 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                     if (tmpfsOptions == null) {
                         tmpfsOptions = new TmpfsOptions();
                     }
-                    tmpfsOptions.withMode(Integer.parseInt(parts[1], 8));
-                    tmpfsMode = parts[1];
+                    int mode = Integer.parseInt(parts[1], 8);
+                    tmpfsOptions.withMode(mode);
+                    tmpfsMode = mode == 0 ? null : parts[1];
                     break;
                 case "tmpfs-size":
                     if (tmpfsOptions == null) {
                         tmpfsOptions = new TmpfsOptions();
                     }
-                    tmpfsOptions.withSizeBytes(Long.parseLong(parts[1]));
-                    tmpfsSize = parts[1];
+                    long size = Long.parseLong(parts[1]);
+                    tmpfsOptions.withSizeBytes(size);
+                    tmpfsSize = size == 0 ? null : parts[1];
                     break;
                 case "tmpfs-noexec":
                     String noexecValue = parts[1].trim();
@@ -1052,6 +1054,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             mount.withBindOptions(bindOptions);
         }
         if (Boolean.TRUE.equals(tmpfsNoexec)) {
+            if (tmpfsMountsResult.containsKey(target)
+                    || mountListResult.stream().anyMatch(existing -> target.equals(existing.getTarget()))) {
+                throw new IllegalArgumentException("Duplicate mount destination: " + target);
+            }
             List<String> tmpfsOptionValues = new ArrayList<>();
             if (Boolean.TRUE.equals(tmpfsReadOnly)) {
                 tmpfsOptionValues.add("ro");
@@ -1065,6 +1071,9 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
             }
             tmpfsMountsResult.put(target, Joiner.on(',').join(tmpfsOptionValues));
         } else {
+            if (tmpfsMountsResult.containsKey(target)) {
+                throw new IllegalArgumentException("Duplicate mount destination: " + target);
+            }
             if (tmpfsOptions != null) {
                 mount.withTmpfsOptions(tmpfsOptions);
             }
