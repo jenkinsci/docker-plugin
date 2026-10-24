@@ -641,8 +641,11 @@ class DockerTemplateBaseTest {
         instanceUnderTest.fillContainerConfig(mockCmd);
 
         verify(mockHostConfig).withTmpFs(Map.of("/tmp", "noexec"));
-        verify(mockHostConfig).withMounts(List.of(
-                new Mount().withType(MountType.VOLUME).withSource("cache").withTarget("/cache")));
+        verify(mockHostConfig)
+                .withMounts(List.of(new Mount()
+                        .withType(MountType.VOLUME)
+                        .withSource("cache")
+                        .withTarget("/cache")));
     }
 
     @Test
