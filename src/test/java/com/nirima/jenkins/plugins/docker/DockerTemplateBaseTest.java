@@ -654,8 +654,7 @@ class DockerTemplateBaseTest {
         final HostConfig mockHostConfig = mock(HostConfig.class);
         when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("tmpfsNoexecDefaults");
-        instanceUnderTest.setMountsString(
-                "type=tmpfs,destination=/tmp,tmpfs-noexec=true,tmpfs-size=0,tmpfs-mode=0000");
+        instanceUnderTest.setMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=true,tmpfs-size=0,tmpfs-mode=0000");
 
         instanceUnderTest.fillContainerConfig(mockCmd);
 
@@ -669,9 +668,8 @@ class DockerTemplateBaseTest {
         final HostConfig mockHostConfig = mock(HostConfig.class);
         when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
         final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("duplicateTmpfsNoexec");
-        instanceUnderTest.setMountsString(
-                "type=tmpfs,destination=/tmp,tmpfs-noexec=true,readonly=true\n"
-                        + "type=tmpfs,destination=/tmp,tmpfs-noexec=true");
+        instanceUnderTest.setMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=true,readonly=true\n"
+                + "type=tmpfs,destination=/tmp,tmpfs-noexec=true");
 
         assertThrows(IllegalArgumentException.class, () -> instanceUnderTest.fillContainerConfig(mockCmd));
     }
