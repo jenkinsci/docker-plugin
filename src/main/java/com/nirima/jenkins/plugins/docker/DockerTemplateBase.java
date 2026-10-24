@@ -880,8 +880,14 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         final String[] mountsOrNull = getMounts();
         if (mountsOrNull != null && mountsOrNull.length > 0) {
             ArrayList<Mount> mnts = new ArrayList<>();
-            parseMountsStrings(mountsOrNull, mnts);
-            hostConfig(containerConfig).withMounts(mnts);
+            Map<String, String> tmpfsMounts = new HashMap<>();
+            parseMountsStrings(mountsOrNull, mnts, tmpfsMounts);
+            if (!mnts.isEmpty()) {
+                hostConfig(containerConfig).withMounts(mnts);
+            }
+            if (!tmpfsMounts.isEmpty()) {
+                hostConfig(containerConfig).withTmpFs(tmpfsMounts);
+            }
         }
 
         final String[] volumesFrom2OrNull = getVolumesFrom2();
@@ -947,18 +953,25 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
      * Parses a given mountsString value, appending any {@link Mount}s to the specified lists.
      * @param mounts The strings to be parsed.
      * @param mountListResult List to which any {@link Mount}s should be stored in.
+     * @param tmpfsMountsResult Map to which tmpfs mounts requiring legacy options should be stored in.
      * @throws IllegalArgumentException if anything is invalid.
      */
-    private static void parseMountsStrings(final String[] mounts, List<Mount> mountListResult) {
+    private static void parseMountsStrings(
+            final String[] mounts, List<Mount> mountListResult, Map<String, String> tmpfsMountsResult) {
         for (String mnt : mounts) {
-            parseMountsString(mnt, mountListResult);
+            parseMountsString(mnt, mountListResult, tmpfsMountsResult);
         }
     }
 
-    private static void parseMountsString(String mnt, List<Mount> mountListResult) {
+    private static void parseMountsString(
+            String mnt, List<Mount> mountListResult, Map<String, String> tmpfsMountsResult) {
         Mount mount = new Mount().withType(MountType.VOLUME);
         BindOptions bindOptions = null;
         TmpfsOptions tmpfsOptions = null;
+        String tmpfsSize = null;
+        String tmpfsMode = null;
+        Boolean tmpfsNoexec = null;
+        Boolean tmpfsReadOnly = null;
 
         final String[] tokens = mnt.split(",");
         for (String token : tokens) {
@@ -986,8 +999,10 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                     String value = parts.length == 2 && parts[1] != null ? parts[1].trim() : "";
                     if (value.isEmpty() || "true".equalsIgnoreCase(value) || "1".equals(value)) {
                         mount.withReadOnly(true);
+                        tmpfsReadOnly = true;
                     } else if ("false".equalsIgnoreCase(value) || "0".equals(value)) {
                         mount.withReadOnly(false);
+                        tmpfsReadOnly = false;
                     }
                     break;
                 case "bind-propagation":
@@ -1001,12 +1016,24 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
                         tmpfsOptions = new TmpfsOptions();
                     }
                     tmpfsOptions.withMode(Integer.parseInt(parts[1], 8));
+                    tmpfsMode = parts[1];
                     break;
                 case "tmpfs-size":
                     if (tmpfsOptions == null) {
                         tmpfsOptions = new TmpfsOptions();
                     }
                     tmpfsOptions.withSizeBytes(Long.parseLong(parts[1]));
+                    tmpfsSize = parts[1];
+                    break;
+                case "tmpfs-noexec":
+                    String noexecValue = parts[1].trim();
+                    if ("true".equalsIgnoreCase(noexecValue) || "1".equals(noexecValue)) {
+                        tmpfsNoexec = true;
+                    } else if ("false".equalsIgnoreCase(noexecValue) || "0".equals(noexecValue)) {
+                        tmpfsNoexec = false;
+                    } else {
+                        throw new IllegalArgumentException("Invalid tmpfs-noexec value: expected true or false");
+                    }
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported keyword: " + parts[0]);
@@ -1017,14 +1044,32 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         if (target == null || target.isEmpty()) {
             throw new IllegalArgumentException("Invalid mount: target/destination must be set");
         }
+        if (tmpfsNoexec != null && mount.getType() != MountType.TMPFS) {
+            throw new IllegalArgumentException("tmpfs-noexec is only valid for type=tmpfs");
+        }
 
         if (bindOptions != null) {
             mount.withBindOptions(bindOptions);
         }
-        if (tmpfsOptions != null) {
-            mount.withTmpfsOptions(tmpfsOptions);
+        if (Boolean.TRUE.equals(tmpfsNoexec)) {
+            List<String> tmpfsOptionValues = new ArrayList<>();
+            if (Boolean.TRUE.equals(tmpfsReadOnly)) {
+                tmpfsOptionValues.add("ro");
+            }
+            tmpfsOptionValues.add("noexec");
+            if (tmpfsSize != null) {
+                tmpfsOptionValues.add("size=" + tmpfsSize);
+            }
+            if (tmpfsMode != null) {
+                tmpfsOptionValues.add("mode=" + tmpfsMode);
+            }
+            tmpfsMountsResult.put(target, Joiner.on(',').join(tmpfsOptionValues));
+        } else {
+            if (tmpfsOptions != null) {
+                mount.withTmpfsOptions(tmpfsOptions);
+            }
+            mountListResult.add(mount);
         }
-        mountListResult.add(mount);
     }
 
     private static String[] convertVolumes(String[] vols) {
@@ -1325,7 +1370,7 @@ public class DockerTemplateBase implements Describable<DockerTemplateBase>, Seri
         public FormValidation doCheckMountsString(@QueryParameter String mountsString) {
             try {
                 final String[] mounts = splitAndFilterEmpty(mountsString, "\n");
-                parseMountsStrings(mounts, new ArrayList<>());
+                parseMountsStrings(mounts, new ArrayList<>(), new HashMap<>());
             } catch (Throwable t) {
                 return FormValidation.error(t.getMessage());
             }
