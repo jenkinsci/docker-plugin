@@ -675,6 +675,30 @@ class DockerTemplateBaseTest {
     }
 
     @Test
+    void rejectDuplicateDestinationWhenTmpfsNoexecFollowsRegularMount() {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("duplicateRegularBeforeTmpfsNoexec");
+        instanceUnderTest.setMountsString(
+                "type=volume,source=cache,target=/tmp\ntype=tmpfs,destination=/tmp,tmpfs-noexec=true");
+
+        assertThrows(IllegalArgumentException.class, () -> instanceUnderTest.fillContainerConfig(mockCmd));
+    }
+
+    @Test
+    void rejectDuplicateDestinationWhenRegularMountFollowsTmpfsNoexec() {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("duplicateTmpfsNoexecBeforeRegular");
+        instanceUnderTest.setMountsString(
+                "type=tmpfs,destination=/tmp,tmpfs-noexec=true\ntype=volume,source=cache,target=/tmp");
+
+        assertThrows(IllegalArgumentException.class, () -> instanceUnderTest.fillContainerConfig(mockCmd));
+    }
+
+    @Test
     void validateTmpfsNoexecMountOption() {
         final DockerTemplateBase.DescriptorImpl descriptor = new DockerTemplateBase.DescriptorImpl();
 
