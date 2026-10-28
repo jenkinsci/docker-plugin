@@ -2,6 +2,7 @@ package com.nirima.jenkins.plugins.docker;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWithIgnoringCase;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
@@ -26,6 +27,7 @@ import com.github.dockerjava.api.model.VolumesFrom;
 import com.nirima.jenkins.plugins.docker.utils.JenkinsUtils;
 import hudson.util.FormValidation;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -587,6 +589,11 @@ class DockerTemplateBaseTest {
                         .withTmpfsOptions(new TmpfsOptions().withMode(448)));
 
         testFillContainerMount(
+                "tmpfsNoexecDisabled",
+                "type=tmpfs,destination=/aTarget,tmpfs-noexec=false",
+                new Mount().withType(MountType.TMPFS).withTarget("/aTarget"));
+
+        testFillContainerMount(
                 "npipe",
                 "type=npipe,source=\\\\.\\pipe\\docker_engine,destination=\\\\.\\pipe\\docker_engine",
                 new Mount()
@@ -605,6 +612,105 @@ class DockerTemplateBaseTest {
         instanceUnderTest.fillContainerConfig(mockCmd);
 
         verify(mockHostConfig).withMounts(List.of(expectedMountsSet));
+    }
+
+    @Test
+    void fillContainerConfigGivenTmpfsNoexec() {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("tmpfsNoexec");
+        instanceUnderTest.setMountsString(
+                "type=tmpfs,destination=/tmp,tmpfs-noexec=true,tmpfs-size=67108864,tmpfs-mode=1777,readonly=true");
+
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        verify(mockHostConfig).withTmpFs(Map.of("/tmp", "ro,noexec,size=67108864,mode=1777"));
+        verify(mockHostConfig, never()).withMounts(anyList());
+    }
+
+    @Test
+    void fillContainerConfigGivenTmpfsNoexecAndRegularMount() {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("mixedMounts");
+        instanceUnderTest.setMountsString(
+                "type=tmpfs,destination=/tmp,tmpfs-noexec=true\ntype=volume,source=cache,target=/cache");
+
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        verify(mockHostConfig).withTmpFs(Map.of("/tmp", "noexec"));
+        verify(mockHostConfig)
+                .withMounts(List.of(new Mount()
+                        .withType(MountType.VOLUME)
+                        .withSource("cache")
+                        .withTarget("/cache")));
+    }
+
+    @Test
+    void fillContainerConfigGivenTmpfsNoexecWithZeroSizeAndMode() {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("tmpfsNoexecDefaults");
+        instanceUnderTest.setMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=true,tmpfs-size=0,tmpfs-mode=0000");
+
+        instanceUnderTest.fillContainerConfig(mockCmd);
+
+        verify(mockHostConfig).withTmpFs(Map.of("/tmp", "noexec"));
+        verify(mockHostConfig, never()).withMounts(anyList());
+    }
+
+    @Test
+    void rejectDuplicateMountDestinationWhenTmpfsNoexecIsEnabled() {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("duplicateTmpfsNoexec");
+        instanceUnderTest.setMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=true,readonly=true\n"
+                + "type=tmpfs,destination=/tmp,tmpfs-noexec=true");
+
+        assertThrows(IllegalArgumentException.class, () -> instanceUnderTest.fillContainerConfig(mockCmd));
+    }
+
+    @Test
+    void rejectDuplicateDestinationWhenTmpfsNoexecFollowsRegularMount() {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("duplicateRegularBeforeTmpfsNoexec");
+        instanceUnderTest.setMountsString(
+                "type=volume,source=cache,target=/tmp\ntype=tmpfs,destination=/tmp,tmpfs-noexec=true");
+
+        assertThrows(IllegalArgumentException.class, () -> instanceUnderTest.fillContainerConfig(mockCmd));
+    }
+
+    @Test
+    void rejectDuplicateDestinationWhenRegularMountFollowsTmpfsNoexec() {
+        final CreateContainerCmd mockCmd = mock(CreateContainerCmd.class);
+        final HostConfig mockHostConfig = mock(HostConfig.class);
+        when(mockCmd.getHostConfig()).thenReturn(mockHostConfig);
+        final DockerTemplateBase instanceUnderTest = new DockerTemplateBase("duplicateTmpfsNoexecBeforeRegular");
+        instanceUnderTest.setMountsString(
+                "type=tmpfs,destination=/tmp,tmpfs-noexec=true\ntype=volume,source=cache,target=/tmp");
+
+        assertThrows(IllegalArgumentException.class, () -> instanceUnderTest.fillContainerConfig(mockCmd));
+    }
+
+    @Test
+    void validateTmpfsNoexecMountOption() {
+        final DockerTemplateBase.DescriptorImpl descriptor = new DockerTemplateBase.DescriptorImpl();
+
+        assertThat(
+                descriptor.doCheckMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=true").kind,
+                is(FormValidation.Kind.OK));
+        assertThat(
+                descriptor.doCheckMountsString("type=bind,destination=/tmp,tmpfs-noexec=true").kind,
+                is(FormValidation.Kind.ERROR));
+        assertThat(
+                descriptor.doCheckMountsString("type=tmpfs,destination=/tmp,tmpfs-noexec=maybe").kind,
+                is(FormValidation.Kind.ERROR));
     }
 
     @Test
