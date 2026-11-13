@@ -122,7 +122,7 @@ public class JenkinsUtils {
 
     @Restricted(NoExternalUse.class)
     @NonNull
-    public static String getInstanceId() {
+    public static synchronized String getInstanceId() {
         try {
             if (_id == null) {
                 _id = Util.getDigestOf(new ByteArrayInputStream(

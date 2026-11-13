@@ -5,7 +5,15 @@
   -->
   <Match>
     <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"/>
-    <Class name="com.nirima.jenkins.plugins.docker.DockerPluginConfiguration"/>
+    <Or>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerCloud"/>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerPluginConfiguration"/>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerTemplate"/>
+      <Class name="com.nirima.jenkins.plugins.docker.DockerTemplateBase"/>
+      <Class name="com.nirima.jenkins.plugins.docker.action.DockerBuildImageAction"/>
+      <Class name="com.nirima.jenkins.plugins.docker.builder.DockerBuilderPublisher"/>
+      <Class name="io.jenkins.docker.DockerTransientNode"/>
+    </Or>
   </Match>
   <Match>
     <!-- Already suppressed at a different level, continue suppressing -->
