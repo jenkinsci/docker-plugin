@@ -551,6 +551,24 @@ public class DockerTemplate implements Describable<DockerTemplate> {
         return template;
     }
 
+    /**
+     * Creates a temporary copy with a resolved image and unique label while retaining the configured agent options.
+     */
+    @Restricted(NoExternalUse.class)
+    public DockerTemplate cloneWithImageAndLabel(String image, String label) {
+        final DockerTemplate template = new DockerTemplate(
+                dockerTemplateBase.cloneWithImage(image), connector, label, remoteFs, Integer.toString(instanceCap));
+        template.setMode(mode);
+        template.setPullStrategy(getPullStrategy());
+        template.setPullTimeout(pullTimeout);
+        template.setRemoveVolumes(removeVolumes);
+        template.setStopTimeout(stopTimeout);
+        template.setRetentionStrategy(makeCopy((DockerOnceRetentionStrategy) retentionStrategy));
+        template.setNodeProperties(makeCopyOfList(getNodeProperties()));
+        template.setName(name);
+        return template;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

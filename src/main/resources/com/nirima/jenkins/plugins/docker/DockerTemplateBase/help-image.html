@@ -1,3 +1,5 @@
 <div>
-    The hash or tagged name of the image that you wish docker to run (e.g "docker run -i -t &lt;id&gt; /bin/bash")
+    The hash or tagged name of the image that you wish docker to run (e.g "docker run -i -t &lt;id&gt; /bin/bash").
+    For queued parameterized builds, Jenkins parameters may be referenced using <code>${IMAGE_TAG}</code>.
+    For example, <code>registry.example.com/ci/build-agent:${IMAGE_TAG}</code> uses the value supplied by the build parameter.
 </div>

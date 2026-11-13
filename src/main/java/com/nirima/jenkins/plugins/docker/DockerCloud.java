@@ -25,6 +25,7 @@ import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.model.Label;
 import hudson.model.Node;
+import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.slaves.Cloud;
@@ -423,6 +424,7 @@ public class DockerCloud extends Cloud {
                         } catch (Throwable ex) {
                             LOGGER.error(
                                     "Error in provisioning; template='{}' for cloud='{}'", t, getDisplayName(), ex);
+                            recordQueueItemProvisioningFailure(t, ex);
                             plannedNode.completeExceptionally(ex);
                             if (agent != null) {
                                 agent.terminate(LOGGER);
@@ -466,6 +468,41 @@ public class DockerCloud extends Cloud {
             }
             return Collections.emptyList();
         }
+    }
+
+    /** Records a temporary template's provisioning failure on its queue item so Jenkins can display it while waiting. */
+    private void recordQueueItemProvisioningFailure(DockerTemplate template, Exception failure) {
+        final Long jobId = getJobTemplateId(template);
+        if (jobId == null) {
+            return;
+        }
+        final Queue.Item item = Jenkins.get().getQueue().getItem(jobId);
+        if (item == null) {
+            LOGGER.error(
+                    "Docker image '{}' failed for temporary queue item {}; the queue item is no longer present. "
+                            + "Failure: {}",
+                    template.getImage(),
+                    jobId,
+                    failure.getMessage());
+            return;
+        }
+        LOGGER.error(
+                "Docker image '{}' failed for temporary queue item {}; leaving it queued for retry. Failure: {}",
+                template.getImage(),
+                jobId,
+                failure.getMessage());
+        DockerQueueTaskDispatcher.recordProvisioningFailure(
+                item, template, failure, getEffectiveErrorDurationInMilliseconds());
+    }
+
+    @CheckForNull
+    private synchronized Long getJobTemplateId(DockerTemplate template) {
+        for (Map.Entry<Long, DockerTemplate> entry : getJobTemplates().entrySet()) {
+            if (entry.getValue() == template) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     /*
@@ -582,7 +619,7 @@ public class DockerCloud extends Cloud {
 
         // add temporary templates matched to requested label
         for (DockerTemplate template : getJobTemplates().values()) {
-            if (label != null && label.matches(template.getLabelSet())) {
+            if (!template.getDisabled().isDisabled() && label != null && label.matches(template.getLabelSet())) {
                 dockerTemplates.add(template);
             }
         }
