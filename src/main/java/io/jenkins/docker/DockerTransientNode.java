@@ -11,9 +11,11 @@ import com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.BulkChange;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
+import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
@@ -51,6 +53,15 @@ public class DockerTransientNode extends AbstractCloudSlave implements TrackedIt
     private ProvisioningActivity.Id provisioningId;
 
     private AtomicBoolean acceptingTasks = new AtomicBoolean(true);
+
+    // Core publishes the Computer before saving the Node. A short build must
+    // not remove the node directory while that first save is still writing.
+    // Transient: a node restored from persisted configuration has already saved.
+    @SuppressFBWarnings(
+            value = "SE_TRANSIENT_FIELD_NOT_RESTORED",
+            justification =
+                    "Restored nodes have already persisted; the default false value intentionally opens admission.")
+    private transient volatile boolean initialSavePending = true;
 
     /**
      * @deprecated Use {@link #DockerTransientNode(String, String, String)} then
@@ -99,11 +110,33 @@ public class DockerTransientNode extends AbstractCloudSlave implements TrackedIt
 
     @Override
     public boolean isAcceptingTasks() {
-        return acceptingTasks == null || acceptingTasks.get();
+        return !initialSavePending && (acceptingTasks == null || acceptingTasks.get());
+    }
+
+    /** Whether core has yet to successfully persist this newly provisioned node. */
+    @Restricted(NoExternalUse.class)
+    public boolean isInitialSavePending() {
+        return initialSavePending;
     }
 
     public void setAcceptingTasks(boolean acceptingTasks) {
         this.acceptingTasks.set(acceptingTasks);
+    }
+
+    @Override
+    public void save() throws IOException {
+        if (BulkChange.contains(this)) {
+            return;
+        }
+        // Property setters may save a node before it is registered. Such a save
+        // has no parent/configuration file and must not open the admission gate.
+        final Jenkins jenkins = Jenkins.getInstanceOrNull();
+        final boolean registered = jenkins != null && jenkins.getNode(getNodeName()) == this;
+        super.save();
+        if (initialSavePending && registered && jenkins.getNode(getNodeName()) == this) {
+            initialSavePending = false;
+            Queue.getInstance().scheduleMaintenance();
+        }
     }
 
     @NonNull
